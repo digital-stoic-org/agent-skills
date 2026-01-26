@@ -14,6 +14,23 @@ This isn't about productivity. It's about *how you think* when working with AI.
 
 ---
 
+## 🪨 Boulder vs Pebbles
+
+| Type | When | Approach |
+|------|------|----------|
+| 🪨 **Boulder** | Multi-file, architectural, ambiguous | OpenSpec workflow |
+| 🪶 **Pebble** | Single file, obvious fix | Direct implementation |
+
+**Garage Mode MVP** (not waterfall, not agile):
+- 🎯 Proposal = MVP design, not full spec
+- 🔧 Tasks = flexible checklist, not rigid requirements
+- 🔀 Replan when blocked, don't force the path
+- 🚀 Ship small, iterate fast
+
+Structure without ceremony—garage workbench, not AutoCAD.
+
+---
+
 ## 📦 Installation
 
 ```bash
