@@ -1,6 +1,6 @@
-# 🧠 digital-stoic-marketplace — TL;DR
+# 🧠 Agent Skills Marketplace — TL;DR
 
-> ⚠️ **Live experiment.** My personal cognitive toolkit—not a universal solution.
+> ⚠️ **Live experiment.** My personal cognitive toolkit—not a universal solution. Beyond dev: writing, analysis, learning, any knowledge work. Unix-geek approach applied to AI collaboration.
 
 ## 🏪 Plugins
 
