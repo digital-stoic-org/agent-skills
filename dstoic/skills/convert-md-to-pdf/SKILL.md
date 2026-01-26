@@ -15,6 +15,8 @@ Convert markdown files to professionally styled PDFs with Mermaid diagram suppor
 python <skill_dir>/scripts/converter.py <input.md> [output.pdf] [--style=STYLE]
 ```
 
+**Note**: The converter.py script automatically handles TMPDIR overrides to avoid `/tmp/claude` permission issues.
+
 ## Available Styles
 
 Check `<skill_dir>/styles/` for options:
@@ -29,6 +31,8 @@ Check `<skill_dir>/styles/` for options:
 
 1. **Python packages**: Use `install-dependency` to install from `<skill_dir>/requirements.txt`
 2. **Mermaid CLI**: Use `install-dependency` for `@mermaid-js/mermaid-cli`
+
+**Note**: The `install-dependency` skill automatically sets up local TMPDIR to avoid permission conflicts.
 
 **Linux setup** (Ubuntu 23.10+ or AppArmor systems):
 

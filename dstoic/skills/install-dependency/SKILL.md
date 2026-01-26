@@ -9,6 +9,35 @@ model: sonnet
 
 Install missing dependencies with monorepo awareness.
 
+## Environment Setup
+
+**CRITICAL**: All install commands MUST run with local TMPDIR to avoid /tmp/claude conflicts:
+
+```bash
+# Set local temp directory
+LOCAL_TMP="${PWD}/.tmp"
+mkdir -p "$LOCAL_TMP"
+
+# Override temp directories
+export TMPDIR="$LOCAL_TMP"
+export TEMP="$LOCAL_TMP"
+export TMP="$LOCAL_TMP"
+
+# Unset Claude Code env vars that force /tmp/claude
+unset CLAUDECODE
+unset CLAUDE_CODE_ENTRYPOINT
+
+# Bun-specific overrides
+export BUN_TMPDIR="$LOCAL_TMP"
+export BUN_INSTALL_CACHE_DIR="$LOCAL_TMP"
+
+# Python-specific
+export PYTHONUSERBASE="$HOME/.local"
+
+# NPM-specific
+export npm_config_tmp="$LOCAL_TMP"
+```
+
 ## Rules
 
 | Type | Location | Method |
@@ -19,12 +48,28 @@ Install missing dependencies with monorepo awareness.
 
 ## Workflow
 
-### 1. Detect & Scan Parents
+### 1. Setup Environment (ALWAYS FIRST)
 
 ```bash
+# Create local temp directory
+LOCAL_TMP="${PWD}/.tmp"
+mkdir -p "$LOCAL_TMP"
+
+# Override all temp directories
+export TMPDIR="$LOCAL_TMP" TEMP="$LOCAL_TMP" TMP="$LOCAL_TMP"
+export BUN_TMPDIR="$LOCAL_TMP" BUN_INSTALL_CACHE_DIR="$LOCAL_TMP"
+export npm_config_tmp="$LOCAL_TMP"
+
+# Unset Claude Code environment
+unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT
+
 # Get git root (scan boundary)
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+```
 
+### 2. Detect & Scan Parents
+
+```bash
 # Python: scan upward for .venv with package
 for dir in . .. ../.. $GIT_ROOT; do
   if [ -d "$dir/.venv" ]; then
@@ -39,7 +84,7 @@ for dir in . .. ../.. $GIT_ROOT; do
 done
 ```
 
-### 2. Decision Flow
+### 3. Decision Flow
 
 ```yaml
 if_found_at_parent:
@@ -56,7 +101,7 @@ if_in_subproject_not_found:
     - "Local (isolated)" → install at current dir
 ```
 
-### 3. Install
+### 4. Install
 
 **Python:**
 ```bash
@@ -68,10 +113,13 @@ $GIT_ROOT/.venv/bin/pip install <package>
 source .venv/bin/activate && pip install --upgrade pip && pip install <package>
 ```
 
-**JS/TS (auto-install bun):**
+**JS/TS (auto-install bun with TMPDIR override):**
 ```bash
-# Install bun if missing
+# Install bun if missing (with TMPDIR override)
 if ! command -v bun &>/dev/null; then
+  # Ensure temp override is active
+  export TMPDIR="$LOCAL_TMP" BUN_TMPDIR="$LOCAL_TMP"
+
   curl -fsSL https://bun.sh/install | bash
   export PATH="$HOME/.bun/bin:$PATH"
 fi
@@ -92,7 +140,7 @@ PKG_MGR=$(command -v apt || command -v brew || command -v dnf)
 sudo $PKG_MGR install -y <package>
 ```
 
-### 4. Verify
+### 5. Verify
 
 ```bash
 # Python
@@ -111,4 +159,11 @@ which <tool> && <tool> --version
 ✓ Installed <package>
   Location: <path>
   Method: <venv/bun/apt/brew>
+```
+
+## Cleanup
+
+```bash
+# Optional: Remove temp directory after successful install
+rm -rf "$LOCAL_TMP"
 ```
