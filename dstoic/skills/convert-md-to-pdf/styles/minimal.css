@@ -1,0 +1,105 @@
+@page {
+    size: A4;
+    margin: 3cm;
+    @bottom-center {
+        content: counter(page);
+        font-size: 9pt;
+        color: #999;
+    }
+}
+
+body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 11pt;
+    line-height: 1.8;
+    color: #222;
+    max-width: 42em;
+}
+
+h1, h2, h3, h4 {
+    font-weight: normal;
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+    page-break-after: avoid;
+}
+
+h1 { font-size: 22pt; }
+h2 { font-size: 16pt; }
+h3 { font-size: 13pt; font-style: italic; }
+h4 { font-size: 12pt; }
+
+p { margin: 1em 0; }
+
+a { color: #333; text-decoration: underline; }
+
+code {
+    font-family: 'Source Code Pro', Menlo, monospace;
+    font-size: 9pt;
+}
+
+pre {
+    border-left: 2px solid #ddd;
+    padding-left: 1em;
+    margin: 1.5em 0;
+    page-break-inside: avoid;
+}
+
+pre code {
+    background: none;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+}
+
+th, td {
+    padding: 0.6em 0.8em;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    font-weight: normal;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+}
+
+blockquote {
+    margin: 1.5em 2em;
+    font-style: italic;
+    color: #555;
+}
+
+ul, ol { margin: 1em 0; padding-left: 2em; }
+li { margin: 0.4em 0; }
+
+img, svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5em auto;
+}
+
+.mermaid-diagram {
+    margin: 2em 0;
+    page-break-inside: avoid;
+    text-align: center;
+}
+
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid-error {
+    color: #666;
+    font-style: italic;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 2.5em 0;
+}

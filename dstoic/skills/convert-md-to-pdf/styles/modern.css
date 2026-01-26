@@ -1,0 +1,136 @@
+@page {
+    size: A4;
+    margin: 2cm;
+    @bottom-right {
+        content: counter(page);
+        font-size: 9pt;
+        color: #64748b;
+    }
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #1e293b;
+}
+
+h1, h2, h3, h4 {
+    color: #0f172a;
+    margin-top: 1.8em;
+    margin-bottom: 0.6em;
+    page-break-after: avoid;
+}
+
+h1 {
+    font-size: 28pt;
+    color: #2563eb;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 0.4em;
+}
+
+h2 {
+    font-size: 20pt;
+    color: #1d4ed8;
+}
+
+h3 { font-size: 14pt; }
+
+p { margin: 0.8em 0; }
+
+a { color: #2563eb; text-decoration: none; }
+
+code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 9pt;
+    background: #f1f5f9;
+    padding: 0.2em 0.5em;
+    border-radius: 4px;
+    color: #e11d48;
+}
+
+pre, .highlight {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1.2em;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    page-break-inside: avoid;
+    font-size: 9pt;
+}
+
+pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2em 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th {
+    background: #2563eb;
+    color: white;
+    padding: 0.75em 1em;
+    text-align: left;
+    font-weight: 600;
+}
+
+td {
+    padding: 0.75em 1em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+blockquote {
+    border-left: 4px solid #2563eb;
+    background: #eff6ff;
+    margin: 1.2em 0;
+    padding: 1em 1.2em;
+    border-radius: 0 8px 8px 0;
+}
+
+ul, ol { margin: 0.8em 0; padding-left: 2em; }
+li { margin: 0.4em 0; }
+
+img, svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em auto;
+}
+
+.mermaid-diagram {
+    background: #f8fafc;
+    padding: 1.5em;
+    border-radius: 8px;
+    margin: 1.5em 0;
+    page-break-inside: avoid;
+}
+
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid-error {
+    color: #dc2626;
+    background: #fef2f2;
+    padding: 1em;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+}
+
+hr {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 2em 0;
+}
