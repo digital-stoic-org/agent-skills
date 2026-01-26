@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local settings (keep .claude/ for project config)
+.claude/settings.local.json
+
+# Session artifacts
+.dump/
+.tmp/
+*.log
+
+# Dependencies (if any scripts need them)
+node_modules/
+__pycache__/
+*.pyc
+.venv/
