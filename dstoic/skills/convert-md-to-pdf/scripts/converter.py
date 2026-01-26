@@ -7,6 +7,7 @@ Usage:
 """
 
 import argparse
+import os
 import re
 import subprocess
 import tempfile
@@ -18,8 +19,16 @@ from weasyprint import HTML, CSS
 
 
 SCRIPT_DIR = Path(__file__).parent
-STYLES_DIR = SCRIPT_DIR / "styles"
-TEMPLATES_DIR = SCRIPT_DIR / "templates"
+STYLES_DIR = SCRIPT_DIR.parent / "styles"
+TEMPLATES_DIR = SCRIPT_DIR.parent / "templates"
+
+# Security: Use local temp directory instead of shared /tmp
+# This avoids permission issues and is more secure
+LOCAL_TMP = Path.cwd() / ".tmp"
+LOCAL_TMP.mkdir(parents=True, exist_ok=True)
+
+# Override Python's tempfile to use local directory
+tempfile.tempdir = str(LOCAL_TMP)
 
 
 def extract_mermaid_blocks(md_content: str) -> tuple[str, list[str]]:
@@ -37,44 +46,76 @@ def extract_mermaid_blocks(md_content: str) -> tuple[str, list[str]]:
     return placeholder_md, blocks
 
 
-def find_mmdc() -> tuple[str, str | None]:
-    """Find mmdc binary and puppeteer config, preferring local node_modules."""
-    mmdc_path = 'mmdc'
+def find_mmdc() -> tuple[list[str], str | None]:
+    """Find mmdc and puppeteer config, return command list to run with bun."""
     puppeteer_config = None
 
     # Check local node_modules first (traverse up to find it)
     cwd = Path.cwd()
     for parent in [cwd] + list(cwd.parents):
-        local_mmdc = parent / 'node_modules' / '.bin' / 'mmdc'
+        local_mmdc = parent / 'node_modules' / '@mermaid-js' / 'mermaid-cli' / 'src' / 'index.js'
         if local_mmdc.exists():
-            mmdc_path = str(local_mmdc)
-            # Also check for puppeteer config in same directory
+            # Run with bun directly to avoid /tmp/claude permission issues
+            bun_path = Path.home() / '.bun' / 'bin' / 'bun'
+            if bun_path.exists():
+                mmdc_cmd = [str(bun_path), 'run', str(local_mmdc)]
+            else:
+                mmdc_cmd = ['bun', 'run', str(local_mmdc)]
+
+            # Check for puppeteer config
             config_path = parent / 'puppeteer-config.json'
             if config_path.exists():
                 puppeteer_config = str(config_path)
-            break
+            return mmdc_cmd, puppeteer_config
 
-    return mmdc_path, puppeteer_config
+    # Fallback to mmdc in PATH
+    return ['mmdc'], puppeteer_config
+
+
+def get_subprocess_env() -> dict:
+    """Get environment with all temp directories pointing to LOCAL_TMP."""
+    env = os.environ.copy()
+    tmp_str = str(LOCAL_TMP)
+
+    # CRITICAL: Unset CLAUDECODE to prevent bun from using /tmp/claude/
+    # Bun hardcodes /tmp/claude/ as temp dir when it detects Claude Code
+    env.pop('CLAUDECODE', None)
+    env.pop('CLAUDE_CODE_ENTRYPOINT', None)
+
+    # Standard temp vars
+    env['TMPDIR'] = tmp_str
+    env['TEMP'] = tmp_str
+    env['TMP'] = tmp_str
+
+    # Node/npm/bun specific
+    env['npm_config_tmp'] = tmp_str
+    env['BUN_TMPDIR'] = tmp_str
+    env['BUN_INSTALL_CACHE_DIR'] = tmp_str
+
+    # Puppeteer specific
+    env['PUPPETEER_TMP_DIR'] = tmp_str
+    env['PUPPETEER_CACHE_DIR'] = str(LOCAL_TMP / "puppeteer")
+
+    return env
 
 
 def render_mermaid_to_png(mermaid_code: str, output_path: Path) -> str:
     """Render mermaid code to PNG using mmdc, return as base64 img tag."""
     import base64
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', delete=False) as f:
-        f.write(mermaid_code)
-        input_path = Path(f.name)
+    input_path = LOCAL_TMP / f"mermaid-input-{os.getpid()}.mmd"
+    input_path.write_text(mermaid_code)
 
-    # Change extension to .png
     png_path = output_path.with_suffix('.png')
 
     try:
-        mmdc_path, puppeteer_config = find_mmdc()
-        cmd = [mmdc_path, '-i', str(input_path), '-o', str(png_path),
+        mmdc_cmd, puppeteer_config = find_mmdc()
+        cmd = mmdc_cmd + ['-i', str(input_path), '-o', str(png_path),
                '-b', 'white', '-t', 'default', '-s', '2']
         if puppeteer_config:
             cmd.extend(['-p', puppeteer_config])
-        subprocess.run(cmd, check=True, capture_output=True)
+
+        subprocess.run(cmd, check=True, capture_output=True, env=get_subprocess_env())
 
         # Convert to base64 data URI for embedding
         png_data = png_path.read_bytes()
@@ -125,9 +166,11 @@ def convert_md_to_pdf(
     md_content = input_path.read_text()
     md_without_mermaid, mermaid_blocks = extract_mermaid_blocks(md_content)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
+    # Use local temp directory
+    tmpdir = LOCAL_TMP / f"convert-{os.getpid()}"
+    tmpdir.mkdir(parents=True, exist_ok=True)
 
+    try:
         # Render Mermaid diagrams to SVG
         svg_contents = []
         for i, block in enumerate(mermaid_blocks):
@@ -186,6 +229,10 @@ def convert_md_to_pdf(
             output_path,
             stylesheets=[CSS(string=style_css)]
         )
+    finally:
+        # Cleanup temp directory
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
     print(f"✓ Generated: {output_path}")
     return output_path
