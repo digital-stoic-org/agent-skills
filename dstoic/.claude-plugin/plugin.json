@@ -7,5 +7,6 @@
     "url": "https://github.com/digital-stoic-org"
   },
   "repository": "https://github.com/digital-stoic-org/agent-skills",
-  "license": "MIT"
+  "license": "MIT",
+  "hooks": "./hooks.json"
 }
