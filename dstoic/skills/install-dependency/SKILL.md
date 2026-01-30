@@ -1,169 +1,149 @@
 ---
 name: install-dependency
-description: Monorepo-aware dependency installation. Scans parent dirs, prompts shared vs local, auto-installs bun.
-tools: Bash, AskUserQuestion
-model: sonnet
+description: >
+  Install dependencies with monorepo awareness. Use when: user asks to install
+  a package, add a dependency, or setup Python/JS packages. Triggers: "install X",
+  "add package", "setup dependency", "I need lodash", "install docling".
+allowed-tools:
+  - Bash
+  - AskUserQuestion
 ---
 
 # Install Dependency
 
-Install missing dependencies with monorepo awareness.
+Monorepo-aware dependency installation using bundled scripts.
 
-## Environment Setup
-
-**CRITICAL**: All install commands MUST run with local TMPDIR to avoid /tmp/claude conflicts:
+## Quick Reference
 
 ```bash
-# Set local temp directory
-LOCAL_TMP="${PWD}/.tmp"
-mkdir -p "$LOCAL_TMP"
+# Set skill directory
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Override temp directories
-export TMPDIR="$LOCAL_TMP"
-export TEMP="$LOCAL_TMP"
-export TMP="$LOCAL_TMP"
-
-# Unset Claude Code env vars that force /tmp/claude
-unset CLAUDECODE
-unset CLAUDE_CODE_ENTRYPOINT
-
-# Bun-specific overrides
-export BUN_TMPDIR="$LOCAL_TMP"
-export BUN_INSTALL_CACHE_DIR="$LOCAL_TMP"
-
-# Python-specific
-export PYTHONUSERBASE="$HOME/.local"
-
-# NPM-specific
-export npm_config_tmp="$LOCAL_TMP"
+# Workflow
+source "$SKILL_DIR/scripts/setup-env.sh"           # 1. Setup env
+"$SKILL_DIR/scripts/scan.sh" <pkg> <type>          # 2. Check existing
+# 3. Prompt user if needed (see below)
+"$SKILL_DIR/scripts/install-{python,js,system}.sh" <pkg> [shared|local]  # 4. Install
+"$SKILL_DIR/scripts/verify.sh" <pkg> <type>        # 5. Verify
+"$SKILL_DIR/scripts/cleanup.sh"                    # 6. Cleanup (optional)
 ```
 
-## Rules
+## Types
 
-| Type | Location | Method |
-|------|----------|--------|
-| Python | `.venv/` | pip (venv) |
-| JS/TS | `node_modules/` | bun (auto-install) |
-| System | OS pkg mgr | apt/brew/dnf (approval required) |
+| Type | Scan | Install | Verify |
+|------|------|---------|--------|
+| `python` | .venv/bin/pip show | pip install | python -c "import X" |
+| `js` | node_modules check | bun add | bun pm ls X |
+| `system` | command -v | apt/brew/dnf | which X && X --version |
 
 ## Workflow
 
-### 1. Setup Environment (ALWAYS FIRST)
+### 1. Setup Environment
 
 ```bash
-# Create local temp directory
-LOCAL_TMP="${PWD}/.tmp"
-mkdir -p "$LOCAL_TMP"
-
-# Override all temp directories
-export TMPDIR="$LOCAL_TMP" TEMP="$LOCAL_TMP" TMP="$LOCAL_TMP"
-export BUN_TMPDIR="$LOCAL_TMP" BUN_INSTALL_CACHE_DIR="$LOCAL_TMP"
-export npm_config_tmp="$LOCAL_TMP"
-
-# Unset Claude Code environment
-unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT
-
-# Get git root (scan boundary)
-GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SKILL_DIR/scripts/setup-env.sh"
 ```
 
-### 2. Detect & Scan Parents
+Sets `$LOCAL_TMP`, `$GIT_ROOT`, overrides `$TMPDIR` to avoid /tmp/claude conflicts.
+
+### 2. Scan for Existing Package
 
 ```bash
-# Python: scan upward for .venv with package
-for dir in . .. ../.. $GIT_ROOT; do
-  if [ -d "$dir/.venv" ]; then
-    source "$dir/.venv/bin/activate" 2>/dev/null
-    pip show <package> &>/dev/null && echo "FOUND:$dir" && break
-  fi
-done
-
-# JS: scan upward for node_modules/<package>
-for dir in . .. ../.. $GIT_ROOT; do
-  [ -f "$dir/node_modules/<package>/package.json" ] && echo "FOUND:$dir" && break
-done
+if "$SKILL_DIR/scripts/scan.sh" <package> <type>; then
+  echo "✓ Package already installed"
+  exit 0
+fi
 ```
 
-### 3. Decision Flow
+Exit codes: 0=found, 1=not found, 2=usage error.
+
+### 3. Prompt User (if needed)
+
+**Decision tree:**
 
 ```yaml
-if_found_at_parent:
+if_found_in_parent:
   action: Report "✓ <package> already at <path>"
   install: false
 
 if_at_git_root:
   action: Install locally (no prompt)
+  mode: local
 
 if_in_subproject_not_found:
-  action: Prompt user
+  action: Use AskUserQuestion
   options:
-    - "Shared (recommended)" → install at $GIT_ROOT
-    - "Local (isolated)" → install at current dir
+    - "Shared at {GIT_ROOT} (recommended)" → mode=shared
+    - "Local at {PWD} (isolated)" → mode=local
 ```
 
-### 4. Install
+**AskUserQuestion example:**
+
+```yaml
+question: "Where should {package} be installed?"
+header: "Location"
+options:
+  - label: "Shared at {GIT_ROOT} (recommended)"
+    description: "Install once, available to all subprojects"
+  - label: "Local at {PWD} (isolated)"
+    description: "Install only for this project"
+```
+
+### 4. Install Package
 
 **Python:**
 ```bash
-# Shared
-$GIT_ROOT/.venv/bin/pip install <package>
-
-# Local (create venv if missing)
-[ ! -d ".venv" ] && python3 -m venv .venv
-source .venv/bin/activate && pip install --upgrade pip && pip install <package>
+"$SKILL_DIR/scripts/install-python.sh" <package> [shared|local]
 ```
 
-**JS/TS (auto-install bun with TMPDIR override):**
+**JavaScript:**
 ```bash
-# Install bun if missing (with TMPDIR override)
-if ! command -v bun &>/dev/null; then
-  # Ensure temp override is active
-  export TMPDIR="$LOCAL_TMP" BUN_TMPDIR="$LOCAL_TMP"
-
-  curl -fsSL https://bun.sh/install | bash
-  export PATH="$HOME/.bun/bin:$PATH"
-fi
-
-# Shared
-bun add <package> --cwd $GIT_ROOT
-
-# Local
-bun add <package>
+"$SKILL_DIR/scripts/install-js.sh" <package> [shared|local]
 ```
 
-**System (approval required):**
+**System (requires approval):**
 ```bash
-# Detect pkg manager
-PKG_MGR=$(command -v apt || command -v brew || command -v dnf)
+# First check needs approval
+"$SKILL_DIR/scripts/install-system.sh" <package>
+# Output: NEEDS_APPROVAL:<package> via apt/brew/dnf
 
-# MUST prompt: "Install <pkg> via <PKG_MGR>? (requires sudo)"
-sudo $PKG_MGR install -y <package>
+# After AskUserQuestion approval:
+APPROVED=1 "$SKILL_DIR/scripts/install-system.sh" <package>
 ```
 
-### 5. Verify
+### 5. Verify Installation
 
 ```bash
-# Python
-python -c "import <module>"
-
-# JS
-bun pm ls <package>
-
-# System
-which <tool> && <tool> --version
+"$SKILL_DIR/scripts/verify.sh" <package> <type> [module_name]
 ```
 
-## Output
+Optional `module_name` for Python packages where import name differs (e.g., `PIL` vs `pillow`).
+
+### 6. Cleanup (optional)
+
+```bash
+"$SKILL_DIR/scripts/cleanup.sh"
+```
+
+Removes `$LOCAL_TMP` (.tmp/) directory.
+
+## Output Format
 
 ```
 ✓ Installed <package>
   Location: <path>
-  Method: <venv/bun/apt/brew>
+  Method: <pip/bun/apt/brew/dnf>
 ```
 
-## Cleanup
+## Scripts Reference
 
-```bash
-# Optional: Remove temp directory after successful install
-rm -rf "$LOCAL_TMP"
-```
+| Script | Args | Exit Codes | Output |
+|--------|------|------------|--------|
+| setup-env.sh | (none, source it) | - | Sets env vars |
+| scan.sh | pkg type | 0=found, 1=not found | FOUND:path or NOT_FOUND |
+| install-python.sh | pkg [shared\|local] | 0=success | INSTALLED:path |
+| install-js.sh | pkg [shared\|local] | 0=success | INSTALLED:path |
+| install-system.sh | pkg | 0=success | NEEDS_APPROVAL or INSTALLED:system |
+| verify.sh | pkg type [module] | 0=success, 1=failed | VERIFIED:path or FAILED |
+| cleanup.sh | (none) | 0=success | CLEANED:path |
