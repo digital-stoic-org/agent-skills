@@ -1,0 +1,23 @@
+{
+  "name": "digital-stoic-marketplace",
+  "description": "Cognitive development plugins for Claude Code. Live experiments in AI collaboration.",
+  "owner": {
+    "name": "dstoic"
+  },
+  "metadata": {
+    "version": "0.1.47"
+  },
+  "plugins": [
+    {
+      "name": "dstoic",
+      "source": "./dstoic",
+      "description": "Core cognitive toolkit: OpenSpec workflow, context management, retrospectives",
+      "version": "0.1.47",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    }
+  ]
+}

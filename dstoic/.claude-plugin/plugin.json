@@ -1,0 +1,12 @@
+{
+  "name": "dstoic",
+  "description": "Cognitive development toolkit for Claude Code: OpenSpec workflow management, context serialization, retrospective analysis, and tool orchestration.",
+  "version": "0.1.47",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT",
+  "hooks": "./hooks.json"
+}

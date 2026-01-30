@@ -1,0 +1,78 @@
+# CLAUDE.md Example
+
+> This is an **example** CLAUDE.md for inspiration. CLAUDE.md is personal—adapt it to your own patterns and preferences.
+
+## Project Context
+
+- Brief description of what this project does
+- Key technologies: [list them]
+- Architecture overview in 2-3 sentences
+
+## Rules
+
+- `**/.in/`: initial context for project bootstrap (if you use this pattern)
+- Add your own project-specific rules here
+
+## Communication Principles
+
+- **Ask clarification questions** when needed or before starting big tasks
+- **Never hallucinate or assume information** without supporting facts
+- **When you don't know, say so** — honesty over speculation
+
+## Git Commits
+
+**Conventional Commits:** `type(scope): description`
+- Types: feat|fix|docs|refactor|test|chore|perf|build|ci
+- Keep commits atomic and focused
+
+**Pre-commit checklist:**
+1. Show `git status` + `git diff --staged`
+2. List files + proposed message
+3. Wait for confirmation
+
+## Security
+
+**NEVER read/parse sensitive files:**
+- `.env*`, `*credentials*`, `*secrets*`
+- `*.key`, `*.pem`, `*.crt`
+- `.aws/*`, `.azure/*`
+
+Warn if requested, get explicit confirmation.
+
+---
+
+## 🧠 Personal Cognitive Preferences (Author's Example)
+
+> The sections below are **verbatim from the author's personal CLAUDE.md**. They exemplify how cognitive preferences can be encoded. These reflect *one person's* thinking style—yours will differ.
+
+### Planning
+
+- **Boulder → Pebbles**: Break complex features into trackable stories
+- Ask user upfront if OpenSpec should be used for the task
+- Use OpenSpec for boulders (multi-step, architectural, ambiguous scope)
+- Skip OpenSpec for pebbles (single file, obvious implementation)
+
+### Style
+
+**Human output (responses, docs, explanations):**
+- **Visual-first:** Mermaid diagrams by default for technical (e.g., architecture/flows/data) AND non-technical (e.g., decisions/processes/comparisons). Colorize with classDef/fill/stroke. **ALWAYS use black text** (`color:#000`) for nodes with colored backgrounds.
+- **Structured data:** YAML/JSON with emoji (✅❌🎯⚠️🚀)
+- **OVERRIDE: Use emojis liberally** ✅❌🎯🚀🔍💾🧪📦⚠️✨🎨🔧
+
+**LLM context (`*-llm.md`, specs, agent prompts):**
+- **Token-optimized:** All `-llm.md` files must be optimized for tokens. Strip prose, keep directives/facts/structure only.
+- **Visual structure:** Mermaid diagrams for complex flows/hierarchies/relationships. More efficient than prose explanations.
+- **Structured data:** Clean YAML/JSON without emoji. Optimized for parsing.
+- **Markdown:** Semantic headings, bullets, code blocks. No decorative formatting.
+
+### Mermaid
+
+- Wrap labels in quotes: `["Label"]`
+- Multi-target connections: use `&` operator: `A -->|label| B & C & D`
+- Define nodes inside subgraphs before referencing them
+- **Black text mandatory:** ALL classDef with colored fills MUST include `color:#000` for readability
+  - Example: `classDef success fill:#90EE90,stroke:#333,color:#000`
+
+---
+
+**Remember:** This file is loaded into every Claude Code session. Keep it focused on what matters for *your* development style.
