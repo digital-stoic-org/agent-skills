@@ -99,6 +99,37 @@ flowchart TD
 | `edit-agent` | 🤖 Isolated context, complex tasks |
 | `edit-claude` | 📄 Project CLAUDE.md files |
 
+### 🔧 Troubleshoot (1)
+
+| Skill | Purpose |
+|-------|---------|
+| `troubleshoot` | 🔧 Search-first debugging with learnings |
+
+```mermaid
+flowchart LR
+    L["📖 Load"] --> S["🔍 Search"]
+    S --> Q["❓ Qualify"]
+    Q --> D["🧠 Diagnose"]
+    D --> I["🔄 OODA"]
+    I --> R["💾 Learn"]
+
+    S -->|"found"| R
+    D -->|"pattern"| R
+
+    classDef default fill:#f9f9f9,stroke:#333,color:#000
+```
+
+| Phase | What |
+|-------|------|
+| **Load** | Read learnings.yaml for known patterns |
+| **Search** | WebSearch SO, GitHub, Docs, Reddit |
+| **Qualify** | 2-3 questions (stack, env, changed) |
+| **Diagnose** | Mental models → Isolation → 5 Whys |
+| **OODA** | Observe → Orient → Decide → Act |
+| **Learn** | Save pattern to learnings.yaml |
+
+**Techniques:** Wolf Fence, 5 Whys, Fishbone 6 M's, Rubber Duck
+
 ### 🔨 Utilities (1)
 
 | Skill | Purpose |
