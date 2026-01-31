@@ -9,6 +9,7 @@ flowchart LR
     A["📋 OpenSpec"] --> B["💾 Context"]
     B --> C["🔍 Retrospect"]
     C --> D["🔧 Edit Tools"]
+    D --> E["🔧 Troubleshoot"]
 
     classDef default fill:#f9f9f9,stroke:#333,color:#000
 ```
@@ -19,6 +20,7 @@ flowchart LR
 | 2 | 💾 **Context** | save/restore sessions |
 | 3 | 🔍 **Retrospect** | learn from patterns |
 | 4 | 🔧 **Edit tools** | create skills/commands/agents |
+| 5 | 🔧 **Troubleshoot** | search-first debugging with learnings |
 
 ## 🚀 Quick Start
 
@@ -30,7 +32,7 @@ flowchart LR
 
 ## 📦 Version
 
-`0.1.42`
+`0.1.49`
 
 ---
 
