@@ -48,7 +48,14 @@ If unsure whether this should be a skill vs command vs agent vs script, see the 
 - Deterministic shell-only? → Probably bash script
 - Complex exploration? → Probably sub-agent
 
-See `reference.md` and `edit-tool/reference.md` for detailed decision frameworks.
+## Best Practices Reference
+
+For latest Anthropic skill authoring guidelines, use WebSearch:
+```
+WebSearch: "skill authoring best practices site:platform.claude.com"
+```
+
+See `reference.md` for detailed decision frameworks and patterns.
 
 ## Determine Action Type
 

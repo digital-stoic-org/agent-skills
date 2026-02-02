@@ -6,6 +6,36 @@ Templates and patterns for Claude Code slash commands.
 
 ---
 
+## Table of Contents
+
+- [Validation Checklist](#validation-checklist)
+- [Templates](#templates)
+- [Frontmatter Fields](#frontmatter-fields)
+- [Argument Patterns](#argument-patterns)
+- [Naming & Location](#naming--location)
+- [Common Patterns](#common-patterns)
+- [Modification Workflow](#modification-workflow)
+- [Common Mistakes](#common-mistakes)
+- [Security](#security)
+- [Examples](#examples)
+- [Quick Reference](#quick-reference)
+
+---
+
+## Validation Checklist
+
+Before finalizing a command, verify:
+
+- [ ] Filename follows lowercase-hyphens-only rule
+- [ ] YAML frontmatter has `---` markers (if used)
+- [ ] Description field present (for discoverability)
+- [ ] argument-hint matches actual usage (if args used)
+- [ ] allowed-tools includes all needed tools
+- [ ] Instructions are clear and actionable
+- [ ] Arguments ($1, $2, $ARGUMENTS) work correctly
+
+---
+
 ## Templates
 
 **Minimal:**

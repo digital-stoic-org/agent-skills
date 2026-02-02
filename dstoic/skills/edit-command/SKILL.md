@@ -77,14 +77,4 @@ If unsure whether this should be a command vs skill vs agent vs script, see the 
 - **Tool restrictions**: Specify allowed-tools to control capabilities
 - **Model selection**: Use haiku for simple tasks to reduce cost/latency
 
-## Validation Checklist
-
-- [ ] Filename follows lowercase-hyphens-only rule
-- [ ] YAML frontmatter has `---` markers (if used)
-- [ ] Description field present (for discoverability)
-- [ ] argument-hint matches actual usage (if args used)
-- [ ] allowed-tools includes all needed tools
-- [ ] Instructions are clear and actionable
-- [ ] Arguments ($1, $2, $ARGUMENTS) work correctly
-
-**For detailed examples, templates, patterns, and edge cases, see `reference.md`.**
+**For validation checklist, templates, patterns, and edge cases, see `reference.md`.**

@@ -6,7 +6,7 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 
 ## Tool Selection Framework
 
-**NOTE**: For comprehensive tool selection matrix with 7 axes (execution type, token budget, frequency, context, scripts, invocation, parallelization), see `edit-tool/reference.md`.
+**NOTE**: For comprehensive tool selection matrix, use the `edit-tool` skill orchestrator.
 
 ### Quick Decision Tree (Skill-Specific)
 
@@ -266,7 +266,7 @@ flowchart TD
 
 ## Context Execution Mode (`context: fork`)
 
-**New in Claude Code 2.1.0 (January 2026)**: Skills can run in forked sub-agent context using `context: fork` frontmatter.
+Skills can run in forked sub-agent context using `context: fork` frontmatter.
 
 ### Context Modes
 
@@ -363,29 +363,6 @@ name: git-helper
 | Output visibility | Inline in main conversation | Returned as summary |
 | Parallelization | Limited (shared state) | Safe (isolated state) |
 | Memory | Shares main context window | Separate context window |
-
-### Migration Guide
-
-If you have existing skills that should use fork:
-
-**Before (pollutes main):**
-```yaml
----
-name: analyze-architecture
-description: Deep dive into codebase structure
----
-```
-
-**After (isolated):**
-```yaml
----
-name: analyze-architecture
-description: Deep dive into codebase structure
-context: fork  # Added in v0.7.17
----
-```
-
-**Test the change:** Verify the skill still works and output is properly returned to main conversation.
 
 ---
 
