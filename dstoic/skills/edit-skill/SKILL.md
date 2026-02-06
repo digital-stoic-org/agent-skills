@@ -64,6 +64,8 @@ See `reference.md` for detailed decision frameworks and patterns.
 
 ## Creating New Skills
 
+💡 **Before creating:** consider running `/search-skill` to discover existing solutions — inspect, adapt, own.
+
 1. Ask for details if missing: purpose, triggers, tools needed, model selection
 2. **Location**: Use `.claude/skills/` for project skills or plugin `skills/` directory
 3. Create directory: `mkdir -p .claude/skills/skill-name`

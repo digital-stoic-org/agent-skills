@@ -46,7 +46,7 @@ Or install globally in `~/.claude/settings.json`.
 
 ---
 
-## 🛠️ Skills (13)
+## 🛠️ Skills (14)
 
 ### 📋 OpenSpec Workflow (7)
 
@@ -76,7 +76,7 @@ flowchart LR
 | `openspec-sync` | 🔄 Update docs and context |
 | `openspec-reflect` | 🪞 Pre-gate drift detection |
 
-### 🔧 Tool Orchestration (5)
+### 🔧 Tool Orchestration (6)
 
 ```mermaid
 flowchart TD
@@ -85,10 +85,13 @@ flowchart TD
     edit -->|"/slash trigger"| command["⌨️ edit-command"]
     edit -->|"isolated context"| agent["🤖 edit-agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
+    edit -.->|"discover first"| search["🔍 search-skill"]
 
     classDef default fill:#f9f9f9,stroke:#333,color:#000
     classDef router fill:#FFE4B5,stroke:#333,color:#000
+    classDef discover fill:#E0E7FF,stroke:#333,color:#000
     class edit router
+    class search discover
 ```
 
 | Skill | When to Use |
@@ -98,6 +101,7 @@ flowchart TD
 | `edit-command` | ⌨️ User-triggered `/slash` commands |
 | `edit-agent` | 🤖 Isolated context, complex tasks |
 | `edit-claude` | 📄 Project CLAUDE.md files |
+| `search-skill` | 🔍 Discover & evaluate skills from curated sources |
 
 ### 🔧 Troubleshoot (1)
 
