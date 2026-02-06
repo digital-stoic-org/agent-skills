@@ -10,33 +10,15 @@ description: Creates and modifies Claude Code sub-agents following best practice
 **CREATE**: New sub-agent requested
 **MODIFY**: Update existing sub-agent (keywords: "update", "modify", "improve", "add to", "fix")
 
-## Uncertain About Tool Type?
+## Modifying Existing Sub-agents
 
-If unsure whether this should be an agent vs skill vs command vs script, see the `edit-tool` orchestrator for comprehensive decision matrix.
+1. Locate and read existing agent file
+2. Analyze: frontmatter (name, description, tools, model), system prompt
+3. Make surgical edits using Edit tool
+4. Update description if changing triggers/purpose
+5. Validate: YAML valid, tools list correct, prompt clear
 
-**Quick checks:**
-- Token budget >2000 OR needs isolation? → ✅ Probably agent
-- Token budget <500 + auto-invoke? → Probably skill
-- User-triggered workflow? → Probably command
-- Deterministic shell-only? → Probably bash script
-
-See `reference.md` and `edit-tool/reference.md` for detailed decision frameworks.
-
-## MANDATORY Validation (CREATE only)
-
-**STOP**: Before proceeding, answer these questions with YES or NO:
-
-| Question | Answer |
-|----------|--------|
-| Q1: Requires AI reasoning across multiple steps? | [YES/NO] |
-| Q2: Needs decisions based on intermediate results? | [YES/NO] |
-| Q3: Benefits from isolated context/specialized tools? | [YES/NO] |
-
-**Decision:**
-- **ALL NO** → STOP. Do NOT create sub-agent. Recommend: slash command (text expansion), bash script (shell ops), or direct request. EXIT immediately.
-- **ANY YES** → Proceed to "Creating New Sub-agents" section below.
-
----
+See `reference.md` for modification patterns.
 
 ## Creating New Sub-agents
 
@@ -48,16 +30,6 @@ See `reference.md` and `edit-tool/reference.md` for detailed decision frameworks
 4. Create file with frontmatter and system prompt
 
 See `reference.md` for templates and tool configurations.
-
-## Modifying Existing Sub-agents
-
-1. Locate and read existing agent file
-2. Analyze: frontmatter (name, description, tools, model), system prompt
-3. Make surgical edits using Edit tool
-4. Update description if changing triggers/purpose
-5. Validate: YAML valid, tools list correct, prompt clear
-
-See `reference.md` for modification patterns.
 
 ## File Structure
 
@@ -82,6 +54,34 @@ Be specific: include examples, constraints, output formats.
 - **Model selection**: Use sonnet (default) for most agents. Use opus for complex multi-agent orchestration or intricate tool restrictions. Use haiku for simple deterministic agents.
 - **Detailed prompts**: Include examples, constraints, formats
 - **Isolated context**: Agents run independently with own context
+
+## MANDATORY Validation (CREATE only)
+
+**STOP**: Before proceeding, answer these questions with YES or NO:
+
+| Question | Answer |
+|----------|--------|
+| Q1: Requires AI reasoning across multiple steps? | [YES/NO] |
+| Q2: Needs decisions based on intermediate results? | [YES/NO] |
+| Q3: Benefits from isolated context/specialized tools? | [YES/NO] |
+
+**Decision:**
+- **ALL NO** → STOP. Do NOT create sub-agent. Recommend: slash command (text expansion), bash script (shell ops), or direct request. EXIT immediately.
+- **ANY YES** → Proceed to "Creating New Sub-agents" section above.
+
+---
+
+## Uncertain About Tool Type?
+
+If unsure whether this should be an agent vs skill vs command vs script, see the `edit-tool` orchestrator for comprehensive decision matrix.
+
+**Quick checks:**
+- Token budget >2000 OR needs isolation? → ✅ Probably agent
+- Token budget <500 + auto-invoke? → Probably skill
+- User-triggered workflow? → Probably command
+- Deterministic shell-only? → Probably bash script
+
+See `reference.md` and `edit-tool/reference.md` for detailed decision frameworks.
 
 ## Validation Checklist
 
