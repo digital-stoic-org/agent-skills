@@ -5,30 +5,42 @@ description: Creates, updates, or optimizes CLAUDE.md files following Anthropic 
 
 # Instructions for Managing CLAUDE.md Files
 
-## MANDATORY Validation (CREATE only)
-
-**STOP**: Before creating new CLAUDE.md, answer YES/NO for each:
-
-- **Q1: Persistent** (not temporary)? [YES/NO]
-- **Q2: Frequently referenced** (coding standards, workflows)? [YES/NO]
-- **Q3: Concise** (avoid verbose docs)? [YES/NO]
-- **Q4: Non-sensitive** (no credentials/tokens)? [YES/NO]
-
-**If ANY answer is NO:**
-→ STOP. Explain why inappropriate.
-→ Recommend alternatives: README.md (docs), environment variables (secrets), direct request (one-time), .claude/rules/ (detailed guidelines)
-→ EXIT immediately.
-
-**If ALL answers are YES:**
-→ Proceed to organization decision below.
-
----
-
 ## Determine Action Type
 
 **CREATE**: New CLAUDE.md file requested
 **UPDATE**: Modify existing CLAUDE.md (keywords: "update", "add", "modify", "change")
 **OPTIMIZE**: Improve token efficiency (keywords: "optimize", "reduce tokens", "improve")
+
+## Updating Existing CLAUDE.md Files
+
+1. **Read current file**: Always read before editing
+2. **Identify section**: Locate relevant section or create new heading
+3. **Make surgical edits**: Use Edit tool for precise changes
+4. **Preserve structure**: Maintain existing organization patterns
+5. **Validate**: Ensure markdown is valid and clear
+
+## Optimizing CLAUDE.md Files
+
+1. **Audit current content**:
+   - Identify verbose prose that can become bullets
+   - Find repetitive information
+   - Locate outdated or irrelevant content
+
+2. **Apply compression techniques**:
+   - Convert paragraphs → bullets or tables
+   - Remove unnecessary words and filler
+   - Use abbreviations where context is clear
+   - Group similar items together
+
+3. **Remove anti-patterns**:
+   - Delete sensitive information (credentials, tokens)
+   - Remove frequently changing data
+   - Extract verbose documentation to separate files
+   - Remove duplicate information
+
+4. **Validate token efficiency**: Aim for maximum signal, minimum tokens
+
+See `reference.md` for optimization strategies and examples.
 
 ## Creating New CLAUDE.md Files
 
@@ -110,36 +122,33 @@ description: Creates, updates, or optimizes CLAUDE.md files following Anthropic 
 
 See `reference.md § Templates` for starter examples and `§ Modular Rules` for .claude/rules/ patterns.
 
-## Updating Existing CLAUDE.md Files
+## Key Principles
 
-1. **Read current file**: Always read before editing
-2. **Identify section**: Locate relevant section or create new heading
-3. **Make surgical edits**: Use Edit tool for precise changes
-4. **Preserve structure**: Maintain existing organization patterns
-5. **Validate**: Ensure markdown is valid and clear
+- **Specific over generic**: "Run `npm test`" not "Test the code"
+- **Persistent not temporary**: Coding standards yes, current bug no
+- **Concise not verbose**: Bullets and tables over paragraphs
+- **Modular organization**: Main CLAUDE.md + .claude/rules/ + @imports
+- **Path-specific when needed**: Frontmatter with `paths:` glob patterns
+- **Secure**: Never include credentials or sensitive data
 
-## Optimizing CLAUDE.md Files
+## MANDATORY Validation (CREATE only)
 
-1. **Audit current content**:
-   - Identify verbose prose that can become bullets
-   - Find repetitive information
-   - Locate outdated or irrelevant content
+**STOP**: Before creating new CLAUDE.md, answer YES/NO for each:
 
-2. **Apply compression techniques**:
-   - Convert paragraphs → bullets or tables
-   - Remove unnecessary words and filler
-   - Use abbreviations where context is clear
-   - Group similar items together
+- **Q1: Persistent** (not temporary)? [YES/NO]
+- **Q2: Frequently referenced** (coding standards, workflows)? [YES/NO]
+- **Q3: Concise** (avoid verbose docs)? [YES/NO]
+- **Q4: Non-sensitive** (no credentials/tokens)? [YES/NO]
 
-3. **Remove anti-patterns**:
-   - Delete sensitive information (credentials, tokens)
-   - Remove frequently changing data
-   - Extract verbose documentation to separate files
-   - Remove duplicate information
+**If ANY answer is NO:**
+→ STOP. Explain why inappropriate.
+→ Recommend alternatives: README.md (docs), environment variables (secrets), direct request (one-time), .claude/rules/ (detailed guidelines)
+→ EXIT immediately.
 
-4. **Validate token efficiency**: Aim for maximum signal, minimum tokens
+**If ALL answers are YES:**
+→ Proceed to "Creating New CLAUDE.md Files" section above.
 
-See `reference.md` for optimization strategies and examples.
+---
 
 ## Progressive Disclosure
 
@@ -169,15 +178,6 @@ reference/
 ```
 
 Use `/memory` command during session to view/edit loaded memories.
-
-## Key Principles
-
-- **Specific over generic**: "Run `npm test`" not "Test the code"
-- **Persistent not temporary**: Coding standards yes, current bug no
-- **Concise not verbose**: Bullets and tables over paragraphs
-- **Modular organization**: Main CLAUDE.md + .claude/rules/ + @imports
-- **Path-specific when needed**: Frontmatter with `paths:` glob patterns
-- **Secure**: Never include credentials or sensitive data
 
 ## Constraints
 
