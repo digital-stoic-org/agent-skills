@@ -6,7 +6,7 @@
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives | ✅ v0.1.54 |
+| [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives | ✅ v0.1.55 |
 | ... | More planned | 🔜 |
 
 ## 📖 Why TL;DR?
