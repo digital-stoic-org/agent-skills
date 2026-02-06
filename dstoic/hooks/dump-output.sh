@@ -17,11 +17,21 @@ fi
 
 # Read hook input from stdin
 input=$(cat)
+
+# Prevent infinite loops when Stop hook triggers continuation
+stop_active=$(echo "$input" | jq -r '.stop_hook_active // false')
+if [ "$stop_active" = "true" ]; then
+  exit 0
+fi
+
 transcript_path=$(echo "$input" | jq -r '.transcript_path')
 
 if [ ! -f "$transcript_path" ]; then
   exit 0
 fi
+
+# Allow transcript to fully flush before reading
+sleep 0.5
 
 # Extract FULL last Claude output from transcript (no truncation)
 # Format: {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"..."}]}}
