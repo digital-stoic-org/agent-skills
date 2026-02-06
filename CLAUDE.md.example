@@ -1,17 +1,8 @@
-# CLAUDE.md Example
+# Praxis
 
-> This is an **example** CLAUDE.md for inspiration. CLAUDE.md is personal—adapt it to your own patterns and preferences.
+## Security 🔒
 
-## Project Context
-
-- Brief description of what this project does
-- Key technologies: [list them]
-- Architecture overview in 2-3 sentences
-
-## Rules
-
-- `**/.in/`: initial context for project bootstrap (if you use this pattern)
-- Add your own project-specific rules here
+**NEVER read/parse:** `.env*`, `*credentials*`, `*secrets*`, `*token*`, `*.key`, `*.pem`, `*.crt`, `*.p12`, `*.pfx`, `.npmrc`, `pypirc`, `*.keystore`, `.aws/*`, `.azure/*`, `gcloud-service-key.json`. Warn user if requested, get confirmation. See `@reference/standards/security-patterns.md` for full list.
 
 ## Communication Principles
 
@@ -22,37 +13,35 @@
 ## Git Commits
 
 **Conventional Commits:** `type(scope): description`
+- Scope: project folder name
 - Types: feat|fix|docs|refactor|test|chore|perf|build|ci
-- Keep commits atomic and focused
+- Deliverables (analysis/specs/research) = `feat`, not `docs`
+- NEVER add Claude/Anthropic attribution or co-author tags
 
-**Pre-commit checklist:**
+**Pre-commit (OVERRIDE: NEVER auto-commit):**
 1. Show `git status` + `git diff --staged`
 2. List files + proposed message
-3. Wait for confirmation
+3. **WAIT for user confirmation**
 
-## Security
+## Rules
 
-**NEVER read/parse sensitive files:**
-- `.env*`, `*credentials*`, `*secrets*`
-- `*.key`, `*.pem`, `*.crt`
-- `.aws/*`, `.azure/*`
+- `**/.in/`: initial context for project bootstrap
 
-Warn if requested, get explicit confirmation.
+## Alias Paths
 
----
+- **gtd-pcm**: control `/praxis/vaults/gtd-pcm` | data `/vaults/gtd-pcm`
+- **agent-skills**: control `/home/mat/dev/praxis` | data `/home/mat/dev/agent-skills`
 
-## 🧠 Personal Cognitive Preferences (Author's Example)
+(Control: instructions, OpenSpec, context. Data: project files in separate git repo.)
 
-> The sections below are **verbatim from the author's personal CLAUDE.md**. They exemplify how cognitive preferences can be encoded. These reflect *one person's* thinking style—yours will differ.
-
-### Planning
+## Planning
 
 - **Boulder → Pebbles**: Break complex features into trackable stories
 - Ask user upfront if OpenSpec should be used for the task
 - Use OpenSpec for boulders (multi-step, architectural, ambiguous scope)
 - Skip OpenSpec for pebbles (single file, obvious implementation)
 
-### Style
+## Style
 
 **Human output (responses, docs, explanations):**
 - **Visual-first:** Mermaid diagrams by default for technical (e.g., architecture/flows/data) AND non-technical (e.g., decisions/processes/comparisons). Colorize with classDef/fill/stroke. **ALWAYS use black text** (`color:#000`) for nodes with colored backgrounds.
@@ -65,7 +54,7 @@ Warn if requested, get explicit confirmation.
 - **Structured data:** Clean YAML/JSON without emoji. Optimized for parsing.
 - **Markdown:** Semantic headings, bullets, code blocks. No decorative formatting.
 
-### Mermaid
+## Mermaid
 
 - Wrap labels in quotes: `["Label"]`
 - Multi-target connections: use `&` operator: `A -->|label| B & C & D`
@@ -73,6 +62,35 @@ Warn if requested, get explicit confirmation.
 - **Black text mandatory:** ALL classDef with colored fills MUST include `color:#000` for readability
   - Example: `classDef success fill:#90EE90,stroke:#333,color:#000`
 
----
+# Instructions: ALWAYS use `rtk` instead of standard Unix commands
 
-**Remember:** This file is loaded into every Claude Code session. Keep it focused on what matters for *your* development style.
+`rtk` compresses command output to save 70-90% tokens. **MANDATORY** for all Bash tool calls.
+
+**Chaining:** Always prefix each command: `rtk git add && rtk git commit -m "msg" && rtk git push`
+
+## Substitution table — ALWAYS use right column
+
+| Instead of | Use |
+|---|---|
+| `ls`, `tree` | `rtk ls <path>` |
+| `cat`, `head`, `tail` | `rtk read <file>` |
+| `cat` (code understanding) | `rtk read <file> -l aggressive` |
+| `find`, `fd` | `rtk find <pattern>` |
+| `git status` | `rtk git status` |
+| `git log` | `rtk git log` |
+| `git diff` | `rtk git diff` |
+| `git add` | `rtk git add` |
+| `git commit -m "msg"` | `rtk git commit -m "msg"` |
+| `git push` | `rtk git push` |
+| `git pull` | `rtk git pull` |
+| `grep -rn`, `rg` | `rtk grep <pattern>` |
+| `pytest`, `npm test`, etc. | `rtk test <cmd>` |
+| `<cmd> 2>&1 \| grep error` | `rtk err <cmd>` |
+| `cat file.log` | `rtk log <file>` |
+| `cat *.json` | `rtk json <file>` |
+| `env`, `printenv` | `rtk env` |
+| `docker ps/images/logs` | `rtk docker ps/images/logs <c>` |
+| `kubectl get pods/logs` | `rtk kubectl pods/logs <pod>` |
+| any long command | `rtk summary <cmd>` |
+
+**Additional commands:** `rtk smart <file>` (2-line summary), `rtk deps` (dependency summary), `rtk kubectl services`

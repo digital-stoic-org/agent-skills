@@ -71,6 +71,8 @@ Or install all plugins via marketplace:
 
 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](CLAUDE.md.example) for inspiration, don't copy.
 
+The example uses [`rtk`](https://github.com/pszymkowiak/rtk) for token-optimized command output. Install it separately if you want to use the rtk instructions.
+
 ---
 
 📚 **Full docs:** [README-full.md](README-full.md)
