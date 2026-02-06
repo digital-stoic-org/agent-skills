@@ -117,17 +117,75 @@ Manual     | pending    | 📋 Awaiting human
 PBT        | {datetime} | ✅/⏭️
 ```
 
+### checkpoint
+
+Run scoped verification for a single section after gate pause.
+
+**Input**: `$ARGUMENTS` = `change-id section-number` (e.g., `add-feature 3`)
+
+**Workflow**:
+1. Read `openspec/changes/{change-id}/tasks.md`, find section `## {section-number}. ...`
+2. Identify affected files from task descriptions + `git diff`
+3. Run test layers scoped to section's affected files (see Philosophy Check table for mode-specific layers)
+4. Evaluate result:
+   - **PASS**: Mark `### GATE {n}: desc` → `### GATE {n}: desc [PASS]` in tasks.md
+   - **PARTIAL**: Report failures, suggest fixes
+   - **BLOCKED**: Report blockers, suggest options
+
+```mermaid
+flowchart LR
+    A["Read section"] --> B["ID affected files"]
+    B --> C["Smoke tests"]
+    C --> D{"Result?"}
+    D -->|PASS| E["Mark gate [PASS]"]
+    D -->|PARTIAL| F["Report failures"]
+    D -->|BLOCKED| G["Suggest options"]
+
+    classDef action fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef decision fill:#FFF9C4,stroke:#FBC02D,color:#000
+    classDef fail fill:#FFCDD2,stroke:#D32F2F,color:#000
+    class A,B,C,E action
+    class D decision
+    class F,G fail
+```
+
+**PASS output**:
+```
+✅ GATE {n}: {description} [PASS]
+Smoke: {passed}/{total} tests passed
+→ Continue: /openspec-develop section {change-id} {n+1}
+```
+
+**PARTIAL output**:
+```
+⚠️ GATE {n}: {description} [PARTIAL]
+Smoke: {passed}/{total} tests passed
+Failures:
+- {test}: {reason}
+→ Fix and re-run: /openspec-test checkpoint {change-id} {n}
+```
+
+**BLOCKED output**:
+```
+🚫 GATE {n}: {description} [BLOCKED]
+Reason: {blocker description}
+Options:
+→ Fix blocker and retry: /openspec-test checkpoint {change-id} {n}
+→ Skip gate: /openspec-develop section {change-id} {n+1}
+→ Replan: /openspec-replan {change-id}
+```
+
 ## Philosophy Check
 
 Before testing, read `openspec/project.md` → Execution Philosophy → `mode`.
 
 **Mode-specific testing behavior**:
 
-| Mode | Smoke | Integration | Manual | PBT |
-|------|-------|-------------|--------|-----|
-| garage | Required | Best-effort | Critical paths only | Skip unless exists |
-| scale | Required | Required | Full coverage | Recommended |
-| maintenance | Required | Required | Full coverage | Required for changes |
+| Mode | Smoke | Integration | Manual | PBT | Checkpoint |
+|------|-------|-------------|--------|-----|------------|
+| garage | Required | Best-effort | Critical paths only | Skip unless exists | Smoke only, BLOCKED = skip allowed |
+| scale | Required | Required | Full coverage | Recommended | Smoke + integration, BLOCKED = must resolve |
+| maintenance | Required | Required | Full coverage | Required for changes | Smoke + integration, BLOCKED = must resolve |
 
 **Garage mode shortcuts**:
 - Skip PBT unless tests already exist

@@ -59,6 +59,9 @@ Generate outcome-centric tasks from proposal.
 - NO activity verbs: Design, Implement, Create, Write
 - Each task ≤80 chars (TodoWrite compatible)
 - Numbered sections with checkboxes
+- Add `### GATE N: Description` after sections representing logical boundaries (where verification prevents cascading errors)
+- Gates are optional — not every section needs one
+- Standard pattern: scaffold → gate → implement → gate → audit → gate → test
 
 **Output**: `tasks.md` with verifiable outcomes
 
