@@ -24,14 +24,31 @@ flowchart LR
 
 **Critical**: Use `openspec status` for change state, never parse files directly.
 
-## Exploration Strategy
+## Guardrails
 
-Before syncing, consult `openspec/project.md` → Exploration Strategy section:
+**Autonomous** (no confirmation needed):
+- CONTEXT-llm.md updates
+- Doc content refresh
+- Status queries via CLI
 
-1. **Context sources**: Read `primary` files (project.md, proposal.md, tasks.md)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Tools**: Use configured codebase tools (Glob, Grep, Read)
-4. **Philosophy**: Read Execution Philosophy section for current mode
+**Ask-first** (pause and confirm):
+- Creating new doc files not mentioned in proposal
+- Deleting outdated docs
+- Major restructuring of existing docs
+
+## CLI Delegation
+
+**Always use CLI for status**:
+```bash
+openspec status {change-id}
+```
+
+**Never**:
+- Parse proposal.md for status manually
+- Infer status from file existence
+- Maintain separate status tracking
+
+The CLI is the single source of truth for change status.
 
 ## Commands
 
@@ -125,19 +142,13 @@ Save session state to CONTEXT-llm.md only (no docs refresh).
 - Status: {status}
 ```
 
-## CLI Delegation
+## Philosophy Check
 
-**Always use CLI for status**:
-```bash
-openspec status {change-id}
-```
+Before syncing, read `openspec/project.md` → Execution Philosophy → `mode`.
 
-**Never**:
-- Parse proposal.md for status manually
-- Infer status from file existence
-- Maintain separate status tracking
-
-The CLI is the single source of truth for change status.
+**In garage mode**: Minimal docs, just CONTEXT-llm.md. Don't gold-plate documentation.
+**In scale mode**: Ensure all docs accurate and up-to-date.
+**In maintenance mode**: Document changes carefully before modifying existing docs.
 
 ## Idempotency
 
@@ -156,22 +167,11 @@ Running sync multiple times with same state produces identical output:
 - Last sync: {timestamp from file}
 ```
 
-## Guardrails
+## Exploration Strategy
 
-**Autonomous** (no confirmation needed):
-- CONTEXT-llm.md updates
-- Doc content refresh
-- Status queries via CLI
+Before syncing, consult `openspec/project.md` → Exploration Strategy section:
 
-**Ask-first** (pause and confirm):
-- Creating new doc files not mentioned in proposal
-- Deleting outdated docs
-- Major restructuring of existing docs
-
-## Philosophy Check
-
-Before syncing, read `openspec/project.md` → Execution Philosophy → `mode`.
-
-**In garage mode**: Minimal docs, just CONTEXT-llm.md. Don't gold-plate documentation.
-**In scale mode**: Ensure all docs accurate and up-to-date.
-**In maintenance mode**: Document changes carefully before modifying existing docs.
+1. **Context sources**: Read `primary` files (project.md, proposal.md, tasks.md)
+2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
+3. **Tools**: Use configured codebase tools (Glob, Grep, Read)
+4. **Philosophy**: Read Execution Philosophy section for current mode

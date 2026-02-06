@@ -15,11 +15,10 @@ Monorepo-aware dependency installation using bundled scripts.
 
 ## Quick Reference
 
-```bash
-# Set skill directory
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+**Types**: `python` (pip), `js` (bun), `system` (apt/brew/dnf)
 
-# Workflow
+```bash
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SKILL_DIR/scripts/setup-env.sh"           # 1. Setup env
 "$SKILL_DIR/scripts/scan.sh" <pkg> <type>          # 2. Check existing
 # 3. Prompt user if needed (see below)
@@ -27,14 +26,6 @@ source "$SKILL_DIR/scripts/setup-env.sh"           # 1. Setup env
 "$SKILL_DIR/scripts/verify.sh" <pkg> <type>        # 5. Verify
 "$SKILL_DIR/scripts/cleanup.sh"                    # 6. Cleanup (optional)
 ```
-
-## Types
-
-| Type | Scan | Install | Verify |
-|------|------|---------|--------|
-| `python` | .venv/bin/pip show | pip install | python -c "import X" |
-| `js` | node_modules check | bun add | bun pm ls X |
-| `system` | command -v | apt/brew/dnf | which X && X --version |
 
 ## Workflow
 

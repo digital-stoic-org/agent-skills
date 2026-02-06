@@ -34,42 +34,6 @@ flowchart LR
 
 **Critical**: Stop on layer failure. No point running integration if smoke fails.
 
-## Exploration Strategy
-
-Before testing, consult `openspec/project.md` → Exploration Strategy section:
-
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Test config**: Detect test framework from package.json, pytest.ini, cargo.toml, etc.
-4. **Existing tests**: Grep for test files to understand project test patterns
-5. **Philosophy**: Read Execution Philosophy section for current mode
-
-## Test Layers
-
-```yaml
-layers:
-  smoke:
-    purpose: Basic health checks
-    examples: ["app starts", "endpoints respond", "no crash on basic input"]
-    auto: true
-
-  integration:
-    purpose: Component interactions
-    examples: ["API contracts match", "DB state consistent", "error handling"]
-    auto: true
-
-  manual:
-    purpose: Human-verified critical paths
-    examples: ["UI flows", "user journeys", "edge cases needing judgment"]
-    auto: false  # Generate instructions only
-
-  pbt:
-    purpose: Property-based edge case discovery
-    examples: ["invariants hold", "no unexpected states", "boundary conditions"]
-    auto: true
-    frameworks: [hypothesis, fast-check, proptest]
-```
-
 ## Commands
 
 ### test
@@ -153,6 +117,25 @@ Manual     | pending    | 📋 Awaiting human
 PBT        | {datetime} | ✅/⏭️
 ```
 
+## Philosophy Check
+
+Before testing, read `openspec/project.md` → Execution Philosophy → `mode`.
+
+**Mode-specific testing behavior**:
+
+| Mode | Smoke | Integration | Manual | PBT |
+|------|-------|-------------|--------|-----|
+| garage | Required | Best-effort | Critical paths only | Skip unless exists |
+| scale | Required | Required | Full coverage | Recommended |
+| maintenance | Required | Required | Full coverage | Required for changes |
+
+**Garage mode shortcuts**:
+- Skip PBT unless tests already exist
+- Manual tests only for user-facing critical paths
+- Integration tests best-effort (don't block on flaky tests)
+
+**Scale/maintenance**: Full rigor, no shortcuts.
+
 ## Framework Detection
 
 Detect test framework from project files:
@@ -190,6 +173,55 @@ Project has: {detected config files}
 What command runs tests? (or 'skip' to skip automated tests)
 ```
 
+## Test Layers
+
+```yaml
+layers:
+  smoke:
+    purpose: Basic health checks
+    examples: ["app starts", "endpoints respond", "no crash on basic input"]
+    auto: true
+
+  integration:
+    purpose: Component interactions
+    examples: ["API contracts match", "DB state consistent", "error handling"]
+    auto: true
+
+  manual:
+    purpose: Human-verified critical paths
+    examples: ["UI flows", "user journeys", "edge cases needing judgment"]
+    auto: false  # Generate instructions only
+
+  pbt:
+    purpose: Property-based edge case discovery
+    examples: ["invariants hold", "no unexpected states", "boundary conditions"]
+    auto: true
+    frameworks: [hypothesis, fast-check, proptest]
+```
+
+## Test Command Patterns
+
+When running tests, use framework-appropriate commands:
+
+```bash
+# Smoke (fast, basic)
+npm test -- --grep "smoke"
+pytest -m smoke
+cargo test --lib
+
+# Integration (slower, thorough)
+npm test -- --grep "integration"
+pytest -m integration
+cargo test --test '*'
+
+# PBT (property-based)
+npm test -- --grep "property"
+pytest -m "property or hypothesis"
+cargo test --features proptest
+```
+
+Adapt patterns based on detected framework and existing test structure.
+
 ## Manual Test Instructions
 
 For manual layer, generate human-executable steps:
@@ -220,47 +252,15 @@ When complete, report results:
 - Test 2: PASS / FAIL (reason)
 ```
 
-## Philosophy Check
+## Exploration Strategy
 
-Before testing, read `openspec/project.md` → Execution Philosophy → `mode`.
+Before testing, consult `openspec/project.md` → Exploration Strategy section:
 
-**Mode-specific testing behavior**:
-
-| Mode | Smoke | Integration | Manual | PBT |
-|------|-------|-------------|--------|-----|
-| garage | Required | Best-effort | Critical paths only | Skip unless exists |
-| scale | Required | Required | Full coverage | Recommended |
-| maintenance | Required | Required | Full coverage | Required for changes |
-
-**Garage mode shortcuts**:
-- Skip PBT unless tests already exist
-- Manual tests only for user-facing critical paths
-- Integration tests best-effort (don't block on flaky tests)
-
-**Scale/maintenance**: Full rigor, no shortcuts.
-
-## Test Command Patterns
-
-When running tests, use framework-appropriate commands:
-
-```bash
-# Smoke (fast, basic)
-npm test -- --grep "smoke"
-pytest -m smoke
-cargo test --lib
-
-# Integration (slower, thorough)
-npm test -- --grep "integration"
-pytest -m integration
-cargo test --test '*'
-
-# PBT (property-based)
-npm test -- --grep "property"
-pytest -m "property or hypothesis"
-cargo test --features proptest
-```
-
-Adapt patterns based on detected framework and existing test structure.
+1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
+2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
+3. **Test config**: Detect test framework from package.json, pytest.ini, cargo.toml, etc.
+4. **Existing tests**: Grep for test files to understand project test patterns
+5. **Philosophy**: Read Execution Philosophy section for current mode
 
 ## Error Handling
 

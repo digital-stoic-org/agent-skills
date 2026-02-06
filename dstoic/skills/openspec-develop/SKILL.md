@@ -26,15 +26,28 @@ flowchart LR
 
 **Critical**: Mark checkbox immediately after each task. Enables crash recovery.
 
-## Exploration Strategy
+## Guardrails
 
-Before implementation, consult `openspec/project.md` → Exploration Strategy section:
+**Autonomous** (no confirmation needed):
+- Code generation matching specs
+- File edits within scope
+- Checkbox updates
+- Pattern-matching existing code
 
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Tools**: Use configured codebase tools (Glob, Grep, Read, or MCP if enabled)
-4. **Pattern matching**: Read existing similar files to match structure/style
-5. **Philosophy**: Read Execution Philosophy section for current mode and principles
+**Ask-first** (pause and confirm):
+- Architectural decisions not in specs
+- New dependencies not mentioned
+- Scope deviation >20% from proposal
+- Files outside change scope
+
+**Scope check**: Before creating files not mentioned in proposal.md, count affected files. If >20% more than proposal's "Affected files", ask:
+```
+⚠️ Scope expansion detected
+Proposal mentions: {n} files
+Implementation needs: {m} files ({percent}% more)
+
+Proceed with expanded scope? [y/N]
+```
 
 ## Commands
 
@@ -92,29 +105,6 @@ openspec show {change-id}
 
 Display task completion progress from CLI output.
 
-## Guardrails
-
-**Autonomous** (no confirmation needed):
-- Code generation matching specs
-- File edits within scope
-- Checkbox updates
-- Pattern-matching existing code
-
-**Ask-first** (pause and confirm):
-- Architectural decisions not in specs
-- New dependencies not mentioned
-- Scope deviation >20% from proposal
-- Files outside change scope
-
-**Scope check**: Before creating files not mentioned in proposal.md, count affected files. If >20% more than proposal's "Affected files", ask:
-```
-⚠️ Scope expansion detected
-Proposal mentions: {n} files
-Implementation needs: {m} files ({percent}% more)
-
-Proceed with expanded scope? [y/N]
-```
-
 ## Philosophy Check
 
 Before implementing, read `openspec/project.md` → Execution Philosophy → `mode`.
@@ -156,3 +146,13 @@ After completing task, edit tasks.md:
 - Replace: `- [x] {task-number} {description}`
 
 Use Edit tool for surgical update. Never rewrite entire file.
+
+## Exploration Strategy
+
+Before implementation, consult `openspec/project.md` → Exploration Strategy section:
+
+1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
+2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
+3. **Tools**: Use configured codebase tools (Glob, Grep, Read, or MCP if enabled)
+4. **Pattern matching**: Read existing similar files to match structure/style
+5. **Philosophy**: Read Execution Philosophy section for current mode and principles

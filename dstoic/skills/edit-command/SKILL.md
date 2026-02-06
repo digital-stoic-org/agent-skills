@@ -7,8 +7,15 @@ description: Creates and modifies Claude Code slash commands following best prac
 
 ## Determine Action Type
 
-**CREATE**: New slash command requested
 **MODIFY**: Update existing command (keywords: "update", "modify", "improve", "add to", "fix")
+**CREATE**: New slash command requested
+
+## Key Principles
+
+- **User-initiated**: Commands don't pollute auto-context (vs skills), can be verbose
+- **Discoverable**: Add description to frontmatter so Claude can find it
+- **Tool restrictions**: Specify allowed-tools to control capabilities
+- **Model selection**: Use haiku for simple tasks to reduce cost/latency
 
 ## Modifying Existing Slash Commands
 
@@ -28,40 +35,27 @@ description: Creates and modifies Claude Code slash commands following best prac
 4. Create file with YAML frontmatter (optional) and instructions
 
 **Frontmatter fields:**
-- `description` - Brief description (for discoverability)
-- `allowed-tools` - Tool restrictions (Bash, Read, Edit, etc.)
-- `argument-hint` - Expected parameters display
-- `model` - Use haiku for simple tasks (cost/latency optimization)
 
-**Argument patterns:**
-- `$ARGUMENTS` - All arguments as string
-- `$1, $2, $3` - Positional arguments
-- `@filepath` - Include file contents
+| Field | Purpose |
+|-------|---------|
+| `description` | Brief description (for discoverability) |
+| `allowed-tools` | Tool restrictions (Bash, Read, Edit, etc.) |
+| `argument-hint` | Expected parameters display |
+| `model` | Use haiku for simple tasks (cost/latency) |
 
-## Key Principles
-
-- **User-initiated**: Commands don't pollute auto-context (vs skills), can be verbose
-- **Discoverable**: Add description to frontmatter so Claude can find it
-- **Tool restrictions**: Specify allowed-tools to control capabilities
-- **Model selection**: Use haiku for simple tasks to reduce cost/latency
+**Argument patterns:** `$ARGUMENTS` (all), `$1 $2 $3` (positional), `@filepath` (include file)
 
 ## MANDATORY Validation (CREATE only)
 
 **STOP**: Before proceeding, answer YES/NO:
 
-**Q1: User-triggered (not auto-invoked)?**
-- Answer: [YOU MUST STATE YES OR NO]
-
-**Q2: Multi-step workflow?**
-- Answer: [YOU MUST STATE YES OR NO]
-
-**Q3: Repeatedly used?**
-- Answer: [YOU MUST STATE YES OR NO]
-
-### Decision Tree
+| Question | Answer |
+|----------|--------|
+| Q1: User-triggered (not auto-invoked)? | [YES/NO] |
+| Q2: Multi-step workflow? | [YES/NO] |
+| Q3: Repeatedly used? | [YES/NO] |
 
 **If ALL NO** → STOP. Use direct request or bash alias instead.
-
 **If ANY YES + needs AI reasoning** → Proceed to creation above.
 **Otherwise** → Delegate to edit-tool (may suggest Sub-Agent or Skill).
 

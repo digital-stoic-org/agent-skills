@@ -25,15 +25,6 @@ flowchart LR
 
 **Critical**: Run before human gates. Catches drift BEFORE human reviews.
 
-## Exploration Strategy
-
-Before reflection, consult `openspec/project.md` → Exploration Strategy section:
-
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Tools**: Use configured codebase tools (Glob, Grep, Read)
-4. **Philosophy**: Read Execution Philosophy section for current mode and principles
-
 ## Commands
 
 ### reflect
@@ -70,6 +61,37 @@ Run comprehensive pre-gate self-check.
    - Evaluate: Is work aligned with proposal's Problem statement?
 
 6. **Generate gate-ready report** (see format below)
+
+## Guardrails
+
+**Autonomous** (no confirmation needed):
+- Reading all context files
+- Analyzing implementation
+- Generating reports
+- Flagging deviations
+
+**Ask-first** (pause and confirm):
+- None - reflect is read-only and advisory
+
+## Philosophy Check
+
+Read `openspec/project.md` → Execution Philosophy → `mode`.
+
+**Flag anti-patterns for current mode**:
+
+| Mode | Anti-patterns to flag |
+|------|----------------------|
+| `garage` | Over-engineering, gold-plating, premature abstraction, analysis paralysis |
+| `scale` | Cowboy coding, skipping tests, undocumented decisions |
+| `maintenance` | Refactoring for aesthetics, feature creep, risky upgrades |
+
+**When flagging**:
+```
+⚠️ PHILOSOPHY VIOLATION ({mode} mode)
+- Anti-pattern: {specific anti-pattern}
+- Evidence: {what triggered this flag}
+- Mode principle violated: {which principle}
+```
 
 ## Gate-Ready Report Format
 
@@ -122,36 +144,14 @@ Flag deviations with warning emoji and explanation:
 - `PHILOSOPHY_VIOLATION`: Anti-pattern for current mode detected
 - `SPEC_DEVIATION`: Implementation differs from spec requirements
 
-## Philosophy Check
+## Exploration Strategy
 
-Read `openspec/project.md` → Execution Philosophy → `mode`.
+Before reflection, consult `openspec/project.md` → Exploration Strategy section:
 
-**Flag anti-patterns for current mode**:
-
-| Mode | Anti-patterns to flag |
-|------|----------------------|
-| `garage` | Over-engineering, gold-plating, premature abstraction, analysis paralysis |
-| `scale` | Cowboy coding, skipping tests, undocumented decisions |
-| `maintenance` | Refactoring for aesthetics, feature creep, risky upgrades |
-
-**When flagging**:
-```
-⚠️ PHILOSOPHY VIOLATION ({mode} mode)
-- Anti-pattern: {specific anti-pattern}
-- Evidence: {what triggered this flag}
-- Mode principle violated: {which principle}
-```
-
-## Guardrails
-
-**Autonomous** (no confirmation needed):
-- Reading all context files
-- Analyzing implementation
-- Generating reports
-- Flagging deviations
-
-**Ask-first** (pause and confirm):
-- None - reflect is read-only and advisory
+1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
+2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
+3. **Tools**: Use configured codebase tools (Glob, Grep, Read)
+4. **Philosophy**: Read Execution Philosophy section for current mode and principles
 
 ## CLI Integration
 

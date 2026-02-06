@@ -7,8 +7,17 @@ description: Creates and modifies Claude Code sub-agents following best practice
 
 ## Determine Action Type
 
-**CREATE**: New sub-agent requested
 **MODIFY**: Update existing sub-agent (keywords: "update", "modify", "improve", "add to", "fix")
+**CREATE**: New sub-agent requested
+
+## Key Principles
+
+- **Single responsibility**: One focused purpose per agent
+- **Specific triggers**: Clear description of when to use
+- **Minimal permissions**: Only grant needed tools
+- **Model selection**: sonnet (default), opus (complex orchestration), haiku (simple deterministic)
+- **Detailed prompts**: Include examples, constraints, formats
+- **Isolated context**: Agents run independently with own context
 
 ## Modifying Existing Sub-agents
 
@@ -45,15 +54,6 @@ System prompt defining agent's role, behavior, and instructions.
 
 Be specific: include examples, constraints, output formats.
 ```
-
-## Key Principles
-
-- **Single responsibility**: One focused purpose per agent
-- **Specific triggers**: Clear description of when to use
-- **Minimal permissions**: Only grant needed tools
-- **Model selection**: Use sonnet (default) for most agents. Use opus for complex multi-agent orchestration or intricate tool restrictions. Use haiku for simple deterministic agents.
-- **Detailed prompts**: Include examples, constraints, formats
-- **Isolated context**: Agents run independently with own context
 
 ## MANDATORY Validation (CREATE only)
 

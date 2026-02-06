@@ -31,15 +31,24 @@ flowchart LR
 
 **Critical**: Always wait for user confirmation before applying changes (ask_first trust zone).
 
-## Exploration Strategy
+## Guardrails
 
-Before replanning, consult `openspec/project.md` → Exploration Strategy section:
+**Trust Zone: ask_first** (all changes require human approval)
 
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Tools**: Use configured codebase tools (Glob, Grep, Read, or MCP if enabled)
-4. **Existing tasks**: Read tasks.md to understand current plan
-5. **Philosophy**: Read Execution Philosophy section for current mode and principles
+**Always ask before**:
+- Modifying tasks.md
+- Modifying proposal.md
+- Archiving files
+- Any scope changes
+
+**Scope deviation threshold**: >20%
+- If openspec-reflect reports >20% drift, suggest replan
+- Show deviation calculation in proposal
+
+**Minimal change preference**:
+- Count affected vs unaffected tasks
+- If <50% affected, revise only those tasks
+- If >50% affected, consider pivot instead
 
 ## Commands
 
@@ -127,25 +136,6 @@ New proposal: {brief summary}
 New tasks: {count} items
 ```
 
-## Guardrails
-
-**Trust Zone: ask_first** (all changes require human approval)
-
-**Always ask before**:
-- Modifying tasks.md
-- Modifying proposal.md
-- Archiving files
-- Any scope changes
-
-**Scope deviation threshold**: >20%
-- If openspec-reflect reports >20% drift, suggest replan
-- Show deviation calculation in proposal
-
-**Minimal change preference**:
-- Count affected vs unaffected tasks
-- If <50% affected, revise only those tasks
-- If >50% affected, consider pivot instead
-
 ## Philosophy Check
 
 Before proposing revisions, read `openspec/project.md` → Execution Philosophy → `mode`.
@@ -176,6 +166,16 @@ Tasks affected: {list}
 ```
 
 Insert after section header of first affected task.
+
+## Exploration Strategy
+
+Before replanning, consult `openspec/project.md` → Exploration Strategy section:
+
+1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
+2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
+3. **Tools**: Use configured codebase tools (Glob, Grep, Read, or MCP if enabled)
+4. **Existing tasks**: Read tasks.md to understand current plan
+5. **Philosophy**: Read Execution Philosophy section for current mode and principles
 
 ## Scope Deviation Calculation
 

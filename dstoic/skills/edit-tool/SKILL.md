@@ -61,15 +61,15 @@ When path requires multiple criteria, consult:
 | **Invocation** | User / Auto? | Command / Skill |
 | **Capability** | Specific / Workflow? | Skill / Command |
 
+## Delegation
+
+After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
+
 ## Explanation Template
 
 Explain decision: `✅ [TYPE] because: token budget (~X → range), frequency (pattern), key factor (dimension)`
 
 Example: `✅ SKILL because: ~300 tokens → <500, 10+/session, auto-invoked capability`
-
-## Delegation
-
-After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
 
 ## Parallelization Check
 
