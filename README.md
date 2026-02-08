@@ -7,6 +7,7 @@
 | Plugin | Description | Status |
 |--------|-------------|--------|
 | [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives | ✅ v0.1.58 |
+| [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
 | ... | More planned | 🔜 |
 
 ## 📖 Why TL;DR?
@@ -25,17 +26,33 @@ Respect your attention. Start here, dive deeper only when needed.
 
 ## 🎯 Core Idea
 
-AI collaboration as **cognitive discipline**, not automation.
+**Human+AI collaboration as cognitive discipline.**
+
+Think first. Build in sections. Stay in control.
 
 ## 💡 Why OpenSpec?
 
-OpenSpec is a **sweet spot** between:
-- ❌ Over-engineered specs (too opinionated, heavy process)
-- ❌ No structure at all (chaos, context loss)
+**AI collaboration over days/weeks needs structure, not ceremony.**
 
-**Current focus:** Individual augmentation—one human + AI working together.
+```mermaid
+flowchart LR
+    P["📝 Think"] --> D["⚙️ Build"]
+    D --> G["🚧 Gate"]
+    G -->|"verify"| D
+    G --> S["💾 Save"]
 
-Not (yet) designed for team collaboration workflows (à la BMAD or multi-agent orchestration).
+    classDef default fill:#f9f9f9,stroke:#333,color:#000
+    classDef gate fill:#FFE0B2,stroke:#F57C00,color:#000
+    class G gate
+```
+
+**Mechanics:**
+- 🧠 **Think first** → Plan before code (boulder → pebbles)
+- 🚧 **Human gates** → Verify between sections, prevent AI runaway
+- 💾 **Resumable** → Checkboxes + context persist across sessions
+- 🎯 **Adaptive** → Garage (scrappy) or Scale (rigorous)
+
+Not waterfall. Not chaos. **Human-in-the-loop iteration for complex builds.**
 
 ## ✨ 3 Things This Does
 

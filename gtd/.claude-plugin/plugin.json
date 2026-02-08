@@ -1,0 +1,11 @@
+{
+  "name": "gtd",
+  "description": "GTD workflow automation for Obsidian vaults: capture, triage, review",
+  "version": "0.1.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

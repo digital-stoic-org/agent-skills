@@ -18,6 +18,17 @@
       },
       "license": "MIT",
       "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "gtd",
+      "source": "./gtd",
+      "description": "GTD workflow automation for Obsidian vaults",
+      "version": "0.1.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
     }
   ]
 }

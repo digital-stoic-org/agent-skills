@@ -4,13 +4,16 @@
 
 ## 🎯 Philosophy
 
-AI collaboration as **cognitive discipline**:
+**Human+AI collaboration as metacognitive practice:**
 
-- 🧠 **Structured thinking** → OpenSpec forces planning before coding
-- 💾 **Context continuity** → Sessions persist across conversations
-- 🔍 **Reflective practice** → Retrospectives surface patterns
+- 🧠 **Think before build** → OpenSpec forces planning (outcome-centric, not process-heavy)
+- 🚧 **Human controls pace** → Gates = verification checkpoints between sections
+- 💾 **Session continuity** → Context + progress persist, resume without re-explaining
+- 🪞 **Reflective iteration** → Drift detection, adaptive replanning when blocked
 
-This isn't about productivity. It's about *how you think* when working with AI.
+**Boulder → Pebbles approach:** Break complex work into checkpointed sections. AI implements, human verifies at gates, continue together.
+
+Not automation. Not micromanagement. **Structured co-thinking for multi-day builds.**
 
 ---
 
@@ -52,29 +55,42 @@ Or install globally in `~/.claude/settings.json`.
 
 ```mermaid
 flowchart LR
-    init["🎬 init"] --> plan["📝 plan"]
-    plan --> develop["⚙️ develop"]
-    develop --> test["🧪 test"]
-    test --> sync["🔄 sync"]
+    plan["📝 Think<br/>Design sections"] --> dev["⚙️ Build<br/>Implement"]
+    dev --> gate["🚧 Gate<br/>Human verifies"]
+    gate -->|"continue"| dev
+    gate --> test["🧪 Test<br/>Layered checks"]
+    test --> reflect["🪞 Reflect<br/>Drift check"]
+    reflect -->|"blocked?"| replan["🔀 Replan<br/>Adapt"]
+    reflect --> save["💾 Save<br/>Session state"]
+    replan --> dev
 
-    develop -.->|blocked| replan["🔀 replan"]
-    replan --> develop
+    classDef think fill:#E1BEE7,stroke:#7B1FA2,color:#000
+    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef gate fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef meta fill:#BBDEFB,stroke:#1976D2,color:#000
 
-    test -.->|pre-gate| reflect["🪞 reflect"]
-
-    classDef default fill:#f9f9f9,stroke:#333,color:#000
-    classDef active fill:#90EE90,stroke:#333,color:#000
+    class plan think
+    class dev build
+    class gate,replan gate
+    class test,reflect,save meta
 ```
 
 | Skill | Purpose |
 |-------|---------|
-| `openspec-init` | 🎬 Initialize OpenSpec in project |
-| `openspec-plan` | 📝 Create change proposal with reasoning |
-| `openspec-develop` | ⚙️ Implement with task tracking |
-| `openspec-test` | 🧪 Layered verification (smoke → integration → manual) |
-| `openspec-replan` | 🔀 Adaptive refinement when blocked |
-| `openspec-sync` | 🔄 Update docs and context |
-| `openspec-reflect` | 🪞 Pre-gate drift detection |
+| `openspec-plan` | 📝 Design proposal + define gate checkpoints |
+| `openspec-develop` | ⚙️ Implement sections, stop at gates for human review |
+| `openspec-test` | 🧪 Checkpoint verification (mode-aware: garage=smoke, scale=full) |
+| `openspec-reflect` | 🪞 Pre-merge self-check (drift >20% triggers review) |
+| `openspec-replan` | 🔀 Pivot when blocked (adapt, don't force) |
+| `openspec-sync` | 💾 Save session state (resume tomorrow without context loss) |
+| `openspec-init` | 🎬 Setup project (set mode: garage/scale/maintenance) |
+
+**Core innovation:** Gates = human checkpoints between implementation sections. AI stops → you verify → mark pass → AI continues. Enables crash recovery (checkboxes persist), prevents scope drift (section-by-section review), maintains human control (you set the pace).
+
+**Garage MVP mode:** Working > perfect. Smoke tests at gates, skip gold-plating.
+**Scale mode:** Production rigor. Full verification at gates, document decisions.
+
+Boulder → Pebbles. Think → Build → Verify → Iterate. Human + AI co-thinking.
 
 ### 🔧 Tool Orchestration (6)
 
