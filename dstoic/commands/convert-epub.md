@@ -2,8 +2,7 @@
 description: Convert EPUB files to clean markdown for LLM context (uses epub-to-markdown)
 argument-hint: <epub-file> [--output dir]
 allowed-tools: Bash, Read, Write, Skill
-model: claude-3-5-haiku-20241022
-# ⚠️ STATUS: needs-review (migrated from v0.1)
+model: haiku
 ---
 
 Convert the EPUB file at $1 to clean markdown format optimized for Claude Code context.

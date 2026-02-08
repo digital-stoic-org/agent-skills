@@ -1,6 +1,8 @@
 ---
 description: Convert PDF files to LLM-ready formats using Docling (markdown/DocTags/JSON)
-# ⚠️ STATUS: needs-review (migrated from v0.1)
+allowed-tools: Bash, Read, Write, Skill
+argument-hint: <pdf-file(s)> [--format markdown|doctags|json] [--ocr]
+model: haiku
 ---
 
 # Convert PDF Command

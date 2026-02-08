@@ -34,10 +34,7 @@ See `reference.md` for modification best practices and common patterns.
 - `name` - Skill identifier (lowercase-hyphens)
 - `description` - Triggers and use cases (max 1024 chars)
 - `allowed-tools` - Tool restrictions (optional)
-- `model` - Model selection (optional, defaults to sonnet):
-  - `haiku` - Simple deterministic tasks (token counting, format conversion)
-  - `sonnet` - Default for most skills requiring reasoning
-  - `opus` - Complex multi-file refactoring, architectural decisions
+- `model` - See Model Selection section below
 - `context` - Context execution mode (optional, defaults to main):
   - `main` (default) - Runs in main conversation (fast, shares context)
   - `fork` - Runs in isolated sub-agent context (prevents pollution, parallel-safe)
@@ -48,6 +45,20 @@ See `reference.md` for modification best practices and common patterns.
    - `assets/` - Output files (templates, images)
 
 See `reference.md` for SKILL.md template, model selection matrix, and naming rules.
+
+## Model Selection
+
+**Use short names** (future-proof): `opus` | `sonnet` | `haiku` (never version-specific IDs)
+
+**When selecting model for a skill:**
+1. Use `pick-model` skill: Pass skill's purpose/capability as argument
+2. `pick-model` provides recommendation with reasoning (decision matrix, complexity escalators)
+3. Default: `sonnet` if skipping analysis
+
+**Quick reference** (see pick-model for full decision matrix):
+- `opus` — Strategic analysis, multi-framework reasoning, architectural decisions
+- `sonnet` — Standard workflows with reasoning (DEFAULT for most skills)
+- `haiku` — Simple deterministic tasks, format conversion, speed-sensitive ops
 
 ## Key Principles
 

@@ -2,8 +2,7 @@
 description: Analyze domain insights (WHAT/WHY learned) from captured sessions
 allowed-tools: Bash, Read, Write, Grep
 argument-hint: [domain] [--last Nd|--week|--month|--from DATE --to DATE]
-model: claude-sonnet-4-5-20250929
-# ⚠️ STATUS: needs-review (migrated from v0.1)
+model: opus
 ---
 
 # /retrospect domain - Domain Insights Analysis

@@ -15,7 +15,7 @@ description: Creates and modifies Claude Code slash commands following best prac
 - **User-initiated**: Commands don't pollute auto-context (vs skills), can be verbose
 - **Discoverable**: Add description to frontmatter so Claude can find it
 - **Tool restrictions**: Specify allowed-tools to control capabilities
-- **Model selection**: Use haiku for simple tasks to reduce cost/latency
+- **Model selection**: Choose based on reasoning complexity and strategic value (see Model Selection below)
 
 ## Modifying Existing Slash Commands
 
@@ -41,9 +41,23 @@ description: Creates and modifies Claude Code slash commands following best prac
 | `description` | Brief description (for discoverability) |
 | `allowed-tools` | Tool restrictions (Bash, Read, Edit, etc.) |
 | `argument-hint` | Expected parameters display |
-| `model` | Use haiku for simple tasks (cost/latency) |
+| `model` | opus/sonnet/haiku (see Model Selection section) |
 
 **Argument patterns:** `$ARGUMENTS` (all), `$1 $2 $3` (positional), `@filepath` (include file)
+
+## Model Selection
+
+**Use short names** (future-proof): `opus` | `sonnet` | `haiku` (never version-specific IDs)
+
+**When selecting model for a command:**
+1. Use `pick-model` skill: Pass command's purpose/workflow as argument
+2. `pick-model` provides recommendation with reasoning (decision matrix, complexity escalators)
+3. Default: `sonnet` if skipping analysis
+
+**Quick reference** (see pick-model for full decision matrix):
+- `opus` — Strategic analysis, multi-framework reasoning, high-stakes decisions
+- `sonnet` — Standard workflows with reasoning (DEFAULT)
+- `haiku` — Simple conversions, minimal reasoning
 
 ## MANDATORY Validation (CREATE only)
 

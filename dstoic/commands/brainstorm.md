@@ -1,8 +1,8 @@
 ---
 description: Divergent-convergent brainstorming with research, ideation, and trade-off analysis
-allowed-tools: WebSearch, TodoWrite, AskUserQuestion, Read, Write
+allowed-tools: WebSearch, TaskCreate, TaskUpdate, TaskList, TaskGet, AskUserQuestion, Read, Write
 argument-hint: [topic/problem]
-# ⚠️ STATUS: needs-review (migrated from v0.1)
+model: opus
 ---
 
 # Brainstorming Protocol

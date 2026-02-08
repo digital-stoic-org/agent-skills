@@ -15,7 +15,7 @@ description: Creates and modifies Claude Code sub-agents following best practice
 - **Single responsibility**: One focused purpose per agent
 - **Specific triggers**: Clear description of when to use
 - **Minimal permissions**: Only grant needed tools
-- **Model selection**: sonnet (default), opus (complex orchestration), haiku (simple deterministic)
+- **Model selection**: Choose based on reasoning complexity and strategic value (see Model Selection below)
 - **Detailed prompts**: Include examples, constraints, formats
 - **Isolated context**: Agents run independently with own context
 
@@ -47,13 +47,27 @@ See `reference.md` for templates and tool configurations.
 name: agent-identifier
 description: When to use this agent (triggers)
 tools: Read, Edit, Bash
-model: sonnet  # haiku (simple) | sonnet (default) | opus (complex)
+model: sonnet  # See Model Selection section below
 ---
 
 System prompt defining agent's role, behavior, and instructions.
 
 Be specific: include examples, constraints, output formats.
 ```
+
+## Model Selection
+
+**Use short names** (future-proof): `opus` | `sonnet` | `haiku` (never version-specific IDs)
+
+**When selecting model for an agent:**
+1. Use `pick-model` skill: Pass agent's purpose/scope as argument
+2. `pick-model` provides recommendation with reasoning (decision matrix, complexity escalators)
+3. Default: `sonnet` if skipping analysis
+
+**Quick reference** (see pick-model for full decision matrix):
+- `opus` — Complex orchestration, architectural exploration, high-stakes decisions
+- `sonnet` — Standard autonomous workflows, multi-step reasoning (DEFAULT)
+- `haiku` — Simple deterministic agents, speed-sensitive ops
 
 ## MANDATORY Validation (CREATE only)
 

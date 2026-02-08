@@ -65,6 +65,8 @@ When path requires multiple criteria, consult:
 
 After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
 
+**Note**: Model selection (opus/sonnet/haiku) is handled by delegated editors using `pick-model` skill.
+
 ## Explanation Template
 
 Explain decision: `✅ [TYPE] because: token budget (~X → range), frequency (pattern), key factor (dimension)`

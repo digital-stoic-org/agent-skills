@@ -49,7 +49,7 @@ Review the code for bugs and suggest improvements.
 description: What this command does
 allowed-tools: Bash, Read, Edit
 argument-hint: [params]
-model: claude-3-5-haiku-20241022
+model: haiku
 ---
 
 Instructions here.
@@ -66,7 +66,7 @@ Use @filepath for files.
 | `description` | Discoverability (max 1024 chars) | `Analyze test coverage` |
 | `allowed-tools` | Restrict tools (omit for full access) | `Bash, Read, Edit` |
 | `argument-hint` | Guide users | `[file] [--flag]` |
-| `model` | Override model | `claude-3-5-haiku-20241022` |
+| `model` | Override model | `haiku` / `sonnet` / `opus` |
 
 **Models:** haiku (fast/cheap), sonnet (default), opus (complex)
 

@@ -119,6 +119,8 @@ flowchart TD
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `search-skill` | 🔍 Discover & evaluate skills from curated sources |
 
+**Model selection:** All editors include guidance on choosing `opus` (strategic analysis, multi-framework reasoning), `sonnet` (default workflows), or `haiku` (simple conversions). Use short names only—never version-specific IDs.
+
 ### 🔧 Troubleshoot (1)
 
 | Skill | Purpose |
@@ -161,34 +163,34 @@ flowchart LR
 
 ---
 
-## ⌨️ Commands (10)
+## ⌨️ Commands (12)
 
 ### 💾 Context Management
 
-| Command | Purpose |
-|---------|---------|
-| `/save-context` | 💾 Serialize session → CONTEXT-llm.md |
-| `/load-context` | 📥 Resume session (optional `--full`) |
+| Command | Purpose | Model |
+|---------|---------|-------|
+| `/create-context` | 🎬 Create baseline from .in/ folder | sonnet |
+| `/save-context` | 💾 Serialize session → CONTEXT-llm.md | sonnet |
+| `/load-context` | 📥 Resume session (optional `--full`) | sonnet |
 
-### 🔍 Session Analysis ⚠️
+### 🔍 Session Analysis
 
-> ⚠️ These commands work but need review (migrated from v0.1)
-
-| Command | Purpose | Status |
-|---------|---------|--------|
-| `/retrospect-domain` | 🎓 Extract learnings (WHAT/WHY) | ⚠️ needs-review |
-| `/retrospect-collab` | 🤝 Analyze patterns (HOW) | ⚠️ needs-review |
-| `/retrospect-report` | 📊 Aggregate trends | ⚠️ needs-review |
+| Command | Purpose | Model |
+|---------|---------|-------|
+| `/retrospect-domain` | 🎓 Extract learnings (WHAT/WHY) | opus |
+| `/retrospect-collab` | 🤝 Analyze patterns (HOW) | opus |
+| `/retrospect-report` | 📊 Aggregate trends | opus |
 
 ### 🔨 Utilities
 
-| Command | Purpose | Status |
-|---------|---------|--------|
-| `/brainstorm` | 💡 Divergent-convergent ideation | ⚠️ needs-review |
-| `/convert-pdf` | 📄 PDF → markdown | ⚠️ needs-review |
-| `/convert-epub` | 📖 EPUB → markdown | ⚠️ needs-review |
-| `/edit-risen-prompt` | ✍️ Create/audit RISEN prompts | ✅ |
-| `/background` | 🔄 Run tasks in background | ✅ |
+| Command | Purpose | Model |
+|---------|---------|-------|
+| `/brainstorm` | 💡 Divergent-convergent ideation | opus |
+| `/convert-pdf` | 📄 PDF → markdown (Docling) | haiku |
+| `/convert-epub` | 📖 EPUB → markdown | haiku |
+| `/import-gdoc` | 📥 Import Google Docs with manifest | haiku |
+| `/edit-risen-prompt` | ✍️ Create/audit RISEN prompts | sonnet |
+| `/background` | 🔄 Run tasks in background | sonnet |
 
 ---
 
