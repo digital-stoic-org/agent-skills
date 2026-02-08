@@ -46,7 +46,7 @@ Or install globally in `~/.claude/settings.json`.
 
 ---
 
-## 🛠️ Skills (14)
+## 🛠️ Skills (18)
 
 ### 📋 OpenSpec Workflow (7)
 
@@ -134,10 +134,13 @@ flowchart LR
 
 **Techniques:** Wolf Fence, 5 Whys, Fishbone 6 M's, Rubber Duck
 
-### 🔨 Utilities (1)
+### 🔨 Utilities (4)
 
 | Skill | Purpose |
 |-------|---------|
+| `pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for tasks |
+| `install-dependency` | 📦 Monorepo-aware package installation (pip/bun/apt) |
+| `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 
 ---
