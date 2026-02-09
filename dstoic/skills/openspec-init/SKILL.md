@@ -58,7 +58,11 @@ context_sources:
   primary:
     - openspec/project.md
     - openspec/changes/{id}/proposal.md
+    - openspec/changes/{id}/tasks.md
+    - openspec/changes/{id}/test.md
     - openspec/changes/{id}/specs/*.md
+  artifacts:
+    - openspec/changes/{id}/test-logs/*.md
   must_read:
     - CLAUDE.md
 tools:

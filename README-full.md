@@ -77,18 +77,20 @@ flowchart LR
 
 | Skill | Purpose |
 |-------|---------|
-| `openspec-plan` | 📝 Design proposal + define gate checkpoints |
+| `openspec-plan` | 📝 Design proposal + test.md strategy (human reviews test plan upfront) |
 | `openspec-develop` | ⚙️ Implement sections, stop at gates for human review |
-| `openspec-test` | 🧪 Checkpoint verification (mode-aware: garage=smoke, scale=full) |
-| `openspec-reflect` | 🪞 Pre-merge self-check (drift >20% triggers review) |
+| `openspec-test` | 🧪 Execute test.md verification, log to test-logs/ (no improvisation) |
+| `openspec-reflect` | 🪞 Pre-gate drift check (flags missing test.md in scale/maintenance) |
 | `openspec-replan` | 🔀 Pivot when blocked (adapt, don't force) |
 | `openspec-sync` | 💾 Save session state (resume tomorrow without context loss) |
 | `openspec-init` | 🎬 Setup project (set mode: garage/scale/maintenance) |
 
 **Core innovation:** Gates = human checkpoints between implementation sections. AI stops → you verify → mark pass → AI continues. Enables crash recovery (checkboxes persist), prevents scope drift (section-by-section review), maintains human control (you set the pace).
 
-**Garage MVP mode:** Working > perfect. Smoke tests at gates, skip gold-plating.
-**Scale mode:** Production rigor. Full verification at gates, document decisions.
+**Transparent testing (new):** test.md documents verification strategy at plan time. Human reviews test approach before any execution. Checkpoint reads test.md literally (no improvisation). Logs written to test-logs/ for audit trail. Blocks lazy patterns (grep "keyword" → functional verification).
+
+**Garage MVP mode:** Working > perfect. test.md recommended, smoke tests sufficient.
+**Scale mode:** Production rigor. test.md required, full verification at gates, document decisions.
 
 Boulder → Pebbles. Think → Build → Verify → Iterate. Human + AI co-thinking.
 

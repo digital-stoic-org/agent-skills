@@ -50,20 +50,28 @@ Create change proposal from codebase analysis.
 
 ### tasks
 
-Generate outcome-centric tasks from proposal.
+Generate outcome-centric tasks + test strategy from proposal.
 
-**Input**: `$ARGUMENTS` = `change-id`
+**Input**: `$ARGUMENTS` = `change-id [--skip-test]`
 
 **Rules**:
 - Tasks are outcomes: "X exists", "Y works", "Z passes"
 - NO activity verbs: Design, Implement, Create, Write
 - Each task ≤80 chars (TodoWrite compatible)
 - Numbered sections with checkboxes
-- Add `### GATE N: Description` after sections representing logical boundaries (where verification prevents cascading errors)
-- Gates are optional — not every section needs one
+- Add `### GATE N: Description` after sections representing logical boundaries
+- Gates optional — not every section needs one
 - Standard pattern: scaffold → gate → implement → gate → audit → gate → test
 
-**Output**: `tasks.md` with verifiable outcomes
+**Output**:
+1. `tasks.md` - verifiable outcomes with gates
+2. `test.md` - verification strategy (unless --skip-test or garage mode + simple change)
+
+**test.md generation**:
+- Mirrors gates from tasks.md
+- For each gated task outcome: concrete verification step + observable expectation
+- Quality bar: functional > structural, observable, specific (see reference.md for anti-patterns)
+- Mode-aware: garage=recommended, scale/maintenance=required (see reference.md for requirements)
 
 ### spec
 

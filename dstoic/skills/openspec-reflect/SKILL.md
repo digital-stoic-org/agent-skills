@@ -37,30 +37,36 @@ Run comprehensive pre-gate self-check.
 1. **Load context**:
    - Read `openspec/changes/{change-id}/proposal.md` for acceptance criteria
    - Read `openspec/changes/{change-id}/tasks.md` for progress
+   - Read `openspec/changes/{change-id}/test.md` for test strategy (if exists)
    - Read `openspec/changes/{change-id}/specs/*.md` for requirements
    - Read `openspec/project.md` for Execution Philosophy
 
-2. **Check acceptance criteria**:
+2. **Pre-gate check** (scale/maintenance mode only):
+   - Check if `test.md` exists
+   - If missing in scale/maintenance mode: flag ⚠️ MISSING_TEST_MD deviation
+   - In garage mode: test.md optional (note if missing, don't block)
+
+3. **Check acceptance criteria**:
    - Extract criteria from proposal.md (Success Criteria section)
    - For each criterion: verify met/unmet/partial
    - Record evidence for each status
 
-3. **Detect scope drift**:
+4. **Detect scope drift**:
    - Extract "Affected files" from proposal.md
    - Run `git status` and `git diff --stat` to find actual changes
    - Calculate deviation percentage: `(actual - proposed) / proposed * 100`
    - Flag if >20% deviation
 
-4. **Check philosophy alignment**:
+5. **Check philosophy alignment**:
    - Read `mode` from Execution Philosophy
    - Review implementation for anti-patterns of current mode
    - Flag any violations
 
-5. **Self-assessment**:
+6. **Self-assessment**:
    - Answer: "Am I solving the right problem?"
    - Evaluate: Is work aligned with proposal's Problem statement?
 
-6. **Generate gate-ready report** (see format below)
+7. **Generate gate-ready report** (see format below)
 
 ## Guardrails
 
@@ -77,26 +83,25 @@ Run comprehensive pre-gate self-check.
 
 Read `openspec/project.md` → Execution Philosophy → `mode`.
 
-**Flag anti-patterns for current mode**:
-
-| Mode | Anti-patterns to flag |
-|------|----------------------|
-| `garage` | Over-engineering, gold-plating, premature abstraction, analysis paralysis |
+| Mode | Flag Anti-patterns |
+|------|-------------------|
+| `garage` | Over-engineering, premature abstraction, analysis paralysis |
 | `scale` | Cowboy coding, skipping tests, undocumented decisions |
 | `maintenance` | Refactoring for aesthetics, feature creep, risky upgrades |
 
-**When flagging**:
-```
-⚠️ PHILOSOPHY VIOLATION ({mode} mode)
-- Anti-pattern: {specific anti-pattern}
-- Evidence: {what triggered this flag}
-- Mode principle violated: {which principle}
-```
+Format: `⚠️ PHILOSOPHY VIOLATION ({mode}) - {anti-pattern}: {evidence}`
 
 ## Gate-Ready Report Format
 
 ```
 # Reflection Report: {change-id}
+
+## Test Strategy Coverage
+- test.md: {present/missing}
+- Mode: {mode}
+{if missing + scale/maintenance: ⚠️ MISSING_TEST_MD - required for {mode} mode}
+{if missing + garage: ℹ️ test.md optional in garage mode}
+{if present: - Coverage: {summary of test.md sections}}
 
 ## Criteria Status
 | Criterion | Status | Evidence |
@@ -126,114 +131,14 @@ Read `openspec/project.md` → Execution Philosophy → `mode`.
 {READY FOR GATE | NOT READY - {reasons}}
 ```
 
-## Deviation Flagging
+## Deviation Types
 
-Flag deviations with warning emoji and explanation:
+- `MISSING_TEST_MD` - test.md missing in scale/maintenance mode
+- `SCOPE_DRIFT` - Files changed exceed proposal by >20%
+- `CRITERIA_UNMET` - Acceptance criterion not satisfied
+- `PHILOSOPHY_VIOLATION` - Anti-pattern for current mode
+- `SPEC_DEVIATION` - Implementation differs from specs
 
-```
-⚠️ DEVIATION: {type}
-- Expected: {what proposal specified}
-- Actual: {what was implemented}
-- Impact: {why this matters}
-- Recommendation: {fix now | discuss at gate | acceptable deviation}
-```
+Format: `⚠️ DEVIATION: {type} - Expected: {X}, Actual: {Y}, Impact: {Z}, Rec: {action}`
 
-**Deviation types**:
-- `SCOPE_DRIFT`: Files changed exceed proposal by >20%
-- `CRITERIA_UNMET`: Acceptance criterion not satisfied
-- `PHILOSOPHY_VIOLATION`: Anti-pattern for current mode detected
-- `SPEC_DEVIATION`: Implementation differs from spec requirements
-
-## Exploration Strategy
-
-Before reflection, consult `openspec/project.md` → Exploration Strategy section:
-
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Tools**: Use configured codebase tools (Glob, Grep, Read)
-4. **Philosophy**: Read Execution Philosophy section for current mode and principles
-
-## CLI Integration
-
-Use CLI for status checks:
-```bash
-openspec show {change-id}  # Get current change status
-openspec status            # Overall project status
-```
-
-## Output Examples
-
-**Ready for gate**:
-```
-# Reflection Report: add-phase3-skills
-
-## Criteria Status
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| All 4 SKILL.md files created | met | Files exist in .claude/skills/ |
-| Skills follow openspec-develop pattern | met | Structure matches reference |
-
-## Scope Analysis
-- Proposed files: 4
-- Actual files: 4
-- Deviation: 0%
-
-## Philosophy Alignment
-- Mode: garage
-- Anti-patterns detected: None
-
-## Self-Assessment
-**Question**: Am I solving the right problem?
-**Answer**: Yes - implementing the 4 Phase 3 skills as specified in proposal.
-
-## Deviations Requiring Attention
-None
-
-## Recommendation
-READY FOR GATE
-```
-
-**Not ready**:
-```
-# Reflection Report: add-feature-x
-
-## Criteria Status
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| API endpoint works | partial | Returns 500 on edge cases |
-| Tests pass | unmet | 3 failing tests |
-
-## Scope Analysis
-- Proposed files: 5
-- Actual files: 12
-- Deviation: 140%
-⚠️ SCOPE DRIFT DETECTED - requires human review
-
-## Philosophy Alignment
-- Mode: garage
-- Anti-patterns detected:
-  ⚠️ PHILOSOPHY VIOLATION (garage mode)
-  - Anti-pattern: Over-engineering
-  - Evidence: Added abstraction layer not in proposal
-  - Mode principle violated: "Working > perfect"
-
-## Self-Assessment
-**Question**: Am I solving the right problem?
-**Answer**: Partially - core feature works but scope expanded significantly.
-
-## Deviations Requiring Attention
-⚠️ DEVIATION: SCOPE_DRIFT
-- Expected: 5 files
-- Actual: 12 files
-- Impact: Review burden increased, potential feature creep
-- Recommendation: Discuss at gate
-
-⚠️ DEVIATION: CRITERIA_UNMET
-- Expected: All tests pass
-- Actual: 3 failing tests
-- Impact: Cannot merge without fixes
-- Recommendation: Fix now
-
-## Recommendation
-NOT READY - unmet criteria and scope drift require attention
-```
+See `reference.md` for detailed examples and patterns.

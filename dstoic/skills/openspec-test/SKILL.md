@@ -1,121 +1,36 @@
 ---
 name: openspec-test
-description: "Layered verification for OpenSpec changes. Use when: running tests after implementation, validating specific test layers, or checking test status."
+description: "Generic test executor for OpenSpec changes. Use when: running checkpoint verification at gates, executing test.md strategies."
 model: sonnet
-allowed-tools: [Glob, Grep, Read, Edit, Bash, TodoWrite]
+allowed-tools: [Glob, Grep, Read, Edit, Bash]
 ---
 
 # OpenSpec Test
 
-Layered verification engine for OpenSpec changes. Runs tests in order: smoke → integration → manual → PBT.
+Generic verification executor for OpenSpec gates. Follows test.md strategy literally - no improvisation.
 
-## Workflow: Detect → Run Layers → Report
+## Workflow: Read test.md → Validate → Execute → Log → Report
 
 ```mermaid
 flowchart LR
-    A["Detect framework"] --> B["Smoke tests"]
-    B --> C{"Pass?"}
-    C -->|Yes| D["Integration tests"]
-    C -->|No| X["Report failure"]
-    D --> E{"Pass?"}
-    E -->|Yes| F["Manual instructions"]
-    E -->|No| X
-    F --> G["PBT (if applicable)"]
-    G --> H["Report summary"]
-    X --> H
+    A["Read test.md"] --> B["Validate quality"]
+    B --> C{"Lazy patterns?"}
+    C -->|Yes| X["BLOCKED"]
+    C -->|No| D["Execute verification"]
+    D --> E["Write test-logs"]
+    E --> F["Report result"]
 
     classDef action fill:#C8E6C9,stroke:#388E3C,color:#000
     classDef decision fill:#FFF9C4,stroke:#FBC02D,color:#000
     classDef fail fill:#FFCDD2,stroke:#D32F2F,color:#000
-    class A,B,D,F,G,H action
-    class C,E decision
+    class A,B,D,E,F action
+    class C decision
     class X fail
 ```
 
-**Critical**: Stop on layer failure. No point running integration if smoke fails.
+**Critical**: test.md is source of truth. Checkpoint executes what test.md says, nothing more.
 
 ## Commands
-
-### test
-
-Run all test layers in order for a change.
-
-**Input**: `$ARGUMENTS` = `change-id`
-
-**Workflow**:
-1. Read `openspec/changes/{change-id}/proposal.md` for context
-2. Detect test framework (see Framework Detection)
-3. Run layers in order, stopping on first failure:
-   - **Smoke**: Run health check tests
-   - **Integration**: Run integration tests
-   - **Manual**: Output instructions (do not wait)
-   - **PBT**: Run property tests if framework detected
-4. Report summary
-
-**Output**:
-```
-🧪 Test Results: {change-id}
-
-Layer      | Status | Details
------------|--------|--------
-Smoke      | ✅/❌   | {count} tests
-Integration| ✅/❌   | {count} tests
-Manual     | 📋     | {n} instructions generated
-PBT        | ✅/⏭️   | {count} tests or "skipped"
-
-Overall: ✅ Ready for gate / ❌ Fix required
-```
-
-### layer
-
-Run a specific test layer only.
-
-**Input**: `$ARGUMENTS` = `change-id layer-name` (e.g., `add-feature integration`)
-
-**Valid layers**: `smoke`, `integration`, `manual`, `pbt`
-
-**Workflow**:
-1. Detect test framework
-2. Run only the specified layer
-3. Report results for that layer
-
-**Output**:
-```
-🧪 Layer: {layer-name} for {change-id}
-
-Status: ✅/❌
-Tests: {passed}/{total}
-Details: {summary}
-```
-
-### status
-
-Show test status summary.
-
-**Input**: `$ARGUMENTS` = `change-id`
-
-**Workflow**:
-1. Check for cached test results (if any)
-2. Report last known status per layer
-
-**No previous runs**:
-```
-🧪 Test Status: {change-id}
-
-No test runs recorded. Run: /openspec-test test {change-id}
-```
-
-**With history**:
-```
-🧪 Test Status: {change-id}
-
-Layer      | Last Run   | Status
------------|------------|-------
-Smoke      | {datetime} | ✅/❌
-Integration| {datetime} | ✅/❌
-Manual     | pending    | 📋 Awaiting human
-PBT        | {datetime} | ✅/⏭️
-```
 
 ### checkpoint
 
@@ -125,223 +40,129 @@ Run scoped verification for a single section after gate pause.
 
 **Workflow**:
 1. Read `openspec/changes/{change-id}/tasks.md`, find section `## {section-number}. ...`
-2. Identify affected files from task descriptions + `git diff`
-3. Run test layers scoped to section's affected files (see Philosophy Check table for mode-specific layers)
-4. Evaluate result:
+2. Read `openspec/changes/{change-id}/test.md` for verification strategy (see Missing test.md section if not found)
+3. **Validate test.md quality**: Check for lazy patterns (grep "keyword", [ -f file ], wc -l, echo). If found → BLOCKED with suggestion to use functional verification
+4. For each task in section, execute verification per test.md strategy
+5. Write results to `test-logs/gate-{n}.md` (see Test Log Format section)
+6. Evaluate result:
    - **PASS**: Mark `### GATE {n}: desc` → `### GATE {n}: desc [PASS]` in tasks.md
    - **PARTIAL**: Report failures, suggest fixes
    - **BLOCKED**: Report blockers, suggest options
 
 ```mermaid
 flowchart LR
-    A["Read section"] --> B["ID affected files"]
-    B --> C["Smoke tests"]
-    C --> D{"Result?"}
-    D -->|PASS| E["Mark gate [PASS]"]
-    D -->|PARTIAL| F["Report failures"]
-    D -->|BLOCKED| G["Suggest options"]
+    A["Read tasks.md"] --> B["Read test.md"]
+    B --> C["Validate quality"]
+    C --> D["Execute per test.md"]
+    D --> E["Write test-logs"]
+    E --> F{"Result?"}
+    F -->|PASS| G["Mark gate [PASS]"]
+    F -->|PARTIAL/BLOCKED| H["Report + options"]
 
     classDef action fill:#C8E6C9,stroke:#388E3C,color:#000
     classDef decision fill:#FFF9C4,stroke:#FBC02D,color:#000
-    classDef fail fill:#FFCDD2,stroke:#D32F2F,color:#000
-    class A,B,C,E action
-    class D decision
-    class F,G fail
+    class A,B,C,D,E,G action
+    class F decision
+    class H action
 ```
 
-**PASS output**:
-```
-✅ GATE {n}: {description} [PASS]
-Smoke: {passed}/{total} tests passed
-→ Continue: /openspec-develop section {change-id} {n+1}
-```
+**Output**: PASS/PARTIAL/BLOCKED with status and next actions (see reference.md for formats)
 
-**PARTIAL output**:
-```
-⚠️ GATE {n}: {description} [PARTIAL]
-Smoke: {passed}/{total} tests passed
-Failures:
-- {test}: {reason}
-→ Fix and re-run: /openspec-test checkpoint {change-id} {n}
-```
+### Missing test.md
 
-**BLOCKED output**:
+If `test.md` not found, warn and provide options — never improvise verification:
+
 ```
-🚫 GATE {n}: {description} [BLOCKED]
-Reason: {blocker description}
+⚠️ No test.md found for {change-id}
+Cannot verify gate without test strategy.
+
 Options:
-→ Fix blocker and retry: /openspec-test checkpoint {change-id} {n}
+→ Generate test.md: /openspec-plan tasks {change-id}
 → Skip gate: /openspec-develop section {change-id} {n+1}
-→ Replan: /openspec-replan {change-id}
 ```
 
-## Philosophy Check
+**Mode-specific behavior**:
+- **garage**: Warn but allow skip if change is simple/obvious
+- **scale/maintenance**: Block until test.md exists
 
-Before testing, read `openspec/project.md` → Execution Philosophy → `mode`.
+### Lazy Pattern Detection
 
-**Mode-specific testing behavior**:
+Before executing test.md, scan verification steps for lazy patterns:
 
-| Mode | Smoke | Integration | Manual | PBT | Checkpoint |
-|------|-------|-------------|--------|-----|------------|
-| garage | Required | Best-effort | Critical paths only | Skip unless exists | Smoke only, BLOCKED = skip allowed |
-| scale | Required | Required | Full coverage | Recommended | Smoke + integration, BLOCKED = must resolve |
-| maintenance | Required | Required | Full coverage | Required for changes | Smoke + integration, BLOCKED = must resolve |
+**Lazy patterns** (structural checks):
+- `grep "keyword" file` - checks word exists, not behavior
+- `[ -f file ]` or `ls file` - checks file exists, not content
+- `wc -l > 0` - checks non-empty, not correctness
+- `echo "looks good"` - no actual verification
 
-**Garage mode shortcuts**:
-- Skip PBT unless tests already exist
-- Manual tests only for user-facing critical paths
-- Integration tests best-effort (don't block on flaky tests)
+**If detected** → BLOCKED:
+```
+🚫 GATE {n}: [BLOCKED]
+Reason: Lazy verification in test.md
 
-**Scale/maintenance**: Full rigor, no shortcuts.
+Task {x}: Uses grep "keyword" - checks word exists, not behavior
+Suggestion: Read file section, verify specific content/structure
 
-## Framework Detection
-
-Detect test framework from project files:
-
-```yaml
-javascript:
-  files: [package.json]
-  frameworks:
-    jest: '"jest"' in dependencies/devDependencies
-    vitest: '"vitest"' in dependencies/devDependencies
-    mocha: '"mocha"' in dependencies/devDependencies
-  default: "npm test"
-
-python:
-  files: [pyproject.toml, pytest.ini, setup.py]
-  frameworks:
-    pytest: pytest.ini exists OR "pytest" in pyproject.toml
-    unittest: test_*.py pattern without pytest
-  default: "pytest"
-
-rust:
-  files: [Cargo.toml]
-  default: "cargo test"
-
-go:
-  files: [go.mod]
-  default: "go test ./..."
+→ Update test.md with functional verification
+→ Re-run: /openspec-test checkpoint {change-id} {n}
 ```
 
-**Fallback**: If no framework detected, prompt for test command:
-```
-⚠️ No test framework detected
-Project has: {detected config files}
+**Functional alternatives** (see openspec-plan/reference.md anti-pattern table)
 
-What command runs tests? (or 'skip' to skip automated tests)
-```
+### Test Log Format
 
-## Test Layers
+Write verification results to `openspec/changes/{change-id}/test-logs/gate-{n}.md`:
 
-```yaml
-layers:
-  smoke:
-    purpose: Basic health checks
-    examples: ["app starts", "endpoints respond", "no crash on basic input"]
-    auto: true
-
-  integration:
-    purpose: Component interactions
-    examples: ["API contracts match", "DB state consistent", "error handling"]
-    auto: true
-
-  manual:
-    purpose: Human-verified critical paths
-    examples: ["UI flows", "user journeys", "edge cases needing judgment"]
-    auto: false  # Generate instructions only
-
-  pbt:
-    purpose: Property-based edge case discovery
-    examples: ["invariants hold", "no unexpected states", "boundary conditions"]
-    auto: true
-    frameworks: [hypothesis, fast-check, proptest]
-```
-
-## Test Command Patterns
-
-When running tests, use framework-appropriate commands:
-
-```bash
-# Smoke (fast, basic)
-npm test -- --grep "smoke"
-pytest -m smoke
-cargo test --lib
-
-# Integration (slower, thorough)
-npm test -- --grep "integration"
-pytest -m integration
-cargo test --test '*'
-
-# PBT (property-based)
-npm test -- --grep "property"
-pytest -m "property or hypothesis"
-cargo test --features proptest
-```
-
-Adapt patterns based on detected framework and existing test structure.
-
-## Manual Test Instructions
-
-For manual layer, generate human-executable steps:
-
-**Format**:
 ```markdown
-## Manual Test Instructions: {change-id}
+# Test Log: GATE {n} — {description}
+**Run**: {timestamp}
+**Mode**: {mode} ({layers})
+**Result**: ✅ PASS / ⚠️ PARTIAL / ❌ FAIL
 
-### Test 1: {test name}
-**Purpose**: {what this validates}
-**Steps**:
-1. {step 1}
-2. {step 2}
-3. {step 3}
+## {task-number} {task outcome}
+- **Action**: {what agent actually did}
+- **Output**: {raw output, truncated if large}
+- **Result**: ✅ / ❌ {brief}
 
-**Expected**: {expected outcome}
-**Pass criteria**: {what constitutes pass}
-
----
-
-### Test 2: {test name}
+## {task-number} {task outcome}
 ...
 
 ---
-
-When complete, report results:
-- Test 1: PASS / FAIL (reason)
-- Test 2: PASS / FAIL (reason)
+Duration: {time}
 ```
 
-## Exploration Strategy
+**On re-run**: Append new timestamped entry to same file, don't overwrite. Enables retry audit trail.
 
-Before testing, consult `openspec/project.md` → Exploration Strategy section:
+## Mode-Specific Behavior
 
-1. **Context sources**: Read `primary` files (project.md, proposal.md, specs)
-2. **Must-read files**: CLAUDE.md, settings.json (project constraints)
-3. **Test config**: Detect test framework from package.json, pytest.ini, cargo.toml, etc.
-4. **Existing tests**: Grep for test files to understand project test patterns
-5. **Philosophy**: Read Execution Philosophy section for current mode
+Read `openspec/project.md` → Execution Philosophy → `mode` for gate requirements:
 
-## Error Handling
+- **garage**: Warn if test.md missing, allow skip for simple changes
+- **scale/maintenance**: Block until test.md exists, require passing verification
 
-**Test failure**:
-```
-❌ Layer failed: {layer-name}
+## Test Progression Strategy
 
-Failed tests:
-- {test 1}: {reason}
-- {test 2}: {reason}
+**Mandatory first**: Smoke tests - basic sanity checks that change didn't break fundamentals (must pass before proceeding).
 
-Fix the failures before proceeding. Re-run: /openspec-test layer {change-id} {layer}
-```
+After smoke, consider **risk-based progression** from fast/cheap to slow/expensive:
 
-**No tests found**:
-```
-⚠️ No tests found for layer: {layer-name}
+**Typical progression** (context-dependent):
+1. **Smoke** - Basic sanity: app starts, endpoints respond, no crashes (mandatory, < 5s)
+2. **Unit** - Functions work in isolation (< 10s)
+3. **Integration** - Components interact correctly (< 30s)
+4. **E2E** - Full user flows work end-to-end (> 30s)
 
-This could mean:
-1. Tests not yet written for this change
-2. Test naming convention doesn't match expected pattern
+**Benefits**: Fail fast - smoke catches obvious breaks before expensive tests. Garage mode can stop after smoke, scale mode runs all.
 
-Options:
-- Write tests matching convention
-- Skip layer with: /openspec-test layer {change-id} {next-layer}
-```
+**Implementation**: test.md MUST start with smoke tests. Order remaining tests fast→slow. Future optimization: add `[quick]` / `[expensive]` tags for automated ordering.
+
+## Future: Framework-Specific Skills
+
+For projects with test frameworks (pytest/jest/cargo), create specialized skills:
+- `/test-pytest {change-id}` - Run pytest with framework detection
+- `/test-jest {change-id}` - Run jest with framework detection
+- `/test-cargo {change-id}` - Run cargo test with framework detection
+
+These can be referenced in test.md: "Run: /test-pytest --grep smoke"
+
+See reference.md for framework detection patterns, test layers, command examples.
