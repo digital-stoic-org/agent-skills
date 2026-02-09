@@ -9,7 +9,7 @@ set -euo pipefail
 # Assumption: Sessions last < 24 hours
 # ==============================================================================
 
-RETRO_ROOT="/praxis/.retro"
+RETRO_ROOT="${RETRO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)/.retro}"
 LOGS_DIR="$RETRO_ROOT/logs"
 
 # --- Source shared libraries ---

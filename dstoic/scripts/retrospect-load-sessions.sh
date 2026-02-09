@@ -10,7 +10,7 @@ set -euo pipefail
 # ==============================================================================
 
 # --- Configuration ---
-RETRO_ROOT="/praxis/.retro"  # Changed to absolute path
+RETRO_ROOT="${RETRO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)/.retro}"
 
 # --- Parse arguments ---
 FILTER_MODE=""

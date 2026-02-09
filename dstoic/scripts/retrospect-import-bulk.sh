@@ -11,7 +11,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMPORT_SCRIPT="$SCRIPT_DIR/retrospect-import-transcript.sh"
 CLAUDE_PROJECTS_DIR="$HOME/.claude/projects"
-RETRO_ROOT="/praxis/.retro"
+RETRO_ROOT="${RETRO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)/.retro}"
 
 # Default: not bulk import
 BULK_IMPORT=false

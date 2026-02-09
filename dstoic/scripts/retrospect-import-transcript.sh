@@ -10,7 +10,7 @@ set -euo pipefail
 # ==============================================================================
 
 # --- Configuration ---
-RETRO_ROOT="/praxis/.retro"  # Changed to absolute path
+RETRO_ROOT="${RETRO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)/.retro}"
 LOGS_DIR="$RETRO_ROOT/logs"
 
 # Maximum characters for tool output (target ~500 tokens = ~2000 chars)

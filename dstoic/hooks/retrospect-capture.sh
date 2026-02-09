@@ -11,8 +11,8 @@ set -euo pipefail
 # ==============================================================================
 
 # --- Configuration ---
-# NOTE: Customize RETRO_ROOT for your setup
-RETRO_ROOT="${RETRO_ROOT:-$HOME/.retro}"  # Default to ~/.retro, override via env var
+# RETRO_ROOT: centralized at git root of CLAUDE_PROJECT_DIR
+RETRO_ROOT="${RETRO_ROOT:-$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null)/.retro}"
 LOGS_DIR="$RETRO_ROOT/logs"  # Keep logs centralized (only for recovery.log)
 
 # --- Source shared libraries ---
