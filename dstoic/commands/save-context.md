@@ -2,7 +2,7 @@
 description: Save session to CONTEXT-llm.md with conversation summary
 allowed-tools: Bash, Read, Write, AskUserQuestion, TaskList
 argument-hint: "[stream-name] [description]"
-model: sonnet
+model: haiku
 ---
 
 # Save Context

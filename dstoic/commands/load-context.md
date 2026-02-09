@@ -2,7 +2,7 @@
 description: Resume session from CONTEXT-llm.md
 allowed-tools: Bash, Read, AskUserQuestion
 argument-hint: "[stream-name] [--full]"
-model: sonnet
+model: haiku
 ---
 
 # Load Context

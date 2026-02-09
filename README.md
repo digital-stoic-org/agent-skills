@@ -6,7 +6,7 @@
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives, investigation | ✅ v0.1.63 |
+| [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives, investigation | ✅ v0.1.64 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
 | ... | More planned | 🔜 |
 
