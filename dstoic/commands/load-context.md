@@ -1,6 +1,6 @@
 ---
 description: Resume session from CONTEXT-llm.md
-allowed-tools: Bash, Read, Glob, TaskCreate, TaskUpdate, TaskList, AskUserQuestion
+allowed-tools: Bash, Read, AskUserQuestion
 argument-hint: "[stream-name] [--full]"
 model: sonnet
 ---
@@ -9,307 +9,110 @@ model: sonnet
 
 Load session state from `CONTEXT-{stream}-llm.md` and optionally expand full resources.
 
-**Speed**: < 5 seconds (default), 8-12 seconds (--full)
+**Speed**: < 3 seconds (default), 5-8 seconds (--full)
+
+## ⚡ Performance Rules
+
+**CRITICAL — follow these rules to minimize latency:**
+
+1. **Use `rtk` for ALL shell commands** — never raw git/ls/grep
+2. **Parallel tool calls** — make ALL independent tool calls in a single message
+3. **Minimize round-trips** — batch reads, batch task creates, batch updates
+4. **No unnecessary synthesis** — present parsed YAML directly, don't rephrase
+5. **NO progress tasks** — load progress is shown in final report only, don't pollute task list
 
 ## Workflow
 
-### 0. Parse Arguments & Detect Streams
+### Phase 1: Detect & Read (parallel — ONE message)
 
-Parse `$ARGUMENTS`:
-- `--full` flag → deep expansion mode
-- Stream name → specific stream to load
-- Empty → detect available streams
+**Before tool calls, output**: `🔍 Detecting streams and loading context...`
 
-**Stream detection**:
-```bash
-# List all context files
-ls -t CONTEXT-*llm.md 2>/dev/null
+**IMPORTANT: Make ALL of these tool calls simultaneously in a single response.**
 
-# Extract stream names (sorted by modification time)
-# CONTEXT-llm.md → "default"
-# CONTEXT-baseline-llm.md → "baseline"
-# CONTEXT-pricing-v2-llm.md → "pricing-v2"
+```
+Bash (all in one):
+  - List streams: rtk ls -t CONTEXT-*llm.md || true
+  - Find test scripts: for f in scripts/test scripts/tests script/test script/tests test.sh; do [ -x "$f" ] && echo "TEST_SCRIPT=$f" && break; done
+
+Read: CONTEXT-{stream}-llm.md (if stream known from $ARGUMENTS)
 ```
 
-**Decision tree**:
-```
-IF explicit stream name in $ARGUMENTS:
-    → Load that stream directly (CONTEXT-{stream}-llm.md or CONTEXT-llm.md for "default")
-    → Error if file doesn't exist
+Detect streams and read context simultaneously.
 
-IF only CONTEXT-llm.md exists:
-    → Load it directly (no menu)
-    → Backward compatible behavior
+If `$ARGUMENTS` contains an explicit stream name:
+- Read `CONTEXT-{stream}-llm.md` directly (or `CONTEXT-llm.md` for "default")
 
-IF multiple CONTEXT-*-llm.md files exist:
-    → AskUserQuestion with stream list
-    → Include timestamps for each
-    → Auto-select if only one
+**Otherwise** — wait for Phase 1 results to determine which file to read.
 
-IF no context files exist:
-    → Report error, suggest /save-context
-```
+### Phase 1b: Stream Selection (only if needed)
 
-### 1. Stream Selection (if needed)
-
-When multiple streams exist and no explicit selection:
+If multiple streams and no explicit selection:
 
 ```
 AskUserQuestion:
   question: "Which stream would you like to load?"
   header: "Stream"
-  options:
-    - label: "default (2026-01-26 15:42)"
-      description: "Main context file (CONTEXT-llm.md)"
-    - label: "baseline (2026-01-26 14:30)"
-      description: "Fork point from /create-context"
-    - label: "stream1 (2026-01-26 16:10)"
-      description: "Working branch"
+  options: [streams with timestamps from Phase 1]
 ```
 
-**Filename resolution**:
+Then Read the selected file.
+
+**Filename resolution**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
+
+### Phase 2: Expand Resources (if --full)
+
+**Before tool calls, output**: `📂 Expanding full resources...`
+
+**DO NOT restore tasks** — they're informational context only, not actual tasks to recreate.
+
+If `--full` flag present, make parallel Read calls in ONE message:
+- OpenSpec project.md (if referenced)
+- OpenSpec proposal.md (if referenced)
+- OpenSpec tasks.md (if referenced)
+- Top 3 hot files from Files section
+- .ctx/manifest.yaml (if referenced)
+
+### Phase 3: Format Resume Report
+
+**Before report, output**: `📊 Preparing resume report...`
+
+**Report structure** (skip empty sections):
+
 ```
-"default" → CONTEXT-llm.md
-"baseline" → CONTEXT-baseline-llm.md
-"{name}" → CONTEXT-{name}-llm.md
-```
-
-### 2. Check Context File Exists
-
-```bash
-# Based on resolved filename
-[ -f "$context_file" ] && echo "found" || echo "not found"
-```
-
-If not found, report and exit with helpful message.
-
-### 3. Read Context File
-
-Parse YAML sections:
-- Stream name (from `stream:` field or filename)
-- Project reference (if exists)
-- Manifest reference (if exists)
-- Git state
-- OpenSpec status
-- Tasks (session TaskCreate state)
-- NextTasks queue
-- Session summary
-- Current focus
-- Hot files
-
-### 4. Restore Task State
-
-If `Tasks` section exists in context file with `active: true`:
-1. Extract all items from `items` array
-2. Sort by dependencies (topological sort - tasks with no blockedBy first)
-3. Create tasks in order:
-   a. `TaskCreate` with subject and activeForm
-   b. Build ID remap table (old ID → new ID)
-4. After all created, set dependencies:
-   a. `TaskUpdate` to set blocks/blockedBy (using remapped IDs)
-5. Set status for non-pending tasks:
-   a. `TaskUpdate` to set status to in_progress if needed
-
-**Dependency ordering algorithm:**
-```
-ready = [tasks with empty blockedBy]
-result = []
-while ready not empty:
-    task = ready.pop()
-    result.append(task)
-    for t in remaining tasks:
-        if task.id in t.blockedBy:
-            remove task.id from t.blockedBy
-            if t.blockedBy now empty:
-                ready.append(t)
-return result
-```
-
-**ID Remapping:**
-```
-id_map = {}  # old_id → new_id
-for task in sorted_tasks:
-    new_task = TaskCreate(subject, activeForm)
-    id_map[task.id] = new_task.id
-
-# Apply dependencies with remapped IDs
-for task in sorted_tasks:
-    if task.blocks or task.blockedBy:
-        TaskUpdate(
-            taskId=id_map[task.id],
-            addBlocks=[id_map[b] for b in task.blocks],
-            addBlockedBy=[id_map[b] for b in task.blockedBy]
-        )
-```
-
-**Rules:**
-- Skip if `active: false` or section missing
-- Don't restore `completed_recent` items (informational only)
-- Skip dependency references to non-existent tasks
-
-### 5. Expand Resources (if --full)
-
-Check for `--full` in `$ARGUMENTS`.
-
-If `--full`:
-```bash
-# Full git diff
-git diff main..HEAD 2>/dev/null || git diff HEAD~5..HEAD
-
-# Read OpenSpec project.md (if referenced in context file)
-# Read OpenSpec proposal (if path in context file)
-# Read OpenSpec tasks (if path in context file)
-# Read top 3 hot files from Files section
-# Read .ctx/manifest.yaml (if referenced)
-```
-
-### 6. Test Script Detection
-
-```bash
-for f in scripts/test scripts/tests script/test script/tests test.sh; do
-  [ -x "$f" ] && echo "TEST_SCRIPT=$f" && break
-done
-```
-
-Report path only (user runs separately).
-
-If OpenSpec tasks exist, count manual checklist progress.
-
-### 7. Format Resume Report
-
-Output human-friendly report (emoji allowed, prose allowed).
-
-```markdown
 # 🔄 Session Resume: [branch-name]
 
-**Stream**: [stream-name]
-**Saved**: [timestamp]
-**Focus**: [focus statement]
-**Goal**: [goal statement]
-
-## 📂 Available Streams
-
-[IF multiple streams exist]:
-- `default` (2026-01-26 15:42) ← loaded
-- `baseline` (2026-01-26 14:30)
-- `stream1` (2026-01-26 16:10)
-
-[IF single stream]:
-(single context file)
-
-## 🎯 Project Context
-
-[IF openspec/project.md referenced]:
-**Vision**: [1-2 sentence summary from project.md]
-**Reference**: `openspec/project.md` (see file for full architecture/patterns)
-
-[IF .ctx/manifest.yaml referenced]:
-**Manifest**: `.ctx/manifest.yaml` (source organization)
-
-[IF --full: include key sections from project.md - Vision, Architecture, Trust Zones]
-
-## 📊 Git
-
-- Branch: `[branch]`
-- Status: [M files modified, A added, D deleted]
-- Ahead of main: [n] commits
-- Recent commits:
-  - [hash] [msg]
-  - [hash] [msg]
-  - [hash] [msg]
-- Changes: +[n] -[n] across [n] files
-
-[IF --full: show condensed git diff --stat output]
-
-## 🎯 Active Work
-
-[IF OpenSpec active]:
-**OpenSpec**: [change-id] - [title]
-- Status: [in_progress/pending]
-- Next task: [next_task from CONTEXT]
-- Progress: [done]/[total] tasks complete
-
-[IF --full: show proposal summary from proposal.md]
-
-## 📋 Tasks Restored
-
-[IF Tasks section had active: true]:
-✅ Restored [n] tasks via TaskCreate
-- 🔄 [in_progress: subject]
-- ⏳ [pending: subject] (blocked by #[remapped_id])
-
-[IF no tasks to restore]:
-No active tasks from previous session.
-
-## ✅ NextTasks
-
-Next 3 items:
-1. [task 1] (from [source])
-2. [task 2] (from [source])
-3. [task 3] (from [source])
-
-## 💬 Session Context
-
-**What Happened**:
-[Summarize progression from CONTEXT - 2-3 sentences]
-
-**Key Decisions**:
-[List 2-3 main decisions with rationale]
-
-**Thinking Process**:
-[1-2 key insights or trade-offs]
-
-[IF unexpected events exist]:
-**Unexpected**:
-[List pivots/corrections]
-
-## 📁 Hot Files
-
-[List top 5-10 files with their roles]
-
-[IF --full: show snippet of top 3 files]
-
-## 🧪 Tests
-
-[IF test script found]:
-- Script: `[path]` (run with ./[path])
-
-[IF manual checklist exists]:
-- Manual: [x]/[y] items checked
-
-## 🎯 Next Step
-
-[1 sentence recommendation based on next task + current focus]
+Stream/Saved/Focus/Goal (always show)
+📂 Available Streams (if multiple)
+🎯 Project Context (if refs exist)
+🎯 Active Work (if OpenSpec active)
+📋 Task Snapshot (if tasks saved)
+✅ NextTasks (always show top 3)
+💬 Session Context (always show)
+📁 Hot Files (always show)
+🧪 Tests (if script found)
+🎯 Next Step (always show)
 ```
 
-Skip empty sections entirely.
-
-### 8. Suggest Next Action
-
-Based on:
-- Restored tasks (highest priority if `in_progress` exists)
-- Next task from NextTasks section
-- Current focus from Focus section
-- Git dirty state
-- Test script availability
-
-Provide specific, actionable next step. If a task was restored with `in_progress` status, that becomes the immediate focus.
+**Formatting principles**:
+- Parse YAML directly, don't re-synthesize
+- Expand inline objects: `{done: 5, active: 2}` → "5 done, 2 active"
+- Lists from YAML arrays without re-ordering
+- Emoji-rich but concise
+- **Next Step**: Single sentence action based on NextTasks[0] + Focus.immediate
 
 ## Flags
 
-**Default** (no args): Minimal summary
+**Default** (no args): Fast resume
 - Detect streams, prompt if multiple
-- Just read context file
-- Parse and format
-- < 5 seconds
+- Read context file, display fancy snapshot
+- Direct data presentation
+- < 3 seconds
 
 **`--full`**: Deep expansion
-- Read full OpenSpec proposal
-- Read full OpenSpec tasks
-- Run full git diff
+- Read full OpenSpec proposal + tasks
 - Read top 3 hot files
 - Read manifest.yaml if exists
-- 8-12 seconds
+- 5-8 seconds
 
 **`[stream-name]`**: Direct load
 - Load specific stream without menu
@@ -319,45 +122,33 @@ Provide specific, actionable next step. If a task was restored with `in_progress
 ## Stream Management
 
 **Available streams display**:
-```bash
-# Get all context files with timestamps
-for f in CONTEXT-*llm.md; do
-  if [ "$f" = "CONTEXT-llm.md" ]; then
-    stream="default"
-  else
-    stream=$(echo "$f" | sed 's/CONTEXT-\(.*\)-llm.md/\1/')
-  fi
-  timestamp=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f")
-  date=$(date -d "@$timestamp" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$timestamp" "+%Y-%m-%d %H:%M")
-  echo "$stream ($date)"
-done
-```
+- Phase 1 uses `rtk ls -t CONTEXT-*llm.md` for fast timestamp retrieval
+- `rtk` provides optimized output with filenames and modification times
+- No `date` command forks needed - timestamps come from rtk's internal implementation
+- For AskUserQuestion: parse rtk output to extract stream names and timestamps
 
-**Cross-platform note**: Uses `stat` with fallback for macOS vs Linux.
+## Meta-Awareness: What This Command Consumes
 
-## Notes
+**Input format**: Token-optimized YAML from `/save-context` (no emoji, inline objects)
+**Audience**: Human user resuming work
+**Purpose**: Transform LLM-optimized context → human-friendly resume report
 
-- Use Sonnet model (needs to synthesize summary, interpret context, suggest next steps)
-- Output is human-friendly (emoji, prose)
-- CONTEXT-*-llm.md is LLM-optimized input
-- Resume report is user-facing output
-- **Stream management:**
-  - Detect all CONTEXT-*-llm.md files
-  - AskUserQuestion if multiple (with timestamps)
-  - Direct load if single or explicit stream name
-  - Show available streams in report header
-- **Task integration:**
-  - If `Tasks` section has `active: true`: restore via TaskCreate/TaskUpdate
-  - Topological sort ensures dependencies created in correct order
-  - ID remapping preserves dependency relationships with new IDs
-  - Restored `in_progress` task becomes immediate next step
-  - Skip `completed_recent` (informational context only)
-  - Report restoration status in resume output
-- **OpenSpec integration:**
-  - If project.md referenced: read and summarize vision (default mode)
-  - If --full: include key architecture sections from project.md
-  - Project context section shows alignment between session and project goals
-- If no context files exist, suggest running `/save-context` first
+**Context file characteristics**:
+- Clean YAML structure (parse directly, don't re-analyze)
+- File references (don't auto-load unless --full)
+- Aggregated progression (already synthesized)
+- Inline objects: `{done: 5, active: 2}` (expand to prose)
+
+**Transformation rules**:
+- YAML → emoji-rich prose
+- Compact → expanded (e.g., "done: 5" → "✅ 5 completed")
+- References → links (e.g., "proposal: path/to/file.md" → "**Proposal**: `path/to/file.md`")
+- Tasks section → display only, NEVER restore via TaskCreate
+
+**Report output principles**:
+- Skip empty sections entirely (don't show "No X" placeholders)
+- Present data directly from parsed YAML (no re-interpretation)
+- Suggest next action based on NextTasks + Focus
 
 ## Error Messages
 

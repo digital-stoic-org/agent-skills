@@ -1,6 +1,6 @@
 ---
 description: Save session to CONTEXT-llm.md with conversation summary
-allowed-tools: Bash, Read, Glob, Write, AskUserQuestion
+allowed-tools: Bash, Read, Write, AskUserQuestion, TaskList
 argument-hint: "[stream-name] [description]"
 model: sonnet
 ---
@@ -9,338 +9,152 @@ model: sonnet
 
 Save current session state to `CONTEXT-{stream}-llm.md` with LLM-optimized format.
 
-**Target**: 1500-2000 tokens MAX
-**Speed**: 8-12 seconds
+**Target**: 1200-1500 tokens MAX
+**Speed**: 3-5 seconds
+
+## ⚡ Performance Rules
+
+**CRITICAL — follow these rules to minimize latency:**
+
+1. **Use `rtk` for ALL shell commands** — never raw git/ls/grep
+2. **Parallel tool calls** — make ALL independent tool calls in a single message
+3. **Minimize round-trips** — gather all data in phase 1, reason once in phase 2, write in phase 3
+4. **No unnecessary synthesis** — output structured data directly
+5. **NO progress tasks** — save operation is atomic, use status messages only
 
 ## Workflow
 
-### 0. Parse Arguments & Determine Stream
+### Phase 1: Gather Data (parallel — ONE message)
 
-Parse `$ARGUMENTS`:
-- First word = stream name (if valid)
-- Remaining words = description (optional)
+**Before tool calls, output**: `🔍 Gathering session data...`
 
-**Stream name validation**:
-```bash
-# Valid: alphanumeric, hyphens, underscores, 1-50 chars
-[[ "$stream" =~ ^[a-zA-Z0-9_-]{1,50}$ ]]
-```
-
-**Decision tree**:
-```
-IF $ARGUMENTS is empty:
-    → List existing streams
-    → AskUserQuestion: "Stream name? (Enter for default)"
-    → Options: "default", existing streams, "Other"
-
-IF $ARGUMENTS starts with valid stream name:
-    → Use that stream name
-    → Rest of args = description
-
-IF $ARGUMENTS is just description (invalid as stream name):
-    → Use "default" stream
-    → All args = description
-```
-
-**Existing streams detection**:
-```bash
-ls CONTEXT-*-llm.md 2>/dev/null | sed 's/CONTEXT-\(.*\)-llm.md/\1/' | grep -v '^$'
-```
-
-**Stream → filename mapping**:
-```
-"default" or "" → CONTEXT-llm.md
-"baseline"      → CONTEXT-baseline-llm.md
-"pricing-v2"    → CONTEXT-pricing-v2-llm.md
-```
-
-### 1. Git Context
-
-```bash
-git branch --show-current
-git log --oneline -5
-git status --short
-git diff --stat main..HEAD 2>/dev/null || git diff --stat
-```
-
-### 2. OpenSpec Context
-
-```bash
-[ -d "openspec" ] && openspec list || echo "none"
-[ -f "openspec/project.md" ] && echo "project.md exists" || echo "no project.md"
-```
-
-**If `openspec/project.md` exists:**
-- This is the golden source for vision/architecture/patterns
-- CONTEXT-llm.md will reference it, not duplicate it
-
-**If active change exists:**
-- Read ONLY title from `openspec/changes/[id]/proposal.md`
-- Read next unchecked task from `openspec/changes/[id]/tasks.md`
-- Count progress: `grep -c '\[x\]'` vs `grep -c '\[ \]'`
-
-### 3. Task State
-
-Capture the current TaskCreate/TaskList state from the session (if active):
-- Call `TaskList` to get all tasks
-- Serialize: id, subject, status, blocks, blockedBy, activeForm
-- Include completed tasks only if recent (last 3)
-
-Format:
-```yaml
-tasks:
-  - id: "1"
-    subject: [brief title]
-    status: in_progress | pending
-    blocks: [2, 3]
-    blockedBy: []
-    activeForm: [present continuous form]
-```
-
-**Rules:**
-- Skip if TaskList returns empty
-- Max 10 items (prioritize in_progress > pending > recent completed)
-- Skip description field (too verbose for token budget)
-- Preserve blocks/blockedBy for dependency restoration
-
-### 4. Next Task Inference
-
-Infer next 3 tasks from:
-- OpenSpec next tasks (if exists)
-- TaskList pending items (if exists)
-- Recent conversation (what's being worked on)
-- Logical next steps
-
-Format:
-```yaml
-next:
-  - source: openspec | tasks | inferred
-    task: [description]
-```
-
-### 5. Conversation Summary
-
-Analyze last 15-20 messages. Extract:
-
-**Progression** (aggregated timeline):
-- What was analyzed/loaded
-- Key evaluations/decisions
-- Major pivots/changes
-- Current state
-
-**Decisions** (key choices made):
-- What was decided
-- Rationale/reasoning
-
-**Thinking** (reasoning process):
-- Why certain approaches chosen
-- Trade-offs considered
-- Insights gained
-
-**Unexpected** (pivots/surprises):
-- User corrections
-- Changed requirements
-- Surprising findings
-
-Token budget: 780 tokens for Session section
-
-### 6. Hot Files
-
-Detect max 10 files discussed/read/edited this session.
-
-### 7. Current Focus & Goal
-
-**If `openspec/project.md` exists:**
-- Read vision/goal from project.md (lines 1-20 typically contain ## 🎯 Vision)
-- Derive brief goal statement aligned with project vision
-- Focus = current task in context of that goal
-
-**Otherwise (non-OpenSpec projects):**
-- Infer minimal big picture from conversation
-- Focus = what's being worked on now
-
-Synthesize 1-2 sentences:
-- What task is active now
-- Brief goal aligned with project (if OpenSpec) or inferred
-- Any challenges
-
-### 8. Write Context File
-
-**Filename determination**:
-```
-stream == "default" or stream == "" → CONTEXT-llm.md
-otherwise                           → CONTEXT-{stream}-llm.md
-```
-
-Use LLM-optimized format (see template below).
-
-### 9. Report
+**IMPORTANT: Make ALL of these tool calls simultaneously in a single response.**
 
 ```
-Saved session context to {filename}
+Bash (combined query):
+  echo "---OPENSPEC---"
+  [ -d "openspec" ] && rtk ls openspec/changes/ 2>/dev/null || echo "none"
+  [ -f "openspec/project.md" ] && head -20 openspec/project.md || echo "no project.md"
+  echo "---STREAMS---"
+  rtk ls -t CONTEXT-*llm.md 2>/dev/null || echo "none"
+
+TaskList: Get current task state
+```
+
+If openspec active change detected from Bash output, also Read in parallel:
+- `openspec/changes/[id]/proposal.md` (first 10 lines for title)
+- `openspec/changes/[id]/tasks.md` (scan for progress)
+
+#### Argument parsing (LLM reasoning, not a tool call)
+
+Determine stream name from `$ARGUMENTS`:
+- First word = stream name (if valid: `^[a-zA-Z0-9_-]{1,50}$`)
+- Remaining = description
+- Empty → AskUserQuestion with existing streams (defer to after data gathering if needed)
+
+**Stream → filename**: `"default"/"" → CONTEXT-llm.md`, otherwise `CONTEXT-{stream}-llm.md`
+
+### Phase 2: Analyze & Synthesize (ONE reasoning pass)
+
+**Before reasoning, output**: `💭 Analyzing session and synthesizing context...`
+
+With ALL data gathered, perform a SINGLE analysis pass to produce ALL of these sections at once:
+
+**Analyze the conversation (last 15-20 messages) and gathered data. Fill ALL sections:**
+
+1. **NextTasks** — Infer next 3 tasks from OpenSpec, TaskList pending, conversation, logical next steps
+2. **Session** — Extract from conversation:
+   - progression: aggregated timeline (what happened)
+   - decisions: key choices + rationale
+   - thinking: reasoning process, trade-offs, insights
+   - unexpected: pivots, user corrections, surprises
+3. **Hot Files** — max 10 files discussed/read/edited this session
+4. **Focus & Goal** — synthesize from project vision (if OpenSpec) + conversation:
+   - 1-2 sentence focus (active task + challenges)
+   - Goal aligned with project vision or inferred
+
+**Token budget**: 780 tokens for Session section, 1200-1500 total output.
+
+### Phase 3: Write & Report
+
+**Before writing, output**: `💾 Writing context file...`
+
+Write the context file using the template below, then report.
+
+**Stream resolution** (if not yet resolved from Phase 1):
+- If `$ARGUMENTS` empty and multiple streams exist → AskUserQuestion now
+- Otherwise use determined stream name
+
+**Report** (enhanced with session summary):
+
+After writing context file, display report:
+
+```
+✅ Saved session context to {filename}
+
 Stream: {stream-name}
-Tokens: ~[estimate] (target: 1500-2000)
-Branch: [branch-name]
-Focus: [focus-statement]
+Tokens: ~{estimate} (target: 1200-1500)
 
-Existing streams: {list of all CONTEXT-*-llm.md}
+📊 Captured:
+  • Focus: {focus-statement}
+  • Hot files: {count} files
+  • Decisions: {count} key decisions
+  • Next tasks: {count} tasks queued
+  • Session events: {count} progression steps
+
+📁 Available streams: {list}
 ```
 
-## Template
+Example:
+```
+✅ Saved session context to CONTEXT-test6-llm.md
 
-```markdown
-# Session Context
+Stream: test6
+Tokens: ~580 (target: 1200-1500)
 
-saved: [ISO 8601 timestamp]
-stream: [stream-name]
-branch: [branch-name]
-focus: [1-2 sentence focus]
-goal: [brief goal aligned with project vision or inferred]
+📊 Captured:
+  • Focus: Validated optimized load-context implementation
+  • Hot files: 3 files
+  • Decisions: 1 key decision
+  • Next tasks: 3 tasks queued
+  • Session events: 5 progression steps
 
-## Project
-
-```yaml
-ref: openspec/project.md | n/a
-manifest: .ctx/manifest.yaml | n/a
-# If project.md exists, it contains: vision, architecture, patterns, roadmap
-# CONTEXT-llm.md focuses on ephemeral session state only
+📁 Available streams: CONTEXT-llm.md, test1-test6
 ```
 
-## Git
+## Template Structure
 
-```yaml
-branch: [name]
-dirty: {M: [n], A: [n], D: [n]}
-ahead_main: [n]
-recent:
-  - [hash]: [msg]
-  - [hash]: [msg]
-  - [hash]: [msg]
-  - [hash]: [msg]
-  - [hash]: [msg]
-diff_stat: "+[n] -[n] across [n] files"
-```
+**Sections**: Header (saved/stream/focus/goal) → Project → OpenSpec → Tasks → NextTasks → Session → Focus → Files → Refs
 
-## OpenSpec
+**Key principles**:
+- Token target: 1200-1500 MAX
+- Session section: 780 tokens max (progression/decisions/thinking/unexpected)
+- Tasks: Include in_progress + pending + 3 recent completed only
+- Files: Max 10 hot files with brief roles
+- Use YAML inline objects where possible: `{done: 5, active: 2, pending: 3}`
 
-```yaml
-active: [change-id] | none
-status: [in_progress | pending] | n/a
-title: [proposal title] | n/a
-next_task: [next unchecked task] | n/a
-proposal: openspec/changes/[id]/proposal.md | n/a
-tasks: openspec/changes/[id]/tasks.md | n/a
-progress: {done: [n], active: [n], pending: [n]} | n/a
-```
+**See existing CONTEXT-*-llm.md files for template format** (don't recreate from scratch, follow established pattern)
 
-## Tasks
+## Context Quality Self-Check
 
-```yaml
-# Active session TaskCreate state (if any)
-active: true | false
-items:
-  - id: "1"
-    subject: [brief title]
-    status: in_progress
-    blocks: []
-    blockedBy: []
-    activeForm: [present continuous form]
-  - id: "2"
-    subject: [brief title]
-    status: pending
-    blocks: []
-    blockedBy: [1]
-    activeForm: [present continuous form]
-# Include max 3 recent completed for context
-completed_recent:
-  - id: "0"
-    subject: [completed task title]
-```
+**Before writing, evaluate session significance**:
 
-## NextTasks
+✅ **Worth saving** (create context):
+- Non-trivial work completed (>1 file edited, meaningful decisions made)
+- Mid-stream checkpoint (need to switch tasks, resume later)
+- Learning/insights captured that inform future work
+- OpenSpec change in progress with active tasks
 
-```yaml
-next:
-  - source: openspec | tasks | inferred
-    task: [description]
+⚠️ **Marginal** (ask user):
+- Quick fix/simple task (1-2 file changes, obvious approach)
+- Exploration with no decisions yet (research phase, no conclusions)
 
-  - source: openspec | tasks | inferred
-    task: [description]
+❌ **Too small** (suggest skip):
+- Greeting/chat only
+- Single read/question answered
+- Pure troubleshooting with no resolution
 
-  - source: openspec | tasks | inferred
-    task: [description]
-```
-
-## Session
-
-```yaml
-progression:
-  - [aggregated action/analysis]
-  - [key evaluation/decision point]
-  - [major pivot/change]
-  - [current state]
-
-decisions:
-  [key_area]: [decision made]
-  rationale: [why this choice]
-  [another_area]: [decision made]
-  rationale: [reasoning]
-
-thinking:
-  - [insight/reasoning point]
-  - [trade-off considered]
-  - [approach rationale]
-
-unexpected:
-  - [user correction/pivot]
-  - [changed requirement]
-  - [surprising finding]
-```
-
-## Focus
-
-```yaml
-state: [current task/activity]
-goal: [what trying to achieve]
-challenges: [list of obstacles/questions]
-immediate: [next immediate step]
-```
-
-## Files
-
-```yaml
-hot:
-  - [path]: [role/purpose]
-  - [path]: [role/purpose]
-  - [path]: [role/purpose]
-```
-
-## Refs
-
-```yaml
-project: openspec/project.md | n/a
-proposal: openspec/changes/[id]/proposal.md | n/a
-tasks: openspec/changes/[id]/tasks.md | n/a
-full_diff: git diff main..HEAD
-test_script: [path] | n/a
-```
-```
-
-## Token Optimization Rules
-
-From CLAUDE.md:
-
-- Token-optimized: Strip prose, keep directives/facts/structure
-- Structured data: Clean YAML/JSON (no emoji)
-- Compact keys: short but clear
-- Inline objects: `{M: 2, A: 1}` not multi-line
-- Aggregated timeline: not tool-by-tool
-- References: pointers not inline content
-
-- NO emoji in CONTEXT-llm.md
-- NO prose paragraphs
-- NO decorative formatting
-- NO full proposals inline (pointer only)
+**If marginal or too small**: Output "📊 Session appears brief. Save context anyway?" and wait for confirmation.
 
 ## Stream Naming Conventions
 
@@ -358,22 +172,23 @@ From CLAUDE.md:
 - Longer than 50 characters
 - Empty string (use "default" explicitly)
 
-## Notes
+## Meta-Awareness: What This Command Produces
 
-- Use Sonnet model (conversation analysis requires reasoning)
-- Skip TODO.md entirely (use OpenSpec or infer)
-- **Stream management:**
-  - First arg is stream name if valid, else "default"
-  - AskUserQuestion if no args provided (list existing streams)
-  - Always include `stream:` field in output
-- **OpenSpec integration:**
-  - If `openspec/project.md` exists: reference it, don't duplicate vision/architecture
-  - Read project vision (lines 1-20) to align goal statement
-  - Active change: include both project.md AND proposal.md references
-  - Title + next task only (not full proposal content)
-- Session summary: 780 tokens max
-- Total output: 1500-2000 tokens MAX
-- Optional description: remaining args after stream name
+**Output format**: Token-optimized YAML (no emoji, no prose, inline objects)
+**Audience**: Future LLM sessions loading context via `/load-context`
+**Purpose**: Session state restoration, not documentation
+
+**What load-context expects**:
+- Clean YAML structure for parsing
+- File references (paths only, not content)
+- Aggregated progression (not tool-by-tool transcript)
+- Decision rationale (why, not just what)
+- Inline progress: `{done: 5, active: 2}` not multi-line
+
+**Token budget discipline**:
+- Session section often bloats — watch for redundancy between progression/decisions/thinking
+- Compress without losing key insights
+- Prefer structured data over narrative
 
 ## Related
 
