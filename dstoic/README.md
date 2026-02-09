@@ -10,6 +10,7 @@ flowchart LR
     B --> C["🔍 Retrospect"]
     C --> D["🔧 Edit Tools"]
     D --> E["🔧 Troubleshoot"]
+    E --> F["🔬 Investigate"]
 
     classDef default fill:#f9f9f9,stroke:#333,color:#000
 ```
@@ -21,6 +22,7 @@ flowchart LR
 | 3 | 🔍 **Retrospect** | learn from patterns |
 | 4 | 🔧 **Edit tools** | create skills/commands/agents |
 | 5 | 🔧 **Troubleshoot** | search-first debugging with learnings |
+| 6 | 🔬 **Investigate** | deep analysis for complex technical problems |
 
 ## 🚀 Quick Start
 
@@ -32,7 +34,7 @@ flowchart LR
 
 ## 📦 Version
 
-`0.1.61`
+`0.1.62`
 
 ---
 

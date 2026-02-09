@@ -4,13 +4,14 @@
 
 ## 📦 Version
 
-`0.1.61`
+`0.1.62`
 
 ## 🔗 Quick Links
 
 - [OpenSpec Workflow](../README-full.md#-openspec-workflow-7)
 - [Tool Orchestration](../README-full.md#-tool-orchestration-5)
 - [Troubleshoot](../README-full.md#-troubleshoot-1)
+- [Investigate](../README-full.md#-investigate-1)
 - [Context Management](../README-full.md#-context-management)
 - [Session Analysis](../README-full.md#-session-analysis-)
 - [Hooks](../README-full.md#-hooks)

@@ -49,7 +49,7 @@ Or install globally in `~/.claude/settings.json`.
 
 ---
 
-## 🛠️ Skills (18)
+## 🛠️ Skills (19)
 
 ### 📋 OpenSpec Workflow (7)
 
@@ -153,6 +153,41 @@ flowchart LR
 | **Learn** | Save pattern to learnings.yaml |
 
 **Techniques:** Wolf Fence, 5 Whys, Fishbone 6 M's, Rubber Duck
+
+### 🔬 Investigate (1)
+
+| Skill | Purpose |
+|-------|---------|
+| `investigate` | 🔬 Deep proactive analysis for complex technical problems |
+
+```mermaid
+flowchart LR
+    S["🎯 Scope"] --> D["🧩 Decompose"]
+    D --> R["🔍 Research"]
+    R --> G["🎨 Design"]
+    G --> C["⚖️ Decide"]
+    C --> B["🌉 Bridge"]
+
+    B -->|"boulder"| OS["📋 OpenSpec"]
+    B -->|"pebble"| IMPL["⚙️ Implement"]
+
+    classDef default fill:#f9f9f9,stroke:#333,color:#000
+    classDef bridge fill:#E8EAF6,stroke:#3F51B5,color:#000
+    class B bridge
+```
+
+| Phase | What |
+|-------|------|
+| **Scope** | Define problem, constraints, success criteria |
+| **Decompose** | Issue Trees (MECE), Constraint Mapping, unknowns inventory |
+| **Research** | Multi-angle probing, Kepner-Tregoe IS/IS NOT, codebase analysis |
+| **Design** | Morphological Analysis (Zwicky), trade-off matrix, Mermaid diagrams |
+| **Decide** | Weighted Decision Matrix, Pre-mortem, assumptions list |
+| **Bridge** | Handoff → OpenSpec (boulder) or direct implementation (pebble) |
+
+**Techniques:** Issue Trees, MECE, Theory of Constraints, Kepner-Tregoe, Morphological Analysis, Pre-mortem, Weighted Decision Matrix
+
+**Key distinction:** Troubleshoot = reactive (error → fix). Brainstorm = divergent (options → pick). Investigate = proactive (complex problem → decompose → design → decide).
 
 ### 🔨 Utilities (4)
 
