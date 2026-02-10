@@ -1,6 +1,6 @@
 ---
 name: edit-tool
-description: Orchestrates creation of Claude Code tools (skills, commands, agents, scripts). Use when user requests creating, updating, or improving any Claude Code extension mechanism. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /commands/, /agents/. Auto-triages based on token budget, frequency, context needs, and execution type. Delegates to edit-skill, edit-command, or edit-agent after explaining decision rationale.
+description: Orchestrates creation of Claude Code tools (skills, commands, agents, scripts). Use when user requests creating, updating, or improving any Claude Code extension mechanism. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /commands/, /agents/. Auto-triages based on token budget, frequency, context needs, and execution type. Delegates to edit-skill, edit-command, edit-agent, or edit-plugin after explaining decision rationale. For plugin version bumps and release metadata, route directly to edit-plugin.
 ---
 
 # Edit Tool Orchestrator
@@ -19,7 +19,9 @@ Automatically triages tool creation requests to the appropriate mechanism (skill
 
 ```mermaid
 graph TD
-    A[Tool Request] --> B{Deterministic<br/>shell only?}
+    A[Tool Request] --> AA{Plugin<br/>version/release?}
+    AA -->|Yes| PLUGIN[✅ edit-plugin<br/>Version bump]
+    AA -->|No| B{Deterministic<br/>shell only?}
     B -->|Yes| C{AI needed to<br/>decide when/how?}
     C -->|No| BASH[✅ Bash Script<br/>0 tokens]
     C -->|Yes| D{Token<br/>budget?}
@@ -39,6 +41,7 @@ graph TD
     G -->|1-2 per session| CMD2
     G -->|Rare <1/10| DIRECT[❌ Direct Request<br/>No tool needed]
 
+    style PLUGIN fill:#B2DFDB,stroke:#00897B,stroke-width:2px,color:#000
     style BASH fill:#90EE90,stroke:#000,stroke-width:2px,color:#000
     style SKILL fill:#FFD700,stroke:#000,stroke-width:2px,color:#000
     style WRAP fill:#FFA500,stroke:#000,stroke-width:2px,color:#000
@@ -63,7 +66,9 @@ When path requires multiple criteria, consult:
 
 ## Delegation
 
-After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
+After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Plugin** → `edit-plugin` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
+
+**Special routing:** Version bumps, release metadata, plugin.json/marketplace.json updates → `edit-plugin` (bypasses decision tree)
 
 **Note**: Model selection (opus/sonnet/haiku) is handled by delegated editors using `pick-model` skill.
 

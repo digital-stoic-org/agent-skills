@@ -47,20 +47,17 @@ def extract_mermaid_blocks(md_content: str) -> tuple[str, list[str]]:
 
 
 def find_mmdc() -> tuple[list[str], str | None]:
-    """Find mmdc and puppeteer config, return command list to run with bun."""
+    """Find mmdc binary and puppeteer config."""
     puppeteer_config = None
 
-    # Check local node_modules first (traverse up to find it)
+    # Check local node_modules/.bin/mmdc first (traverse up to find it)
+    # Using the bin wrapper instead of bun run index.js because bun silently
+    # swallows errors (exits 0 with no output on failure)
     cwd = Path.cwd()
     for parent in [cwd] + list(cwd.parents):
-        local_mmdc = parent / 'node_modules' / '@mermaid-js' / 'mermaid-cli' / 'src' / 'index.js'
-        if local_mmdc.exists():
-            # Run with bun directly to avoid /tmp/claude permission issues
-            bun_path = Path.home() / '.bun' / 'bin' / 'bun'
-            if bun_path.exists():
-                mmdc_cmd = [str(bun_path), 'run', str(local_mmdc)]
-            else:
-                mmdc_cmd = ['bun', 'run', str(local_mmdc)]
+        local_mmdc_bin = parent / 'node_modules' / '.bin' / 'mmdc'
+        if local_mmdc_bin.exists():
+            mmdc_cmd = [str(local_mmdc_bin)]
 
             # Check for puppeteer config
             config_path = parent / 'puppeteer-config.json'
@@ -92,9 +89,8 @@ def get_subprocess_env() -> dict:
     env['BUN_TMPDIR'] = tmp_str
     env['BUN_INSTALL_CACHE_DIR'] = tmp_str
 
-    # Puppeteer specific
+    # Puppeteer specific - only override tmp, NOT cache (Chrome binaries live there)
     env['PUPPETEER_TMP_DIR'] = tmp_str
-    env['PUPPETEER_CACHE_DIR'] = str(LOCAL_TMP / "puppeteer")
 
     return env
 

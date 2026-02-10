@@ -49,7 +49,7 @@ Or install globally in `~/.claude/settings.json`.
 
 ---
 
-## 🛠️ Skills (19)
+## 🛠️ Skills (21)
 
 ### 📋 OpenSpec Workflow (7)
 
@@ -94,7 +94,7 @@ flowchart LR
 
 Boulder → Pebbles. Think → Build → Verify → Iterate. Human + AI co-thinking.
 
-### 🔧 Tool Orchestration (6)
+### 🔧 Tool Orchestration (7)
 
 ```mermaid
 flowchart TD
@@ -103,6 +103,7 @@ flowchart TD
     edit -->|"/slash trigger"| command["⌨️ edit-command"]
     edit -->|"isolated context"| agent["🤖 edit-agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
+    edit -->|"plugin versioning"| plugin["📦 edit-plugin"]
     edit -.->|"discover first"| search["🔍 search-skill"]
 
     classDef default fill:#f9f9f9,stroke:#333,color:#000
@@ -119,6 +120,7 @@ flowchart TD
 | `edit-command` | ⌨️ User-triggered `/slash` commands |
 | `edit-agent` | 🤖 Isolated context, complex tasks |
 | `edit-claude` | 📄 Project CLAUDE.md files |
+| `edit-plugin` | 📦 Version bumps and plugin metadata sync |
 | `search-skill` | 🔍 Discover & evaluate skills from curated sources |
 
 **Model selection:** All editors include guidance on choosing `opus` (strategic analysis, multi-framework reasoning), `sonnet` (default workflows), or `haiku` (simple conversions). Use short names only—never version-specific IDs.
