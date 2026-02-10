@@ -27,6 +27,7 @@ Analyze captured sessions across two complementary dimensions:
    ```bash
    bash ${CLAUDE_PLUGIN_ROOT}/scripts/retrospect-load-sessions.sh $@
    ```
+   The first line of output is `PERIOD: YYYY-MM-DD_to_YYYY-MM-DD` — extract this for the output filename. Remaining lines are session file paths.
 
 2. **Read session files and compute metrics:**
    - Use Read tool to read each session YAML file
@@ -136,10 +137,10 @@ Analyze captured sessions across two complementary dimensions:
    - Impact ratio targets (>60% high-impact, <20% automation)
 
 6. **Write insights:**
-   Use Write tool to create `.retro/insights/collab/YYYY-MM-DD.md` with:
+   Use Write tool to create `.retro/insights/collab/{PERIOD}.md` where `{PERIOD}` is the `YYYY-MM-DD_to_YYYY-MM-DD` value from step 1:
 
    ```markdown
-   # Collaboration Retrospective: YYYY-MM-DD
+   # Collaboration Retrospective: YYYY-MM-DD to YYYY-MM-DD
 
    ## Sessions Analyzed
    - [List with prompts/tools counts]

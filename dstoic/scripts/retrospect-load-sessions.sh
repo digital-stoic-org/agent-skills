@@ -194,6 +194,28 @@ if [ ${#filtered_sessions[@]} -eq 0 ]; then
   exit 0
 fi
 
+# Output resolved period as metadata line (consumed by commands for filenames)
+if [ -n "$FILTER_MODE" ]; then
+  period_from=$(date -d "@$filter_start" +%Y-%m-%d)
+  period_to=$(date -d "@$filter_end" +%Y-%m-%d)
+  echo "PERIOD: ${period_from}_to_${period_to}"
+else
+  # No filter: derive range from min/max session timestamps
+  first_ts="" last_ts=""
+  for sf in "${filtered_sessions[@]}"; do
+    ts=$(extract_timestamp "$(basename "$sf")")
+    [ -z "$ts" ] && continue
+    ep=$(timestamp_to_epoch "$ts")
+    if [ -z "$first_ts" ] || [ "$ep" -lt "$first_ts" ]; then first_ts=$ep; fi
+    if [ -z "$last_ts" ] || [ "$ep" -gt "$last_ts" ]; then last_ts=$ep; fi
+  done
+  if [ -n "$first_ts" ]; then
+    echo "PERIOD: $(date -d "@$first_ts" +%Y-%m-%d)_to_$(date -d "@$last_ts" +%Y-%m-%d)"
+  else
+    echo "PERIOD: $(date +%Y-%m-%d)_to_$(date +%Y-%m-%d)"
+  fi
+fi
+
 # Print session file paths, one per line
 for session_file in "${filtered_sessions[@]}"; do
   echo "$session_file"

@@ -43,7 +43,7 @@ Analyze captured sessions to extract domain learnings: what was learned, what wo
    ```bash
    bash ${CLAUDE_PLUGIN_ROOT}/scripts/retrospect-load-sessions.sh $@
    ```
-   This returns a list of session file paths matching the timeframe.
+   The first line of output is `PERIOD: YYYY-MM-DD_to_YYYY-MM-DD` — extract this for the output filename. Remaining lines are session file paths.
 
 3. **Read session files:**
    - Use Read tool to read each session YAML file
@@ -86,10 +86,10 @@ Analyze captured sessions to extract domain learnings: what was learned, what wo
    - **Continue**: Effective domain practices to maintain
 
 6. **Write insights:**
-   Use Write tool to create `.retro/insights/domain/YYYY-MM-DD.md` with:
+   Use Write tool to create `.retro/insights/domain/{PERIOD}.md` where `{PERIOD}` is the `YYYY-MM-DD_to_YYYY-MM-DD` value from step 2:
 
    ```markdown
-   # Domain Retrospective: YYYY-MM-DD
+   # Domain Retrospective: YYYY-MM-DD to YYYY-MM-DD
 
    ## Sessions Reviewed
    - [List sessions with timestamps and brief summaries]

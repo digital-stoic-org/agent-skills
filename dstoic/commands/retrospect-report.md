@@ -23,6 +23,7 @@ Generate aggregate views across multiple sessions: compute trends, identify patt
    ```bash
    bash ${CLAUDE_PLUGIN_ROOT}/scripts/retrospect-load-sessions.sh $@
    ```
+   The first line of output is `PERIOD: YYYY-MM-DD_to_YYYY-MM-DD` — extract this for the output filename. Remaining lines are session file paths.
 
 2. **Read all session files and compute aggregate metrics:**
    - Use Read tool to read each session YAML file
@@ -35,7 +36,7 @@ Generate aggregate views across multiple sessions: compute trends, identify patt
      - Date range (first to last session)
 
 3. **Check for recent collaboration insights:**
-   - Look for most recent file in `.retro/insights/collab/`
+   - List files in `.retro/insights/collab/` (filenames are `YYYY-MM-DD_to_YYYY-MM-DD.md`, sort descending to find most recent)
    - If found, extract collaboration scores for visualization
    - Scores to extract: Context quality, Guidance clarity, Critical thinking, Bias awareness
 
@@ -58,10 +59,10 @@ Generate aggregate views across multiple sessions: compute trends, identify patt
    ```
 
 6. **Write report:**
-   Use Write tool to create `.retro/reports/YYYY-MM-DD.md` with:
+   Use Write tool to create `.retro/reports/{PERIOD}.md` where `{PERIOD}` is the `YYYY-MM-DD_to_YYYY-MM-DD` value from step 1:
 
    ```markdown
-   # Retrospective Report: YYYY-MM-DD
+   # Retrospective Report: YYYY-MM-DD to YYYY-MM-DD
 
    ## Summary
    **Period:** [start date] to [end date]
