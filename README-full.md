@@ -49,7 +49,7 @@ Or install globally in `~/.claude/settings.json`.
 
 ---
 
-## 🛠️ Skills (21)
+## 🛠️ Skills (22)
 
 ### 📋 OpenSpec Workflow (7)
 
@@ -94,7 +94,7 @@ flowchart LR
 
 Boulder → Pebbles. Think → Build → Verify → Iterate. Human + AI co-thinking.
 
-### 🔧 Tool Orchestration (7)
+### 🔧 Tool Orchestration (8)
 
 ```mermaid
 flowchart TD
@@ -122,6 +122,7 @@ flowchart TD
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `edit-plugin` | 📦 Version bumps and plugin metadata sync |
 | `search-skill` | 🔍 Discover & evaluate skills from curated sources |
+| `frame` | 🎯 Sense-making—classify problem (Cynefin + Stacey) → route to right skill chain |
 
 **Model selection:** All editors include guidance on choosing `opus` (strategic analysis, multi-framework reasoning), `sonnet` (default workflows), or `haiku` (simple conversions). Use short names only—never version-specific IDs.
 
