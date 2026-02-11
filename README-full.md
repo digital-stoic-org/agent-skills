@@ -275,10 +275,11 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (4 skills)
+## 🔧 Utilities (5 skills)
 
 | Skill | Purpose |
 |-------|---------|
+| `anonymize-doc` | 🔒 Detect/anonymize PII + business data (GDPR/HIPAA aware) |
 | `install-dependency` | 📦 Monorepo-aware package installation (pip/bun/apt) |
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
@@ -320,6 +321,7 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 | Feature | Requires | Install |
 |---------|----------|---------|
 | `openspec-*` skills | [OpenSpec CLI](https://github.com/digital-stoic-org/openspec) | `pip install openspec` (TBD) |
+| `anonymize-doc` | scrubadub, faker, spacy | `pip install scrubadub faker spacy && python -m spacy download en_core_web_sm` |
 | `/convert-pdf` | [Docling](https://github.com/DS4SD/docling) | `pip install docling` |
 | `/convert-epub` | [epub-to-markdown](https://github.com/nickvdyck/epub-to-markdown) | `pip install epub-to-markdown` |
 
