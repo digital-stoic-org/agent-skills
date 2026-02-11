@@ -36,7 +36,7 @@ Two locations to update:
 
 Plugin table row pattern:
 ```
-| [dstoic](dstoic/) | Core toolkit: OpenSpec, context, retrospectives, investigation | ✅ vX.Y.Z |
+| [dstoic](dstoic/) | Core cognitive toolkit: 22 skills, 12 commands, 3 hooks | ✅ vX.Y.Z |
 ```
 
 Replace version in the `✅ vX.Y.Z` cell.
@@ -47,10 +47,10 @@ Version section pattern:
 ```markdown
 ## 📦 Version
 
-`X.Y.Z`
+`X.Y.Z` · 22 skills · 12 commands · 3 hooks
 ```
 
-Replace the backtick-wrapped version string.
+Replace the backtick-wrapped version string. Update skill/command/hook counts if changed.
 
 ### 5. `dstoic/README-full.md`
 
@@ -65,35 +65,37 @@ Replace the backtick-wrapped version string.
 
 ## README-full.md Skill/Command Sections
 
+README-full.md is organized by **cognitive modes**, not skill types.
+
 ### Adding a New Skill
 
-1. Identify the correct category section:
-   - `### 📋 OpenSpec Workflow` — openspec-* skills
-   - `### 🔧 Tool Orchestration` — edit-*, search-skill
-   - `### 🔧 Troubleshoot` — troubleshoot
-   - `### 🔬 Investigate` — investigate
-   - `### 🔨 Utilities` — everything else
+1. Identify the correct cognitive mode section:
+   - `## 🧭 Frame — Sense-Making` — frame, pick-model, edit-tool
+   - `## 🧠 Think — Ideation & Analysis` — brainstorm, investigate
+   - `## ⚙️ Build — Structured Development` — openspec-* skills
+   - `## 🔧 Debug — Troubleshooting` — troubleshoot
+   - `## 🪞 Learn — Retrospectives & Session Memory` — retrospect-*, context commands
+   - `## 🔨 Create — Tool Orchestration` — edit-*, search-skill
+   - `## 🔧 Utilities` — everything else
 
 2. Add table row in the appropriate section:
    ```
    | `skill-name` | 📎 Brief description |
    ```
 
-3. Update skill count in `## 🛠️ Skills (N)` heading
+3. Update skill count in the section heading if present (e.g., `(N skills)`)
 
 ### Adding a New Command
 
-1. Identify the correct category section:
-   - `### 💾 Context Management` — context/session commands
-   - `### 🔍 Session Analysis` — retrospect commands
-   - `### 🔨 Utilities` — everything else
+1. Identify the correct cognitive mode section:
+   - `## 🪞 Learn` — retrospect commands, context management commands
+   - `## 📥 Conversions & Imports` — convert-*, import-*
+   - `## 🔧 Utilities` — everything else
 
 2. Add table row:
    ```
    | `/command-name` | 📎 Brief description | model |
    ```
-
-3. Update command count in `## ⌨️ Commands (N)` heading
 
 ## Change Detection Logic
 

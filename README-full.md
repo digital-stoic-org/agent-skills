@@ -293,6 +293,12 @@ flowchart LR
 | `/import-gdoc` | 📥 Import Google Docs with manifest tracking | haiku |
 | `/background` | 🔄 Run tasks in background | sonnet |
 
+## 🚀 Deployment (1 command)
+
+| Command | Purpose | Model |
+|---------|---------|-------|
+| `/deploy-surge` | 🌐 Deploy static sites to Surge.sh with inventory tracking | sonnet |
+
 ---
 
 ## 🪝 Hooks (3)

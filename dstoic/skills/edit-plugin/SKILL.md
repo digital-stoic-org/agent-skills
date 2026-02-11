@@ -46,9 +46,9 @@ Read current version from `dstoic/.claude-plugin/plugin.json`.
 
 Use Edit tool: old version string → new version string. See `reference.md` for exact patterns.
 
-## 4. Update Counts (if added/removed)
+## 4. Update Sections (if added/removed)
 
-Update `README-full.md` headings: `## 🛠️ Skills (N)`, `## ⌨️ Commands (N)`. Add/remove table entries in appropriate sections. See `reference.md` for section categories.
+Add/remove table entries in appropriate cognitive mode sections of `README-full.md`. Update counts in section headings if present. See `reference.md` for section categories.
 
 ## 5. Review
 
