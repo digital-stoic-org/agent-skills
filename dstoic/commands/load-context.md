@@ -161,5 +161,6 @@ Stream/Saved/Focus/Goal (always show)
 ## Related
 
 - `/save-context [stream] [description]` - Save session to named stream
+- `/list-contexts` - List all contexts across code/ and projects/
 - `/create-context` - Create baseline from .in/ folder
 - `/load-context [stream] [--full]` - This command

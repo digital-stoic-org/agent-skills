@@ -193,4 +193,5 @@ Tokens: ~580 (target: 1200-1500)
 ## Related
 
 - `/load-context [stream]` - Load saved stream
+- `/list-contexts` - List all contexts across code/ and projects/
 - `/create-context` - Create baseline from .in/ folder
