@@ -20,7 +20,7 @@ It's not about making AI do more. It's about **thinking better together**.
 
 Don't jump into the first approach that comes to mind. Classify the problem first. Is it clear? Complicated? Complex? Chaotic? The answer determines everything — which tools to use, how much planning is needed, whether to think divergently or converge fast.
 
-`/frame` uses Cynefin + Stacey frameworks to map your situation and route you to the right skill chain.
+`/frame-problem` uses Cynefin + Stacey frameworks to map your situation and route you to the right skill chain.
 
 ### 🧠 Think before build
 
@@ -34,6 +34,17 @@ AI is fast. Humans need to verify. The **gate pattern** solves this: AI implemen
 
 Gates also enable crash recovery — checkboxes persist, so you can resume where you left off.
 
+### 📌 Micro-commits at every gate
+
+Gates and git commits are natural partners. Every time AI completes a section and the human verifies — **commit**. This gives you:
+
+- 🔄 **Rollback granularity** — undo one section without losing others
+- 📖 **Readable history** — each commit = one verified unit of work, not a blob of "implemented feature X"
+- 🚧 **Gate evidence** — the commit log becomes a record of what was verified and when
+- 💾 **Crash safety** — if the session dies, your last verified state is always in git
+
+The pattern: `AI builds section → human reviews at gate → git commit → next section`. Conventional commits (`feat`, `fix`, `refactor`) with scope give you a clean narrative. The commit history tells the story of the build, not just the end result.
+
 ### 🪨 Boulder → Pebbles
 
 Not every task needs a plan. Scale your process to the problem:
@@ -45,7 +56,7 @@ Not every task needs a plan. Scale your process to the problem:
 
 This isn't a binary — it's **iterative zoom**. Like Epics → User Stories in agile roadmapping: boulders break into pebbles over time. You start at the boulder level to see the whole landscape, then zoom into pebbles for execution. And you can zoom back out when you need to reassess direction.
 
-`/frame` helps you gauge the scale. `/openspec-plan` breaks boulders into gated sections (the pebbles).
+`/frame-problem` helps you gauge the scale. `/openspec-plan` breaks boulders into gated sections (the pebbles).
 
 ### 💾 Sessions persist
 

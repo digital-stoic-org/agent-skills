@@ -50,7 +50,7 @@ flowchart LR
 
 | Mode | What | Hero Skills |
 |------|------|-------------|
-| 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame` (Cynefin + Stacey), `/pick-model` |
+| 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin + Stacey), `/pick-model` |
 | 🧠 **Think** | Divergent ideation, deep technical analysis | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem) |
 | ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (7 skills, human-gated sections) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA) |
@@ -64,7 +64,7 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 22 skills, 13 commands, 3 hooks | ✅ v0.4.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 22 skills, 13 commands, 3 hooks | ✅ v0.5.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
 | ... | More planned | 🔜 |
 
@@ -87,7 +87,7 @@ Or install all plugins via marketplace:
 ## 🚀 Quick Start
 
 ```bash
-/frame how should I approach building a new auth system
+/frame-problem how should I approach building a new auth system
 # → Classifies as Complicated (HOW) + Boulder
 # → Routes to: /investigate → /openspec-plan
 

@@ -1,5 +1,5 @@
 ---
-name: frame
+name: frame-problem
 description: "Sense-making before action. Classify problem using Cynefin + Stacey to route to the right skill chain. Use when: frame, what approach, how should I start, which skill, where to begin, unsure what to do. NOT for known tasks — just do them."
 allowed-tools: AskUserQuestion
 model: sonnet

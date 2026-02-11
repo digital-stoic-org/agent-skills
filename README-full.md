@@ -59,12 +59,12 @@ flowchart TD
 
 | Skill | Purpose |
 |-------|---------|
-| `frame` | 🧭 Classify problem (Cynefin + Stacey) → route to right skill chain |
+| `frame-problem` | 🧭 Classify problem (Cynefin + Stacey) → route to right skill chain |
 | `pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
 | `search-skill` | 🔍 Discover existing skills before building new ones |
 | `edit-tool` | 🎯 Decision tree — routes to correct tool editor (skill/command/agent) |
 
-### `/frame` — The Entry Point
+### `/frame-problem` — The Entry Point
 
 ```mermaid
 quadrantChart

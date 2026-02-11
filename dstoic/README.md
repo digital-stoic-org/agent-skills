@@ -26,7 +26,7 @@ flowchart LR
 
 | Mode | What it does |
 |------|-------------|
-| 🧭 **Frame** | Classify problem → route to right skill chain (`/frame`, `/pick-model`) |
+| 🧭 **Frame** | Classify problem → route to right skill chain (`/frame-problem`, `/pick-model`) |
 | 🧠 **Think** | Brainstorm, investigate, deep analysis (`/brainstorm`, `/investigate`) |
 | ⚙️ **Build** | Plan → develop → gate → test → sync (`/openspec-*` suite) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings (`/troubleshoot`) |
@@ -37,14 +37,14 @@ Plus: tool creation, conversions, and hooks.
 ## 🚀 Quick Start
 
 ```bash
-/frame how should I approach this new feature
+/frame-problem how should I approach this new feature
 /brainstorm naming ideas for my project
 /troubleshoot "error: module not found"
 ```
 
 ## 📦 Version
 
-`0.4.0` · 22 skills · 13 commands · 3 hooks
+`0.5.0` · 22 skills · 13 commands · 3 hooks
 
 ---
 

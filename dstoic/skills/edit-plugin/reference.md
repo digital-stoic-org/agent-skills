@@ -70,7 +70,7 @@ README-full.md is organized by **cognitive modes**, not skill types.
 ### Adding a New Skill
 
 1. Identify the correct cognitive mode section:
-   - `## 🧭 Frame — Sense-Making` — frame, pick-model, edit-tool
+   - `## 🧭 Frame — Sense-Making` — frame-problem, pick-model, edit-tool
    - `## 🧠 Think — Ideation & Analysis` — brainstorm, investigate
    - `## ⚙️ Build — Structured Development` — openspec-* skills
    - `## 🔧 Debug — Troubleshooting` — troubleshoot
