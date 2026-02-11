@@ -1,41 +1,51 @@
 # 🧠 dstoic Plugin — TL;DR
 
-> ⚠️ Live experiment. My brain, not yours.
+> ⚠️ Live experiment. My cognitive toolkit — adapt it to your brain.
 
 ## ✨ What
 
 ```mermaid
 flowchart LR
-    A["📋 OpenSpec"] --> B["💾 Context"]
-    B --> C["🔍 Retrospect"]
-    C --> D["🔧 Edit Tools"]
-    D --> E["🔧 Troubleshoot"]
-    E --> F["🔬 Investigate"]
+    F["🧭 Frame"] --> T["🧠 Think"]
+    T --> B["⚙️ Build"]
+    B --> D["🔧 Debug"]
+    D --> L["🪞 Learn"]
 
-    classDef default fill:#f9f9f9,stroke:#333,color:#000
+    classDef frame fill:#E8EAF6,stroke:#3F51B5,color:#000
+    classDef think fill:#E1BEE7,stroke:#7B1FA2,color:#000
+    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef debug fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef learn fill:#BBDEFB,stroke:#1976D2,color:#000
+
+    class F frame
+    class T think
+    class B build
+    class D debug
+    class L learn
 ```
 
-| # | Feature | Purpose |
-|---|---------|---------|
-| 1 | 📋 **OpenSpec** | plan → develop → test → sync |
-| 2 | 💾 **Context** | save/restore sessions |
-| 3 | 🔍 **Retrospect** | learn from patterns |
-| 4 | 🔧 **Edit tools** | create skills/commands/agents |
-| 5 | 🔧 **Troubleshoot** | search-first debugging with learnings |
-| 6 | 🔬 **Investigate** | deep analysis for complex technical problems |
+| Mode | What it does |
+|------|-------------|
+| 🧭 **Frame** | Classify problem → route to right skill chain (`/frame`, `/pick-model`) |
+| 🧠 **Think** | Brainstorm, investigate, deep analysis (`/brainstorm`, `/investigate`) |
+| ⚙️ **Build** | Plan → develop → gate → test → sync (`/openspec-*` suite) |
+| 🔧 **Debug** | Search-first troubleshooting with learnings (`/troubleshoot`) |
+| 🪞 **Learn** | Retrospectives, context save/restore (`/retrospect-*`, `/save-context`) |
+
+Plus: tool creation, conversions, and hooks.
 
 ## 🚀 Quick Start
 
 ```bash
-/dstoic:openspec-init
-/dstoic:openspec-plan
-/save-context
+/frame how should I approach this new feature
+/brainstorm naming ideas for my project
+/troubleshoot "error: module not found"
 ```
 
 ## 📦 Version
 
-`0.3.0`
+`0.3.0` · 22 skills · 12 commands · 3 hooks
 
 ---
 
-📚 **Full docs:** [README-full.md](README-full.md)
+📚 **Full catalog:** [README-full.md](../README-full.md) · 🧭 **Philosophy:** [PHILOSOPHY.md](../PHILOSOPHY.md)
