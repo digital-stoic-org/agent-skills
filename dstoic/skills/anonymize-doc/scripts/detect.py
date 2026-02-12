@@ -30,6 +30,12 @@ except ImportError:
     print("Error: spacy not installed. Run: pip install spacy", file=sys.stderr)
     sys.exit(1)
 
+try:
+    from langdetect import detect, LangDetectException
+except ImportError:
+    print("Error: langdetect not installed. Run: pip install langdetect", file=sys.stderr)
+    sys.exit(1)
+
 
 class PIIDetector:
     """Detects PII using Scrubadub"""
@@ -65,6 +71,25 @@ class PIIDetector:
 
 class BusinessDataDetector:
     """Detects business entities using spaCy NER and custom patterns"""
+
+    # Supported language models
+    LANGUAGE_MODELS = {
+        'en': 'en_core_web_md',
+        'fr': 'fr_core_news_md',
+    }
+
+    NAME_PATTERNS = [
+        # Structured contexts with name labels
+        r'(?:Name|Author|Contact|Owner|Manager|Director|CEO|CTO|CFO|VP|President|Leader):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+        # Email-like patterns (extract name before @)
+        r'\b([A-Z][a-z]+\.[A-Z][a-z]+)@',
+        # Possessive forms
+        r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\b",
+        # Initials with periods (J. Doe, J.R.R. Tolkien)
+        r'\b([A-Z]\.(?:\s*[A-Z]\.)*\s+[A-Z][a-z]+)\b',
+        # By/From patterns
+        r'(?:by|from|written by|created by|submitted by)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
+    ]
 
     FINANCIAL_PATTERNS = {
         'REVENUE': [
@@ -113,12 +138,48 @@ class BusinessDataDetector:
         'DATE': ('DATE', 'BUSINESS', 'low'),
     }
 
-    def __init__(self):
+    def __init__(self, text: str = None):
+        """Initialize detector with optional text for language detection"""
+        self.nlp = None
+        self.detected_language = None
+
+        if text:
+            self._load_model_for_text(text)
+        else:
+            # Default to English if no text provided
+            self._load_model('en')
+
+    def _detect_language(self, text: str) -> str:
+        """Detect language of text, return language code"""
         try:
-            self.nlp = spacy.load("en_core_web_sm")
+            # Use first 1000 chars for detection (performance)
+            sample = text[:1000]
+            lang = detect(sample)
+
+            # Map to supported languages, default to 'en'
+            if lang in self.LANGUAGE_MODELS:
+                return lang
+            else:
+                print(f"Detected language '{lang}' not supported, falling back to English", file=sys.stderr)
+                return 'en'
+        except LangDetectException:
+            print("Language detection failed, defaulting to English", file=sys.stderr)
+            return 'en'
+
+    def _load_model_for_text(self, text: str):
+        """Detect language and load appropriate model"""
+        self.detected_language = self._detect_language(text)
+        self._load_model(self.detected_language)
+
+    def _load_model(self, lang_code: str):
+        """Load spaCy model for given language code"""
+        model_name = self.LANGUAGE_MODELS.get(lang_code, 'en_core_web_md')
+        try:
+            self.nlp = spacy.load(model_name)
+            print(f"Loaded spaCy model: {model_name} (language: {lang_code})", file=sys.stderr)
         except OSError:
-            print("Error: spaCy model 'en_core_web_sm' not found.", file=sys.stderr)
-            print("Run: python -m spacy download en_core_web_sm", file=sys.stderr)
+            print(f"Error: spaCy model '{model_name}' not found.", file=sys.stderr)
+            print(f"Run: python -m spacy download {model_name}", file=sys.stderr)
             sys.exit(1)
 
     def detect(self, text: str) -> List[Dict]:
@@ -136,6 +197,23 @@ class BusinessDataDetector:
                     'start': ent.start_char,
                     'end': ent.end_char,
                     'severity': severity,
+                })
+
+        # Name regex patterns (fallback for structured contexts)
+        for pattern in self.NAME_PATTERNS:
+            for match in re.finditer(pattern, text):
+                # Extract the name group (group 1 in all patterns)
+                name_text = match.group(1) if match.lastindex >= 1 else match.group(0)
+                # Calculate actual position of the name within the match
+                name_start = match.start() + match.group(0).index(name_text)
+                name_end = name_start + len(name_text)
+                entities.append({
+                    'type': 'PERSON_NAME',
+                    'category': 'PII',
+                    'text': name_text,
+                    'start': name_start,
+                    'end': name_end,
+                    'severity': 'medium',
                 })
 
         # Financial regex patterns
@@ -187,7 +265,8 @@ def detect_all(file_path: str) -> Dict:
         return {'error': f'Failed to read file: {e}', 'file': file_path}
 
     pii_entities = PIIDetector().detect(text)
-    business_entities = BusinessDataDetector().detect(text)
+    business_detector = BusinessDataDetector(text=text)
+    business_entities = business_detector.detect(text)
 
     # Deduplicate by position
     unique_entities = []

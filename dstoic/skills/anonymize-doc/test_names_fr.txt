@@ -1,0 +1,40 @@
+Document de Test pour la Détection de Noms
+
+Contextes structurés:
+- Nom: Jean Dupont
+- Auteur: Marie Lefebvre
+- Contact: François Martin
+- Directeur: Sophie Bernard
+
+Patterns d'email:
+Contactez jean.dupont@exemple.fr pour plus de détails.
+Écrivez à marie.lefebvre@entreprise.org.
+
+Formes possessives:
+C'est le rapport de Jean.
+L'analyse de Sophie montre une amélioration.
+
+Initiales:
+Écrit par J. Dupont
+Créé par M.L. Martin
+Soumis par A.B. Durand
+
+Patterns par/de:
+Rapport par Pierre Dubois
+Analyse de Claire Moreau
+Document écrit par Alexandre Petit
+
+Données financières:
+- Chiffre d'affaires: 1,2M€ ARR
+- Coûts opérationnels: 500K€ annuels
+- Équipe: 25 employés
+
+Services:
+- Département Ingénierie
+- Département Marketing
+- Direction Financière
+
+Contact entreprise:
+Société: TechStart France
+Email: contact@techstart.fr
+Téléphone: +33 1 23 45 67 89

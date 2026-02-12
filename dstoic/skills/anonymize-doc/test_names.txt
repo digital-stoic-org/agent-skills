@@ -1,0 +1,35 @@
+Test Document for Name Detection
+
+Structured contexts:
+- Name: John Smith
+- Author: María García
+- Contact: Hans Müller
+- Manager: José Ñoño
+
+Email patterns:
+Contact john.doe@example.com for details.
+Reach out to maria.garcia@company.org.
+
+Possessive forms:
+This is John's report.
+Sarah's analysis shows improvement.
+
+Initials:
+Written by J. Doe
+Created by J.R.R. Tolkien
+Submitted by A.B. Chen
+
+By/From patterns:
+Report by Emily Johnson
+Analysis from Robert Chen
+Document written by Alexandra Peterson
+
+Lowercase challenge:
+john smith worked with maria garcia on the project.
+
+Mixed case with titles:
+Dr. James Wilson and Prof. Sarah Anderson collaborated.
+
+Single word names:
+Madonna performed last night.
+Cher won the award.

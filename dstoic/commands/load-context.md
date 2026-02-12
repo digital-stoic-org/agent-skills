@@ -18,7 +18,7 @@ Load session state from `CONTEXT-{stream}-llm.md` and optionally expand full res
 1. **Use `rtk` for ALL shell commands** — never raw git/ls/grep
 2. **Parallel tool calls** — make ALL independent tool calls in a single message
 3. **Minimize round-trips** — batch reads, batch task creates, batch updates
-4. **No unnecessary synthesis** — present parsed YAML directly, don't rephrase
+4. **No unnecessary synthesis** — present parsed data directly, don't rephrase
 5. **NO progress tasks** — load progress is shown in final report only, don't pollute task list
 
 ## Workflow
@@ -76,10 +76,26 @@ If `--full` flag present, make parallel Read calls in ONE message:
 
 **Before report, output**: `📊 Preparing resume report...`
 
-**Report structure** (skip empty sections):
+Parse the CONTEXT file as key-value header + markdown sections. Map sections to report blocks:
+
+**Section mapping** (match with fallback for variants):
+
+| CONTEXT Section | Report Block | Fallback names |
+|----------------|-------------|----------------|
+| Header fields (saved/stream/status/focus/goal) | Stream/Saved/Focus/Goal | — |
+| `## Session` | 💬 Session Context | `## Session Progression` |
+| `## Next Tasks` | ✅ NextTasks | `## NextTasks` |
+| `## Hot Files` | 📁 Hot Files | `## Files` |
+| `## Tasks` | 📋 Task Snapshot | — |
+| `## Project` | 🎯 Project Context | — |
+| `## Refs` | 📎 References | `## References` |
+
+**Graceful degradation**: If a section is missing or malformed, skip it in the report (don't error). Only Header fields and `## Next Tasks` are required.
+
+**Report structure** (skip empty/missing sections):
 
 ```
-# 🔄 Session Resume: [branch-name]
+# 🔄 Session Resume: [stream-name]
 
 Stream/Saved/Focus/Goal (always show)
 📂 Available Streams (if multiple)
@@ -94,61 +110,24 @@ Stream/Saved/Focus/Goal (always show)
 ```
 
 **Formatting principles**:
-- Parse YAML directly, don't re-synthesize
+- Parse key-value header + markdown sections directly, don't re-synthesize
 - Expand inline objects: `{done: 5, active: 2}` → "5 done, 2 active"
-- Lists from YAML arrays without re-ordering
+- Lists from markdown without re-ordering
 - Emoji-rich but concise
-- **Next Step**: Single sentence action based on NextTasks[0] + Focus.immediate
-
-## Flags
-
-**Default** (no args): Fast resume
-- Detect streams, prompt if multiple
-- Read context file, display fancy snapshot
-- Direct data presentation
-- < 3 seconds
-
-**`--full`**: Deep expansion
-- Read full OpenSpec proposal + tasks
-- Read top 3 hot files
-- Read manifest.yaml if exists
-- 5-8 seconds
-
-**`[stream-name]`**: Direct load
-- Load specific stream without menu
-- Examples: `/load-context baseline`, `/load-context pricing-v2`
-- "default" loads CONTEXT-llm.md
-
-## Stream Management
-
-**Available streams display**:
-- Phase 1 uses `rtk ls -t CONTEXT-*llm.md` for fast timestamp retrieval
-- `rtk` provides optimized output with filenames and modification times
-- No `date` command forks needed - timestamps come from rtk's internal implementation
-- For AskUserQuestion: parse rtk output to extract stream names and timestamps
+- **Next Step**: Single sentence action based on NextTasks[0] + focus field
 
 ## Meta-Awareness: What This Command Consumes
 
-**Input format**: Token-optimized YAML from `/save-context` (no emoji, inline objects)
+**Input format**: Key-value header + markdown sections from `/save-context` (token-optimized, no emoji, inline objects)
 **Audience**: Human user resuming work
 **Purpose**: Transform LLM-optimized context → human-friendly resume report
 
-**Context file characteristics**:
-- Clean YAML structure (parse directly, don't re-analyze)
-- File references (don't auto-load unless --full)
-- Aggregated progression (already synthesized)
-- Inline objects: `{done: 5, active: 2}` (expand to prose)
-
 **Transformation rules**:
-- YAML → emoji-rich prose
-- Compact → expanded (e.g., "done: 5" → "✅ 5 completed")
-- References → links (e.g., "proposal: path/to/file.md" → "**Proposal**: `path/to/file.md`")
+- Key-value header → formatted metadata block
+- Compact → expanded (e.g., `{done: 5}` → "✅ 5 completed")
+- References → links (e.g., `ref: path/to/file.md` → "**Ref**: `path/to/file.md`")
 - Tasks section → display only, NEVER restore via TaskCreate
-
-**Report output principles**:
 - Skip empty sections entirely (don't show "No X" placeholders)
-- Present data directly from parsed YAML (no re-interpretation)
-- Suggest next action based on NextTasks + Focus
 
 ## Error Messages
 
@@ -157,10 +136,10 @@ Stream/Saved/Focus/Goal (always show)
 | No context files | "No context files found. Run `/save-context` to create one." |
 | Stream not found | "Stream '{name}' not found. Available: {list}" |
 | File read error | "Could not read {filename}. Check file permissions." |
+| Malformed file | Parse what's available, skip unparseable sections with no error |
 
 ## Related
 
 - `/save-context [stream] [description]` - Save session to named stream
-- `/list-contexts` - List all contexts across code/ and projects/
+- `/list-contexts [--sync] [--archive <stream>]` - List/sync all contexts
 - `/create-context` - Create baseline from .in/ folder
-- `/load-context [stream] [--full]` - This command

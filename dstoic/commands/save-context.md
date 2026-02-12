@@ -1,6 +1,6 @@
 ---
 description: Save session to CONTEXT-llm.md with conversation summary
-allowed-tools: Bash, Read, Write, AskUserQuestion, TaskList
+allowed-tools: Bash, Read, Write, Edit, AskUserQuestion, TaskList
 argument-hint: "[stream-name] [description]"
 model: haiku
 ---
@@ -21,6 +21,72 @@ Save current session state to `CONTEXT-{stream}-llm.md` with LLM-optimized forma
 3. **Minimize round-trips** — gather all data in phase 1, reason once in phase 2, write in phase 3
 4. **No unnecessary synthesis** — output structured data directly
 5. **NO progress tasks** — save operation is atomic, use status messages only
+
+## CONTEXT File Template
+
+The file written in Phase 3 MUST follow this exact structure:
+
+```markdown
+# Session Context: {title}
+
+saved: YYYY-MM-DDTHH:MM:SSZ
+stream: {name}
+status: {exploring|building|decided|parked|done}
+focus: {1-2 sentences}
+goal: {1 sentence}
+
+---
+
+## Project
+
+ref: {openspec project.md path | n/a}
+type: {project type}
+
+## Tasks
+
+{in_progress + pending + 3 recent completed only, inline objects}
+
+## Next Tasks
+
+- {task 1}
+- {task 2}
+- {task 3}
+
+## Session
+
+progression:
+  - {aggregated timeline steps}
+decisions:
+  - {key choice}: {rationale}
+thinking:
+  - {reasoning, trade-offs, insights}
+unexpected:
+  - {pivots, corrections, surprises}
+
+## Hot Files
+
+- {path}: {brief role}
+
+## Refs
+
+- {external references if any}
+```
+
+**Key principles**:
+- Token target: 1200-1500 MAX
+- Session section: 780 tokens max (progression/decisions/thinking/unexpected)
+- Tasks: in_progress + pending + 3 recent completed only
+- Hot Files: max 10 files with brief roles
+- Use YAML inline objects where possible: `{done: 5, active: 2, pending: 3}`
+
+## Context Quality Self-Check
+
+Before writing, evaluate session significance:
+- ✅ **Save**: non-trivial work (>1 file, decisions made), mid-stream checkpoint, learning/insights, OpenSpec change active
+- ⚠️ **Ask user**: quick fix (1-2 files, obvious), exploration with no conclusions
+- ❌ **Suggest skip**: greeting/chat only, single read/question, unresolved troubleshooting
+
+If marginal or too small: `"📊 Session appears brief. Save context anyway?"` — wait for confirmation.
 
 ## Workflow
 
@@ -79,15 +145,13 @@ With ALL data gathered, perform a SINGLE analysis pass to produce ALL of these s
 
 **Before writing, output**: `💾 Writing context file...`
 
-Write the context file using the template below, then report.
+Write the context file using the CONTEXT File Template above, then report.
 
 **Stream resolution** (if not yet resolved from Phase 1):
 - If `$ARGUMENTS` empty and multiple streams exist → AskUserQuestion now
 - Otherwise use determined stream name
 
-**Report** (enhanced with session summary):
-
-After writing context file, display report:
+**Report**:
 
 ```
 ✅ Saved session context to {filename}
@@ -105,93 +169,61 @@ Tokens: ~{estimate} (target: 1200-1500)
 📁 Available streams: {list}
 ```
 
-Example:
-```
-✅ Saved session context to CONTEXT-test6-llm.md
+### Phase 3b: Upsert INDEX.md (after report)
 
-Stream: test6
-Tokens: ~580 (target: 1200-1500)
+Resolve path: `$(git rev-parse --show-toplevel)/INDEX.md`. Skip if missing or CWD not in `code/`, `projects/`, or `vaults/`.
 
-📊 Captured:
-  • Focus: Validated optimized load-context implementation
-  • Hot files: 3 files
-  • Decisions: 1 key decision
-  • Next tasks: 3 tasks queued
-  • Session events: 5 progression steps
+1. Read INDEX.md (or create with Active/Parked/Done/Archived headers)
+2. Derive row from CONTEXT file and path:
+   - **Area**: `code`, `projects`, or `vaults` (from CWD relative to repo root)
+   - **Project**: folder name relative to area
+   - **Context**: stream name
+   - **Status**: use Status Mapping below to get emoji form
+   - **Focus**: ≤80 chars
+   - **Saved**: YYYY-MM-DD
+3. Search Active Contexts for matching `| {Area} | {Project} | {Context} |` row:
+   - Found → Edit replace
+   - Not found → Edit append (before blank line)
+4. Update summary counts (`📊 **Total**:`)
+5. **Preserve** Parked/Done/Archived unchanged
 
-📁 Available streams: CONTEXT-llm.md, test1-test6
-```
+**Performance**: Single Read + single Edit.
 
-## Template Structure
+## Status Mapping
 
-**Sections**: Header (saved/stream/focus/goal) → Project → OpenSpec → Tasks → NextTasks → Session → Focus → Files → Refs
+Normalize status values to emoji form for INDEX.md rows:
 
-**Key principles**:
-- Token target: 1200-1500 MAX
-- Session section: 780 tokens max (progression/decisions/thinking/unexpected)
-- Tasks: Include in_progress + pending + 3 recent completed only
-- Files: Max 10 hot files with brief roles
-- Use YAML inline objects where possible: `{done: 5, active: 2, pending: 3}`
+| Raw Value | Display |
+|-----------|---------|
+| `exploring` | 🔍 exploring |
+| `decided` | ✅ decided |
+| `building`, `in_progress` | 🏗️ building |
+| `parked` | ⏸️ parked |
+| `operational`, `verified` | ✅ operational |
+| `done`, `completed`, `closed` | ✅ done |
+| missing/empty/`n/a` | ❓ unknown |
 
-**See existing CONTEXT-*-llm.md files for template format** (don't recreate from scratch, follow established pattern)
+## Stream Naming
 
-## Context Quality Self-Check
-
-**Before writing, evaluate session significance**:
-
-✅ **Worth saving** (create context):
-- Non-trivial work completed (>1 file edited, meaningful decisions made)
-- Mid-stream checkpoint (need to switch tasks, resume later)
-- Learning/insights captured that inform future work
-- OpenSpec change in progress with active tasks
-
-⚠️ **Marginal** (ask user):
-- Quick fix/simple task (1-2 file changes, obvious approach)
-- Exploration with no decisions yet (research phase, no conclusions)
-
-❌ **Too small** (suggest skip):
-- Greeting/chat only
-- Single read/question answered
-- Pure troubleshooting with no resolution
-
-**If marginal or too small**: Output "📊 Session appears brief. Save context anyway?" and wait for confirmation.
-
-## Stream Naming Conventions
-
-**Reserved names**:
-- `default` - maps to `CONTEXT-llm.md` (backward compat)
-- `baseline` - created by `/create-context`, fork point for streams
-
-**Recommended patterns**:
-- `feature-name` - feature work (e.g., `pricing-v2`, `auth-refactor`)
-- `experiment-n` - exploratory work (e.g., `experiment-1`)
-- `angle-name` - RISEN angles (e.g., `angle-tech`, `angle-exec`)
-
-**Invalid names** (will prompt for correction):
-- Contains spaces, special chars except `-` and `_`
-- Longer than 50 characters
-- Empty string (use "default" explicitly)
+**Reserved**: `default` → `CONTEXT-llm.md`, `baseline` → fork point from `/create-context`
+**Pattern**: `^[a-zA-Z0-9_-]{1,50}$` (e.g., `pricing-v2`, `experiment-1`, `angle-tech`)
 
 ## Meta-Awareness: What This Command Produces
 
-**Output format**: Token-optimized YAML (no emoji, no prose, inline objects)
-**Audience**: Future LLM sessions loading context via `/load-context`
+**Output**: Key-value header + markdown sections (token-optimized, no emoji, inline objects)
+**Audience**: Future LLM sessions loading via `/load-context`
 **Purpose**: Session state restoration, not documentation
 
 **What load-context expects**:
-- Clean YAML structure for parsing
+- Key-value header (saved/stream/status/focus/goal) for frontmatter extraction
+- Markdown sections: `## Session`, `## Next Tasks`, `## Hot Files`, `## Tasks`, `## Project`, `## Refs`
 - File references (paths only, not content)
 - Aggregated progression (not tool-by-tool transcript)
 - Decision rationale (why, not just what)
 - Inline progress: `{done: 5, active: 2}` not multi-line
 
-**Token budget discipline**:
-- Session section often bloats — watch for redundancy between progression/decisions/thinking
-- Compress without losing key insights
-- Prefer structured data over narrative
-
 ## Related
 
-- `/load-context [stream]` - Load saved stream
-- `/list-contexts` - List all contexts across code/ and projects/
+- `/load-context [stream] [--full]` - Load saved stream
+- `/list-contexts [--sync] [--archive <stream>]` - List/sync all contexts
 - `/create-context` - Create baseline from .in/ folder

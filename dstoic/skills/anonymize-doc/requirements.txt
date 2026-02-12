@@ -1,3 +1,6 @@
 scrubadub>=2.0.0
 faker>=20.0.0
 spacy>=3.7.0
+langdetect>=1.0.9
+en-core-web-md>=3.7.0
+fr-core-news-md>=3.7.0
