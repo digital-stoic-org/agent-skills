@@ -286,11 +286,12 @@ flowchart LR
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 | `edit-risen-prompt` | ✍️ Create/audit RISEN prompts |
 
-## 📥 Conversions & Imports (4 commands)
+## 📥 Conversions & Imports (5 commands)
 
 | Command | Purpose | Model |
 |---------|---------|-------|
 | `/convert-pdf` | 📄 PDF → markdown (Docling) | haiku |
+| `/convert-pptx` | 📊 PowerPoint → markdown (markitdown) | haiku |
 | `/convert-epub` | 📖 EPUB → markdown | haiku |
 | `/import-gdoc` | 📥 Import Google Docs with manifest tracking | haiku |
 | `/background` | 🔄 Run tasks in background | sonnet |
@@ -324,6 +325,7 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 | `openspec-*` skills | [OpenSpec CLI](https://github.com/digital-stoic-org/openspec) | `pip install openspec` (TBD) |
 | `anonymize-doc` | scrubadub, faker, spacy | `pip install scrubadub faker spacy && python -m spacy download en_core_web_sm` |
 | `/convert-pdf` | [Docling](https://github.com/DS4SD/docling) | `pip install docling` |
+| `/convert-pptx` | [markitdown](https://github.com/microsoft/markitdown) | `pip install markitdown` |
 | `/convert-epub` | [epub-to-markdown](https://github.com/nickvdyck/epub-to-markdown) | `pip install epub-to-markdown` |
 
 ### Recommended
