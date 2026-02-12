@@ -116,7 +116,8 @@ If openspec active change detected from Bash output, also Read in parallel:
 Determine stream name from `$ARGUMENTS`:
 - First word = stream name (if valid: `^[a-zA-Z0-9_-]{1,50}$`)
 - Remaining = description
-- Empty → AskUserQuestion with existing streams (defer to after data gathering if needed)
+- Empty → check conversation history for a prior `/load-context {stream}` invocation and reuse that stream name as default (skip AskUserQuestion)
+- Empty + no prior load-context found → AskUserQuestion with existing streams (defer to after data gathering if needed)
 
 **Stream → filename**: `"default"/"" → CONTEXT-llm.md`, otherwise `CONTEXT-{stream}-llm.md`
 
