@@ -110,7 +110,7 @@ Parse `$ARGUMENTS`:
 If `--sync` in `$ARGUMENTS`:
 
 1. Read `$ROOT/INDEX.md` (or create if missing with Active/Parked/Done/Archived headers)
-2. **Regenerate Active Contexts table** from Phase 2 data. Use this exact format (6 columns with Area inline):
+2. **Regenerate Active Contexts table** from Phase 2 data. **Sort rows by Area (alphabetical), then by Saved date (descending) within each area.** Use this exact format (6 columns with Area inline):
 
 ```
 ## Active Contexts
