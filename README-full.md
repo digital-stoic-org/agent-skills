@@ -214,9 +214,15 @@ flowchart LR
 
 ---
 
-## 🪞 Learn — Retrospectives & Session Memory (7 commands)
+## 🪞 Learn — Retrospectives & Session Memory (7 commands + 1 skill)
 
 *Extract patterns from sessions. Persist context across conversations.*
+
+### Session Recap
+
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| `/tldr` | 📝 Concise recap of previous response (summary + action items) | haiku |
 
 ### Session Analysis
 
