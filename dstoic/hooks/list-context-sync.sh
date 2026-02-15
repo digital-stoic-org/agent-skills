@@ -25,6 +25,7 @@ fi
 
 # --- Configuration ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 GIT_ROOT=$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "")
 if [ -z "$GIT_ROOT" ]; then
   exit 0
@@ -52,9 +53,11 @@ SYNC_MARKER="$SYNC_STATE_DIR/${TODAY}-context-sync"
 if [ ! -f "$SYNC_MARKER" ]; then
   log "Phase 1: Running context sync..."
 
-  # Invoke list-contexts --sync headlessly
+  # Invoke list-contexts --sync headlessly (fully detached to avoid blocking session start)
+  # See: learnings.yaml "Claude Code headless doesn't load plugins" + "SessionStart hooks block"
   if command -v claude &>/dev/null; then
-    claude -p "/list-contexts --sync" --project-dir "$GIT_ROOT" >> "$LOG_FILE" 2>&1 &
+    nohup bash -c "cd \"$GIT_ROOT\" && claude --plugin-dir \"$PLUGIN_DIR\" --allowedTools 'Read Glob Bash(git*) Edit(INDEX.md)' -p '/dstoic:list-contexts --sync' >> \"$LOG_FILE\" 2>&1" </dev/null >/dev/null 2>&1 &
+    disown
     log "Phase 1: Context sync spawned (PID: $!)"
   else
     log "Phase 1: SKIP — claude CLI not found"
@@ -73,7 +76,6 @@ if command -v git &>/dev/null && git -C "$PROJECT_DIR" rev-parse --git-dir &>/de
 
   if [ "$UNPUSHED" -gt 0 ]; then
     log "Phase 2: ⚠️  $UNPUSHED unpushed commit(s) (manual push required)"
-    echo "[list-context-sync] ⚠️  $UNPUSHED unpushed commit(s) — manual push required" >&2
   else
     log "Phase 2: All commits pushed"
   fi
