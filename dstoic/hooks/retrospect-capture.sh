@@ -4,6 +4,7 @@ set -euo pipefail
 # ==============================================================================
 # Retrospective System: Unified Event Capture Hook
 # ==============================================================================
+# Reflect on AI-human collab per project — beyond execution-centric Agile retros
 # Purpose: Capture ALL 10 Claude Code lifecycle events to staging JSONL
 # Usage: capture.sh <EventName>
 # Input: JSON on stdin (from Claude Code hooks)

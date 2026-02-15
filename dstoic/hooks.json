@@ -13,6 +13,11 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SessionStart"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/list-context-sync.sh",
+            "timeout": 15
           }
         ]
       }

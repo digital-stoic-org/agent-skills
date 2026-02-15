@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Know when the agent needs you vs working autonomously
 # Context-aware tmux notification with double emoji prefixes (🤖 + status)
 # States: IDLE (no emoji) | ACTIVE (🤖X) | ALERT (🤖🚨) | COMPLETED (🤖✅)
 # See: ./notify-tmux--state-machine.md

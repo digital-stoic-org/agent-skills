@@ -4,6 +4,7 @@ set -e
 # ==============================================================================
 # Claude Output Dumper Hook (Staging Plugin)
 # ==============================================================================
+# Review agent output later without scrolling back
 # Purpose: Automatically dump Claude's last output when enabled
 # Usage: Triggered by Stop hook event
 # Input: JSON on stdin (from Claude Code hooks)
