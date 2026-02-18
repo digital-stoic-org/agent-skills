@@ -70,18 +70,15 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 
 ## 📦 Install
 
-```bash
-git clone https://github.com/digital-stoic-org/agent-skills.git
+Install from the Claude Code marketplace:
+
+```
+/install-plugin https://github.com/digital-stoic-org/agent-skills
 ```
 
-Add specific plugin to `.claude/settings.json`:
+This installs all plugins (dstoic, gtd). To install a specific plugin only, add it to `.claude/settings.json`:
 ```json
-{"plugins": ["/path/to/agent-skills/dstoic"]}
-```
-
-Or install all plugins via marketplace:
-```json
-{"plugins": ["/path/to/agent-skills"]}
+{"plugins": ["digital-stoic-org/agent-skills/dstoic"]}
 ```
 
 ## 🚀 Quick Start

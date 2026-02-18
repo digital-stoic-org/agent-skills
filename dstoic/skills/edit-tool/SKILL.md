@@ -1,11 +1,11 @@
 ---
-name: edit-tool
-description: Orchestrates creation of Claude Code tools (skills, commands, agents, scripts). Use when user requests creating, updating, or improving any Claude Code extension mechanism. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /commands/, /agents/. Auto-triages based on token budget, frequency, context needs, and execution type. Delegates to edit-skill, edit-command, edit-agent, or edit-plugin after explaining decision rationale. For plugin version bumps and release metadata, route directly to edit-plugin.
+name: edit-tool2
+description: Orchestrates creation of Claude Code tools (skills, agents, scripts). Use when user requests creating, updating, or improving any Claude Code extension mechanism. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /agents/. Auto-triages based on context pollution cost, token budget, and execution type. Delegates to edit-skill, edit-agent, or edit-plugin after explaining decision rationale. For plugin version bumps and release metadata, route directly to edit-plugin.
 ---
 
 # Edit Tool Orchestrator
 
-Automatically triages tool creation requests to the appropriate mechanism (skill, command, agent, or script).
+Automatically triages tool creation requests to the appropriate mechanism (skill, agent, or script).
 
 ## Triage Process
 
@@ -26,47 +26,48 @@ graph TD
     C -->|No| BASH[✅ Bash Script<br/>0 tokens]
     C -->|Yes| D{Token<br/>budget?}
     D -->|<500| WRAP[✅ Skill + scripts/<br/>AI wraps code]
-    D -->|>500| CMD1[✅ Command<br/>+ @filepath]
+    D -->|>500| SKILL_REF[✅ Skill + reference.md<br/>Progressive disclosure]
 
-    B -->|No| E{Token<br/>budget?}
-    E -->|>2000| AGENT[✅ Sub-Agent<br/>Isolated context]
-    E -->|500-2000| F{Invocation?}
-    F -->|User| CMD2[✅ Command<br/>User controls]
-    F -->|Auto| AGENT
+    B -->|No| E{Pollution<br/>cost?}
+    E -->|High >2000 tokens<br/>OR deep exploration| AGENT[✅ Sub-Agent<br/>Isolated context]
+    E -->|Medium 500-2000| F{Context<br/>mode?}
+    F -->|Needs isolation| FORK[✅ Skill context:fork<br/>Isolated execution]
+    F -->|Needs main context| SKILL_BIG[✅ Skill + reference.md<br/>Progressive disclosure]
 
-    E -->|<500| G{Frequency?}
-    G -->|5+ per session| H{Specific<br/>capability?}
-    H -->|Yes| SKILL[✅ Skill<br/>Auto-invoked]
-    H -->|No| CMD2
-    G -->|1-2 per session| CMD2
+    E -->|Low <500| G{Frequency?}
+    G -->|5+ per session| SKILL[✅ Skill<br/>Dual-invocable]
+    G -->|1-4 per session| SKILL_USER[✅ Skill<br/>Dual-invocable]
     G -->|Rare <1/10| DIRECT[❌ Direct Request<br/>No tool needed]
 
     style PLUGIN fill:#B2DFDB,stroke:#00897B,stroke-width:2px,color:#000
     style BASH fill:#90EE90,stroke:#000,stroke-width:2px,color:#000
     style SKILL fill:#FFD700,stroke:#000,stroke-width:2px,color:#000
+    style SKILL_USER fill:#FFD700,stroke:#000,stroke-width:2px,color:#000
     style WRAP fill:#FFA500,stroke:#000,stroke-width:2px,color:#000
-    style CMD1 fill:#87CEEB,stroke:#000,stroke-width:2px,color:#000
-    style CMD2 fill:#87CEEB,stroke:#000,stroke-width:2px,color:#000
+    style SKILL_REF fill:#FFA500,stroke:#000,stroke-width:2px,color:#000
+    style SKILL_BIG fill:#87CEEB,stroke:#000,stroke-width:2px,color:#000
+    style FORK fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
     style AGENT fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
     style DIRECT fill:#FFB6C1,stroke:#000,stroke-width:2px,color:#000
 ```
 
 ## Decision Factors Reference
 
-When path requires multiple criteria, consult:
+Primary axis: **context pollution cost** = token_count × load_frequency
 
 | Factor | Key Question | Result |
 |--------|--------------|--------|
-| **Token Budget** | <500 / 500-2000 / >2000? | Skill / Command / Agent |
-| **Frequency** | 5+ / 1-2 / <1 per 10 sessions? | Skill / Command / Direct |
-| **Context** | Main / Isolated? | Command / Agent |
-| **Scripts** | AI wrapper needed? | Skill+scripts/ / Bash |
-| **Invocation** | User / Auto? | Command / Skill |
-| **Capability** | Specific / Workflow? | Skill / Command |
+| **Pollution Cost** | Low (<500) / Medium (500-2000) / High (>2000)? | Skill / Skill+ref / Agent |
+| **Context Mode** | Needs main conversation or isolation? | `context:main` / `context:fork` |
+| **Frequency** | 5+ / 1-4 / <1 per 10 sessions? | Skill / Skill / Direct request |
+| **Scripts** | AI wrapper needed for deterministic code? | Skill+scripts/ / Bash |
 
 ## Delegation
 
-After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` | **Agent** → `edit-agent` | **Plugin** → `edit-plugin` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
+After explanation: **All tools** → `edit-skill` | **Agent** → `edit-agent` | **Plugin** → `edit-plugin` | **Bash** → Direct guidance (scripts/, #!/bin/bash, chmod +x, no tool)
+
+**Default**: All skills are dual-invocable (both `/name` and model auto-invoke). No special frontmatter needed.
+`disable-model-invocation: true` is an opt-out for rare edge cases only.
 
 **Special routing:** Version bumps, release metadata, plugin.json/marketplace.json updates → `edit-plugin` (bypasses decision tree)
 
@@ -74,9 +75,9 @@ After explanation: **Skill** → `edit-skill` | **Command** → `edit-command` |
 
 ## Explanation Template
 
-Explain decision: `✅ [TYPE] because: token budget (~X → range), frequency (pattern), key factor (dimension)`
+Explain decision: `✅ [TYPE] because: pollution cost (~X tokens × Yfreq), context mode (main|fork), key factor (dimension)`
 
-Example: `✅ SKILL because: ~300 tokens → <500, 10+/session, auto-invoked capability`
+Example: `✅ SKILL because: ~300 tokens → low pollution, 2x/session, dual-invocable (both / and model)`
 
 ## Parallelization Check
 
@@ -97,19 +98,21 @@ Example: `✅ SKILL because: ~300 tokens → <500, 10+/session, auto-invoked cap
 
 ## Tool Comparison Quick Reference
 
-| Tool | Token Cost | When to Use | Context |
-|------|------------|-------------|---------|
+| Tool | Pollution Cost | When to Use | Context |
+|------|---------------|-------------|---------|
 | **Bash Script** | 0 (executed) | Deterministic shell ops | None |
-| **Skill** | <500 ideal | Auto-invoked, frequent | Shared (pollution) |
-| **Command** | 500-2000 ok | User-triggered workflows | User-controlled |
-| **Agent** | Unlimited | Complex exploration | Isolated |
+| **Skill** | <500 ideal | All capabilities (dual-invocable by default) | `context:main` (shared) |
+| **Skill + reference.md** | <500 SKILL.md | Verbose workflows needing progressive disclosure | `context:main` (shared) |
+| **Skill (forked)** | 0 (isolated) | Research, exploration, heavy analysis | `context:fork` (isolated) |
+| **Agent** | 0 (isolated) | Complex multi-step exploration | Isolated sub-process |
 
 ## Common Patterns
 
 | Pattern | When | Solution |
 |---------|------|----------|
 | Script Wrapper | AI decides timing for existing scripts | Skill + scripts/ |
-| Verbose Workflow | >1000 tokens, manual trigger | Slash command |
+| Verbose Workflow | >500 tokens, needs progressive disclosure | Skill + reference.md |
 | Research Task | Multi-file exploration, autonomous | Sub-agent (check Task tool first) |
+| Heavy Analysis | Deep analysis, shouldn't pollute | Skill + `context:fork` |
 
 See `reference.md` for edge cases, conversion guide, and extended examples.

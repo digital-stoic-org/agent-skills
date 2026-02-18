@@ -7,6 +7,8 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 ## Table of Contents
 
 - [Complete Decision Framework](#complete-decision-framework)
+- [Unified Frontmatter Specification](#unified-frontmatter-specification)
+- [Context Execution Mode](#context-execution-mode)
 - [Token Estimation Guidelines](#token-estimation-guidelines)
 - [Edge Cases & Special Situations](#edge-cases--special-situations)
 - [Tool Conversion Guide](#tool-conversion-guide)
@@ -14,6 +16,107 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 - [Bash Script vs Skill Wrapper](#bash-script-vs-skill-wrapper)
 - [Parallelization Deep Dive](#parallelization-deep-dive)
 - [Real-World Examples](#real-world-examples)
+
+---
+
+## Unified Frontmatter Specification
+
+Single source of truth for all skill frontmatter fields.
+
+| Field | Required | Values | Description |
+|-------|----------|--------|-------------|
+| `name` | ✅ | lowercase-hyphens | Skill identifier |
+| `description` | ✅ | string (max 1024 chars) | Triggers and use cases |
+| `disable-model-invocation` | No | `true`/`false` (default: false) | Opt-out from model auto-invoke; rarely needed since dual-invocable is the default |
+| `user-invocable` | No | `true`/`false` (default: true) | Shows in `/` menu |
+| `context` | No | `main`/`fork` (default: main) | Execution context mode |
+| `agent` | No | agent-type string | Sub-agent type for forked context |
+| `hooks` | No | `[hook-spec, ...]` | Skill-scoped hooks |
+| `allowed-tools` | No | `[Tool1, Tool2, ...]` | Tool restrictions |
+| `argument-hint` | No | pattern string | Argument pattern hint |
+| `model` | No | `opus`/`sonnet`/`haiku` | Model override (use short names) |
+
+### Frontmatter Patterns
+
+**Auto-invoked capability** (frequent, lightweight):
+```yaml
+name: detect-conflicts
+description: Detects git conflicts and suggests resolution. Use when merge conflicts detected.
+```
+
+**Workflow tool** (verbose, progressive disclosure):
+```yaml
+name: deploy-vercel
+description: Deploy to Vercel. Use when "deploy to vercel", "vercel deploy".
+argument-hint: [environment]
+# Dual-invocable by default: both /deploy-vercel and model auto-invoke work
+```
+
+**Isolated heavy analysis**:
+```yaml
+name: security-audit
+description: Deep security analysis across codebase. Use for security audit, vulnerability scan.
+context: fork
+model: opus
+```
+
+---
+
+## Context Execution Mode
+
+**PRIMARY DISCRIMINATOR** for tool design. Determines how a skill interacts with the conversation.
+
+### Modes
+
+| Mode | Execution | Pollution | Use Case |
+|------|-----------|-----------|----------|
+| **main** (default) | In main conversation | Token cost applies | Quick actions, shared context, interactive |
+| **fork** | Isolated sub-agent | Zero (isolated) | Research, exploration, heavy analysis |
+
+### Decision Tree: Main vs Fork
+
+```mermaid
+flowchart TD
+    A[Skill Design] --> B{Generates verbose output?}
+    B -->|Yes >500 lines| C[context: fork]
+    B -->|No| D{Needs main conversation context?}
+    D -->|Yes| E[context: main]
+    D -->|No| F{Called frequently?}
+    F -->|Yes >5/session| E
+    F -->|No| G{Parallel-safe required?}
+    G -->|Yes| C
+    G -->|No| E
+
+    classDef fork fill:#FFB6C1,stroke:#8B0000,color:#000
+    classDef main fill:#98FB98,stroke:#006400,color:#000
+
+    class C fork
+    class E main
+```
+
+### Performance Considerations
+
+| Aspect | Main Context | Fork Context |
+|--------|--------------|--------------|
+| Startup time | Instant | ~1-2s (sub-agent spawn) |
+| Context access | Full main conversation | Isolated (only skill context) |
+| Output visibility | Inline in conversation | Returned as summary |
+| Parallelization | Limited (shared state) | Safe (isolated state) |
+| Memory | Shares main context window | Separate context window |
+
+### When to Use Fork
+
+✅ Deep codebase analysis generating verbose output
+✅ Multiple independent tasks running simultaneously
+✅ Long-running analysis (reports, test coverage)
+✅ Task shouldn't affect or be affected by main conversation
+
+### When to Use Main (default)
+
+✅ Quick operations (format conversion, simple transforms)
+✅ Context-dependent (needs conversation history)
+✅ Frequent invocation (fork overhead adds up at 5+/session)
+✅ Interactive workflow (user sees results inline)
 
 ---
 
@@ -27,26 +130,26 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 |------|----------------|-------------|
 | **Pure deterministic** | Sequential shell commands, no decisions | Bash Script |
 | **Deterministic + AI** | Scripts exist, AI decides when/how | Skill with scripts/ |
-| **Single AI operation** | One response, simple logic | Slash Command |
+| **Single AI operation** | One response, simple logic | Skill (user-triggered or auto) |
 | **Multi-step AI** | Autonomous reasoning across steps | Sub-Agent |
 | **Capability enhancement** | Extends Claude's abilities | Skill |
 
 #### Axis 2: Invocation Pattern
 
-| Pattern | User Action | Best Tool |
-|---------|-------------|-----------|
-| **Explicit manual** | Types `/command` or invokes | Slash Command |
-| **Implicit auto** | Keywords trigger automatically | Skill |
+| Pattern | User Action | Frontmatter |
+|---------|-------------|-------------|
+| **Dual-invocable** (default) | Both `/skill-name` and model auto-invoke | No special frontmatter needed |
+| **Manual-only** (rare) | Only `/skill-name` | `disable-model-invocation: true` |
 | **Programmatic** | Called by other tools | Sub-Agent (Task tool) |
 
-#### Axis 3: Token Budget
+#### Axis 3: Token Budget (Pollution Cost)
 
 | Range | Implication | Tool Choice |
 |-------|-------------|-------------|
 | **0 tokens** | Script executed, not read | Bash Script or Skill+scripts/ |
-| **<500 tokens** | Acceptable context pollution | Skill (ideal) |
-| **500-2000 tokens** | Moderate, needs user control | Slash Command |
-| **>2000 tokens** | High, needs isolation | Sub-Agent |
+| **<500 tokens** | Acceptable pollution | Skill (ideal) |
+| **500-2000 tokens** | Use progressive disclosure | Skill + reference.md |
+| **>2000 tokens** | Needs isolation | Sub-Agent or `context:fork` |
 
 **Estimation Tips:**
 - Count prose, not code blocks (code is efficient)
@@ -58,20 +161,20 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 
 | Need | Rationale | Tool Choice |
 |------|-----------|-------------|
-| **Main context access** | Needs conversation history | Slash Command |
-| **Isolated exploration** | Research without pollution | Sub-Agent |
-| **Minimal pollution** | Concise, high-value capability | Skill |
+| **Main context access** | Needs conversation history | Skill (`context:main`) |
+| **Isolated exploration** | Research without pollution | Skill (`context:fork`) or Sub-Agent |
+| **Minimal pollution** | Concise, high-value capability | Skill (<500 tokens) |
 | **Zero pollution** | Execution only | Bash Script |
 
 #### Axis 5: Frequency & Justification
 
-| Frequency | Per Session | Justification | Tool Choice |
-|-----------|-------------|---------------|-------------|
-| **Very high** | 10+ | Essential capability | Skill |
-| **High** | 5-9 | Frequent enough | Skill (if <500 tokens) |
-| **Medium** | 2-4 | Occasional use | Slash Command |
-| **Low** | 1 | User controls timing | Slash Command |
-| **Rare** | <0.1 | Not worth tool | Direct Request |
+| Frequency | Per Session | Frontmatter | Tool Choice |
+|-----------|-------------|-------------|-------------|
+| **Very high** | 10+ | default (auto-invoke) | Skill |
+| **High** | 5-9 | default (auto-invoke) | Skill (if <500 tokens) |
+| **Medium** | 2-4 | default (dual-invocable) | Skill |
+| **Low** | 1 | default (dual-invocable) | Skill |
+| **Rare** | <0.1 | — | Direct Request |
 
 **Context Pollution Math:**
 - Skill at 400 tokens, used 10x/session = 4000 token "cost"
@@ -86,10 +189,6 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 | **Scripts + timing** | AI decides when to run | Skill with scripts/ |
 | **Scripts + parameters** | AI generates args | Skill with scripts/ |
 | **Scripts + orchestration** | Complex sequencing | Skill or Sub-Agent |
-| **User-guided scripts** | Manual trigger + files | Command with @filepath |
-
-**Why not Command for scripts?**
-Commands can't bundle scripts directory. Must reference external files with `@filepath`.
 
 #### Axis 7: Write Operations (Parallelization)
 
@@ -138,10 +237,6 @@ Skill reference.md:
   Typical: 1000-3000 tokens
   Maximum: No hard limit (loaded on-demand)
 
-Command .md:
-  Typical: 500-2000 tokens
-  Maximum: No hard limit (user-controlled)
-
 Agent .md:
   Typical: 300-1000 tokens (system prompt)
   Maximum: No hard limit (isolated context)
@@ -151,43 +246,34 @@ Agent .md:
 
 ## Edge Cases & Special Situations
 
-### Case 1: "I want a skill that wraps multiple commands"
+### Case 1: "I want a skill that wraps multiple workflows"
 
 **Analysis:**
 - Token budget likely >1000 (multiple workflows)
 - Violates single-responsibility principle
-- Each command should be separate
 
 **Solution:**
-- Create individual skills/commands for each capability
+- Create individual skills for each capability
 - Or create orchestrator skill that delegates (like edit-tool!)
 
-### Case 2: "Make this command auto-invoke"
+### Case 2: "Prevent this tool from auto-invoking"
 
 **Analysis:**
-- Commands are user-invoked by design
-- Auto-invoke = convert to skill
+- Rare case where auto-invoke is undesirable (e.g. destructive operations)
 
 **Solution:**
-- If <500 tokens → Convert to skill
-- If >500 tokens → Keep as command (explain trade-off)
+- Add `disable-model-invocation: true` to frontmatter
+- This is the exception, not the default
 
 ### Case 3: "This skill is too verbose (>1000 tokens)"
 
-**Analysis:**
-- Wrong tool type OR needs refactoring
-
 **Solutions:**
-1. **Convert to Command**: If user-triggered workflow
+1. **Progressive disclosure**: Move details to reference.md
 2. **Split into multiple skills**: If multiple capabilities
-3. **Progressive disclosure**: Move details to reference.md
+3. **Fork context**: If research/exploration (`context: fork`)
 4. **Convert to Agent**: If >2000 tokens and exploratory
 
 ### Case 4: "I need a skill that runs complex scripts"
-
-**Analysis:**
-- Scripts = 0 tokens (executed, not loaded)
-- Perfect for Skill + scripts/ pattern
 
 **Solution:**
 ```
@@ -202,146 +288,73 @@ skill-name/
 
 ### Case 5: "Should this be a skill or use existing Task tool?"
 
-**Analysis:**
-- Task tool with specialized agents already exists
-- Check if agent type already covers use case
-
 **Decision Tree:**
 ```
 Is there an existing agent? (Explore, Plan, etc.)
 ├─ Yes → Use Task tool (no new skill needed)
-└─ No → Is it <500 tokens and frequently invoked?
-    ├─ Yes → Create skill
-    └─ No → Create sub-agent or use command
+└─ No → Create skill (with appropriate context mode)
 ```
 
 ### Case 6: "Skill for one project vs all projects"
 
-**Not a tool type question** - it's about location:
 - `.claude/skills/` → Current project only
 - `~/.claude/skills/` → All projects (rare, use plugins instead)
-- `reference/claude-plugins/common/skills/` → Plugin development
+- Plugin `skills/` → Plugin distribution
 
 ---
 
 ## Tool Conversion Guide
 
-### Command → Skill
+### Legacy Command → Skill
 
-**When to convert:**
-- Used 5+ times per session
-- Auto-invoke makes sense
-- Can reduce to <500 tokens
+**When:** Migrating existing commands to unified skill format.
 
 **Process:**
-1. Copy command content
-2. Create skill directory: `reference/claude-plugins/common/skills/skill-name/`
-3. Add YAML frontmatter with `name` and `description`
-4. Add trigger keywords to description
-5. Move detailed examples to `reference.md`
-6. Remove `$ARGUMENTS` / `@filepath` syntax (skills don't use these)
-7. Test auto-invocation with trigger keywords
+1. Create skill directory: `skills/tool-name/`
+2. Add unified frontmatter (see Unified Frontmatter Specification above)
+3. Ensure `description` has trigger keywords (enables model auto-invoke)
+4. Move verbose content to `reference.md`
+6. Optimize SKILL.md to <500 tokens
+7. Test trigger still works
 
-**Example:**
-```markdown
-# BEFORE (command)
----
-description: Analyze test coverage
-argument-hint: [file]
----
-Analyze test coverage in @$1 and report gaps.
+**Frontmatter transformation:**
+```yaml
+# BEFORE (legacy command)
+description: Brief description
+allowed-tools: [Tool1, Tool2]
+argument-hint: pattern
+model: sonnet
 
 # AFTER (skill)
----
-name: test-coverage
-description: Analyzes test coverage and reports gaps. Use when user mentions "test coverage", "coverage report", or .coverage files.
----
-# Test Coverage Analyzer
-Analyze test coverage and identify gaps...
+name: tool-name
+description: Brief description. Use when [triggers].
+allowed-tools: [Tool1, Tool2]
+argument-hint: pattern
+model: sonnet
+context: main
+# Dual-invocable by default: both /tool-name and model auto-invoke work
 ```
 
-### Skill → Command
+### Skill → Agent
 
-**When to convert:**
-- Token budget >1000
-- Rarely used (<2 times per session)
-- User preference for manual trigger
-
-**Process:**
-1. Remove skill directory structure
-2. Create `.claude/commands/skill-name.md`
-3. Optional: Add frontmatter with `description`, `argument-hint`
-4. Add `$ARGUMENTS` or `$1, $2` if parameters needed
-5. No need to reduce tokens (user controls)
-
-### Command/Skill → Agent
-
-**When to convert:**
-- Token budget >2000
-- Needs isolated context
-- Complex multi-step exploration
+**When:** Token budget >2000, needs isolated context, complex multi-step exploration.
 
 **Process:**
 1. Create `.claude/agents/agent-name.md`
 2. Add frontmatter: `name`, `description`, `tools`, `model`
 3. Convert instructions to system prompt (2nd person → role-based)
 4. Restrict tools to minimum needed
-5. Remove any references to conversation history
-
-**Example:**
-```markdown
-# BEFORE (command/skill)
-Analyze the codebase and find all API endpoints...
-
-# AFTER (agent)
----
-name: api-analyzer
-description: Analyzes codebase to find and document API endpoints
-tools: Read, Grep, Glob
-model: sonnet
----
-You are an API analysis specialist. Your task is to:
-1. Search the codebase for API endpoint definitions
-2. Extract routes, methods, and handlers
-3. Generate comprehensive documentation
-```
+5. Remove references to conversation history
 
 ### Bash Script → Skill Wrapper
 
-**When to convert:**
-- Script works but AI needs to decide when/how to use it
-- Parameters need AI-generated values
-- Part of larger workflow
+**When:** Script works but AI needs to decide when/how to use it.
 
 **Process:**
 1. Create skill: `skill-name/`
 2. Move script to `scripts/` subdirectory
-3. Write SKILL.md with:
-   - When to invoke script
-   - How to generate parameters
-   - How to interpret output
+3. Write SKILL.md: when to invoke, how to generate parameters, how to interpret output
 4. Keep script pure (no AI logic in script)
-
-**Example:**
-```markdown
-# SKILL.md
----
-name: pdf-rotator
-description: Rotates PDF pages. Use when user wants to rotate, flip, or reorient PDFs.
----
-# PDF Rotator
-
-## Usage
-Determine rotation angle (90, 180, 270) based on user request, then run:
-```bash
-python scripts/rotate.py input.pdf output.pdf --angle [ANGLE]
-```
-
-## Common Patterns
-- "rotate clockwise" → 90
-- "flip upside down" → 180
-- "rotate counterclockwise" → 270
-```
 
 ---
 
@@ -349,27 +362,13 @@ python scripts/rotate.py input.pdf output.pdf --angle [ANGLE]
 
 ### What is Context Pollution?
 
-Every skill's SKILL.md body is loaded when triggered and remains in context. This competes with:
-- Conversation history
-- Other skills' metadata
-- File contents
-- User requests
+Every skill's SKILL.md body is loaded when triggered and remains in context. This competes with conversation history, other skills, file contents, and user requests.
 
 ### Pollution Impact Formula
 
 ```
 Impact = TokenCount × LoadFrequency × SessionDuration
 ```
-
-**Example:**
-- Skill: 800 tokens
-- Triggered: 1x per session
-- Duration: Stays loaded entire session
-- **Impact**: 800 tokens of pollution
-
-**Justification threshold:**
-- Must save >800 tokens of repeated instructions, OR
-- Provides capability not easily expressed inline
 
 ### Minimizing Pollution
 
@@ -391,22 +390,15 @@ scripts/ (0 tokens) → Executed, never loaded
 - Generic triggers = loads too often = more pollution
 - Example: "Use for .xlsx files" (good) vs "Use for documents" (bad)
 
+**Technique 4: Context Mode**
+- `context: fork` = zero pollution (isolated execution)
+- Use for research, analysis, report generation
+
 ### When Pollution is Acceptable
 
-✅ **High-value capabilities**:
-- Skill provides >2000 tokens worth of procedural knowledge
-- Used 5+ times per session
-- No good alternative (can't be command/agent)
-
-✅ **Zero-inflation skills**:
-- Skill mostly references `scripts/` (0 token execution)
-- SKILL.md just decides when/how to invoke
-- Net pollution: ~200-300 tokens
-
-❌ **Unacceptable pollution**:
-- >1000 token skill used 1x per session
-- Could easily be command
-- Verbose instructions that change rarely
+✅ **High-value capabilities**: >2000 tokens worth of procedural knowledge, used 5+ times/session
+✅ **Zero-inflation skills**: Mostly references `scripts/` (0 token execution), SKILL.md ~200-300 tokens
+❌ **Unacceptable**: >1000 token skill used 1x per session — use progressive disclosure (reference.md) or `context:fork`
 
 ---
 
@@ -422,158 +414,35 @@ scripts/ (0 tokens) → Executed, never loaded
 | **Reusability** | Limited to script use cases | Flexible invocation |
 | **Token cost** | 0 | ~200-400 (wrapper logic) |
 
-### Pattern 1: Pure Bash Script
-
-**Use when:**
-- Steps are always the same
-- No decision-making needed
-- Parameters obvious to user
-
-**Example: Git commit message generator**
-```bash
-#!/bin/bash
-# scripts/commit-msg.sh
-git log -1 --pretty=%B
-echo "---"
-git diff --staged
-```
-
-Just run: `./scripts/commit-msg.sh`
-
-### Pattern 2: Skill Wrapper
-
-**Use when:**
-- AI needs to decide which script to run
-- AI needs to generate parameters
-- Part of larger capability
-
-**Example: PDF processor**
-```
-pdf-processor/
-├── SKILL.md
-└── scripts/
-    ├── rotate.py
-    ├── merge.py
-    └── extract.py
-```
-
-```markdown
-# SKILL.md
----
-name: pdf-processor
-description: Process PDFs (rotate, merge, extract). Use for .pdf files.
----
-
-## Operations
-
-**Rotate**: `python scripts/rotate.py input.pdf output.pdf --angle [90|180|270]`
-**Merge**: `python scripts/merge.py output.pdf input1.pdf input2.pdf ...`
-**Extract**: `python scripts/extract.py input.pdf output.txt --pages [range]`
-
-Determine operation from user request and generate appropriate command.
-```
-
 ### When Scripts Can't Solve It
 
 **Scenarios requiring AI:**
-1. **Ambiguous input**: "Make this image look better" (what operations?)
-2. **Context-dependent**: "Fix the test failures" (which tests? what fixes?)
-3. **Creative tasks**: "Write API docs" (requires understanding + generation)
-4. **Multi-file coordination**: "Refactor authentication" (many files, decisions)
+1. **Ambiguous input**: "Make this image look better"
+2. **Context-dependent**: "Fix the test failures"
+3. **Creative tasks**: "Write API docs"
+4. **Multi-file coordination**: "Refactor authentication"
 
-**These need:** Command or Agent, not script wrappers
+**These need:** Skill or Agent, not script wrappers
 
 ---
 
 ## Parallelization Deep Dive
 
-### Why It Matters
-
-Claude can call multiple tools in one message:
-```markdown
-Let me read three files in parallel.
-[Read file1.js]
-[Read file2.js]
-[Read file3.js]
-```
-
-**Benefits:**
-- 3x faster (one round-trip vs three)
-- Better UX
-- More efficient
-
-**Risks:**
-- Write conflicts
-- Race conditions
-- Dependent operations out of order
-
 ### Safe Parallelization Rules
 
 #### ✅ Always Safe: Read Operations
-
 ```markdown
-# SAFE - no side effects
 [Read src/auth.js]
 [Read src/user.js]
-[Read tests/auth.test.js]
 [Grep "function" --output_mode content]
 [Glob "**/*.config.js"]
 ```
 
 #### ⚠️ Sometimes Safe: Independent Writes
-
-**Safe if:**
-- Different files
-- No shared state
-- No dependencies
-
-```markdown
-# SAFE - independent files
-[Write src/newFeature.js "..."]
-[Write tests/newFeature.test.js "..."]
-[Write docs/newFeature.md "..."]
-```
-
-**Unsafe:**
-```markdown
-# UNSAFE - same file
-[Edit file.js "old1" "new1"]
-[Edit file.js "old2" "new2"]  # Conflict!
-```
-
-#### ⚠️ Careful: Dependent Writes
-
-**Must sequence:**
-- File B depends on file A existing
-- Config must be updated before code
-- Tests must run after code changes
-
-```markdown
-# UNSAFE - dependent operations
-[Write config.json "..."]
-[Write feature.js "import config from 'config.json'"]
-# What if config.json write fails?
-
-# SAFE - sequential
-[Write config.json "..."]
-# Wait for response
-[Write feature.js "import config from 'config.json'"]
-```
+Safe if different files, no shared state, no dependencies.
 
 #### ❌ Never Parallel: Destructive Operations
-
-**Always Plan Mode first:**
-- Deleting files
-- Renaming files
-- Refactoring across >5 files
-- Database migrations
-- Breaking changes
-
-**Workflow:**
-1. Enter Plan Mode
-2. Design changes
-3. Get user approval
-4. Execute sequentially with validation
+Always Plan Mode first: deleting files, renaming, refactoring >5 files, breaking changes.
 
 ### Parallelization Decision Tool
 
@@ -591,167 +460,78 @@ graph TD
     F -->|Yes| PLAN
     F -->|No| PARA2[✅ Can Parallelize]
 
-    style PARA fill:#90EE90
-    style PARA2 fill:#90EE90
-    style SEQ fill:#FFD700
-    style PLAN fill:#FFB6C1
+    style PARA fill:#90EE90,color:#000
+    style PARA2 fill:#90EE90,color:#000
+    style SEQ fill:#FFD700,color:#000
+    style PLAN fill:#FFB6C1,color:#000
 ```
 
 ---
 
 ## Real-World Examples
 
-### Example 1: Test Coverage Analyzer
+### Example 1: Test Coverage Analyzer (Auto-invoked Skill)
 
-**User Request:** "I need something to check test coverage and show gaps"
+**Request:** "I need something to check test coverage and show gaps"
 
 **Analysis:**
-- **Token budget**: ~400 tokens (analysis logic + report format)
-- **Frequency**: 3-5 times per session (during testing)
-- **Context**: Needs main context (recent changes)
-- **Scripts**: Could use coverage.py output
-- **Invocation**: Auto when user mentions "coverage"
+- Pollution cost: ~400 tokens → Low
+- Frequency: 3-5x/session → High
+- Context: Needs main (recent changes)
 
-**Decision:** ✅ **SKILL**
+**Decision:** `✅ SKILL because: ~400 tokens → low pollution, 5x/session → auto-invoke justified`
 
-**Rationale:**
-```
-✅ SKILL because:
-- Token budget: ~400 tokens → <500 range
-- Frequency: 3-5x per session → justifies auto-invoke
-- Key factor: Concise capability, frequently used
-- Context impact: Low pollution (efficient)
-```
-
-**Implementation:**
 ```
 test-coverage/
 ├── SKILL.md (400 tokens - when to check, how to report)
-└── scripts/
-    └── parse_coverage.py (0 tokens - executed)
+└── scripts/parse_coverage.py (0 tokens - executed)
 ```
 
-### Example 2: API Documentation Generator
+### Example 2: API Documentation Generator (User-triggered Skill)
 
-**User Request:** "Build a tool that generates API docs from code comments"
+**Request:** "Build a tool that generates API docs from code comments"
 
 **Analysis:**
-- **Token budget**: ~1500 tokens (parsing rules, format templates, examples)
-- **Frequency**: 1-2 times per session (after features)
-- **Context**: Needs main context (recent code changes)
-- **Invocation**: User triggers when docs needed
+- Pollution cost: ~1500 tokens → Medium (use progressive disclosure)
+- Frequency: 1-2x/session → Low
+- Invocation: User triggers when docs needed
 
-**Decision:** ✅ **SLASH COMMAND**
+**Decision:** `✅ SKILL because: ~300 token SKILL.md + reference.md for progressive disclosure, 1-2x/session, dual-invocable`
 
-**Rationale:**
 ```
-✅ COMMAND because:
-- Token budget: ~1500 tokens → 500-2000 range
-- Frequency: 1-2x per session → occasional use
-- Key factor: User controls when to generate
-- Context impact: User-controlled (no pollution)
+generate-api-docs/
+├── SKILL.md (~300 tokens - when to use, output format)
+└── reference.md (~1200 tokens - parsing rules, templates, examples)
 ```
 
-**Implementation:**
-```
-.claude/commands/generate-api-docs.md
-- Parse JSDoc/docstrings
-- Extract endpoints/methods
-- Generate markdown
-- User invokes: /generate-api-docs src/api/
-```
+### Example 3: Codebase Analyzer (Sub-Agent)
 
-### Example 3: Codebase Analyzer
-
-**User Request:** "I want something that explores the codebase and explains architecture"
+**Request:** "Explore the codebase and explain architecture"
 
 **Analysis:**
-- **Token budget**: >3000 tokens (exploration heuristics, analysis patterns, report structure)
-- **Frequency**: 1 time per session (onboarding)
-- **Context**: Isolated (doesn't need conversation history)
-- **Operations**: Multiple file reads, searches, autonomous decisions
+- Pollution cost: >3000 tokens → High
+- Frequency: 1x/session
+- Context: Doesn't need conversation history
 
-**Decision:** ✅ **SUB-AGENT**
+**Decision:** `✅ SUB-AGENT because: >3000 tokens, complex exploration, isolated context needed`
 
-**Rationale:**
-```
-✅ SUB-AGENT because:
-- Token budget: ~3500 tokens → >2000 range
-- Frequency: 1x per session → isolated task
-- Key factor: Complex exploration, needs isolation
-- Context impact: Isolated (zero pollution)
-```
+### Example 4: Deploy to Vercel (User-triggered Skill)
 
-**Implementation:**
-```
-.claude/agents/codebase-analyzer.md
-- System prompt with analysis methodology
-- Tools: Read, Grep, Glob (read-only)
-- Model: sonnet (complex reasoning)
-```
-
-### Example 4: Git Hook Runner
-
-**User Request:** "Make a tool that runs git hooks automatically"
+**Request:** "Make a slash command for deploying to Vercel"
 
 **Analysis:**
-- **Deterministic**: Yes (hook execution is scripted)
-- **AI needed**: No (hooks run deterministically)
-- **Token budget**: 0 (pure bash)
+- Pollution cost: ~600 tokens → Medium
+- Frequency: 1-2x/session → Low
+- Invocation: User manually triggers
 
-**Decision:** ✅ **BASH SCRIPT**
+**Decision:** `✅ SKILL because: progressive disclosure keeps SKILL.md <500, dual-invocable, trigger keywords in description`
 
-**Rationale:**
-```
-✅ BASH SCRIPT because:
-- Execution: Purely deterministic
-- AI needed: No decision-making required
-- Token cost: 0 (executed, not loaded)
-- Key factor: Sequential shell operations
-```
-
-**Implementation:**
-```bash
-#!/bin/bash
-# .git/hooks/pre-commit
-
-npm run lint
-npm run test
-npm run build
-```
-
-No AI tool needed - just a script!
-
-### Example 5: Code Review Automation
-
-**User Request:** "Create something that reviews PRs and comments on issues"
-
-**Analysis:**
-- **Token budget**: ~800 tokens (review criteria, comment format)
-- **Frequency**: Manual trigger (when PR ready)
-- **Context**: Needs PR context
-- **Invocation**: User types `/review-pr 123`
-- **Could be >500 tokens**: Review checklist is detailed
-
-**Decision:** ✅ **SLASH COMMAND**
-
-**Rationale:**
-```
-✅ COMMAND because:
-- Token budget: ~800 tokens → 500-2000 range
-- Frequency: On-demand per PR
-- Key factor: User controls timing
-- Context impact: User-controlled load
-```
-
-**Implementation:**
-```
-.claude/commands/review-pr.md
-- Fetch PR with gh CLI
-- Check against review criteria
-- Generate comments
-- Post via gh CLI
-- Arguments: $1 = PR number
+```yaml
+# Frontmatter
+name: deploy-vercel
+description: Deploy to Vercel. Use when "deploy to vercel", "vercel deploy".
+argument-hint: [environment]
+# Dual-invocable by default
 ```
 
 ---
@@ -762,55 +542,35 @@ No AI tool needed - just a script!
 Choose BASH SCRIPT when:
   ✅ Purely deterministic shell operations
   ✅ No AI decision-making needed
-  ✅ Sequential commands
   ❌ NOT: Needs AI to decide when/how/what
 
-Choose SKILL when:
-  ✅ <500 tokens (ideally <400)
+Choose SKILL (auto-invoked) when:
+  ✅ <500 tokens ideal
   ✅ Used 5+ times per session
   ✅ Auto-invoke makes sense
-  ✅ Specific capability (not workflow)
+  ✅ Specific capability
   ❌ NOT: Verbose, rare, or user-triggered
 
-Choose COMMAND when:
-  ✅ 500-2000 tokens (can be verbose)
-  ✅ User manually triggers
-  ✅ 1-5 times per session
+Choose SKILL (with progressive disclosure) when:
+  ✅ >500 tokens total content
+  ✅ Keep SKILL.md <500, verbose content in reference.md
+  ✅ Any frequency (dual-invocable by default)
   ✅ Workflow with steps
-  ❌ NOT: Should auto-invoke or >2000 tokens
+
+Choose SKILL (forked) when:
+  ✅ Research, exploration, heavy analysis
+  ✅ Verbose output that would pollute main context
+  ✅ Parallel-safe execution needed
+  Frontmatter: context: fork
 
 Choose SUB-AGENT when:
-  ✅ >2000 tokens OR complex exploration
-  ✅ Needs isolated context
+  ✅ >2000 tokens AND complex exploration
   ✅ Multi-step autonomous reasoning
-  ✅ Research/analysis task
+  ✅ Needs full isolation
   ❌ NOT: Needs main conversation context
 
 Choose DIRECT REQUEST when:
-  ✅ One-off task
-  ✅ Used <1 per 10 sessions
+  ✅ One-off task, <1 per 10 sessions
   ✅ Simple enough to ask inline
   ❌ NOT: Worth building a tool for
 ```
-
----
-
-## Questions & Troubleshooting
-
-**Q: My skill is 600 tokens. Skill or command?**
-A: Command. Skills should be <500 ideally. Use progressive disclosure (reference.md) or convert to command.
-
-**Q: Should every bash script become a skill?**
-A: No! Only if AI needs to decide when/how to use it. Pure scripts stay as scripts.
-
-**Q: Can I convert a command to a skill later?**
-A: Yes. If usage increases to 5+ per session and you can get <500 tokens, convert it.
-
-**Q: How do I know if Task tool already covers my use case?**
-A: Check existing agent types: Explore, Plan, Bash, general-purpose. If close match, use Task tool.
-
-**Q: What if I'm unsure about token count?**
-A: Start with command (safer). Convert to skill later if usage justifies it.
-
-**Q: My skill needs 1000 tokens of reference data. What do I do?**
-A: Put 200-300 tokens in SKILL.md (when to use, how to access), put 1000 tokens in reference.md (Claude loads on-demand).
