@@ -243,76 +243,96 @@ flowchart LR
 
 ### 🧬 Context Engineering Workflow
 
-This plugin implements **context engineering** — the discipline of designing what task-relevant information the model has access to, not just how you prompt it. Inspired by [Dexter Horthy's Advanced Context Engineering for Agents](https://www.youtube.com/watch?v=VvkhYWFWaKI) ([paper](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents)).
+This plugin implements **context engineering** — the discipline of designing what task-relevant information the model has access to, not just how you prompt it.
 
-> *"The contents of your context window are the ONLY lever you have to affect the quality of your output."* — Dexter Horthy
+🎤 **Accessible intro:** [Context Engineering FTW — Making Claude actually work in real codebases](https://link.excalidraw.com/p/readonly/cz2KRei6ueIPyvbXaThj) by [Mehdi Mehlah](https://www.linkedin.com/in/mehlah/) (Lyon.rb) — visual walkthrough of micro-agents in DAGs, context window mechanics, and why traditional large agents break after 10-20 turns.
+
+📖 **Deep dive:** [Advanced Context Engineering for Agents](https://www.youtube.com/watch?v=VvkhYWFWaKI) ([paper](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents)) by Dexter Horthy — the original framework: *"The contents of your context window are the ONLY lever you have to affect the quality of your output."*
 
 **Core principle: Frequent Intentional Compaction** — pause before context saturation, distill progress into structured artifacts (CONTEXT-llm.md, research docs, specs), restart fresh with compressed knowledge. Target 40-60% context utilization.
 
+#### 🗺️ High-level lifecycle (stable)
+
+The session lifecycle pattern itself is generic — it applies to any AI-assisted workflow, regardless of tooling.
+
 ```mermaid
-flowchart TD
-    subgraph SESSION_START["🟢 Session Start"]
-        direction LR
-        load["📥 /load-context<br/>Resume from CONTEXT-llm.md"]
-        claude["📄 CLAUDE.md<br/>Auto-loaded directives"]
-        hooks_start["🪝 Hooks<br/>retrospect-capture"]
-    end
+flowchart LR
+    START["🟢 Start<br/>Load context"] --> RESEARCH["🔍 Research<br/>Understand problem"]
+    RESEARCH -->|"compressed<br/>research doc"| PLAN["📝 Plan<br/>Design solution"]
+    PLAN -->|"detailed spec"| IMPLEMENT["⚙️ Implement<br/>Build + verify"]
+    IMPLEMENT -->|"compaction<br/>trigger"| COMPACT["📦 Compact<br/>Distill progress"]
+    COMPACT --> END["🔴 End<br/>Save context"]
 
-    subgraph RESEARCH["🔍 Research Phase"]
-        direction LR
-        frame["🧭 /frame-problem<br/>Classify + route"]
-        search["🔍 /search-skill<br/>Discover existing"]
-        brainstorm["🧠 /brainstorm<br/>Divergent → convergent"]
-        investigate["🔬 /investigate<br/>Deep analysis"]
-    end
+    COMPACT -.->|"🔄 fresh window"| START
 
-    subgraph PLAN["📝 Plan Phase"]
-        direction LR
-        openspec_plan["📋 /openspec-plan<br/>Spec + test strategy"]
-        risen["✍️ /edit-risen-prompt<br/>Structured prompts"]
-    end
-
-    subgraph IMPLEMENT["⚙️ Implement Phase"]
-        direction LR
-        dev["⚙️ /openspec-develop<br/>Build at gates"]
-        test["🧪 /openspec-test<br/>Verify at checkpoints"]
-        reflect["🪞 /openspec-reflect<br/>Drift detection"]
-        replan["🔀 /openspec-replan<br/>Adapt if blocked"]
-    end
-
-    subgraph COMPACT["📦 Compaction"]
-        direction LR
-        sync["💾 /openspec-sync<br/>Persist change state"]
-        save["💾 /save-context<br/>Serialize session"]
-        retro["🪞 /retrospect-*<br/>Extract learnings"]
-    end
-
-    subgraph SESSION_END["🔴 Session End"]
-        direction LR
-        hooks_stop["🪝 Hooks<br/>retrospect-capture"]
-        context_out["📄 CONTEXT-llm.md<br/>Ready for next session"]
-    end
-
-    SESSION_START --> RESEARCH
-    RESEARCH -->|"compressed<br/>research doc"| PLAN
-    PLAN -->|"detailed spec<br/>+ test.md"| IMPLEMENT
-    IMPLEMENT -->|"compaction<br/>trigger"| COMPACT
-    COMPACT --> SESSION_END
-
-    COMPACT -.->|"🔄 fresh window<br/>+ compressed artifacts"| SESSION_START
-
-    classDef startEnd fill:#E8F5E9,stroke:#2E7D32,color:#000
+    classDef session fill:#BBDEFB,stroke:#1976D2,color:#000
     classDef research fill:#E8EAF6,stroke:#3F51B5,color:#000
     classDef plan fill:#E1BEE7,stroke:#7B1FA2,color:#000
     classDef implement fill:#C8E6C9,stroke:#388E3C,color:#000
     classDef compact fill:#FFE0B2,stroke:#F57C00,color:#000
-    classDef session fill:#BBDEFB,stroke:#1976D2,color:#000
 
-    class SESSION_START,SESSION_END session
+    class START,END session
     class RESEARCH research
     class PLAN plan
     class IMPLEMENT implement
     class COMPACT compact
+```
+
+---
+
+#### 🔧 Detailed implementation (permanent WIP)
+
+How this plugin maps each phase to concrete skills and commands — evolves as new tools are added.
+
+```mermaid
+flowchart LR
+    subgraph START["🟢 Start"]
+        load["📥 /load-context"]
+        claude["📄 CLAUDE.md"]
+        hooks_start["🪝 Hooks"]
+    end
+
+    subgraph SENSE["🔍 Sense-Make"]
+        frame["🧭 /frame-problem"]
+        search["🔍 /search-skill"]
+        frame --> brainstorm["🧠 /brainstorm"]
+        frame --> investigate["🔬 /investigate"]
+    end
+
+    subgraph BUILD["⚙️ Plan + Build"]
+        plan["📋 /openspec-plan"]
+        risen["✍️ /edit-risen-prompt"]
+        plan --> dev["⚙️ /openspec-develop"]
+        dev --> test["🧪 /openspec-test"]
+        dev --> reflect["🪞 /openspec-reflect"]
+        reflect -->|"blocked"| replan["🔀 /openspec-replan"]
+        replan --> dev
+    end
+
+    subgraph PERSIST["📦 Persist"]
+        sync["💾 /openspec-sync"]
+        save["💾 /save-context"]
+        retro["🪞 /retrospect-*"]
+        hooks_stop["🪝 Hooks"]
+    end
+
+    START --> SENSE
+    brainstorm --> plan
+    investigate --> plan
+    BUILD --> PERSIST
+    PERSIST -->|"🔄 next session"| NEXT["🟢 /load-context"]
+
+    classDef start fill:#BBDEFB,stroke:#1976D2,color:#000
+    classDef sense fill:#E8EAF6,stroke:#3F51B5,color:#000
+    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef persist fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef loop fill:#E8F5E9,stroke:#2E7D32,color:#000,stroke-dasharray:5
+
+    class START start
+    class SENSE sense
+    class BUILD build
+    class PERSIST persist
+    class NEXT loop
 ```
 
 **How it maps to Horthy's principles:**
