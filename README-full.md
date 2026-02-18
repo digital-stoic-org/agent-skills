@@ -241,6 +241,92 @@ flowchart LR
 | `/load-context` | 📥 Resume session from CONTEXT-llm.md (optional `--full`) | sonnet |
 | `/list-contexts` | 📋 List all contexts across code/ and projects/ with status | haiku |
 
+### 🧬 Context Engineering Workflow
+
+This plugin implements **context engineering** — the discipline of designing what task-relevant information the model has access to, not just how you prompt it. Inspired by [Dexter Horthy's Advanced Context Engineering for Agents](https://www.youtube.com/watch?v=VvkhYWFWaKI) ([paper](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents)).
+
+> *"The contents of your context window are the ONLY lever you have to affect the quality of your output."* — Dexter Horthy
+
+**Core principle: Frequent Intentional Compaction** — pause before context saturation, distill progress into structured artifacts (CONTEXT-llm.md, research docs, specs), restart fresh with compressed knowledge. Target 40-60% context utilization.
+
+```mermaid
+flowchart TD
+    subgraph SESSION_START["🟢 Session Start"]
+        direction LR
+        load["📥 /load-context<br/>Resume from CONTEXT-llm.md"]
+        claude["📄 CLAUDE.md<br/>Auto-loaded directives"]
+        hooks_start["🪝 Hooks<br/>retrospect-capture"]
+    end
+
+    subgraph RESEARCH["🔍 Research Phase"]
+        direction LR
+        frame["🧭 /frame-problem<br/>Classify + route"]
+        search["🔍 /search-skill<br/>Discover existing"]
+        brainstorm["🧠 /brainstorm<br/>Divergent → convergent"]
+        investigate["🔬 /investigate<br/>Deep analysis"]
+    end
+
+    subgraph PLAN["📝 Plan Phase"]
+        direction LR
+        openspec_plan["📋 /openspec-plan<br/>Spec + test strategy"]
+        risen["✍️ /edit-risen-prompt<br/>Structured prompts"]
+    end
+
+    subgraph IMPLEMENT["⚙️ Implement Phase"]
+        direction LR
+        dev["⚙️ /openspec-develop<br/>Build at gates"]
+        test["🧪 /openspec-test<br/>Verify at checkpoints"]
+        reflect["🪞 /openspec-reflect<br/>Drift detection"]
+        replan["🔀 /openspec-replan<br/>Adapt if blocked"]
+    end
+
+    subgraph COMPACT["📦 Compaction"]
+        direction LR
+        sync["💾 /openspec-sync<br/>Persist change state"]
+        save["💾 /save-context<br/>Serialize session"]
+        retro["🪞 /retrospect-*<br/>Extract learnings"]
+    end
+
+    subgraph SESSION_END["🔴 Session End"]
+        direction LR
+        hooks_stop["🪝 Hooks<br/>retrospect-capture"]
+        context_out["📄 CONTEXT-llm.md<br/>Ready for next session"]
+    end
+
+    SESSION_START --> RESEARCH
+    RESEARCH -->|"compressed<br/>research doc"| PLAN
+    PLAN -->|"detailed spec<br/>+ test.md"| IMPLEMENT
+    IMPLEMENT -->|"compaction<br/>trigger"| COMPACT
+    COMPACT --> SESSION_END
+
+    COMPACT -.->|"🔄 fresh window<br/>+ compressed artifacts"| SESSION_START
+
+    classDef startEnd fill:#E8F5E9,stroke:#2E7D32,color:#000
+    classDef research fill:#E8EAF6,stroke:#3F51B5,color:#000
+    classDef plan fill:#E1BEE7,stroke:#7B1FA2,color:#000
+    classDef implement fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef compact fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef session fill:#BBDEFB,stroke:#1976D2,color:#000
+
+    class SESSION_START,SESSION_END session
+    class RESEARCH research
+    class PLAN plan
+    class IMPLEMENT implement
+    class COMPACT compact
+```
+
+**How it maps to Horthy's principles:**
+
+| Principle | Plugin Implementation |
+|-----------|----------------------|
+| **Research phase** | `/frame-problem` → `/brainstorm` or `/investigate` — map the problem space before coding |
+| **Plan phase** | `/openspec-plan` — precise spec with test strategy, human reviews before execution |
+| **Implement phase** | `/openspec-develop` — gate-driven, section-by-section with human checkpoints |
+| **Frequent compaction** | `/save-context` + `/openspec-sync` — serialize state to markdown artifacts |
+| **Session continuity** | `/load-context` resumes from CONTEXT-llm.md — no context loss between sessions |
+| **Human leverage** | Gates shift human review upstream (research → plan) where impact compounds |
+| **Subagent isolation** | Skills run as isolated context windows, return compressed summaries to parent |
+
 ---
 
 ## 🔨 Create — Tool Orchestration (7 skills)
