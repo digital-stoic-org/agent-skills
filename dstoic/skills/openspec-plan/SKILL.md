@@ -54,6 +54,17 @@ Generate outcome-centric tasks + test strategy from proposal.
 
 **Input**: `$ARGUMENTS` = `change-id [--skip-test]`
 
+**Sources** (read before generating):
+1. `openspec/changes/{id}/proposal.md` (required)
+2. `openspec/changes/{id}/design.md` (optional — if present, use mapping rules below)
+
+**design.md mapping rules** (only when design.md exists):
+- **Containers → task sections**: Each C4 container maps to a numbered section in tasks.md
+- **Aggregate boundaries → task granularity**: Entities within an aggregate = single task; entities across aggregates = separate tasks
+- **TT interaction modes → task sequencing**: Collaboration mode = sequential tasks (tightly coupled); X-as-a-Service mode = parallelizable tasks (clear interface)
+
+If no `design.md` exists, derive sections from proposal.md as before (backward compatible).
+
 **Rules**:
 - Tasks are outcomes: "X exists", "Y works", "Z passes"
 - NO activity verbs: Design, Implement, Create, Write

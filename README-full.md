@@ -136,13 +136,14 @@ flowchart LR
 
 ---
 
-## ⚙️ Build — Structured Development (7 skills)
+## ⚙️ Build — Structured Development (8 skills)
 
 *Plan → implement → gate → test → sync. Human-in-the-loop iteration.*
 
 ```mermaid
 flowchart LR
-    plan["📝 Think<br/>Design sections"] --> dev["⚙️ Build<br/>Implement"]
+    plan["📝 Think<br/>Design sections"] --> design["🏗️ Design<br/>BC check + design.md"]
+    design --> dev["⚙️ Build<br/>Implement"]
     dev --> gate["🚧 Gate<br/>Human verifies"]
     gate -->|"continue"| dev
     gate --> test["🧪 Test<br/>Layered checks"]
@@ -165,6 +166,7 @@ flowchart LR
 | Skill | Purpose |
 |-------|---------|
 | `openspec-init` | 🎬 Setup project (set mode: garage/scale/maintenance) |
+| `openspec-design` | 🏗️ BC-first structural design — produces `design.md` between proposal and tasks |
 | `openspec-plan` | 📝 Design proposal + test.md strategy (human reviews test plan upfront) |
 | `openspec-develop` | ⚙️ Implement sections, stop at gates for human review |
 | `openspec-test` | 🧪 Execute test.md verification, log to test-logs/ (no improvisation) |
@@ -302,7 +304,8 @@ flowchart LR
     subgraph BUILD["⚙️ Plan + Build"]
         plan["📋 /openspec-plan"]
         risen["✍️ /edit-risen-prompt"]
-        plan --> dev["⚙️ /openspec-develop"]
+        plan --> design["🏗️ /openspec-design"]
+        design --> dev["⚙️ /openspec-develop"]
         dev --> test["🧪 /openspec-test"]
         dev --> reflect["🪞 /openspec-reflect"]
         reflect -->|"blocked"| replan["🔀 /openspec-replan"]
