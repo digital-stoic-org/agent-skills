@@ -187,6 +187,45 @@ Options:
 → Replan: /openspec-replan {change-id}
 ```
 
+## Execution Tracing
+
+### Per-Step Capture Protocol
+
+For every `[auto]` and `[smoke]` step, capture:
+
+```yaml
+capture:
+  command: "{exact command from test.md}"
+  expected: "{pass criteria from test.md}"
+  stdout: "{raw output, truncated per rules}"
+  stderr: "{raw stderr, truncated per rules}"
+  exit_code: 0
+  duration_s: 2.3
+  result: "PASS"  # or "FAIL — {reason}"
+```
+
+**Truncation rules**:
+- stdout >50 lines → first 30 + `\n... ({N} lines omitted)\n` + last 10
+- stderr >20 lines → first 15 + `\n... ({N} lines omitted)\n`
+- Single lines >500 chars → first 200 + `...` + last 50
+- Sensitive values (API keys, tokens) → mask: `sk-ant-...xxxx` (first 7 + last 4)
+
+### Failure Diagnostics
+
+When a step fails, include diagnostic context:
+
+```markdown
+- **Result**: ❌ FAIL — exit code 1 (expected 0)
+- **Diagnostic**: stderr shows "Read-only file system" — mount flag :ro is applied but command expected write access
+- **Fix hint**: Check if test expectation matches. Step expects non-zero exit for read-only validation.
+```
+
+**Diagnostic heuristic**:
+- Exit code mismatch → report expected vs actual
+- Stderr contains error → extract first error line
+- Timeout → report command duration vs expected
+- Empty stdout when output expected → flag as "no output produced"
+
 ## Error Handling
 
 ### Test failure

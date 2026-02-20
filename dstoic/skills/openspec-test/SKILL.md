@@ -42,14 +42,17 @@ Run scoped verification for a single section after gate pause.
 1. Read `openspec/changes/{change-id}/tasks.md`, find section `## {section-number}. ...`
 2. Read `openspec/changes/{change-id}/test.md` for verification strategy (see Missing test.md section if not found)
 3. **Validate test.md quality**: Check for lazy patterns (grep "keyword", [ -f file ], wc -l, echo). If found → BLOCKED with suggestion to use functional verification
-4. For each task in section, execute by type tag (see §Mixed-Mode Execution):
-   - `[auto]` / untagged → run command, assert exit code + output
-   - `[smoke]` → run command, present output to human for review
-   - `[manual]` → pause, display instructions, wait for human pass/fail
-5. Write results to `test-logs/gate-{n}.md` (see Test Log Format section)
-6. Evaluate result:
+4. **Initialize log**: Create/open `test-logs/gate-{n}.md`, write header with timestamp + mode
+5. For each step in the gate section, execute by type tag (see §Mixed-Mode Execution):
+   - `[auto]` / untagged → run command, capture stdout/stderr/exit code/duration, assert expected
+   - `[smoke]` → run command, capture output, present to human for review
+   - `[manual]` → pause, display instructions, collect structured pass/fail via AskUserQuestion
+   - **Per step**: Record command, expected, stdout, stderr, exit code, duration, result to log
+6. **Write gate summary** to `test-logs/gate-{n}.md`: summary table + per-type counts + next action (see Test Log Format)
+7. **Display gate summary** to user inline (always — don't rely on user reading log file)
+8. Evaluate result:
    - **PASS**: Mark `### GATE {n}: desc` → `### GATE {n}: desc [PASS]` in tasks.md
-   - **PARTIAL**: Report failures, suggest fixes
+   - **PARTIAL**: Report failures with per-step diagnostics
    - **BLOCKED**: Report blockers, suggest options
 
 ```mermaid
@@ -126,15 +129,17 @@ test.md steps are tagged `[auto]`, `[smoke]`, or `[manual]` (see openspec-plan/r
 
 **Ordering**: Execute all `[auto]` and `[smoke]` steps first. Group `[manual]` steps at the end — present as a single checklist to minimize human interruptions.
 
-**Manual step prompt**:
+**Manual step prompt** (use AskUserQuestion with structured options):
 ```
-📋 Manual verification needed for GATE {n}:
+📋 Manual verification for GATE {n}, Step {id}: {description}
 
-1. {step description} — PASS / FAIL?
-2. {step description} — PASS / FAIL?
+Instructions:
+1. {step 1}
+2. {step 2}
 
-Enter results (e.g., "1:pass 2:fail reason"):
+Pass criteria: {criteria from test.md}
 ```
+Options: `PASS`, `FAIL — {reason}`, `SKIP — {reason}`
 
 **Test log**: Record type tag in each task entry (`**Type**: auto/smoke/manual`).
 
@@ -144,23 +149,49 @@ Write verification results to `openspec/changes/{change-id}/test-logs/gate-{n}.m
 
 ```markdown
 # Test Log: GATE {n} — {description}
-**Run**: {timestamp}
+
+**Run**: {ISO 8601 timestamp}
 **Mode**: {mode} ({layers})
 **Result**: ✅ PASS / ⚠️ PARTIAL / ❌ FAIL
 
-## {task-number} {task outcome}
-- **Action**: {what agent actually did}
-- **Output**: {raw output, truncated if large}
-- **Result**: ✅ / ❌ {brief}
+## Summary
 
-## {task-number} {task outcome}
+| Step | Type | Status | Duration |
+|------|------|--------|----------|
+| {id} | auto | ✅/❌ | {Xs} |
+| {id} | smoke | ✅/📋 | {Xs} |
+| {id} | manual | ✅/❌/📋 | — |
+
+**Auto**: {pass}/{total} ✅ | **Smoke**: {pass}/{total} 📋 | **Manual**: {pass}/{total} 👤
+**Total duration**: {Xs}
+
+---
+
+## {step-id} {description} [{type}]
+
+- **Command**: `{exact command run}`
+- **Expected**: {pass criteria from test.md}
+- **Stdout**: {first 50 lines, or "(empty)"}
+- **Stderr**: {first 20 lines, or "(none)"}
+- **Exit code**: {code}
+- **Duration**: {Xs}
+- **Result**: ✅ PASS / ❌ FAIL — {1-line reason}
+
+## {step-id} ...
 ...
 
 ---
-Duration: {time}
+
+## Next Action
+
+{If PASS}: → Continue: `/openspec-develop section {change-id} {n+1}`
+{If PARTIAL}: → Fix failures, re-run: `/openspec-test checkpoint {change-id} {n}`
+{If BLOCKED}: → Resolve blocker: {specific instruction}
 ```
 
-**On re-run**: Append new timestamped entry to same file, don't overwrite. Enables retry audit trail.
+**Output truncation**: stdout >50 lines → keep first 30 + last 10 + `... ({N} lines omitted)`. stderr >20 lines → keep first 15 + `... ({N} lines omitted)`.
+
+**On re-run**: Append new timestamped entry (separated by `---\n\n`) to same file, don't overwrite. Enables retry audit trail.
 
 ## Mode-Specific Behavior
 
