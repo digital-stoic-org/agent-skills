@@ -187,6 +187,109 @@ Options:
 → Replan: /openspec-replan {change-id}
 ```
 
+## Log Formats
+
+### Test Log Format
+
+Write human summary to `openspec/changes/{change-id}/test-logs/gate-{n}.md`:
+
+```markdown
+# Test Log: GATE {n} — {description}
+
+**Run**: {ISO 8601 timestamp}
+**Mode**: {mode} ({layers})
+**Result**: ✅ PASS / ⚠️ PARTIAL / ❌ FAIL
+
+## Summary
+
+| Step | Type | Status | Duration |
+|------|------|--------|----------|
+| {id} | auto | ✅/❌ | {Xs} |
+| {id} | smoke | ✅/📋 | {Xs} |
+| {id} | manual | ✅/❌/📋 | — |
+
+**Auto**: {pass}/{total} ✅ | **Smoke**: {pass}/{total} 📋 | **Manual**: {pass}/{total} 👤
+**Total duration**: {Xs}
+
+---
+
+## {step-id} {description} [{type}]
+
+- **Command**: `{exact command run}`
+- **Expected**: {pass criteria from test.md}
+- **Stdout**: {first 50 lines, or "(empty)"}
+- **Stderr**: {first 20 lines, or "(none)"}
+- **Exit code**: {code}
+- **Duration**: {Xs}
+- **Result**: ✅ PASS / ❌ FAIL — {1-line reason}
+
+---
+
+## Next Action
+
+{If PASS}: → Continue: `/openspec-develop section {change-id} {n+1}`
+{If PARTIAL}: → Fix failures, re-run: `/openspec-test checkpoint {change-id} {n}`
+{If BLOCKED}: → Resolve blocker: {specific instruction}
+```
+
+On re-run: append new timestamped entry (separated by `---\n\n`), don't overwrite.
+
+### Raw Log Format
+
+Write raw captures to `openspec/changes/{change-id}/test-logs/gate-{n}-raw.json`:
+
+```json
+{
+  "gate": 0,
+  "change_id": "{change-id}",
+  "runs": [
+    {
+      "timestamp": "ISO 8601",
+      "mode": "garage",
+      "result": "PASS",
+      "steps": [
+        {
+          "id": "0.5",
+          "description": "step description",
+          "type": "auto|smoke|manual",
+          "command": "exact command run",
+          "expected": "pass criteria from test.md",
+          "stdout": "full output (mask secrets)",
+          "stderr": "",
+          "exit_code": 0,
+          "duration_s": 0,
+          "result": "PASS|FAIL",
+          "reason": null
+        }
+      ],
+      "summary": {
+        "auto": {"pass": 0, "total": 0},
+        "smoke": {"pass": 0, "total": 0},
+        "manual": {"pass": 0, "total": 0},
+        "total_duration_s": 0
+      }
+    }
+  ]
+}
+```
+
+**Rules**:
+- Write each step immediately after execution
+- Full stdout/stderr — no truncation (except mask API keys/tokens: first 7 + last 4 chars)
+- On re-run: append to `runs[]` array, never overwrite
+- Markdown `gate-{n}.md` is rendered from this JSON — single source of truth
+
+## Test Progression Strategy
+
+Mandatory first: smoke tests (basic sanity, < 5s). Then risk-based progression:
+
+1. **Smoke** — app starts, no crashes (mandatory)
+2. **Unit** — functions in isolation (< 10s)
+3. **Integration** — components interact (< 30s)
+4. **E2E** — full user flows (> 30s)
+
+Garage mode can stop after smoke. Scale mode runs all. test.md MUST start with smoke tests, ordered fast→slow.
+
 ## Execution Tracing
 
 ### Per-Step Capture Protocol
