@@ -71,6 +71,17 @@ Every verification step in tests.md MUST be tagged with an execution type:
 
 **Mode**: {mode} ({layers for this mode})
 
+**Test execution tags**:
+| Tag | Meaning | Who evaluates |
+|---|---|---|
+| `[auto]` | Agent/CI runs command, asserts exit code + output | Agent (pass/fail) |
+| `[smoke]` | Agent/CI runs command, human reviews output | Agent runs, human glances |
+| `[manual]` | Human follows numbered steps, reports pass/fail | Human judgment |
+
+Default: `[auto]` (no tag = automated). `[manual]` steps include explicit instructions + pass criteria.
+
+---
+
 ## GATE {n}: {description}
 
 ### {task-number} {task outcome from tasks.md} [auto]
