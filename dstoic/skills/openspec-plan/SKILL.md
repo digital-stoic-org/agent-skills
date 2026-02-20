@@ -101,6 +101,7 @@ Coverage rules:
 - **Tag each step**: `[auto]` (default), `[smoke]`, or `[manual]` — see reference.md §Test Execution Model
 - Quality bar: functional > structural, observable, specific (see reference.md for anti-patterns)
 - Mode-aware: garage=recommended, scale/maintenance=required (see reference.md for requirements)
+- **MUST include** in tests.md header: `**Execution**: Always run gates via /openspec-test {change-id} {N} — never ad-hoc.`
 
 ### spec
 
