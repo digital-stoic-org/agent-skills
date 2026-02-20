@@ -391,13 +391,14 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (5 skills)
+## 🔧 Utilities (6 skills)
 
 | Skill | Purpose |
 |-------|---------|
 | `anonymize-doc` | 🔒 Detect/anonymize PII + business data (GDPR/HIPAA aware) |
 | `install-dependency` | 📦 Monorepo-aware package installation (pip/bun/apt) |
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
+| `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 | `edit-risen-prompt` | ✍️ Create/audit RISEN prompts |
 
@@ -444,6 +445,7 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 | `/convert-docx` | [markitdown](https://github.com/microsoft/markitdown) | `pip install markitdown` |
 | `/convert-pptx` | [markitdown](https://github.com/microsoft/markitdown) | `pip install markitdown` |
 | `/convert-epub` | [epub-to-markdown](https://github.com/nickvdyck/epub-to-markdown) | `pip install epub-to-markdown` |
+| `infographize` | [@antv/infographic](https://github.com/antvis/infographic) | `bun add @antv/infographic` |
 
 ### Recommended
 
