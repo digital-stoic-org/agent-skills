@@ -1,8 +1,19 @@
 # OpenSpec Plan Reference
 
-## test.md Anti-Pattern Table
+## Proposal: Philosophy Alignment Template
 
-When reviewing test.md for quality, reject these lazy verification patterns:
+```markdown
+## Execution Philosophy Alignment
+
+**Mode**: {mode from project.md}
+**Principles applied**: {relevant principles for this change}
+**Trade-offs accepted**: {from accept list}
+**Anti-patterns avoided**: {relevant anti-patterns}
+```
+
+## tests.md Anti-Pattern Table
+
+When reviewing tests.md for quality, reject these lazy verification patterns:
 
 | ❌ Lazy Pattern | ✅ What It Should Be |
 |---|---|
@@ -13,9 +24,9 @@ When reviewing test.md for quality, reject these lazy verification patterns:
 | `git diff --name-only` | `Run modified endpoints and verify responses` |
 | `cat file \| grep "import"` | `pytest test_module.py -v` |
 
-## test.md Quality Bar
+## tests.md Quality Bar
 
-Verification steps in test.md MUST be:
+Verification steps in tests.md MUST be:
 
 1. **Functional over structural**
    - ❌ Check if code exists: `grep "function login" auth.js`
@@ -31,13 +42,13 @@ Verification steps in test.md MUST be:
 
 ## Mode-Specific Requirements
 
-| Mode | test.md Requirement | Enforcement |
+| Mode | tests.md Requirement | Enforcement |
 |------|---------------------|-------------|
 | **garage** | Recommended | Optional unless human requests it. Focus on critical paths. |
-| **scale** | Required | Checkpoint blocks without test.md. Full coverage expected. |
-| **maintenance** | Required | Checkpoint blocks without test.md. Emphasis on regression prevention. |
+| **scale** | Required | Checkpoint blocks without tests.md. Full coverage expected. |
+| **maintenance** | Required | Checkpoint blocks without tests.md. Emphasis on regression prevention. |
 
-## test.md Template
+## tests.md Template
 
 ```markdown
 # Test Strategy: {change-id}
@@ -55,7 +66,24 @@ Verification steps in test.md MUST be:
 - Expect: {result}
 ```
 
-## Common test.md Patterns
+## Cross-check Coverage Example
+
+```markdown
+### Coverage Check
+
+| design.md Component | Type | tasks.md | tests.md | Status |
+|---|---|---|---|---|
+| TestRunner | container | S1 | GATE 1 | ✅ |
+| Fixtures | aggregate | S2 | GATE 2 | ✅ |
+| TestOutput | aggregate | — | — | ⚠️ missing |
+| run-suite flow | flow | S3 | GATE 3 | ✅ |
+| fixture-uniqueness | invariant | S2.3 | GATE 2 | ✅ |
+| Reporter (X-as-a-Service) | interaction | — | — | ⚠️ missing |
+```
+
+⚠️ 2 gaps found. Fix these gaps now or defer?
+
+## Common tests.md Patterns
 
 ### Pattern: API Endpoint Added
 ```markdown
