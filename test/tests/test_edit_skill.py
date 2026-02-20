@@ -14,6 +14,7 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 EDIT_SKILL_PATH = "/workspace/skills/edit-skill/SKILL.md"
+PICK_MODEL_PATH = "/workspace/skills/pick-model/SKILL.md"
 OUTPUT_DIR = Path("/workspace/output")
 
 
@@ -82,21 +83,21 @@ def test_T1_happy_create(workspace):
 
 @pytest.mark.behavioral
 def test_T2_model_selection(workspace):
-    """T2: edit-skill picks opus/sonnet for architectural prompt (LLM-judge)."""
+    """T2: pick-model recommends opus/sonnet for architectural analysis (LLM-judge)."""
     check_cost_cap("T2")
 
     prompt = (
-        "Create a new skill called 'codebase-architect' for analyzing entire codebases, "
-        "identifying architectural patterns, cross-referencing 50+ files, and "
-        "generating multi-layer dependency graphs with ADR recommendations. "
-        "Generate the SKILL.md with appropriate frontmatter including model selection."
+        "Pick the right model for a skill that analyzes entire codebases, "
+        "identifies architectural patterns across 50+ files, generates "
+        "dependency graphs, and produces ADR recommendations. "
+        "This requires deep multi-framework reasoning."
     )
 
-    response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="T2")
+    response = invoke_skill(prompt, PICK_MODEL_PATH, test_id="T2")
     result_text = response["result"]
 
     judge_response = llm_judge(
-        question="Did this response generate a SKILL.md that includes a model field set to opus or sonnet (not haiku) in the frontmatter, appropriate for a complex architectural analysis skill?",
+        question="Did this response recommend opus or sonnet (not haiku) as the appropriate model for a complex architectural analysis task?",
         context=result_text,
         test_id="T2",
     )

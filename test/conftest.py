@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -71,3 +72,28 @@ def workspace():
 @pytest.fixture
 def skills_dir():
     return Path("/workspace/skills")
+
+
+# ── Suite-end cost reconciliation (ADR-5) ────────────────────────────────────
+
+def pytest_sessionfinish(session, exitstatus):
+    """Write cost reconciliation report after all tests complete."""
+    cost_file = Path("/workspace/output/cost.json")
+    reconciliation_file = Path("/workspace/output/cost-reconciliation.json")
+
+    estimated_total = 0.0
+    if cost_file.exists():
+        try:
+            state = json.loads(cost_file.read_text())
+            estimated_total = state.get("running_total", 0.0)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    reconciliation = {
+        "estimated_total": estimated_total,
+        "api_reported_total": None,
+        "drift_pct": None,
+    }
+
+    reconciliation_file.parent.mkdir(parents=True, exist_ok=True)
+    reconciliation_file.write_text(json.dumps(reconciliation, indent=2))
