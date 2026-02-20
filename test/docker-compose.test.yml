@@ -1,0 +1,15 @@
+services:
+  skill-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../dstoic/skills/:/workspace/skills:ro
+      - ./tests/:/workspace/tests:ro
+      - ./harness/:/workspace/harness:ro
+      - ./fixtures/:/workspace/fixtures:ro
+      - ./conftest.py:/workspace/conftest.py:ro
+      - ./pytest.ini:/workspace/pytest.ini:ro
+      - ./output/:/workspace/output
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
