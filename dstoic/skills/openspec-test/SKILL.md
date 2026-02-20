@@ -42,7 +42,10 @@ Run scoped verification for a single section after gate pause.
 1. Read `openspec/changes/{change-id}/tasks.md`, find section `## {section-number}. ...`
 2. Read `openspec/changes/{change-id}/test.md` for verification strategy (see Missing test.md section if not found)
 3. **Validate test.md quality**: Check for lazy patterns (grep "keyword", [ -f file ], wc -l, echo). If found → BLOCKED with suggestion to use functional verification
-4. For each task in section, execute verification per test.md strategy
+4. For each task in section, execute by type tag (see §Mixed-Mode Execution):
+   - `[auto]` / untagged → run command, assert exit code + output
+   - `[smoke]` → run command, present output to human for review
+   - `[manual]` → pause, display instructions, wait for human pass/fail
 5. Write results to `test-logs/gate-{n}.md` (see Test Log Format section)
 6. Evaluate result:
    - **PASS**: Mark `### GATE {n}: desc` → `### GATE {n}: desc [PASS]` in tasks.md
@@ -108,6 +111,32 @@ Suggestion: Read file section, verify specific content/structure
 ```
 
 **Functional alternatives** (see openspec-plan/reference.md anti-pattern table)
+
+### Mixed-Mode Execution
+
+test.md steps are tagged `[auto]`, `[smoke]`, or `[manual]` (see openspec-plan/reference.md §Test Execution Model). If no tag, treat as `[auto]`.
+
+**Execution protocol per type**:
+
+| Tag | Agent action | Result source |
+|-----|-------------|---------------|
+| `[auto]` | Run command, assert exit code + expected output | Agent evaluates pass/fail |
+| `[smoke]` | Run command, display output | Agent evaluates, flags ambiguous for human |
+| `[manual]` | Display numbered instructions, ask human | Human reports pass/fail via prompt |
+
+**Ordering**: Execute all `[auto]` and `[smoke]` steps first. Group `[manual]` steps at the end — present as a single checklist to minimize human interruptions.
+
+**Manual step prompt**:
+```
+📋 Manual verification needed for GATE {n}:
+
+1. {step description} — PASS / FAIL?
+2. {step description} — PASS / FAIL?
+
+Enter results (e.g., "1:pass 2:fail reason"):
+```
+
+**Test log**: Record type tag in each task entry (`**Type**: auto/smoke/manual`).
 
 ### Test Log Format
 

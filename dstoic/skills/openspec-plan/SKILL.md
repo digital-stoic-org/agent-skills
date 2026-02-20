@@ -98,6 +98,7 @@ Coverage rules:
 **tests.md generation**:
 - Mirrors gates from tasks.md
 - For each gated task outcome: concrete verification step + observable expectation
+- **Tag each step**: `[auto]` (default), `[smoke]`, or `[manual]` — see reference.md §Test Execution Model
 - Quality bar: functional > structural, observable, specific (see reference.md for anti-patterns)
 - Mode-aware: garage=recommended, scale/maintenance=required (see reference.md for requirements)
 

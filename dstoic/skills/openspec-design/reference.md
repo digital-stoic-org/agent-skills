@@ -251,3 +251,27 @@ If **no** → split the container or document the accepted complexity.
 **Container split heuristic**:
 > "Can a single person (or single agent session) hold enough context to implement this container without constantly switching domains?"
 > If no → split.
+
+---
+
+## Testability Bridge
+
+Design artifacts inform test.md execution model. When producing design.md, note testability per container:
+
+| Container characteristic | Test type hint |
+|---|---|
+| Pure data validation (YAML, schema, file checks) | `[auto]` — deterministic, no API calls |
+| External system integration (API calls, subprocess) | `[auto]` or `[smoke]` — depends on cost/flakiness |
+| Non-deterministic output (LLM responses, creative) | `[smoke]` or `[manual]` — needs human judgment |
+| UI/UX flows, visual correctness | `[manual]` — human verification required |
+
+**In cognitive load check table**, optionally add a "Test type" column:
+
+```markdown
+| Container | Domains required | Passes? | Test type hint |
+|---|---|---|---|
+| Structural Harness | YAML parsing | ✅ | [auto] |
+| Behavioral Harness | claude -p, subprocess | ✅ | [smoke] |
+```
+
+This bridges design.md → test.md so openspec-plan/tasks can generate correctly tagged test steps.

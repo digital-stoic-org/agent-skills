@@ -48,6 +48,22 @@ Verification steps in tests.md MUST be:
 | **scale** | Required | Checkpoint blocks without tests.md. Full coverage expected. |
 | **maintenance** | Required | Checkpoint blocks without tests.md. Emphasis on regression prevention. |
 
+## Test Execution Model
+
+Every verification step in tests.md MUST be tagged with an execution type:
+
+| Type | Tag | Who runs it | Examples |
+|------|-----|-------------|---------|
+| **Automated** | `[auto]` | Agent/CI runs command, asserts exit code + output | `pytest tests/`, `npm test`, `curl` + assert |
+| **Smoke** | `[smoke]` | Agent/CI runs command, human reviews output | `docker compose run`, quick sanity script |
+| **Manual** | `[manual]` | Human follows steps, reports pass/fail | UI flows, visual checks, judgment calls |
+
+**Rules**:
+- Default is `[auto]` — if no tag, assume automated
+- `[manual]` steps MUST include numbered human instructions + pass criteria
+- Mixed gates are allowed — tag each step independently
+- Checkpoint (openspec-test) pauses at `[manual]` steps and prompts human
+
 ## tests.md Template
 
 ```markdown
@@ -55,15 +71,21 @@ Verification steps in tests.md MUST be:
 
 **Mode**: {mode} ({layers for this mode})
 
-## GATE {n}: {description} | {layers}
+## GATE {n}: {description}
 
-### {task-number} {task outcome from tasks.md}
-- {concrete verification step}
-- Expect: {observable result}
+### {task-number} {task outcome from tasks.md} [auto]
+- {concrete verification command}
+- Expect: {observable result — exit code, output match, assertion}
 
-### {task-number} {task outcome}
-- {verification step}
-- Expect: {result}
+### {task-number} {task outcome} [manual]
+- **Steps**:
+  1. {human action}
+  2. {human action}
+- **Pass criteria**: {what human verifies}
+
+### {task-number} {task outcome} [smoke]
+- {command to run}
+- Expect: {what to look for in output}
 ```
 
 ## Cross-check Coverage Example
