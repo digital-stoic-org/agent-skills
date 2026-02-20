@@ -189,9 +189,68 @@ Options:
 
 ## Log Formats
 
-### Test Log Format
+### Filename Convention
 
-Write human summary to `openspec/changes/{change-id}/test-logs/gate-{n}.md`:
+```
+test-logs/gate-{n}-{yyyyMMddHHmm}.yaml   # raw source of truth
+test-logs/gate-{n}-{yyyyMMddHHmm}.md     # human summary
+```
+
+Timestamp = run start time (UTC). Each run = new file pair. No overwriting.
+
+Examples: `gate-0-202602200145.yaml`, `gate-0-202602200145.md`
+
+### Raw Log Format (YAML — append-per-step)
+
+Write to `openspec/changes/{change-id}/test-logs/gate-{n}-{ts}.yaml`.
+
+**Header** — written once at init (step 4 of workflow):
+
+```yaml
+gate: 0
+change_id: test-framework-setup
+timestamp: "2026-02-20T01:45:00Z"
+mode: garage
+steps:
+```
+
+**Per step** — appended immediately after each step executes:
+
+```yaml
+  - id: "0.5"
+    description: ANTHROPIC_API_KEY reaches container env
+    type: auto
+    command: "docker compose -f test/docker-compose.test.yml run skill-tester printenv ANTHROPIC_API_KEY"
+    expected: "Non-empty string. Exit code 0."
+    stdout: "sk-ant-...riQAA"
+    stderr: ""
+    exit_code: 0
+    duration_s: 3
+    result: PASS
+    reason: null
+```
+
+**Footer** — appended after all steps complete:
+
+```yaml
+summary:
+  auto: {pass: 4, total: 4}
+  smoke: {pass: 0, total: 1, skip: 1}
+  manual: {pass: 0, total: 0}
+  total_duration_s: 10
+result: PASS
+```
+
+**Append protocol**: The raw YAML file is the source of truth. Each step is appended with a single Edit/Write call immediately after execution — never batched. This means the file is always current even if the run is interrupted. The summary + result footer are only written after all steps complete (or on interruption with partial results).
+
+**Rules**:
+- Full stdout/stderr — no truncation (except mask API keys/tokens: first 7 + last 4 chars)
+- Multi-line stdout/stderr: use YAML literal block `|` syntax
+- Never overwrite — each run is a new file
+
+### Test Log Format (Markdown — summary)
+
+Write to `openspec/changes/{change-id}/test-logs/gate-{n}-{ts}.md` after all steps complete. Rendered from raw YAML, not memory.
 
 ```markdown
 # Test Log: GATE {n} — {description}
@@ -232,52 +291,7 @@ Write human summary to `openspec/changes/{change-id}/test-logs/gate-{n}.md`:
 {If BLOCKED}: → Resolve blocker: {specific instruction}
 ```
 
-On re-run: append new timestamped entry (separated by `---\n\n`), don't overwrite.
-
-### Raw Log Format
-
-Write raw captures to `openspec/changes/{change-id}/test-logs/gate-{n}-raw.json`:
-
-```json
-{
-  "gate": 0,
-  "change_id": "{change-id}",
-  "runs": [
-    {
-      "timestamp": "ISO 8601",
-      "mode": "garage",
-      "result": "PASS",
-      "steps": [
-        {
-          "id": "0.5",
-          "description": "step description",
-          "type": "auto|smoke|manual",
-          "command": "exact command run",
-          "expected": "pass criteria from test.md",
-          "stdout": "full output (mask secrets)",
-          "stderr": "",
-          "exit_code": 0,
-          "duration_s": 0,
-          "result": "PASS|FAIL",
-          "reason": null
-        }
-      ],
-      "summary": {
-        "auto": {"pass": 0, "total": 0},
-        "smoke": {"pass": 0, "total": 0},
-        "manual": {"pass": 0, "total": 0},
-        "total_duration_s": 0
-      }
-    }
-  ]
-}
-```
-
-**Rules**:
-- Write each step immediately after execution
-- Full stdout/stderr — no truncation (except mask API keys/tokens: first 7 + last 4 chars)
-- On re-run: append to `runs[]` array, never overwrite
-- Markdown `gate-{n}.md` is rendered from this JSON — single source of truth
+Markdown truncation: stdout >50 lines → first 30 + last 10; stderr >20 lines → first 15.
 
 ## Test Progression Strategy
 
@@ -294,24 +308,21 @@ Garage mode can stop after smoke. Scale mode runs all. test.md MUST start with s
 
 ### Per-Step Capture Protocol
 
-For every `[auto]` and `[smoke]` step, capture:
+For every `[auto]` and `[smoke]` step:
+1. Execute command
+2. Capture stdout, stderr, exit code, duration
+3. Evaluate result (PASS/FAIL/SKIP)
+4. **Immediately append** step YAML block to raw log file (see §Raw Log Format)
 
-```yaml
-capture:
-  command: "{exact command from test.md}"
-  expected: "{pass criteria from test.md}"
-  stdout: "{raw output, truncated per rules}"
-  stderr: "{raw stderr, truncated per rules}"
-  exit_code: 0
-  duration_s: 2.3
-  result: "PASS"  # or "FAIL — {reason}"
-```
+This ensures the raw log is always current — even if the run is interrupted mid-gate.
 
-**Truncation rules**:
+**Masking rules** (applied before writing):
+- API keys/tokens → `sk-ant-...xxxx` (first 7 + last 4 chars)
+
+**Truncation rules** (markdown summary only — raw YAML keeps full output):
 - stdout >50 lines → first 30 + `\n... ({N} lines omitted)\n` + last 10
 - stderr >20 lines → first 15 + `\n... ({N} lines omitted)\n`
 - Single lines >500 chars → first 200 + `...` + last 50
-- Sensitive values (API keys, tokens) → mask: `sk-ant-...xxxx` (first 7 + last 4)
 
 ### Failure Diagnostics
 
