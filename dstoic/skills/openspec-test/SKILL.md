@@ -33,6 +33,7 @@ flowchart LR
 **Workflow**:
 1. Read `openspec/changes/{change-id}/tasks.md` → find `## {section-number}. ...`
 2. Read `openspec/changes/{change-id}/test.md` → verification strategy. If missing: warn + offer `/openspec-plan tasks {change-id}` or skip (garage only).
+3. If test.md has a `**Design**:` header → read `openspec/changes/{change-id}/design.md` for invariants, key flows, and ADRs (informs gate evaluation context)
 3. **Validate**: Scan for lazy patterns (`grep "keyword"`, `[ -f file ]`, `wc -l`, `echo`). If found → BLOCKED with suggestion for functional verification.
 4. **Init logs**: Create `test-logs/gate-{n}-{yyyyMMddHHmm}.yaml` (raw, append-per-step) + `test-logs/gate-{n}-{yyyyMMddHHmm}.md` (summary). Timestamp = run start time. See reference.md §Log Formats.
 5. **Execute** by type tag (default `[auto]`):

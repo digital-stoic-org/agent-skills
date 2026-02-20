@@ -68,7 +68,8 @@ Implement all pending tasks from tasks.md, pausing at gates.
 
 **Workflow**:
 1. Read `openspec/changes/{change-id}/tasks.md`
-2. Group tasks by section headers (`## N. Section Name`)
+2. If tasks.md has a `**Design**:` header → read `openspec/changes/{change-id}/design.md` for BC scope, invariants, ubiquitous language, and ADRs
+3. Group tasks by section headers (`## N. Section Name`)
 3. For each section (in order):
    a. For each unchecked task in section:
       - Consult Exploration Strategy for context/tools

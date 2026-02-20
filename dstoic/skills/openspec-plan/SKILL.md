@@ -91,6 +91,10 @@ Coverage rules:
 
 ⚠️ gaps = warn, don't block. If gaps found, ask user: "Fix these gaps now or defer?"
 
+**tasks.md headers** (MUST include both):
+- `**Implementation**: Always use /openspec-develop {change-id} — never implement tasks ad-hoc.`
+- `**Design**: See design.md for BC scope, invariants, C4 containers, key flows, and ADRs.` (only when design.md was consumed)
+
 **Output**:
 1. `tasks.md` - verifiable outcomes with gates
 2. `tests.md` - verification strategy (unless --skip-test or garage mode + simple change)
@@ -102,6 +106,7 @@ Coverage rules:
 - Quality bar: functional > structural, observable, specific (see reference.md for anti-patterns)
 - Mode-aware: garage=recommended, scale/maintenance=required (see reference.md for requirements)
 - **MUST include** in tests.md header: `**Execution**: Always run gates via /openspec-test {change-id} {N} — never ad-hoc.`
+- **MUST include** in tests.md header (when design.md was consumed): `**Design**: See design.md for BC scope, invariants, C4 containers, key flows, and ADRs.`
 
 ### spec
 
