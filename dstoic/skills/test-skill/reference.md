@@ -9,10 +9,10 @@ When scaffolding a new test, use this template. Replace all `{PLACEHOLDERS}`.
 test_{SNAKE_NAME}.py — L1/L3 behavioral test for {SKILL_NAME} skill.
 Smoke test: {SCENARIO_DESCRIPTION}
 """
-import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
@@ -38,12 +38,12 @@ def test_{SNAKE_NAME}_smoke(workspace):
     )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / f"{test_id}.json").write_text(json.dumps({
+    (OUTPUT_DIR / f"{test_id}.yaml").write_text(yaml.dump({
         "status": "pass" if judge["verdict"] == "YES" else "fail",
         "judge_verdict": judge["verdict"],
         "judge_reason": judge["reason"],
         "cost_usd": response["cost_usd"] + judge["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge["verdict"] == "YES", f"Judge said NO: {judge['reason']}"
 ```
@@ -97,7 +97,7 @@ docker compose -f test/docker-compose.test.yml run --rm skill-tester pytest test
 
 ## Cost Tracking
 
-- Each `test_id` tracked separately in `/workspace/output/cost.json`
+- Each `test_id` tracked separately in `/workspace/output/cost.yaml`
 - Judge costs tracked as `{test_id}_judge`
 - Total cap: $0.50 per session (ADR-5)
 - `check_cost_cap` auto-skips if approaching limit

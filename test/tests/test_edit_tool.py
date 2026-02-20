@@ -4,10 +4,10 @@ test_edit_tool.py — L1/L3 behavioral tests for the edit-tool orchestration ski
 T4: MODIFY + fork — edit-tool uses Edit approach (not Write/overwrite) for modifications
 T5: Uncertain type — edit-tool delegates/asks to clarify which tool type
 """
-import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
@@ -41,14 +41,14 @@ def test_T4_modify_uses_edit(workspace):
         test_id="T4",
     )
 
-    result_file = OUTPUT_DIR / "T4.json"
-    result_file.write_text(json.dumps({
+    result_file = OUTPUT_DIR / "T4.yaml"
+    result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
         "judge_verdict": judge_response["verdict"],
         "judge_reason": judge_response["reason"],
         "cost_usd": response["cost_usd"] + judge_response["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge_response["verdict"] == "YES", (
         f"Judge said NO: {judge_response['reason']}\n"
@@ -81,14 +81,14 @@ def test_T5_uncertain_type_delegates(workspace):
         test_id="T5",
     )
 
-    result_file = OUTPUT_DIR / "T5.json"
-    result_file.write_text(json.dumps({
+    result_file = OUTPUT_DIR / "T5.yaml"
+    result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
         "judge_verdict": judge_response["verdict"],
         "judge_reason": judge_response["reason"],
         "cost_usd": response["cost_usd"] + judge_response["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge_response["verdict"] == "YES", (
         f"Judge said NO: {judge_response['reason']}\n"

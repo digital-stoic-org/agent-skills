@@ -5,7 +5,6 @@ T1: Happy CREATE — deterministic assertions (file exists, YAML valid, token co
 T2: Model selection — LLM-judge asserts correct model picked for architectural prompt
 T3: Reject verbose — LLM-judge asserts refusal + alternative suggestion returned
 """
-import json
 from pathlib import Path
 
 import pytest
@@ -39,7 +38,7 @@ def test_T1_happy_create(workspace):
     response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="T1")
 
     result_text = response["result"]
-    result_file = OUTPUT_DIR / "T1.json"
+    result_file = OUTPUT_DIR / "T1.yaml"
 
     assertions = {
         "is_error": response["is_error"],
@@ -62,7 +61,7 @@ def test_T1_happy_create(workspace):
             pass
     assertions["yaml_valid"] = yaml_valid
 
-    result_file.write_text(json.dumps({
+    result_file.write_text(yaml.dump({
         "status": "pass" if all([
             not assertions["is_error"],
             assertions["result_nonempty"],
@@ -71,7 +70,7 @@ def test_T1_happy_create(workspace):
         ]) else "fail",
         "assertions": assertions,
         "cost_usd": response["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert not response["is_error"], f"invoke_skill returned error: {result_text[:200]}"
     assert assertions["result_nonempty"], "Result is empty"
@@ -102,14 +101,14 @@ def test_T2_model_selection(workspace):
         test_id="T2",
     )
 
-    result_file = OUTPUT_DIR / "T2.json"
-    result_file.write_text(json.dumps({
+    result_file = OUTPUT_DIR / "T2.yaml"
+    result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
         "judge_verdict": judge_response["verdict"],
         "judge_reason": judge_response["reason"],
         "cost_usd": response["cost_usd"] + judge_response["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge_response["verdict"] == "YES", (
         f"Judge said NO: {judge_response['reason']}\n"
@@ -146,14 +145,14 @@ def test_T3_reject_verbose(workspace):
         test_id="T3",
     )
 
-    result_file = OUTPUT_DIR / "T3.json"
-    result_file.write_text(json.dumps({
+    result_file = OUTPUT_DIR / "T3.yaml"
+    result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
         "judge_verdict": judge_response["verdict"],
         "judge_reason": judge_response["reason"],
         "cost_usd": response["cost_usd"] + judge_response["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge_response["verdict"] == "YES", (
         f"Judge said NO: {judge_response['reason']}\n"

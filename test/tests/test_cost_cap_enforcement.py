@@ -1,11 +1,12 @@
 """
 test_cost_cap_enforcement.py — Verify cost cap guard skips tests at $0.48 threshold.
 
-Injects a running total of $0.48 into cost.json, then asserts check_cost_cap() raises
+Injects a running total of $0.48 into cost.yaml, then asserts check_cost_cap() raises
 pytest.skip.Exception with the correct warning message.
 """
-import json
 from pathlib import Path
+
+import yaml
 
 import pytest
 
@@ -29,10 +30,10 @@ def test_cost_cap_skips_at_threshold(workspace, tmp_path):
     try:
         # Inject the high running total
         COST_FILE.parent.mkdir(parents=True, exist_ok=True)
-        COST_FILE.write_text(json.dumps({
+        COST_FILE.write_text(yaml.dump({
             "tests": {"injected_cap_test": injected_total},
             "running_total": injected_total,
-        }, indent=2))
+        }, default_flow_style=False, sort_keys=False))
 
         # check_cost_cap should raise pytest.skip.Exception
         with pytest.raises(pytest.skip.Exception, match="WARNING: cost cap reached"):

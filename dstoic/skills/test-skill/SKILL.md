@@ -33,4 +33,4 @@ Generate `test_file` from template in `reference.md`. Derive prompt from scenari
 
     docker compose -f test/docker-compose.test.yml run --rm skill-tester pytest tests/test_{snake_name}.py -v -s
 
-**5. Report** — Parse `test/output/{snake_name}_smoke.json`: status, judge verdict/reason, cost USD.
+**5. Report** — Parse `test/output/{snake_name}_smoke.yaml`: status, judge verdict/reason, cost USD. Also show latest trace file `test/output/{snake_name}_smoke_trace_*.yaml`.

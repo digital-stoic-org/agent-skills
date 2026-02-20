@@ -2,10 +2,10 @@
 test_edit_claude.py — L1/L3 behavioral test for edit-claude skill.
 Smoke test: CLAUDE.md creation request → structured output.
 """
-import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
@@ -33,11 +33,11 @@ def test_edit_claude_structured_output(workspace):
     )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / "edit_claude_smoke.json").write_text(json.dumps({
+    (OUTPUT_DIR / "edit_claude_smoke.yaml").write_text(yaml.dump({
         "status": "pass" if judge["verdict"] == "YES" else "fail",
         "judge_verdict": judge["verdict"],
         "judge_reason": judge["reason"],
         "cost_usd": response["cost_usd"] + judge["cost_usd"],
-    }, indent=2))
+    }, default_flow_style=False, sort_keys=False))
 
     assert judge["verdict"] == "YES", f"Judge said NO: {judge['reason']}"

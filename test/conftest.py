@@ -1,6 +1,7 @@
-import json
 import os
 from pathlib import Path
+
+import yaml
 
 import pytest
 
@@ -66,7 +67,7 @@ def workspace():
     output_dir = Path("/workspace/output")
     output_dir.mkdir(parents=True, exist_ok=True)
     yield output_dir
-    # No teardown — output persists for the container run (cost.json accumulates across tests)
+    # No teardown — output persists for the container run (cost.yaml accumulates across tests)
 
 
 @pytest.fixture
@@ -78,15 +79,15 @@ def skills_dir():
 
 def pytest_sessionfinish(session, exitstatus):
     """Write cost reconciliation report after all tests complete."""
-    cost_file = Path("/workspace/output/cost.json")
-    reconciliation_file = Path("/workspace/output/cost-reconciliation.json")
+    cost_file = Path("/workspace/output/cost.yaml")
+    reconciliation_file = Path("/workspace/output/cost-reconciliation.yaml")
 
     estimated_total = 0.0
     if cost_file.exists():
         try:
-            state = json.loads(cost_file.read_text())
+            state = yaml.safe_load(cost_file.read_text()) or {}
             estimated_total = state.get("running_total", 0.0)
-        except (json.JSONDecodeError, OSError):
+        except (yaml.YAMLError, OSError):
             pass
 
     reconciliation = {
@@ -96,4 +97,4 @@ def pytest_sessionfinish(session, exitstatus):
     }
 
     reconciliation_file.parent.mkdir(parents=True, exist_ok=True)
-    reconciliation_file.write_text(json.dumps(reconciliation, indent=2))
+    reconciliation_file.write_text(yaml.dump(reconciliation, default_flow_style=False, sort_keys=False))
