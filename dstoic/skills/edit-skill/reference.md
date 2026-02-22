@@ -10,24 +10,24 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 
 ### Quick Decision Tree (Skill-Specific)
 
-1. **>1000 tokens or multiple reference files?** → Slash Command or Sub-Agent
+1. **>1000 tokens total?** → Skill with progressive disclosure (SKILL.md + reference.md)
 2. **Complex multi-step exploration?** → Sub-Agent (existing Task tool)
-3. **User manually invokes?** → Slash Command
-4. **Auto-invoked AND concise?** → Skill
-5. **Frequently used across sessions?** → Skill (if concise)
+3. **Needs isolation?** → Skill with `context: fork`
+4. **Concise capability (<500 tokens)?** → Skill (dual-invocable by default)
+5. **Frequently used across sessions?** → Skill
 6. **Deterministic shell-only?** → Bash script (or Skill wrapper if AI needed)
 
 ### Tool Comparison
 
 | Tool | Best For | Context | When to Avoid |
 |------|----------|---------|---------------|
-| **Skill** | Specific auto-invoked capabilities | Loaded when active (<500 tokens ideal) | Verbose workflows, rare use, multiple capabilities |
-| **Slash Command** | User-initiated workflows | User-controlled expansion (can be verbose) | Should happen automatically, cross-project use |
+| **Skill** | All capabilities (dual-invocable by default) | Loaded when active (<500 tokens ideal) | Multiple capabilities in one skill |
+| **Skill (forked)** | Research, verbose output, parallel work | Isolated (`context: fork`) | Needs main conversation context |
 | **Sub-Agent** | Complex exploration/research | Isolated (no pollution) | Simple operations, needs main context |
 
 ### Context Overload Signals
 
-When you see these, consider slash command or sub-agent:
+When you see these, consider progressive disclosure or `context: fork`:
 - Instructions >2000 tokens
 - Multiple reference files needed
 - Detailed step-by-step procedures
@@ -35,9 +35,9 @@ When you see these, consider slash command or sub-agent:
 
 ### Response Templates
 
-**Suggest slash command:**
+**Suggest progressive disclosure:**
 ```
-"This workflow seems verbose. A slash command would be better because you control when it loads into context. Should I create a slash command at `.claude/commands/[name].md` instead?"
+"These instructions would use ~[X] tokens. I'll keep SKILL.md under 500 tokens and move detailed content to reference.md for on-demand loading."
 ```
 
 **Suggest sub-agent:**
@@ -48,9 +48,9 @@ When you see these, consider slash command or sub-agent:
 **Ask about verbose skill:**
 ```
 "These instructions would use ~[X] tokens. Consider:
-1. Slash Command - Load on-demand with `/[name]`
-2. Sub-Agent - Isolated context
-3. Streamlined Skill - More concise version
+1. Skill + reference.md - Progressive disclosure, dual-invocable
+2. Skill with context: fork - Isolated execution
+3. Sub-Agent - Full isolation for complex exploration
 
 Which do you prefer?"
 ```

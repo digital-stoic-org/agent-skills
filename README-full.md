@@ -352,28 +352,27 @@ flowchart LR
 
 ---
 
-## 🔨 Create — Tool Orchestration (7 skills)
+## 🔨 Create — Tool Orchestration (6 skills)
 
-*Build your own skills, commands, and agents.*
+*Build your own skills and agents.*
 
 ```mermaid
 flowchart LR
     search["🔍 search-skill"] -.->|"exists?"| edit["🎯 edit-tool"]
-    edit -->|"<500 tokens"| skill["✨ edit-skill"]
-    edit -->|"/slash trigger"| command["⌨️ edit-command"]
+    edit -->|"skill"| skill["✨ edit-skill"]
     edit -->|"isolated context"| agent["🤖 edit-agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
 
-    pick["🎯 pick-model"] -.->|"which model?"| skill & command & agent
+    pick["🎯 pick-model"] -.->|"which model?"| skill & agent
 
-    skill & command & agent -->|"added/removed?"| plugin["📦 edit-plugin"]
+    skill & agent -->|"added/removed?"| plugin["📦 edit-plugin"]
 
     classDef router fill:#FFE4B5,stroke:#333,color:#000
     classDef editor fill:#f9f9f9,stroke:#333,color:#000
     classDef support fill:#E0E7FF,stroke:#333,color:#000
     classDef post fill:#C8E6C9,stroke:#333,color:#000
     class edit router
-    class skill,command,agent,claude editor
+    class skill,agent,claude editor
     class search,pick support
     class plugin post
 ```
@@ -381,8 +380,7 @@ flowchart LR
 | Skill | When to Use |
 |-------|-------------|
 | `edit-tool` | 🎯 Decision tree — routes to correct editor |
-| `edit-skill` | ✨ Auto-invoked capabilities (<500 tokens) |
-| `edit-command` | ⌨️ User-triggered `/slash` commands |
+| `edit-skill` | ✨ All tool creation (dual-invocable by default) |
 | `edit-agent` | 🤖 Isolated context, complex tasks |
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `edit-plugin` | 📦 Version bumps and plugin metadata sync |
