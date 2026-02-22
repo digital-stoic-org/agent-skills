@@ -3,7 +3,7 @@ behavioral.py — ACL layer for invoking skills via claude -p and parsing respon
 
 Translates --output-format json responses into assertion-friendly dicts.
 Tracks running cost to enforce $0.50 cap (ADR-5).
-Auto-traces every invocation to /workspace/output/{test_id}_trace_{ts}.yaml.
+Auto-traces every invocation to /workspace/output/{run_dir}/{test_id}_trace.yaml.
 """
 import json
 import os
@@ -13,10 +13,20 @@ from pathlib import Path
 
 import yaml
 
-COST_FILE = Path("/workspace/output/cost.yaml")
-TRACE_DIR = Path("/workspace/output")
+# Defaults — overridden by conftest.py via set_run_dir()
+_RUN_DIR = Path("/workspace/output")
 COST_CAP = 0.50
 COST_WARN_THRESHOLD = 0.45  # warn when approaching cap
+
+
+def set_run_dir(run_dir: Path) -> None:
+    """Called by conftest.py to set the per-run output folder."""
+    global _RUN_DIR, COST_FILE
+    _RUN_DIR = run_dir
+    COST_FILE = _RUN_DIR / "cost.yaml"
+
+
+COST_FILE = _RUN_DIR / "cost.yaml"
 
 
 def _load_cost_state() -> dict:
@@ -34,18 +44,8 @@ def get_running_total() -> float:
     return _load_cost_state().get("running_total", 0.0)
 
 
-# Cache timestamp per test_id so invoke_skill and llm_judge write to the same file
-_trace_timestamps: dict[str, str] = {}
-
-
-def _trace_ts(test_id: str) -> str:
-    if test_id not in _trace_timestamps:
-        _trace_timestamps[test_id] = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    return _trace_timestamps[test_id]
-
-
 def _trace_path(test_id: str) -> Path:
-    return TRACE_DIR / f"{test_id}_trace_{_trace_ts(test_id)}.yaml"
+    return _RUN_DIR / f"{test_id}_trace.yaml"
 
 
 def _load_trace(test_id: str) -> dict:
@@ -56,7 +56,7 @@ def _load_trace(test_id: str) -> dict:
 
 
 def _save_trace(test_id: str, trace: dict) -> None:
-    TRACE_DIR.mkdir(parents=True, exist_ok=True)
+    _RUN_DIR.mkdir(parents=True, exist_ok=True)
     _trace_path(test_id).write_text(
         yaml.dump(trace, default_flow_style=False, allow_unicode=True, sort_keys=False, width=120)
     )

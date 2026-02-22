@@ -14,7 +14,6 @@ from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 EDIT_SKILL_PATH = "/workspace/skills/edit-skill/SKILL.md"
 PICK_MODEL_PATH = "/workspace/skills/pick-model/SKILL.md"
-OUTPUT_DIR = Path("/workspace/output")
 
 
 def _count_tokens_approx(text: str) -> int:
@@ -38,7 +37,7 @@ def test_T1_happy_create(workspace):
     response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="T1")
 
     result_text = response["result"]
-    result_file = OUTPUT_DIR / "T1.yaml"
+    result_file = workspace / "T1.yaml"
 
     assertions = {
         "is_error": response["is_error"],
@@ -101,7 +100,7 @@ def test_T2_model_selection(workspace):
         test_id="T2",
     )
 
-    result_file = OUTPUT_DIR / "T2.yaml"
+    result_file = workspace / "T2.yaml"
     result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
@@ -145,7 +144,7 @@ def test_T3_reject_verbose(workspace):
         test_id="T3",
     )
 
-    result_file = OUTPUT_DIR / "T3.yaml"
+    result_file = workspace / "T3.yaml"
     result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],

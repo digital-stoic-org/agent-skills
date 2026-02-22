@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -6,11 +7,34 @@ import yaml
 import pytest
 
 
+# ── Run folder (session-scoped, timestamp-prefixed) ──────────────────────────
+
+_OUTPUT_BASE = Path("/workspace/output")
+_RUN_DIR: Path | None = None
+
+
+def _get_run_dir() -> Path:
+    """Return the per-run output folder, creating it on first call."""
+    global _RUN_DIR
+    if _RUN_DIR is None:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        _RUN_DIR = _OUTPUT_BASE / ts
+        _RUN_DIR.mkdir(parents=True, exist_ok=True)
+    return _RUN_DIR
+
+
 # ── Marker registration ──────────────────────────────────────────────────────
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "structural: L2 structural tests (YAML, tokens, naming)")
     config.addinivalue_line("markers", "behavioral: L1/L3 behavioral tests (claude -p invocations)")
+
+    # Initialize run dir early so harness can use it
+    run_dir = _get_run_dir()
+
+    # Configure harness to use run dir
+    from harness import behavioral
+    behavioral.set_run_dir(run_dir)
 
 
 # ── L2-before-L1/L3 guard ────────────────────────────────────────────────────
@@ -64,9 +88,9 @@ def api_key():
 
 @pytest.fixture
 def workspace():
-    output_dir = Path("/workspace/output")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    yield output_dir
+    run_dir = _get_run_dir()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    yield run_dir
     # No teardown — output persists for the container run (cost.yaml accumulates across tests)
 
 
@@ -79,8 +103,9 @@ def skills_dir():
 
 def pytest_sessionfinish(session, exitstatus):
     """Write cost reconciliation report after all tests complete."""
-    cost_file = Path("/workspace/output/cost.yaml")
-    reconciliation_file = Path("/workspace/output/cost-reconciliation.yaml")
+    run_dir = _get_run_dir()
+    cost_file = run_dir / "cost.yaml"
+    reconciliation_file = run_dir / "cost-reconciliation.yaml"
 
     estimated_total = 0.0
     if cost_file.exists():
