@@ -13,5 +13,7 @@ services:
       - ./conftest.py:/workspace/conftest.py:ro
       - ./pytest.ini:/workspace/pytest.ini:ro
       - ./output/:/workspace/output
-    environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Max subscription credentials (replaces API key billing)
+      - ${HOME}/.claude/.credentials.json:/root/.claude/.credentials.json:ro
+    # environment:
+    #   - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
