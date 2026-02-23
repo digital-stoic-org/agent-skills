@@ -5,14 +5,14 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.14.0"
+    "version": "0.15.0"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core cognitive toolkit: OpenSpec workflow, context management, retrospectives, troubleshooting, investigation",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "author": {
         "name": "dstoic"
       },
@@ -23,6 +23,17 @@
       "name": "gtd",
       "source": "./gtd",
       "description": "GTD workflow automation for Obsidian vaults",
+      "version": "0.1.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "coach",
+      "source": "./coach",
+      "description": "Personal coaching with CLEAR protocol, anxiety-first surfacing, and Goldsmith accountability loop",
       "version": "0.1.0",
       "author": {
         "name": "dstoic"

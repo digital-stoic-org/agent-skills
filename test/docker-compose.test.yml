@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../dstoic/skills/:/workspace/skills:ro
+      - ../coach/skills/:/workspace/coach-skills:ro
       - ./tests/:/workspace/tests:ro
       - ./harness/:/workspace/harness:ro
       - ./fixtures/:/workspace/fixtures:ro

@@ -15,18 +15,22 @@ import pytest
 
 from harness.structural import validate_skill
 
-SKILLS_DIR = Path("/workspace/skills")
+SKILLS_DIRS = [
+    Path("/workspace/skills"),
+    Path("/workspace/coach-skills"),
+]
 
 
 def _discover_skills() -> list[tuple[str, Path]]:
-    """Return list of (skill_name, SKILL.md path) for all skills."""
+    """Return list of (skill_name, SKILL.md path) for all skills across plugin roots."""
     skills = []
-    if not SKILLS_DIR.exists():
-        return skills
-    for skill_dir in sorted(SKILLS_DIR.iterdir()):
-        if skill_dir.is_dir():
-            skill_md = skill_dir / "SKILL.md"
-            skills.append((skill_dir.name, skill_md))
+    for skills_dir in SKILLS_DIRS:
+        if not skills_dir.exists():
+            continue
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if skill_dir.is_dir():
+                skill_md = skill_dir / "SKILL.md"
+                skills.append((skill_dir.name, skill_md))
     return skills
 
 
