@@ -6,6 +6,7 @@ services:
     volumes:
       - ../dstoic/skills/:/workspace/skills:ro
       - ../coach/skills/:/workspace/coach-skills:ro
+      - ../gtd/skills/:/workspace/gtd-skills:ro
       - ./tests/:/workspace/tests:ro
       - ./harness/:/workspace/harness:ro
       - ./fixtures/:/workspace/fixtures:ro

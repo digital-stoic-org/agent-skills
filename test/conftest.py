@@ -99,6 +99,11 @@ def skills_dir():
     return Path("/workspace/skills")
 
 
+@pytest.fixture
+def gtd_skills_dir():
+    return Path("/workspace/gtd-skills")
+
+
 # ── Suite-end cost reconciliation (ADR-5) ────────────────────────────────────
 
 def pytest_sessionfinish(session, exitstatus):

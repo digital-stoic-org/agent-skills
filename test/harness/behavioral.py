@@ -73,7 +73,7 @@ def check_cost_cap(test_id: str = "") -> None:
         )
 
 
-def invoke_skill(prompt: str, skill_path: str, test_id: str = "") -> dict:
+def invoke_skill(prompt: str, skill_path: str, test_id: str = "", allowed_tools: list[str] | None = None) -> dict:
     """
     Invoke a skill via claude -p and return an assertion dict.
 
@@ -81,6 +81,7 @@ def invoke_skill(prompt: str, skill_path: str, test_id: str = "") -> dict:
         prompt: The user prompt to send to the skill
         skill_path: Path to the SKILL.md file (used as system prompt context)
         test_id: Optional test identifier for cost tracking
+        allowed_tools: Optional list of tool names to auto-approve (e.g. ["Read", "Edit", "Bash"])
 
     Returns:
         dict with keys:
@@ -102,6 +103,9 @@ def invoke_skill(prompt: str, skill_path: str, test_id: str = "") -> dict:
         "claude", "-p", full_prompt,
         "--output-format", "json",
     ]
+
+    if allowed_tools:
+        cmd.extend(["--allowedTools", ",".join(allowed_tools)])
 
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
