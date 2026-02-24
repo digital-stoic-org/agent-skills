@@ -51,7 +51,7 @@ flowchart LR
 | Mode | What | Hero Skills |
 |------|------|-------------|
 | 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin + Stacey), `/pick-model` |
-| 🧠 **Think** | Divergent ideation, deep technical analysis | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem) |
+| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem), `/challenge` (Devil's Advocate) |
 | ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (7 skills, human-gated sections) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA) |
 | 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |

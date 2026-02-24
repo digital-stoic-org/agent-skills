@@ -89,9 +89,41 @@ Frame asks 2 questions (situation + scale), maps to a domain, suggests the skill
 
 ---
 
-## 🧠 Think — Ideation & Analysis (4 skills)
+## 🧠 Think — Ideation & Analysis (3 skills + 1 agent)
 
 *Diverge before you converge. Analyze before you design. Challenge before you commit.*
+
+```mermaid
+flowchart LR
+    subgraph THINK["🧠 Think"]
+        direction LR
+        B["💡 brainstorm<br/>Divergent ideation"]
+        I["🔬 investigate<br/>Deep analysis"]
+        C["🔴 challenge<br/>Adversarial review"]
+    end
+
+    B -->|"options → pick"| I
+    I -->|"design → decide"| COMMIT["✅ Commit"]
+    C -.->|"wait — is this right?"| COMMIT
+
+    B -.->|"too confident?"| C
+    I -.->|"feels off?"| C
+    C -->|"deep"| DA["🤖 devils-advocate<br/>(fresh context)"]
+
+    classDef generative fill:#E1BEE7,stroke:#7B1FA2,color:#000
+    classDef analytical fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef adversarial fill:#FFCDD2,stroke:#C62828,color:#000
+    classDef agent fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef output fill:#f9f9f9,stroke:#333,color:#000
+
+    class B generative
+    class I analytical
+    class C adversarial
+    class DA agent
+    class COMMIT output
+```
+
+Three cognitive stances — **generative** (create options), **analytical** (decompose + decide), **adversarial** (challenge before committing). `/challenge` is reactive: invoke it when output feels too confident, too fast, or too convenient.
 
 ### `/challenge` (skill, opus)
 
@@ -106,7 +138,9 @@ Structured adversarial review — forces reconsideration of current AI output us
 
 **Triggers:** "challenge this", "are you sure", "push back", "prove it", "devil's advocate", "poke holes", "sanity check"
 
-**Sub-agent:** `devils-advocate` (Opus) — runs in fresh context (no parent reasoning bias), returns structured Challenge Report with failure scenarios + remedies + steelmanned counter-argument.
+> 🤖 **Agent: `devils-advocate`** (Opus)
+> Fresh context · 3-tier analysis (failure scenarios → alignment check → verdict) · Read/Glob/Grep only
+> Returns: structured Challenge Report with failure scenarios + remedies + steelmanned counter-argument
 
 ### `/brainstorm` (skill, opus)
 
@@ -258,6 +292,10 @@ flowchart LR
 | `save-context` | 💾 Serialize session → CONTEXT-llm.md (before leaving) | sonnet |
 | `load-context` | 📥 Resume session from CONTEXT-llm.md (optional `--full`) | sonnet |
 | `list-contexts` | 📋 List all contexts across code/ and projects/ with status | haiku |
+
+> 🤖 **Agent: `summarize-for-context`** (Haiku)
+> Chunked reading for files >25K tokens · Read + python3 + wc only
+> Returns: token-budgeted markdown summary preserving key facts, decisions, and actionable items
 
 ### 🧬 Context Engineering Workflow
 
