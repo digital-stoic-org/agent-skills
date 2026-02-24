@@ -89,9 +89,24 @@ Frame asks 2 questions (situation + scale), maps to a domain, suggests the skill
 
 ---
 
-## 🧠 Think — Ideation & Analysis (3 skills)
+## 🧠 Think — Ideation & Analysis (4 skills)
 
-*Diverge before you converge. Analyze before you design.*
+*Diverge before you converge. Analyze before you design. Challenge before you commit.*
+
+### `/challenge` (skill, opus)
+
+Structured adversarial review — forces reconsideration of current AI output using provocation patterns.
+
+| Subcommand | Error Type | Technique |
+|---|---|---|
+| `anchor` | Premature commitment / anchoring bias | Counterfactual reframe, Steelman opposite |
+| `verify` | Factual errors / hallucination | Claim decomposition, source audit |
+| `framing` | Wrong problem / framing errors | Problem restatement, scope challenge |
+| `deep` | High-stakes — all error types | Spawns `devils-advocate` sub-agent (3-tier: failure scenarios → alignment check → verdict) |
+
+**Triggers:** "challenge this", "are you sure", "push back", "prove it", "devil's advocate", "poke holes", "sanity check"
+
+**Sub-agent:** `devils-advocate` (Opus) — runs in fresh context (no parent reasoning bias), returns structured Challenge Report with failure scenarios + remedies + steelmanned counter-argument.
 
 ### `/brainstorm` (skill, opus)
 

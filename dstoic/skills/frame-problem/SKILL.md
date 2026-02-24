@@ -14,6 +14,8 @@ Classify → route to right skill chain.
 
 ## 1. Qualify
 
+**Question Refinement** (before classifying): If $ARGUMENTS is vague or broad, generate 2-3 clarifying sub-questions that sharpen the problem statement. Present them inline before the AskUserQuestion call. Skip if $ARGUMENTS is already specific.
+
 AskUserQuestion — both questions in one call:
 
 **Q1 "Situation"** (4 options):
