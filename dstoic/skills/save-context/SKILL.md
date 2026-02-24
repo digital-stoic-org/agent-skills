@@ -2,7 +2,7 @@
 name: save-context
 description: Save session to CONTEXT-llm.md with conversation summary. Use when saving work, checkpointing progress, preserving session state. Triggers include "save context", "save session", "checkpoint", "save my progress".
 argument-hint: "[stream-name] [description]"
-allowed-tools: [Bash, Read, Write, Edit, AskUserQuestion, TaskList]
+allowed-tools: [Bash, Read, Write, Edit, AskUserQuestion]
 model: haiku
 context: main
 user-invocable: true
@@ -26,7 +26,6 @@ Save current session state to `CONTEXT-{stream}-llm.md` with LLM-optimized forma
 
 ```
 Bash: rtk ls openspec/changes/ + rtk ls -t CONTEXT-*llm.md
-TaskList: Get current task state
 ```
 
 **Stream resolution**: First word of `$ARGUMENTS` = stream name (`^[a-zA-Z0-9_-]{1,50}$`), rest = description. Empty → reuse prior `/load-context` stream or AskUserQuestion.
@@ -34,14 +33,14 @@ TaskList: Get current task state
 ### Phase 2: Analyze & Synthesize (single pass)
 
 From conversation (last 15-20 messages):
-1. **NextTasks** — infer 3 from OpenSpec/TaskList/conversation
+1. **NextTasks** — infer 3 from OpenSpec/conversation
 2. **Session** — progression, decisions, thinking, unexpected (780 tokens max)
 3. **Hot Files** — max 10 discussed/edited
 4. **Focus & Goal** — 1-2 sentence focus + goal
 
 ### Phase 3: Write & Report
 
-Write CONTEXT file using template, then upsert INDEX.md.
+Write CONTEXT file using template, then upsert INDEX.md via `scripts/upsert-index.sh`.
 
 **Stream naming**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
 

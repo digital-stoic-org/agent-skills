@@ -18,10 +18,6 @@ goal: {1 sentence}
 ref: {openspec project.md path | n/a}
 type: {project type}
 
-## Tasks
-
-{in_progress + pending + 3 recent completed only, inline objects}
-
 ## Next Tasks
 
 - {task 1}
@@ -70,13 +66,20 @@ If marginal: `"📊 Session appears brief. Save context anyway?"` — wait for c
 
 ## INDEX.md Upsert (Phase 3b)
 
-Path: `$(git rev-parse --show-toplevel)/INDEX.md`. Skip if missing or CWD not in `code/`, `projects/`, or `vaults/`.
+Run `scripts/upsert-index.sh` with 6 positional args:
 
-1. Read INDEX.md
-2. Derive row: Area, Project, Context (stream), Status (emoji), Focus (≤80 chars), Saved (YYYY-MM-DD)
-3. Match `| {Area} | {Project} | {Context} |`: found → Edit replace, not found → Edit append
-4. Update summary counts
-5. Preserve Parked/Done/Archived unchanged
+```
+Bash: ./scripts/upsert-index.sh <area> <project> <context> "<status_emoji>" "<focus>" <saved_date>
+```
+
+- **area**: derive from CWD relative to repo root (e.g., `repos`, `projects`, `code`)
+- **project**: project folder name
+- **context**: stream name
+- **status**: emoji + label from Status Mapping table (e.g., `"🏗️ building"`)
+- **focus**: ≤80 char summary
+- **saved**: YYYY-MM-DD
+
+Script handles: find INDEX.md, match/replace or append row, skip if missing. Parked/Done/Archived sections preserved.
 
 ## Stream Naming
 
@@ -87,7 +90,6 @@ Path: `$(git rev-parse --show-toplevel)/INDEX.md`. Skip if missing or CWD not in
 
 - Session section: 780 tokens max
 - Total: 1200-1500 tokens MAX
-- Tasks: in_progress + pending + 3 recent completed only
 - Hot Files: max 10 with brief roles
 - Use YAML inline objects: `{done: 5, active: 2, pending: 3}`
 

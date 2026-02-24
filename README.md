@@ -64,7 +64,7 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 43 skills, 0 commands, 4 hooks | ✅ v0.17.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 43 skills, 0 commands, 4 hooks | ✅ v0.17.1 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
 | ... | More planned | 🔜 |
 
