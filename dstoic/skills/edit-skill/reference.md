@@ -2,6 +2,25 @@
 
 Detailed templates, examples, and best practices for creating and modifying Claude Code skills.
 
+## Table of Contents
+
+- [Tool Selection Framework](#tool-selection-framework)
+- [SKILL.md Templates](#skillmd-templates)
+- [Naming Rules](#naming-rules)
+- [Description Best Practices](#description-best-practices)
+- [Model Selection Guide](#model-selection-guide)
+- [Context Execution Mode](#context-execution-mode-context-fork)
+- [Common Mistakes](#common-mistakes)
+- [Modification Best Practices](#modification-best-practices)
+- [Example Skills](#example-skills)
+- [Supporting Files](#supporting-files)
+- [Progressive Disclosure Patterns](#progressive-disclosure-patterns)
+- [Token Efficiency Techniques](#token-efficiency-techniques)
+- [Anthropic Best Practices](#anthropic-best-practices)
+- [Anthropic Workflows & Patterns](#anthropic-workflows--patterns)
+- [Script Wrapper Pattern](#script-wrapper-pattern)
+- [Instruction Ordering](#instruction-ordering-attention-mechanism-optimization)
+
 ---
 
 ## Tool Selection Framework
@@ -10,10 +29,10 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 
 ### Quick Decision Tree (Skill-Specific)
 
-1. **>1000 tokens or multiple reference files?** → Slash Command or Sub-Agent
+1. **>1000 tokens or multiple reference files?** → Skill with `context: fork` or Sub-Agent
 2. **Complex multi-step exploration?** → Sub-Agent (existing Task tool)
-3. **User manually invokes?** → Slash Command
-4. **Auto-invoked AND concise?** → Skill
+3. **Verbose output / research?** → Skill with `context: fork`
+4. **Auto-invoked AND concise?** → Skill (`context: main`)
 5. **Frequently used across sessions?** → Skill (if concise)
 6. **Deterministic shell-only?** → Bash script (or Skill wrapper if AI needed)
 
@@ -21,13 +40,13 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 
 | Tool | Best For | Context | When to Avoid |
 |------|----------|---------|---------------|
-| **Skill** | Specific auto-invoked capabilities | Loaded when active (<500 tokens ideal) | Verbose workflows, rare use, multiple capabilities |
-| **Slash Command** | User-initiated workflows | User-controlled expansion (can be verbose) | Should happen automatically, cross-project use |
+| **Skill (main)** | Specific auto-invoked capabilities | Loaded when active (<500 tokens ideal) | Verbose workflows, rare use, multiple capabilities |
+| **Skill (fork)** | Verbose/research workflows | Isolated sub-agent, user-invoked | Needs main context, frequent use (fork overhead) |
 | **Sub-Agent** | Complex exploration/research | Isolated (no pollution) | Simple operations, needs main context |
 
 ### Context Overload Signals
 
-When you see these, consider slash command or sub-agent:
+When you see these, consider `context: fork` skill or sub-agent:
 - Instructions >2000 tokens
 - Multiple reference files needed
 - Detailed step-by-step procedures
@@ -35,9 +54,9 @@ When you see these, consider slash command or sub-agent:
 
 ### Response Templates
 
-**Suggest slash command:**
+**Suggest fork context skill:**
 ```
-"This workflow seems verbose. A slash command would be better because you control when it loads into context. Should I create a slash command at `.claude/commands/[name].md` instead?"
+"This workflow seems verbose. A skill with `context: fork` would be better — it runs in isolation so it won't pollute the main conversation. Should I create it with fork context?"
 ```
 
 **Suggest sub-agent:**
@@ -48,9 +67,9 @@ When you see these, consider slash command or sub-agent:
 **Ask about verbose skill:**
 ```
 "These instructions would use ~[X] tokens. Consider:
-1. Slash Command - Load on-demand with `/[name]`
-2. Sub-Agent - Isolated context
-3. Streamlined Skill - More concise version
+1. Skill (fork context) - Isolated, on-demand with `/[name]`
+2. Sub-Agent - Isolated context, complex exploration
+3. Streamlined Skill - More concise version in main context
 
 Which do you prefer?"
 ```
@@ -152,48 +171,7 @@ description: What it does and when to use it
 
 ---
 
-## Token Efficiency Techniques
-
-### Use Tables vs Prose
-
-❌ Verbose: "The workflow type can be sequential, which means tasks run one after another, or parallel..."
-
-✅ Efficient:
-| Type | Behavior |
-|------|----------|
-| Sequential | Run one after another |
-| Parallel | Run simultaneously |
-
-### Inline Examples
-
-❌ `Step 1: Create config file\n\nExample:\n```yaml\nconfig: enabled: true\n```\n`
-
-✅ `1. Create config: \`{enabled: true}\``
-
-### Bullets Over Paragraphs
-
-❌ "When you encounter an error, first check logs, then attempt to fix..."
-
-✅ `On error: Check logs → Attempt fix → Report if unfixable`
-
-### Code Blocks for Templates
-
-❌ Describing code in prose
-
-✅ Show the pattern:
-```js
-function greet(name) { return `Hello ${name}`; }
-```
-
-### Reference Other Files
-
-❌ Including 500 lines of API docs in SKILL.md
-
-✅ `See reference.md for API details`
-
-### Front-Load Critical Info
-
-Structure: Instructions → Best Practices → Background
+See [Token Efficiency Techniques](#token-efficiency-techniques) below for detailed patterns (tables vs prose, inline examples, bullets, Mermaid).
 
 ---
 

@@ -12,7 +12,7 @@ description: Creates and modifies Claude Code skills following Anthropic best pr
 
 ## Modifying Existing Skills
 
-1. Locate in `reference/claude-plugins/common/skills/` and read SKILL.md
+1. Locate skill in plugin `skills/` directory (e.g., `dstoic/skills/{name}/`) or `.claude/skills/` and read SKILL.md
 2. Analyze: frontmatter, instructions
 3. Determine type: Add Feature, Fix/Improve, Refactor, or Restrict/Expand Scope
 4. Make surgical edits using Edit tool
