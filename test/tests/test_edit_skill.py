@@ -1,9 +1,9 @@
 """
 test_edit_skill.py — L1/L3 behavioral tests for the edit-skill skill.
 
-T1: Happy CREATE — deterministic assertions (file exists, YAML valid, token count <500)
-T2: Model selection — LLM-judge asserts correct model picked for architectural prompt
-T3: Reject verbose — LLM-judge asserts refusal + alternative suggestion returned
+edit_skill_create: Happy CREATE — deterministic assertions (file exists, YAML valid, token count <500)
+pick_model_arch: Model selection — LLM-judge asserts correct model picked for architectural prompt
+edit_skill_reject_verbose: Reject verbose — LLM-judge asserts refusal + alternative suggestion returned
 """
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 EDIT_SKILL_PATH = "/workspace/skills/edit-skill/SKILL.md"
 PICK_MODEL_PATH = "/workspace/skills/pick-model/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 def _count_tokens_approx(text: str) -> int:
@@ -21,12 +22,12 @@ def _count_tokens_approx(text: str) -> int:
     return len(text) // 4
 
 
-# ── T1: Happy CREATE ──────────────────────────────────────────────────────────
+# ── edit_skill_create: Happy CREATE ──────────────────────────────────────────
 
 @pytest.mark.behavioral
-def test_T1_happy_create(workspace):
-    """T1: edit-skill creates a valid SKILL.md with correct structure."""
-    check_cost_cap("T1")
+def test_edit_skill_create(workspace, sandbox):
+    """edit_skill_create: edit-skill creates a valid SKILL.md with correct structure."""
+    check_cost_cap("edit_skill_create")
 
     prompt = (
         "Create a new skill called 'greet-user' that greets the user by name. "
@@ -34,10 +35,12 @@ def test_T1_happy_create(workspace):
         "Keep it simple and under 200 tokens."
     )
 
-    response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="T1")
+    response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="edit_skill_create",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
 
     result_text = response["result"]
-    result_file = workspace / "T1.yaml"
+    result_file = workspace / "edit_skill_create.yaml"
 
     assertions = {
         "is_error": response["is_error"],
@@ -77,12 +80,12 @@ def test_T1_happy_create(workspace):
     assert assertions["token_count_ok"], f"Token count {assertions['token_count']} >= 500"
 
 
-# ── T2: Model Selection ───────────────────────────────────────────────────────
+# ── pick_model_arch: Model Selection ──────────────────────────────────────────
 
 @pytest.mark.behavioral
-def test_T2_model_selection(workspace):
-    """T2: pick-model recommends opus/sonnet for architectural analysis (LLM-judge)."""
-    check_cost_cap("T2")
+def test_pick_model_arch(workspace, sandbox):
+    """pick_model_arch: pick-model recommends opus/sonnet for architectural analysis (LLM-judge)."""
+    check_cost_cap("pick_model_arch")
 
     prompt = (
         "Pick the right model for a skill that analyzes entire codebases, "
@@ -91,16 +94,18 @@ def test_T2_model_selection(workspace):
         "This requires deep multi-framework reasoning."
     )
 
-    response = invoke_skill(prompt, PICK_MODEL_PATH, test_id="T2")
+    response = invoke_skill(prompt, PICK_MODEL_PATH, test_id="pick_model_arch",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge_response = llm_judge(
         question="Did this response recommend opus or sonnet (not haiku) as the appropriate model for a complex architectural analysis task?",
         context=result_text,
-        test_id="T2",
+        test_id="pick_model_arch",
     )
 
-    result_file = workspace / "T2.yaml"
+    result_file = workspace / "pick_model_arch.yaml"
     result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],
@@ -115,12 +120,12 @@ def test_T2_model_selection(workspace):
     )
 
 
-# ── T3: Reject Verbose ────────────────────────────────────────────────────────
+# ── edit_skill_reject_verbose: Reject Verbose ────────────────────────────────
 
 @pytest.mark.behavioral
-def test_T3_reject_verbose(workspace):
-    """T3: edit-skill refuses >500 token SKILL.md and suggests alternative (LLM-judge)."""
-    check_cost_cap("T3")
+def test_edit_skill_reject_verbose(workspace, sandbox):
+    """edit_skill_reject_verbose: edit-skill refuses >500 token SKILL.md and suggests alternative (LLM-judge)."""
+    check_cost_cap("edit_skill_reject_verbose")
 
     # Read the violation fixture
     violation_path = "/workspace/fixtures/violations/edit-skill-token-overflow.md"
@@ -131,7 +136,9 @@ def test_T3_reject_verbose(workspace):
         "Please approve this skill or tell me if there are any issues with it."
     )
 
-    response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="T3")
+    response = invoke_skill(prompt, EDIT_SKILL_PATH, test_id="edit_skill_reject_verbose",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge_response = llm_judge(
@@ -141,10 +148,10 @@ def test_T3_reject_verbose(workspace):
             "splitting content, or reducing the skill size?"
         ),
         context=result_text,
-        test_id="T3",
+        test_id="edit_skill_reject_verbose",
     )
 
-    result_file = workspace / "T3.yaml"
+    result_file = workspace / "edit_skill_reject_verbose.yaml"
     result_file.write_text(yaml.dump({
         "status": "pass" if judge_response["verdict"] == "YES" else "fail",
         "result": result_text[:500],

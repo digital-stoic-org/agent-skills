@@ -10,17 +10,33 @@ import pytest
 # ── Run folder (session-scoped, timestamp-prefixed) ──────────────────────────
 
 _OUTPUT_BASE = Path("/workspace/output")
+_SANDBOX_BASE = Path("/workspace/sandbox")
 _RUN_DIR: Path | None = None
+_RUN_TS: str | None = None
+
+
+def _get_run_ts() -> str:
+    """Return the per-run timestamp, generating once."""
+    global _RUN_TS
+    if _RUN_TS is None:
+        _RUN_TS = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    return _RUN_TS
 
 
 def _get_run_dir() -> Path:
     """Return the per-run output folder, creating it on first call."""
     global _RUN_DIR
     if _RUN_DIR is None:
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        _RUN_DIR = _OUTPUT_BASE / ts
+        _RUN_DIR = _OUTPUT_BASE / _get_run_ts()
         _RUN_DIR.mkdir(parents=True, exist_ok=True)
     return _RUN_DIR
+
+
+def _get_sandbox_dir() -> Path:
+    """Return the per-run sandbox folder for artifact capture."""
+    sandbox = _SANDBOX_BASE / _get_run_ts()
+    sandbox.mkdir(parents=True, exist_ok=True)
+    return sandbox
 
 
 # ── Marker registration ──────────────────────────────────────────────────────
@@ -31,6 +47,9 @@ def pytest_configure(config):
 
     # Initialize run dir early so harness can use it
     run_dir = _get_run_dir()
+
+    # Route pytest-json-report into the timestamped run dir
+    config.option.json_report_file = str(run_dir / "results.json")
 
     # Configure harness to use run dir
     from harness import behavioral
@@ -92,6 +111,12 @@ def workspace():
     run_dir.mkdir(parents=True, exist_ok=True)
     yield run_dir
     # No teardown — output persists for the container run (cost.yaml accumulates across tests)
+
+
+@pytest.fixture
+def sandbox():
+    """Per-run sandbox directory for capturing artifacts created by e2e tests."""
+    return _get_sandbox_dir()
 
 
 @pytest.fixture

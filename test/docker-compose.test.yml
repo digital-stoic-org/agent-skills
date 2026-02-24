@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../dstoic/skills/:/workspace/skills:ro
+      - ../dstoic/:/workspace/dstoic:ro
       - ../coach/skills/:/workspace/coach-skills:ro
       - ../gtd/skills/:/workspace/gtd-skills:ro
       - ./tests/:/workspace/tests:ro
@@ -13,7 +14,8 @@ services:
       - ./conftest.py:/workspace/conftest.py:ro
       - ./pytest.ini:/workspace/pytest.ini:ro
       - ./output/:/workspace/output
-      # Max subscription credentials (replaces API key billing)
-      - ${HOME}/.claude/.credentials.json:/root/.claude/.credentials.json:ro
+      - ./sandbox/:/workspace/sandbox
+      # Max subscription credentials for node user (uid=1000)
+      - ${HOME}/.claude/.credentials.json:/home/node/.claude/.credentials.json:ro
     # environment:
     #   - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}

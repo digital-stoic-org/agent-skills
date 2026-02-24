@@ -8,10 +8,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/investigate/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_investigate_analysis_output(workspace):
+def test_investigate_analysis_output(workspace, sandbox):
     """investigate produces a structured analysis for a technical question."""
     check_cost_cap("investigate_smoke")
 
@@ -20,7 +21,9 @@ def test_investigate_analysis_output(workspace):
         "for a CLI tool that needs local-first data storage with occasional sync?"
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="investigate_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="investigate_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

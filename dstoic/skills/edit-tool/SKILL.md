@@ -1,5 +1,5 @@
 ---
-name: edit-tool2
+name: edit-tool
 description: Orchestrates creation of Claude Code tools (skills, agents, scripts). Use when user requests creating, updating, or improving any Claude Code extension mechanism. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /agents/. Auto-triages based on context pollution cost, token budget, and execution type. Delegates to edit-skill, edit-agent, or edit-plugin after explaining decision rationale. For plugin version bumps and release metadata, route directly to edit-plugin.
 ---
 

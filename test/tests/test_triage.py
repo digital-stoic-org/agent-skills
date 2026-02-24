@@ -10,32 +10,26 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/gtd-skills/triage/SKILL.md"
-OUTPUT_DIR = Path("/workspace/output")
-SCRATCH_INBOX = OUTPUT_DIR / "triage-scratch-inbox.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
-@pytest.fixture(autouse=True)
-def scratch_inbox():
-    """Create a scratch inbox with test items for triage."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    SCRATCH_INBOX.write_text(
+@pytest.mark.behavioral
+def test_triage_smoke(workspace, sandbox):
+    """Triage produces a routing plan showing destination and tags for each item."""
+    test_id = "triage_smoke"
+    check_cost_cap(test_id)
+
+    scratch_inbox = sandbox / "triage-scratch-inbox.md"
+    scratch_inbox.write_text(
         "# GTD Inbox\n\n"
         "### New\n"
         "- buy milk [created:: 2026-02-23]\n"
         "- call dentist [created:: 2026-02-23]\n"
         "### Prio 1\n"
     )
-    yield SCRATCH_INBOX
-
-
-@pytest.mark.behavioral
-def test_triage_smoke(workspace):
-    """Triage produces a routing plan showing destination and tags for each item."""
-    test_id = "triage_smoke"
-    check_cost_cap(test_id)
 
     prompt = (
-        f"Run GTD triage on the inbox at {SCRATCH_INBOX}. "
+        f"Run GTD triage on the inbox at {scratch_inbox}. "
         f"Do NOT apply routing edits — just show me the triage plan (what you would route where). "
         f"There are no project files available, so suggest generic destinations."
     )
@@ -43,6 +37,8 @@ def test_triage_smoke(workspace):
     response = invoke_skill(
         prompt, SKILL_PATH, test_id=test_id,
         allowed_tools=["Read", "Glob", "Grep"],
+        plugin_dir=PLUGIN_DIR, skip_permissions=True,
+        cwd=str(sandbox),
     )
     result_text = response["result"]
 
@@ -56,8 +52,7 @@ def test_triage_smoke(workspace):
         test_id=test_id,
     )
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / f"{test_id}.yaml").write_text(yaml.dump({
+    (workspace / f"{test_id}.yaml").write_text(yaml.dump({
         "status": "pass" if judge["verdict"] == "YES" else "fail",
         "judge_verdict": judge["verdict"],
         "judge_reason": judge["reason"],

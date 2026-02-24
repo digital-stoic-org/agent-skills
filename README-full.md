@@ -89,11 +89,11 @@ Frame asks 2 questions (situation + scale), maps to a domain, suggests the skill
 
 ---
 
-## 🧠 Think — Ideation & Analysis (2 skills + 1 command)
+## 🧠 Think — Ideation & Analysis (3 skills)
 
 *Diverge before you converge. Analyze before you design.*
 
-### `/brainstorm` (command, opus)
+### `/brainstorm` (skill, opus)
 
 Structured ideation: research → divergent → convergent → recommendation.
 
@@ -136,7 +136,7 @@ flowchart LR
 
 ---
 
-## ⚙️ Build — Structured Development (8 skills)
+## ⚙️ Build — Structured Development (9 skills)
 
 *Plan → implement → gate → test → sync. Human-in-the-loop iteration.*
 
@@ -173,6 +173,7 @@ flowchart LR
 | `openspec-reflect` | 🪞 Pre-gate drift check (flags missing test.md in scale/maintenance) |
 | `openspec-replan` | 🔀 Pivot when blocked (adapt, don't force) |
 | `openspec-sync` | 💾 Save session state (resume tomorrow without context loss) |
+| `edit-risen-prompt` | ✍️ Create/audit RISEN prompts with structure validation |
 
 **Core innovation:** Gates = human checkpoints between implementation sections. AI stops → you verify → mark pass → AI continues. Enables crash recovery (checkboxes persist), prevents scope drift (section-by-section review), maintains human control (you set the pace).
 
@@ -216,7 +217,7 @@ flowchart LR
 
 ---
 
-## 🪞 Learn — Retrospectives & Session Memory (7 commands + 1 skill)
+## 🪞 Learn — Retrospectives & Session Memory (8 skills)
 
 *Extract patterns from sessions. Persist context across conversations.*
 
@@ -224,24 +225,24 @@ flowchart LR
 
 | Skill | Purpose | Model |
 |-------|---------|-------|
-| `/tldr` | 📝 Concise recap of previous response (summary + action items) | haiku |
+| `tldr` | 📝 Concise recap of previous response (summary + action items) | haiku |
 
 ### Session Analysis
 
-| Command | Purpose | Model |
-|---------|---------|-------|
-| `/retrospect-domain` | 🎓 Extract learnings (WHAT/WHY) from captured sessions | opus |
-| `/retrospect-collab` | 🤝 Analyze collaboration patterns (HOW) + compute metrics | opus |
-| `/retrospect-report` | 📊 Aggregate trends and visualizations across sessions | opus |
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| `retrospect-domain` | 🎓 Extract learnings (WHAT/WHY) from captured sessions | opus |
+| `retrospect-collab` | 🤝 Analyze collaboration patterns (HOW) + compute metrics | opus |
+| `retrospect-report` | 📊 Aggregate trends and visualizations across sessions | opus |
 
 ### Context Management
 
-| Command | Purpose | Model |
-|---------|---------|-------|
-| `/create-context` | 🎬 Create baseline from `.in/` folder (run once per project) | sonnet |
-| `/save-context` | 💾 Serialize session → CONTEXT-llm.md (before leaving) | sonnet |
-| `/load-context` | 📥 Resume session from CONTEXT-llm.md (optional `--full`) | sonnet |
-| `/list-contexts` | 📋 List all contexts across code/ and projects/ with status | haiku |
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| `create-context` | 🎬 Create baseline from `.in/` folder (run once per project) | sonnet |
+| `save-context` | 💾 Serialize session → CONTEXT-llm.md (before leaving) | sonnet |
+| `load-context` | 📥 Resume session from CONTEXT-llm.md (optional `--full`) | sonnet |
+| `list-contexts` | 📋 List all contexts across code/ and projects/ with status | haiku |
 
 ### 🧬 Context Engineering Workflow
 
@@ -352,28 +353,27 @@ flowchart LR
 
 ---
 
-## 🔨 Create — Tool Orchestration (7 skills)
+## 🔨 Create — Tool Orchestration (6 skills)
 
-*Build your own skills, commands, and agents.*
+*Build your own skills and agents.*
 
 ```mermaid
 flowchart LR
     search["🔍 search-skill"] -.->|"exists?"| edit["🎯 edit-tool"]
     edit -->|"<500 tokens"| skill["✨ edit-skill"]
-    edit -->|"/slash trigger"| command["⌨️ edit-command"]
     edit -->|"isolated context"| agent["🤖 edit-agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
 
-    pick["🎯 pick-model"] -.->|"which model?"| skill & command & agent
+    pick["🎯 pick-model"] -.->|"which model?"| skill & agent
 
-    skill & command & agent -->|"added/removed?"| plugin["📦 edit-plugin"]
+    skill & agent -->|"added/removed?"| plugin["📦 edit-plugin"]
 
     classDef router fill:#FFE4B5,stroke:#333,color:#000
     classDef editor fill:#f9f9f9,stroke:#333,color:#000
     classDef support fill:#E0E7FF,stroke:#333,color:#000
     classDef post fill:#C8E6C9,stroke:#333,color:#000
     class edit router
-    class skill,command,agent,claude editor
+    class skill,agent,claude editor
     class search,pick support
     class plugin post
 ```
@@ -382,7 +382,6 @@ flowchart LR
 |-------|-------------|
 | `edit-tool` | 🎯 Decision tree — routes to correct editor |
 | `edit-skill` | ✨ Auto-invoked capabilities (<500 tokens) |
-| `edit-command` | ⌨️ User-triggered `/slash` commands |
 | `edit-agent` | 🤖 Isolated context, complex tasks |
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `edit-plugin` | 📦 Version bumps and plugin metadata sync |
@@ -391,7 +390,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (6 skills)
+## 🔧 Utilities (5 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -400,24 +399,23 @@ flowchart LR
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
-| `edit-risen-prompt` | ✍️ Create/audit RISEN prompts |
 
-## 📥 Conversions & Imports (6 commands)
+## 📥 Conversions & Imports (6 skills)
 
-| Command | Purpose | Model |
-|---------|---------|-------|
-| `/convert-pdf` | 📄 PDF → markdown (Docling) | haiku |
-| `/convert-docx` | 📝 Word → markdown (markitdown) | haiku |
-| `/convert-pptx` | 📊 PowerPoint → markdown (markitdown) | haiku |
-| `/convert-epub` | 📖 EPUB → markdown | haiku |
-| `/import-gdoc` | 📥 Import Google Docs with manifest tracking | haiku |
-| `/background` | 🔄 Run tasks in background | sonnet |
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| `convert-pdf` | 📄 PDF → markdown (Docling) | haiku |
+| `convert-docx` | 📝 Word → markdown (markitdown) | haiku |
+| `convert-pptx` | 📊 PowerPoint → markdown (markitdown) | haiku |
+| `convert-epub` | 📖 EPUB → markdown | haiku |
+| `import-gdoc` | 📥 Import Google Docs with manifest tracking | haiku |
+| `background` | 🔄 Run tasks in background | sonnet |
 
-## 🚀 Deployment (1 command)
+## 🚀 Deployment (1 skill)
 
-| Command | Purpose | Model |
-|---------|---------|-------|
-| `/deploy-surge` | 🌐 Deploy static sites to Surge.sh with inventory tracking | sonnet |
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| `deploy-surge` | 🌐 Deploy static sites to Surge.sh with inventory tracking | sonnet |
 
 ---
 

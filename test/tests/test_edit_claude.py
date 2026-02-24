@@ -8,10 +8,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/edit-claude/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_edit_claude_structured_output(workspace):
+def test_edit_claude_structured_output(workspace, sandbox):
     """edit-claude produces structured CLAUDE.md content when asked to create one."""
     check_cost_cap("edit_claude_smoke")
 
@@ -20,7 +21,9 @@ def test_edit_claude_structured_output(workspace):
         "and follows conventional commits."
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="edit_claude_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="edit_claude_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

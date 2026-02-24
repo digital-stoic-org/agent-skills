@@ -11,11 +11,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/coach-skills/coach/SKILL.md"
-OUTPUT_DIR = Path("/workspace/output")
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_coach_smoke(workspace):
+def test_coach_smoke(workspace, sandbox):
     """Personal coaching session follows 6-step CLEAR protocol end-to-end."""
     test_id = "coach_smoke"
     check_cost_cap(test_id)
@@ -26,7 +26,9 @@ def test_coach_smoke(workspace):
         "I'm avoiding writing the quarterly business plan."
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id=test_id)
+    response = invoke_skill(prompt, SKILL_PATH, test_id=test_id,
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(
@@ -39,8 +41,7 @@ def test_coach_smoke(workspace):
         test_id=test_id,
     )
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / f"{test_id}.yaml").write_text(yaml.dump({
+    (workspace / f"{test_id}.yaml").write_text(yaml.dump({
         "status": "pass" if judge["verdict"] == "YES" else "fail",
         "judge_verdict": judge["verdict"],
         "judge_reason": judge["reason"],

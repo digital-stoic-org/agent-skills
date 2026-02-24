@@ -8,10 +8,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/frame-problem/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_frame_problem_cynefin_classification(workspace):
+def test_frame_problem_cynefin_classification(workspace, sandbox):
     """frame-problem classifies an ambiguous scenario using Cynefin or similar framework."""
     check_cost_cap("frame_problem_smoke")
 
@@ -21,7 +22,9 @@ def test_frame_problem_cynefin_classification(workspace):
         "the metrics look normal. How should I approach this?"
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="frame_problem_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="frame_problem_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

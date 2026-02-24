@@ -8,16 +8,19 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/dump-output/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_dump_output_toggle_confirmation(workspace):
+def test_dump_output_toggle_confirmation(workspace, sandbox):
     """dump-output responds with a confirmation when toggled."""
     check_cost_cap("dump_output_smoke")
 
     prompt = "Enable output dumping for this session."
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="dump_output_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="dump_output_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

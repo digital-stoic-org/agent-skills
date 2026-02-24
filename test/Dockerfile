@@ -16,6 +16,12 @@ RUN python3 -m pip install --break-system-packages \
     pytest-json-report \
     pyyaml
 
+# Run as non-root (node uid=1000) so --dangerously-skip-permissions works in sandbox
+RUN mkdir -p /home/node/.claude/debug && chown -R node:node /home/node/.claude
+RUN mkdir -p /etc/claude-code && echo '{}' > /etc/claude-code/managed-settings.json
 WORKDIR /workspace
+RUN mkdir -p /workspace/sandbox && chown -R node:node /workspace
+
+USER node
 
 CMD ["pytest", "tests/"]

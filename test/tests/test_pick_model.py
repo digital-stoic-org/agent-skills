@@ -8,16 +8,19 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/pick-model/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_pick_model_simple_task_recommends_haiku(workspace):
+def test_pick_model_simple_task_recommends_haiku(workspace, sandbox):
     """Simple formatting task should recommend haiku (cheapest/fastest)."""
     check_cost_cap("pick_model_smoke")
 
     prompt = "Pick the right model for: convert a list of names to title case."
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="pick_model_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="pick_model_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

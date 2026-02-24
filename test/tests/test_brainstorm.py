@@ -8,16 +8,19 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/brainstorm/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_brainstorm_structured_output(workspace):
+def test_brainstorm_structured_output(workspace, sandbox):
     """Brainstorm produces structured output with multiple ideas."""
     check_cost_cap("brainstorm_smoke")
 
     prompt = "Brainstorm ways to improve developer onboarding for a CLI tool."
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="brainstorm_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="brainstorm_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

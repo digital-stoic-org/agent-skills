@@ -8,10 +8,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/tldr/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_tldr_concise_output(workspace):
+def test_tldr_concise_output(workspace, sandbox):
     """tldr produces a concise bulleted recap."""
     check_cost_cap("tldr_smoke")
 
@@ -23,7 +24,9 @@ def test_tldr_concise_output(workspace):
         "Next steps: update the API docs and add refresh token rotation."
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="tldr_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="tldr_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

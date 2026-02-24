@@ -8,10 +8,11 @@ import yaml
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
 SKILL_PATH = "/workspace/skills/troubleshoot/SKILL.md"
+PLUGIN_DIR = "/workspace/dstoic"
 
 
 @pytest.mark.behavioral
-def test_troubleshoot_diagnostic_steps(workspace):
+def test_troubleshoot_diagnostic_steps(workspace, sandbox):
     """troubleshoot produces diagnostic steps for an error."""
     check_cost_cap("troubleshoot_smoke")
 
@@ -20,7 +21,9 @@ def test_troubleshoot_diagnostic_steps(workspace):
         "The app worked fine yesterday. Help me troubleshoot."
     )
 
-    response = invoke_skill(prompt, SKILL_PATH, test_id="troubleshoot_smoke")
+    response = invoke_skill(prompt, SKILL_PATH, test_id="troubleshoot_smoke",
+                             plugin_dir=PLUGIN_DIR, skip_permissions=True,
+                             cwd=str(sandbox))
     result_text = response["result"]
 
     judge = llm_judge(

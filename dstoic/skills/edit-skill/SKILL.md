@@ -29,6 +29,7 @@ See `reference.md` for modification best practices and common patterns.
 2. **Location**: Use `.claude/skills/` for project skills or plugin `skills/` directory
 3. Create directory: `mkdir -p .claude/skills/skill-name`
 4. Generate SKILL.md with frontmatter and instructions
+5. **Order sections by usage frequency** — most common workflow first, validation/reference last. See `reference.md` § Instruction Ordering.
 
 **Frontmatter fields:**
 - `name` - Skill identifier (lowercase-hyphens)
@@ -76,10 +77,13 @@ See `reference.md` for SKILL.md template, model selection matrix, and naming rul
 
 Answer each question with YES or NO:
 
-**Q1: Will this be auto-invoked frequently enough to justify context pollution?**
+**Q1: Is the pollution cost acceptable? (token_count × load_frequency)**
 - Answer: [YOU MUST STATE YES OR NO]
+- <500 tokens × any frequency = acceptable
+- 500-1000 tokens = use progressive disclosure (reference.md)
+- >1000 tokens = needs `context: fork` or sub-agent
 
-**Q2: Can this be kept under 500 tokens (concise capability)?**
+**Q2: Can SKILL.md be kept under 500 tokens (with reference.md for overflow)?**
 - Answer: [YOU MUST STATE YES OR NO]
 
 **Q3: Is this a specific capability rather than a workflow?**
@@ -92,7 +96,7 @@ Answer each question with YES or NO:
 → Explain why it's not appropriate.
 → Recommend one of these alternatives:
   - **Direct request** - For simple one-off tasks (just ask Claude)
-  - **Slash command** - For user-initiated workflows or verbose instructions
+  - **Skill with `context: fork`** - For verbose/research workflows needing isolation
   - **Sub-Agent** - For complex multi-step exploration/research tasks
 → EXIT this skill immediately.
 
@@ -106,10 +110,10 @@ Answer each question with YES or NO:
 If unsure whether this should be a skill vs command vs agent vs script, see the `edit-tool` orchestrator for comprehensive decision matrix.
 
 **Quick checks:**
-- Token budget >500? → Probably not a skill
-- Used <5 times per session? → Probably command
-- Deterministic shell-only? → Probably bash script
-- Complex exploration? → Probably sub-agent
+- Token budget >500? → Use progressive disclosure (SKILL.md + reference.md)
+- Needs isolation? → Skill with `context: fork` or sub-agent
+- Deterministic shell-only? → Bash script
+- Complex exploration? → Sub-agent
 
 ## Best Practices Reference
 

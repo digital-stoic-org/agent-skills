@@ -15,8 +15,11 @@ import yaml
 
 # Defaults — overridden by conftest.py via set_run_dir()
 _RUN_DIR = Path("/workspace/output")
-COST_CAP = 0.50
-COST_WARN_THRESHOLD = 0.45  # warn when approaching cap
+# API billing thresholds (restore if switching from Claude Max to API key):
+# COST_CAP = 0.50
+# COST_WARN_THRESHOLD = 0.45
+COST_CAP = 999.0  # Claude Max plan — no API billing
+COST_WARN_THRESHOLD = 998.0
 
 
 def set_run_dir(run_dir: Path) -> None:
@@ -73,15 +76,23 @@ def check_cost_cap(test_id: str = "") -> None:
         )
 
 
-def invoke_skill(prompt: str, skill_path: str, test_id: str = "", allowed_tools: list[str] | None = None) -> dict:
+def invoke_skill(prompt: str, skill_path: str = "", test_id: str = "",
+                  allowed_tools: list[str] | None = None,
+                  plugin_dir: str | None = None,
+                  skip_permissions: bool = False,
+                  cwd: str | None = None) -> dict:
     """
     Invoke a skill via claude -p and return an assertion dict.
 
     Args:
         prompt: The user prompt to send to the skill
-        skill_path: Path to the SKILL.md file (used as system prompt context)
+        skill_path: Path to the SKILL.md file (used as system prompt context).
+                    Empty string or None to skip (e.g. when using plugin_dir for native skill discovery).
         test_id: Optional test identifier for cost tracking
         allowed_tools: Optional list of tool names to auto-approve (e.g. ["Read", "Edit", "Bash"])
+        plugin_dir: Optional plugin directory for native skill discovery via --plugin-dir
+        skip_permissions: If True, add --dangerously-skip-permissions (safe in sandboxed Docker)
+        cwd: Optional working directory for claude process (e.g. sandbox dir for artifact capture)
 
     Returns:
         dict with keys:
@@ -104,10 +115,16 @@ def invoke_skill(prompt: str, skill_path: str, test_id: str = "", allowed_tools:
         "--output-format", "json",
     ]
 
-    if allowed_tools:
+    if allowed_tools is not None:
         cmd.extend(["--allowedTools", ",".join(allowed_tools)])
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if plugin_dir is not None:
+        cmd.extend(["--plugin-dir", plugin_dir])
+
+    if skip_permissions:
+        cmd.append("--dangerously-skip-permissions")
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=cwd)
 
     if result.returncode != 0:
         return {
