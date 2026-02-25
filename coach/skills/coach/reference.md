@@ -213,7 +213,7 @@ habits:
 
 ---
 
-## Previous Commitment Lookup
+## Previous Commitment Lookup (Personal Domain)
 
 To find the last commitment for Step 3 accountability:
 
@@ -224,3 +224,216 @@ To find the last commitment for Step 3 accountability:
 5. Find `## Session` section → extract `**Commit**:` line
 6. If no `## Session` section found in that file, try the next most recent
 7. If no previous commitment found in any file → treat as first session
+
+---
+
+# Signal Domain
+
+Strategic signal coaching using GROW protocol. Addresses positioning, targeting, and feedback loops for outward-facing social engagement (1:1s + online).
+
+**Protocol backbone**: GROW (Whitmore) — Goal (positioning) → Reality (scorecard) → Options (signal-gap scan) → Way Forward (commit).
+
+---
+
+## Signal Domain Config
+
+```yaml
+domain: signal
+protocol: GROW + Signal Theory + Ibarra network types + AOR measurement
+vault_path: /home/mat/dev/gtd-pcm/
+project_refs:
+  - 03-projects/*/01-*.md  # read-only, for signal-gap scan
+coaching_log: 06-coaching/daily/YYYY-MM-DD.md
+```
+
+### Active Streams (customize per user)
+
+```yaml
+streams:
+  stream-a:
+    label: "Stream A — Primary Business"
+    audience: Target audience description
+    claim: "One-sentence positioning claim for this audience"
+    signals: [case studies, results, decisions]
+
+  stream-b:
+    label: "Stream B — Training / Consulting"
+    audience: Target audience description
+    claim: "One-sentence positioning claim for this audience"
+    signals: [outcomes, publications, demos]
+
+  stream-c:
+    label: "Stream C — Advisory / Fractional"
+    audience: Target audience description
+    claim: "One-sentence positioning claim for this audience"
+    signals: [architecture decisions, transformation stories]
+```
+
+**Rule**: Max 2 streams active per week. If `streams_active` shows 3+ → diffusion warning (I6).
+
+---
+
+## Signal 6-Step Protocol
+
+Run steps 1→2→3→4→5→6 in order. Do not skip, reorder, or defer any step. All 6 steps must appear in a single response. Use numbered headers (Step 1, Step 2, ...).
+
+### Step 1: SIGNAL SCORECARD (BLOCKING — must complete before any other step)
+
+Read today's coaching log: `06-coaching/daily/YYYY-MM-DD.md` (use today's date).
+
+**If file exists with `signal:` block** → extract scorecard values. Greet user with summary.
+
+**If file does not exist or `signal:` block absent** → ask interactively:
+```
+How many 1:1s this week (planned + impromptu)?
+What fraction were tech-only interactions? (0.0–1.0)
+How many online signals sent (posts/comments/DMs)?
+How many follow-ups do you owe?
+How many follow-ups have you sent?
+Which streams got signal this week? (list stream IDs)
+```
+
+**INVARIANT — scorecard gate (I1)**: Do NOT proceed to Step 2 until all 6 numeric fields are captured. If user gives vague answers ("a few", "some"), ask again:
+> "I need a number — how many 1:1s, planned + impromptu?"
+
+### Step 2: POSITIONING CHECK (GROW: Goal)
+
+Read active streams from Signal Domain Config.
+
+Ask:
+1. "Any 1:1s or lunches coming up? Who with?"
+2. For each person: "Which stream? What do you want THEM to walk away knowing about you?"
+3. "Any online signal planned? For which audience?"
+
+**INVARIANT — network rebalance (I7)**: If `tech_ratio > 0.8`:
+> "All recent interactions are tech peers. Where's the business signal? Who's a strategic contact you could reach this week?"
+
+**INVARIANT — stream diffusion (I6)**: If 3+ streams in `streams_active`:
+> "You've signalled on [N] streams this week. Max 2 recommended. Which one can you drop or defer?"
+
+### Step 3: ACCOUNTABILITY (Goldsmith)
+
+Scan `06-coaching/daily/` for the most recent previous file (sorted by date, skip today).
+
+**If previous session exists with a `## Signal Session` section** → extract the `**Commit**:` line.
+Ask:
+> "Last signal session you committed to: [commitment]. What happened?"
+
+Accept: done / partial / didn't. Be neutral — no judgment, just data.
+
+**If no previous signal session** → say:
+> "First signal session — no prior commitment to review. Let's set a strong baseline."
+
+### Step 4: SIGNAL-GAP SCAN (GROW: Options)
+
+Read project files: `03-projects/*/01-*.md` from vault (read-only, graceful degradation if missing).
+
+For each active stream:
+- Scan recent work context for signal-worthy accomplishments
+- Suggest 2-3 signal opportunities: "You did X on [stream]. Worth a [post/DM/talking point for lunch with Y]?"
+- Tag each suggestion: **strategic** (business buyers, partners, decision-makers) or **operational** (tech peers, colleagues)
+
+Bias toward costly signals (grounded in real work) over cheap signals (reshares, generic claims).
+
+**INVARIANT — read-only projects (I4)**: NEVER write to `03-projects/`.
+
+### Step 5: COMMIT (GROW: Way Forward — BLOCKING)
+
+Ask:
+> "What's one specific action — one person to reach or one post to publish — by when exactly?"
+
+Require: **action** + **target** (person or post) + **deadline**. If vague, push once:
+> "Can you make that more specific — who exactly, what signal, by what date?"
+
+Bias toward: follow-up DM, 1:1 prep note, or one online signal. Small, specific, dated.
+
+**INVARIANT — commitment gate (I2)**: Do NOT proceed to Step 6 until a concrete commitment exists. If in single-turn context, infer the smallest reasonable signal action from Step 4 suggestions.
+
+### Step 6: DEBRIEF + PERSIST (MANDATORY — never skip or defer)
+
+This step MUST execute in the same response as Steps 1-5.
+
+Ask:
+> "Any 1:1s since last session? For each: who, which stream, any follow-up action?"
+
+Then produce the session output block:
+
+```markdown
+## Signal Session
+
+**Scorecard**: [1:1s] 1:1s | tech_ratio [ratio] | [online] online | [owed]/[sent] followups | streams: [list]
+**Positioning**: [upcoming targets + stream intent]
+**Accountability**: [last commitment result — done/partial/didn't]
+**Signals suggested**: [2-3 suggestions from gap scan, tagged strategic/operational]
+**Commit**: [action] → [target person/post] by [deadline]
+**Debrief**: [1:1s since last session — who, stream, follow-up]
+```
+
+**Write** to today's coaching file (`06-coaching/daily/YYYY-MM-DD.md`):
+1. Add/update `signal:` frontmatter block (never touch `coaching:` block — I5)
+2. Append `## Signal Session` body below any existing content
+
+Write is atomic (I3) — complete the full block before writing.
+
+---
+
+## Signal Invariants
+
+| # | Invariant | Rule |
+|---|-----------|------|
+| I1 | Scorecard gate | MUST capture all 6 scorecard fields (numbers) before Step 2. No vague values. |
+| I2 | Commitment gate | MUST produce action + target + deadline before Step 6. Infer if user is silent. |
+| I3 | Atomic write | Signal session output written in full or not at all. Never partial `## Signal Session`. |
+| I4 | Read-only projects | NEVER write to `03-projects/`. Only read for signal-gap scan. |
+| I5 | Domain isolation | Signal domain NEVER modifies `coaching:` frontmatter block. Only reads/writes `signal:` block. |
+| I6 | Stream diffusion guard | 3+ streams in `streams_active` → emit diffusion warning before commit step. |
+| I7 | Network rebalance flag | `tech_ratio > 0.8` → flag at positioning check: "where's the business signal?" |
+
+---
+
+## Signal Coaching Log Schema
+
+New `signal:` block in frontmatter (additive — does not conflict with `coaching:` block):
+
+```yaml
+signal:
+  one_on_ones: N              # int, count of 1:1s this week (planned + impromptu)
+  tech_ratio: 0.8             # float, 0.0–1.0, fraction tech-only interactions
+  online_signals: N           # int, posts/comments/DMs sent
+  followups_owed: N           # int, committed follow-ups not yet sent
+  followups_sent: N           # int, completed follow-ups this week
+  streams_active: []          # list of stream IDs that got signal this week
+```
+
+All 6 fields required. Signal session output appended as `## Signal Session` section in file body.
+
+---
+
+## Signal Session Output Format
+
+Append below frontmatter (and any existing `## Session` block) in `06-coaching/daily/YYYY-MM-DD.md`:
+
+```markdown
+## Signal Session
+
+**Scorecard**: [1:1s] 1:1s | tech_ratio [ratio] | [online] online | [owed]/[sent] followups | streams: [list]
+**Positioning**: [upcoming targets + stream intent]
+**Accountability**: [last commitment result — done/partial/didn't]
+**Signals suggested**: [2-3 suggestions from gap scan, tagged strategic/operational]
+**Commit**: [action] → [target person/post] by [deadline]
+**Debrief**: [1:1s since last session — who, stream, follow-up]
+```
+
+---
+
+## Previous Commitment Lookup (Signal Domain)
+
+To find the last signal commitment for Step 3 accountability:
+
+1. List all files in `06-coaching/daily/`
+2. Sort by filename descending (lexicographic = chronological)
+3. Skip today's file
+4. Read the most recent file
+5. Find `## Signal Session` section → extract `**Commit**:` line
+6. If no `## Signal Session` section found in that file, try the next most recent
+7. If no previous signal commitment found in any file → treat as first signal session

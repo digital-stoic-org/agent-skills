@@ -1,7 +1,7 @@
 {
   "name": "coach",
-  "description": "Personal coaching plugin for Claude Code: CLEAR protocol with anxiety-first surfacing and Goldsmith accountability loop.",
-  "version": "0.1.0",
+  "description": "Coaching plugin for Claude Code: personal (CLEAR protocol, anxiety-first) and signal (GROW protocol, strategic positioning) domains.",
+  "version": "0.2.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
