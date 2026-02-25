@@ -8,20 +8,30 @@
 ## code/ (N contexts)
 | Project | Context | Status | Focus | Saved |
 |---|---|---|---|---|
-| agent-skills | session-replay | 🔍 exploring | Retrospect replay storyboards | 2026-02-10 |
 
 ## projects/ (N contexts)
 | Project | Context | Status | Focus | Saved |
 |---|---|---|---|---|
 
+## repos/ (N contexts)
+| Project | Context | Status | Focus | Saved |
+|---|---|---|---|---|
+| agent-skills | merge-command-skills | 🏗️ building | S3+S4 complete, Batch 2 ready | 2026-02-24 |
+
 ## vaults/ (N contexts)
 | Project | Context | Status | Focus | Saved |
 |---|---|---|---|---|
 
+### 📦 Done (per area)
+| Area | Project | Context | Status | Focus | Saved |
+|---|---|---|---|---|---|
+| code | skills | migration-commands | ✅ done | Command migration complete | 2026-02-08 |
+| repos | agent-skills | static-hosting | ✅ done | Surge deployment skill complete | 2026-02-10 |
+
 ---
-📊 Total: {N} contexts ({N} code, {N} projects, {N} vaults)
+📊 Total: {N} active + {N} archived ({N} code, {N} projects, {N} repos, {N} vaults)
 🔍 exploring: {N} | 🏗️ building: {N} | ✅ decided: {N} | ⏸️ parked: {N} | ✅ done: {N}
-⚠️ No status: {N} (consider updating with /save-context)
+⚠️ Stale (>30d): {N} active contexts need triage
 ```
 
 ## Status Mapping
@@ -49,6 +59,7 @@ Regenerate Active Contexts table. Sort by Area (alphabetical), then Saved (desce
 ```
 
 Preserve Parked/Done/Archived sections unchanged. Update summary counts.
+**Exclude** files in `done/` subfolders from Active table — they are archived.
 
 ## Archive Format (`--archive <stream>`)
 

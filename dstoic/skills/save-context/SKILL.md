@@ -44,4 +44,12 @@ Write CONTEXT file using template, then upsert INDEX.md via `scripts/upsert-inde
 
 **Stream naming**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
 
-See `reference.md` for CONTEXT file template, quality self-check, status mapping, and INDEX.md upsert logic.
+### Phase 3b: Auto-archive to `done/`
+
+If status is `done` or `parked` → move file to `done/` subfolder:
+```
+Bash: mkdir -p done && mv CONTEXT-{stream}-llm.md done/
+```
+Report: `"📦 Archived to done/ (status: {status})"`
+
+See `reference.md` for CONTEXT file template, quality self-check, status mapping, done/ archival rules, and INDEX.md upsert logic.

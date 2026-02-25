@@ -64,7 +64,7 @@ If marginal: `"📊 Session appears brief. Save context anyway?"` — wait for c
 | `done`, `completed`, `closed` | ✅ done |
 | missing/empty/`n/a` | ❓ unknown |
 
-## INDEX.md Upsert (Phase 3b)
+## INDEX.md Upsert (Phase 3)
 
 Run `scripts/upsert-index.sh` with 6 positional args:
 
@@ -80,6 +80,20 @@ Bash: ./scripts/upsert-index.sh <area> <project> <context> "<status_emoji>" "<fo
 - **saved**: YYYY-MM-DD
 
 Script handles: find INDEX.md, match/replace or append row, skip if missing. Parked/Done/Archived sections preserved.
+
+## Auto-Archive to `done/` (Phase 3b)
+
+When status is `done` or `parked`:
+1. `mkdir -p done/` in the project folder
+2. `mv CONTEXT-{stream}-llm.md done/`
+3. Confirm: `"📦 Archived to done/ (status: {status})"`
+
+**Exceptions** — do NOT move:
+- `CONTEXT-llm.md` (default stream) — always stays in project root
+- `CONTEXT-baseline-llm.md` — always stays in project root
+- If user explicitly says "keep here" or "don't move"
+
+**Note**: upsert-index.sh runs BEFORE the move (it reads CWD, not file path).
 
 ## Stream Naming
 

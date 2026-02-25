@@ -1,7 +1,7 @@
 ---
 name: list-contexts
-description: List all CONTEXT files across code/, projects/, and vaults/ with status and metadata. Use when viewing context registry, checking saved sessions, or syncing INDEX.md. Triggers include "list contexts", "show contexts", "context registry", "sync index".
-argument-hint: "[--status=exploring|building|parked|done] [--area=code|projects|vaults] [--sync] [--archive <stream>]"
+description: List all CONTEXT files across code/, projects/, repos/, and vaults/ with status and metadata. Use when viewing context registry, checking saved sessions, or syncing INDEX.md. Triggers include "list contexts", "show contexts", "context registry", "sync index".
+argument-hint: "[--status=exploring|building|parked|done] [--area=code|projects|repos|vaults] [--sync] [--archive <stream>]"
 allowed-tools: [Bash, Read, Edit, Glob, AskUserQuestion]
 model: haiku
 context: main
@@ -10,7 +10,7 @@ user-invocable: true
 
 # List Contexts
 
-Scan `CONTEXT-*-llm.md` files across `{repo-root}/code/`, `projects/`, and `vaults/` — display cross-project context registry.
+Scan `CONTEXT-*-llm.md` files across `{repo-root}/code/`, `projects/`, `repos/`, and `vaults/` — display cross-project context registry.
 
 **Speed**: < 3 seconds
 
@@ -25,13 +25,19 @@ Scan `CONTEXT-*-llm.md` files across `{repo-root}/code/`, `projects/`, and `vaul
 ### Phase 1: Resolve Root & Scan (parallel)
 
 ```
-Bash: git rev-parse --show-toplevel && git ls-files --others --ignored --exclude-standard --directory -- code/ projects/ vaults/ | head -50
+Bash: git rev-parse --show-toplevel && git ls-files --others --ignored --exclude-standard --directory -- code/ projects/ repos/ vaults/ | head -50
 Glob: **/code/**/CONTEXT-*-llm.md
 Glob: **/projects/**/CONTEXT-*-llm.md
+Glob: **/repos/**/CONTEXT-*-llm.md
 Glob: **/vaults/**/CONTEXT-*-llm.md
+Glob: **/code/**/done/CONTEXT-*-llm.md
+Glob: **/projects/**/done/CONTEXT-*-llm.md
+Glob: **/repos/**/done/CONTEXT-*-llm.md
+Glob: **/vaults/**/done/CONTEXT-*-llm.md
 ```
 
 Filter out gitignored project folders silently.
+Files in `done/` subfolders are tagged as archived in display.
 
 ### Phase 2: Read Frontmatter (parallel)
 
@@ -43,6 +49,10 @@ Derive from path: Area, Project, Context name.
 Parse `$ARGUMENTS` for filters (`--status`, `--area`), actions (`--sync`, `--archive`).
 Group by area, sort by saved timestamp (most recent first).
 Output emoji-rich markdown table.
+
+**Active vs Archived split**: Files in project root → Active table. Files in `done/` → separate `### 📦 Done` section per area (collapsed, shown after active).
+
+**Staleness**: Active contexts with `saved` >30 days ago → append `⚠️ stale` to status.
 
 ### Phase 4-5: Sync/Archive (if flagged)
 

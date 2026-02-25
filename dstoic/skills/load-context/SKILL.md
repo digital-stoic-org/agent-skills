@@ -26,11 +26,13 @@ Load session state from `CONTEXT-{stream}-llm.md` and optionally expand full res
 ### Phase 1: Detect & Read (parallel)
 
 ```
-Bash: rtk ls -t CONTEXT-*llm.md || true
+Bash: rtk ls -t CONTEXT-*llm.md done/CONTEXT-*llm.md 2>/dev/null || true
 Read: CONTEXT-{stream}-llm.md (if stream known from $ARGUMENTS)
 ```
 
-If multiple streams and no selection → AskUserQuestion with options.
+If not found in project root, check `done/` subfolder. If found there, note `📦 (from done/)` in report.
+
+If multiple streams and no selection → AskUserQuestion with options (mark done/ files with 📦).
 
 **Filename**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
 

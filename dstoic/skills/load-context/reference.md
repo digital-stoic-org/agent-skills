@@ -50,7 +50,8 @@ Stream/Saved/Focus/Goal (always show)
 | Condition | Message |
 |-----------|---------|
 | No context files | "No context files found. Run `/save-context` to create one." |
-| Stream not found | "Stream '{name}' not found. Available: {list}" |
+| Stream not found | "Stream '{name}' not found. Available: {list}" (also check `done/` subfolder) |
+| Stream in done/ | Load normally, prefix report with "📦 Loaded from done/ — this context is archived ({status})" |
 | File read error | "Could not read {filename}. Check file permissions." |
 | Malformed file | Parse what's available, skip unparseable sections |
 
