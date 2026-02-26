@@ -22,7 +22,7 @@ Parse first word of $ARGUMENTS as subcommand:
 | `anchor` | Premature commitment / anchoring bias | Read `protocols/anchor.md` → execute |
 | `verify` | Factual errors / hallucination | Read `protocols/verify.md` → execute |
 | `framing` | Wrong problem / framing errors | Read `protocols/framing.md` → execute |
-| `deep` | High stakes — all error types | Spawn devils-advocate sub-agent via Task |
+| `deep` | High stakes — all 9 patterns in fresh context | Spawn devil-advocate sub-agent via Task |
 
 ## No-Subcommand Fallback
 
@@ -32,16 +32,16 @@ AskUserQuestion: "What are you worried about with the current AI response?"
 - A) Anchoring bias — AI committed too early to one approach
 - B) Factual accuracy — claims may be wrong or hallucinated
 - C) Wrong framing — solving the wrong problem
-- D) High stakes — want full Devil's Advocate review (separate context)
+- D) High stakes — want all 9 patterns in fresh context (Devil's Advocate)
 
 → Dispatch to matching subcommand based on answer.
 
 ## Deep Subcommand
 
 Spawn via Task tool:
-- subagent_type: `devils-advocate`
-- prompt: target description + relevant file paths to read + the following instruction:
-  "Show your reasoning explicitly: for each challenge point, state what you observed in the target, which technique family and named pattern you applied, why it's relevant, and your confidence level."
+- subagent_type: `devil-advocate`
+- prompt: target description + relevant file paths to read
+- The agent runs ALL 9 patterns (anchor: Gatekeeper, Reset, Alt Approaches, Pre-mortem · verify: Proof Demand, CoVe, Fact Check List · framing: Socratic, Steelman) comprehensively in fresh context
 - DO NOT pass parent conversation reasoning — fresh context is the point
 
 ## Thinking Transparency (applies to all subcommands)

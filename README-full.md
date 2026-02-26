@@ -108,7 +108,7 @@ flowchart LR
 
     B -.->|"too confident?"| C
     I -.->|"feels off?"| C
-    C -->|"deep"| DA["🤖 devils-advocate<br/>(fresh context)"]
+    C -->|"deep"| DA["🤖 devil-advocate<br/>(fresh context)"]
 
     classDef generative fill:#E1BEE7,stroke:#7B1FA2,color:#000
     classDef analytical fill:#C8E6C9,stroke:#388E3C,color:#000
@@ -134,13 +134,13 @@ Structured adversarial review — forces reconsideration of current AI output us
 | `anchor` | Premature commitment / anchoring bias | Counterfactual reframe, Steelman opposite |
 | `verify` | Factual errors / hallucination | Claim decomposition, source audit |
 | `framing` | Wrong problem / framing errors | Problem restatement, scope challenge |
-| `deep` | High-stakes — all error types | Spawns `devils-advocate` sub-agent (3-tier: failure scenarios → alignment check → verdict) |
+| `deep` | High-stakes — all 9 patterns in fresh context | Spawns `devil-advocate` sub-agent (all 3 families: anchor → verify → framing → alignment check → verdict) |
 
 **Triggers:** "challenge this", "are you sure", "push back", "prove it", "devil's advocate", "poke holes", "sanity check"
 
-> 🤖 **Agent: `devils-advocate`** (Opus)
-> Fresh context · 3-tier analysis (failure scenarios → alignment check → verdict) · Read/Glob/Grep only
-> Returns: structured Challenge Report with failure scenarios + remedies + steelmanned counter-argument
+> 🤖 **Agent: `devil-advocate`** (Opus)
+> Fresh context · All 9 debiasing patterns (Gatekeeper, Reset, Alt Approaches, Pre-mortem, Proof Demand, CoVe, Fact Check List, Socratic, Steelman) · Read/Glob/Grep only
+> Returns: comprehensive Challenge Report with explicit technique rationale, reasoning traces, and confidence levels
 
 ### `/brainstorm` (skill, opus)
 

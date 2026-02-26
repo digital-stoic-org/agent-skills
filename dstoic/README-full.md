@@ -4,7 +4,7 @@
 
 ## 📦 Version
 
-`0.17.3`
+`0.17.4`
 
 ## 🔗 Quick Links
 
