@@ -3,7 +3,7 @@ name: list-contexts
 description: List all CONTEXT files across code/, projects/, repos/, and vaults/ with status and metadata. Use when viewing context registry, checking saved sessions, or syncing INDEX.md. Triggers include "list contexts", "show contexts", "context registry", "sync index".
 argument-hint: "[--status=exploring|building|parked|done] [--area=code|projects|repos|vaults] [--sync] [--archive <stream>]"
 allowed-tools: [Bash, Read, Edit, Write, Glob, AskUserQuestion]
-model: haiku
+model: sonnet
 context: main
 user-invocable: true
 ---
