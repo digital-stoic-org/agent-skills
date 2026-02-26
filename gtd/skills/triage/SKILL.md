@@ -1,146 +1,104 @@
 ---
 name: triage
-description: Intelligent inbox triage with human-in-the-loop approval. Classifies and routes items to projects.
+description: Inline inbox triage — two-pass // comment flow for async Obsidian review. Triggers: process inbox, triage inbox, route inbox, process triage.
 context: fork
-allowed-tools: [Read, Edit, Glob, Grep, AskUserQuestion]
+allowed-tools: [Read, Edit, Glob, Grep]
 model: sonnet
 user-invocable: true
 ---
 
 # GTD Triage
 
-Process inbox items with intelligent routing. Propose-then-apply with human gate.
+Two-pass inline triage. Claude annotates inbox, human reviews in Obsidian, Claude routes on second pass.
 
-## Instructions
+## Two-Pass Flow
 
-1. Read `/home/mat/dev/gtd-pcm/01-inbox.md`
-2. Extract items from `### New` section
-3. If empty: report "Inbox empty" and stop
-4. For each item, classify and propose routing
-5. Present triage plan to user via AskUserQuestion
-6. Apply approved routing
-7. Remove routed items from `### New`
+### Pass 1: Annotate (no second `//` on lines)
+
+Trigger: `/gtd:triage` when `### New` has lines WITHOUT `//`
+
+1. Read `/home/mat/dev/gtd-pcm/01-inbox.md`, extract `### New` items
+2. If empty: report "📭 Inbox empty" and stop
+3. Scan `03-projects/` for routing targets (Glob + Grep)
+4. Append `// → target #tags` to each unannotated line
+5. Report: "✏️ Annotated X items. Review in Obsidian, append your `//` comments, then run `/gtd:triage` again."
+
+### Pass 2: Route (lines have two `//` blocks)
+
+Trigger: `/gtd:triage` when `### New` has lines with TWO `//` blocks
+
+1. Read inbox, parse lines with two `//` blocks
+2. If none found: report "⏳ No reviewed items yet" and stop
+3. For each reviewed line, interpret the second `//`:
+   - `// ok` → route using Claude's proposal (first `//`)
+   - `// ok → different-target #tags` → route with human override
+   - `// delete` → remove from inbox entirely
+   - `// any other text` → interpret intent (question = flag with ❓, target name = reroute)
+4. Apply routing to destination project files
+5. Remove routed + deleted lines from `### New`
+6. Leave lines with only one `//` (unreviewed) untouched — never strip proposals
+7. Report summary
+
+### Auto-detect Pass
+
+On invocation, detect which pass to run:
+- If ANY line in `### New` has two `//` blocks → **Pass 2**
+- If lines exist without `//` → **Pass 1**
+- If mixed: run Pass 2 first (process reviewed), then Pass 1 on remaining
 
 ## Classification
-
-Analyze each item and determine:
 
 **Type**: task | reference | waiting-for | someday | trash | project-seed
 
 **Destination**: Scan `03-projects/` for best match
-- Use Glob to find project files: `03-projects/**/*.md`
-- Use Grep to search project content for context
-- Match by keywords, domain, or create new project
+- Glob: `03-projects/**/*.md`
+- Grep: search project content for keyword match
+- Use folder number prefix as shorthand (e.g., `38-mind-body`)
 
 **Tags**: ONLY allowed GTD tags
 - Priority: `#next` `#frog` `#waiting` `#recurring`
-- Context: `#phone` `#field` `#admin` `#read` `#listen` `#watch` `#shop`
+- Context: `#phone` `#field` `#admin` `#read-quick` `#read-deep` `#read-book` `#listen` `#watch` `#shop`
 - Energy: `#deep` `#braindead`
 - People: `#agenda/Name` `#waiting/Name`
 - No tag = backlog
 
-**Dates**: Use `[field:: YYYY-MM-DD]` format
-- `[due:: YYYY-MM-DD]` for hard deadlines
-- `[scheduled:: YYYY-MM-DD]` for tickler dates
-- Never use emoji date shorthand
+**Unclear items**: Mark with `// ❓` + reason instead of routing proposal
+
+**Dates**: `[due:: YYYY-MM-DD]` or `[scheduled:: YYYY-MM-DD]` — never emoji shorthand
 
 ## Routing Rules
 
 | Type | Destination | Section |
 |------|-------------|---------|
-| task | project `01-index.md` | `## Tasks` (under appropriate priority) |
+| task | project `01-{name}.md` | `## Tasks` |
 | reference | project file | `## Reference` |
-| waiting-for | project `01-index.md` | `## Waiting For` with `#waiting/Name` |
+| waiting-for | project `01-{name}.md` | `## Waiting For` with `#waiting/Name` |
 | someday | 50-59 project | `## Tasks` |
 | trash | (delete) | Remove from inbox |
-| project-seed | (flag) | Needs new project file |
+| project-seed | (flag ❓) | Needs new project — ask human |
 
-**Priority placement** (for tasks):
-- No tag → Backlog subsection
-- `#next` → Next Actions subsection
-- `#frog` → Today subsection
+## Scope
 
-## Approval Flow
-
-Use AskUserQuestion to present routing plan:
-
-```yaml
-question: "Review triage plan for X items. Approve to apply routing?"
-header: "Triage Plan"
-options:
-  - label: "Approve and route all items"
-    description: "Apply routing plan to all items"
-  - label: "Skip this session"
-    description: "Leave items in inbox for later"
-```
-
-Display plan before asking:
-```
-Triage Plan:
-1. "buy milk" → 20-home/01-index.md ## Tasks #shop
-2. "article link" → 01-project/01-index.md ## Reference #read
-3. "call John" → 15-work/01-index.md ## Waiting For #waiting/John
-```
-
-## Implementation
-
-**Step 1**: Read inbox and extract items
-```
-Read: /home/mat/dev/gtd-pcm/01-inbox.md
-Parse: Lines after `### New` until next `###` header
-```
-
-**Step 2**: Scan projects for routing
-```
-Glob: 03-projects/**/*.md
-Grep: Search for keywords from inbox items
-```
-
-**Step 3**: Build routing table
-For each item:
-- Classify type
-- Find best destination project
-- Assign tags (only allowed tags)
-- Add dates if applicable
-
-**Step 4**: Present plan and get approval
-
-**Step 5**: Apply routing
-- Edit destination files (append to correct section)
-- Edit inbox (remove routed items from ### New)
-
-**Step 6**: Report summary
-```
-✅ Triaged X items:
-- Y tasks routed
-- Z references filed
-- N items remain in inbox
-```
+- Only process `### New` section
+- Other sections (Prio 1, Prio 2, Misc, Praxis, LQ) are left untouched
+- Completed items (`- [x]`) are skipped
 
 ## Error Handling
 
-**Empty inbox**: Report "Inbox empty" and stop
-
-**No matching project**: Ask user or suggest creating new project
-
-**Invalid tags**: Never add tags not in allowed list
-
-**Edit conflicts**: Report error and ask user to retry
+- **Empty inbox**: "📭 Inbox empty"
+- **No matching project**: Use `// ❓ no project match` — don't guess
+- **Edit conflicts**: Report and ask user to retry
 
 ## Constraints
 
-- Tasks ONLY in `01-index.md` files (never in reference docs)
-- Use `[field:: value]` date format (not emoji)
-- Preserve existing file structure
+- Tasks ONLY in `01-{name}.md` files (never in reference docs)
+- `[field:: value]` date format
+- Preserve existing file structure and markdown validity
 - No trailing whitespace
-- Maintain markdown validity
+- NEVER use AskUserQuestion — the `//` flow IS the human gate
 
 ## Triggers
 
-**Direct invocation**:
-- `/gtd:triage`
+**Direct**: `/gtd:triage`
 
-**Natural language** (auto-invoked):
-- "process inbox"
-- "triage inbox items"
-- "route inbox to projects"
+**Natural language**: "process inbox", "triage inbox", "route inbox", "process triage"

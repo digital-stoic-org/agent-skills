@@ -37,7 +37,7 @@ flowchart LR
 
 ## 📦 Version
 
-`0.2.0`
+`0.2.1`
 
 ## 🎯 Skills
 
@@ -51,18 +51,16 @@ Fast append to inbox `### New` section. No priority, no routing — just capture
 
 ### triage
 
-Intelligent inbox processing with human-in-the-loop approval.
+Two-pass inline triage with `//` comment flow for async Obsidian review.
 
 - **Model**: sonnet (reasoning-capable)
-- **Tools**: Read, Edit, Glob, Grep, AskUserQuestion
+- **Tools**: Read, Edit, Glob, Grep
 - **Invocation**: `/gtd:triage`
 
 Workflow:
-1. Read items from `### New`
-2. Classify (task/reference/waiting/someday/trash/project-seed)
-3. Propose routing table
-4. User approves
-5. Move to projects
+1. **Pass 1**: Annotate each `### New` item with `// → target #tags`
+2. Human reviews in Obsidian, appends `// ok` / `// delete` / `// override`
+3. **Pass 2**: Route all double-`//` lines, leave single-`//` untouched
 
 ### focus
 
