@@ -281,7 +281,17 @@ Run steps 1→2→3→4→5→6 in order. Do not skip, reorder, or defer any ste
 
 Read today's coaching log: `06-coaching/daily/YYYY-MM-DD.md` (use today's date).
 
-**If file exists with `signal:` block** → extract scorecard values. Greet user with summary.
+**If file exists with `signal:` block** → extract scorecard values. Display all 6 fields:
+
+```
+📊 Signal Scorecard
+  1:1s this week:    [one_on_ones]
+  Tech ratio:        [tech_ratio]
+  Online signals:    [online_signals]
+  Follow-ups owed:   [followups_owed]
+  Follow-ups sent:   [followups_sent]
+  Streams active:    [streams_active list]
+```
 
 **If file does not exist or `signal:` block absent** → ask interactively:
 ```
@@ -295,6 +305,8 @@ Which streams got signal this week? (list stream IDs)
 
 **INVARIANT — scorecard gate (I1)**: Do NOT proceed to Step 2 until all 6 numeric fields are captured. If user gives vague answers ("a few", "some"), ask again:
 > "I need a number — how many 1:1s, planned + impromptu?"
+
+**After capturing all 6 fields (from file or interactively)**, ALWAYS display the full scorecard table above before proceeding. All 6 values must be visible in output — never skip or elide any field.
 
 ### Step 2: POSITIONING CHECK (GROW: Goal)
 

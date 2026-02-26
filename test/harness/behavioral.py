@@ -193,8 +193,10 @@ def llm_judge(question: str, context: str, test_id: str = "") -> dict:
             raw_response (str): Full judge response
     """
     prompt = (
-        f"Evaluate the following and answer with YES or NO on the first line, "
-        f"followed by a brief reason.\n\n"
+        f"You are an evaluation judge. Answer the question about the content below.\n\n"
+        f"CRITICAL: Your response MUST start with exactly YES or NO as the very first word "
+        f"on the first line. No formatting, no markdown, no asterisks before it. "
+        f"Then explain your reasoning on subsequent lines.\n\n"
         f"Question: {question}\n\n"
         f"Content to evaluate:\n{context}"
     )

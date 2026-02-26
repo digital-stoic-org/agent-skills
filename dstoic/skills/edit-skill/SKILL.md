@@ -14,10 +14,12 @@ description: Creates and modifies Claude Code skills following Anthropic best pr
 
 1. Locate skill in plugin `skills/` directory (e.g., `dstoic/skills/{name}/`) or `.claude/skills/` and read SKILL.md
 2. Analyze: frontmatter, instructions
-3. Determine type: Add Feature, Fix/Improve, Refactor, or Restrict/Expand Scope
-4. Make surgical edits using Edit tool
-5. Update description if adding triggers
-6. Validate: YAML valid, triggers clear, instructions actionable
+3. **Enumerate functional outputs**: List every distinct output, behavior, and user-facing capability the skill produces. These are the **preservation contract** — all must be retained unless user explicitly approves removal.
+4. Determine type: Add Feature, Fix/Improve, Refactor, or Restrict/Expand Scope
+5. Make surgical edits using Edit tool
+6. **Regression check**: Verify each functional output from step 3 is still present and working. If any are missing, restore before proceeding.
+7. Update description if adding triggers
+8. Validate: YAML valid, triggers clear, instructions actionable
 
 See `reference.md` for modification best practices and common patterns.
 
@@ -63,10 +65,11 @@ See `reference.md` for SKILL.md template, model selection matrix, and naming rul
 
 ## Key Principles
 
+- **Preserve function**: MODIFY must not remove functional outputs unless explicitly requested. Token optimization must NEVER reduce capabilities.
 - **Concise**: <500 tokens ideal, avoid >1000 tokens
 - **Specific**: Clear triggers in description, not generic
 - **Focused**: One capability per skill
-- **Token-efficient**: Tables, bullets, code blocks over prose
+- **Token-efficient**: Tables, bullets, code blocks over prose — but never at the cost of functional completeness
 - **Context-aware**: Main context (default) for quick tasks. Fork context for research/exploration that shouldn't pollute main conversation.
 
 ## MANDATORY Validation (CREATE only)
