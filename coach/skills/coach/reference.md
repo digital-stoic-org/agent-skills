@@ -1,12 +1,12 @@
 # Coach Reference
 
-## 6-Step Protocol
+## Personal 6-Step Protocol
 
 Run steps 1→2→3→4→5→6 in order. Do not skip, reorder, or defer any step. All 6 steps must appear in a single response. Use numbered headers (Step 1, Step 2, ...) not CLEAR acronym letters.
 
 ### Step 1: PULSE CHECK (BLOCKING — must complete before any other step)
 
-Read today's coaching log: `06-coaching/daily/YYYY-MM-DD.md` (use today's date).
+Read today's coaching log from config path `personal.coaching_log` (resolve YYYY-MM-DD to today's date).
 
 **If file exists** → extract `coaching.energy`, `coaching.mood`, `coaching.stress` from frontmatter. Greet user with values.
 
@@ -29,7 +29,7 @@ Then create the file with YAML frontmatter (see Coaching Log Schema).
 Wait for response, then continue to Step 2.
 
 Also read today's habits for context (read-only, graceful degradation if missing):
-- Path: `05-tracker/YYYY/YYYY-MM/YYYY-MM-DD.md`
+- Path: config `personal.habits_path` (resolve date patterns)
 
 ### Step 2: ANXIETY SURFACING
 
@@ -41,23 +41,20 @@ Listen. Do not rush to reframe yet.
 
 ### Step 3: ACCOUNTABILITY (Goldsmith)
 
-Scan `06-coaching/daily/` for the most recent previous file (sorted by date, skip today).
+Scan coaching log directory (parent of `personal.coaching_log`) for the most recent previous file (sorted by date, skip today).
 
 **If previous session exists with a `## Session` section** → extract the `**Commit**:` line.
 Ask:
 > "Last time you committed to: [commitment]. What happened?"
 
-Accept: done / partial / didn't. Link result to OY7 KRs (read from `02-views/00-okrs.md`, OY7 section only). Be neutral — no judgment, just data.
+Accept: done / partial / didn't. Link result to relevant OKR key results (read from config `personal.okr_file`, section matching `personal.okr_section`). Be neutral — no judgment, just data.
 
 **If no previous session** → say:
 > "First session — no prior commitment to review. Let's set a good baseline."
 
 ### Step 4: EXPLORE & REFRAME (CLEAR)
 
-Read health project status (read-only, graceful degradation if any missing):
-- `03-projects/37-health/01-health.md`
-- `03-projects/38-mind-body/01-mind-body.md` (try common filenames)
-- `03-projects/39-mental-health/01-mental-health.md` (try common filenames)
+Read project files from config `personal.project_refs[]` (read-only, graceful degradation if any missing).
 
 Explore the avoidance pattern named in Step 2:
 - "What specifically makes [task] feel hard to start?"
@@ -95,7 +92,7 @@ If in a single-turn context (user provided all inputs upfront), infer the shift 
 **Shift**: [inferred or stated shift from this session]
 ```
 
-Then **write** this block to today's coaching file (`06-coaching/daily/YYYY-MM-DD.md`), appended below frontmatter. Write is atomic — complete the full block before writing.
+Then **write** this block to today's coaching file (config `personal.coaching_log`), appended below frontmatter. Write is atomic — complete the full block before writing.
 
 ---
 
@@ -107,31 +104,16 @@ Hard rules enforced throughout every session. Violations are protocol failures.
 |---|-----------|------|
 | I1 | Pulse gate | MUST capture energy + mood + stress (1-10) before Step 2. No vague values accepted. |
 | I2 | Commitment gate | MUST produce a specific action + deadline before Step 6. Infer from reframe if user is silent. |
-| I3 | Atomic write | Session output block written in full or not at all. Never write partial `## Session` sections. |
-| I4 | Read-only tracker | NEVER write to `05-tracker/`. Only read. All writes go to `06-coaching/daily/` only. |
+| I3 | Atomic write | Session output written in full or not at all. Never write partial `## Session` sections. |
+| I4 | Read-only tracker | NEVER write to habits or project paths. Only read. All writes go to coaching log only. |
 | I5 | Stress flag | stress > 7 → surface emotional regulation question before Step 2. Required, not optional. |
-
----
-
-## Personal Domain Config
-
-```yaml
-domain: personal
-okr_refs:
-  - OY7  # Personal resilience objective in 02-views/00-okrs.md
-project_refs:
-  - 03-projects/37-health/01-health.md
-  - 03-projects/38-mind-body/  # scan for main project file
-  - 03-projects/39-mental-health/  # scan for main project file
-habit_path: 05-tracker/YYYY/YYYY-MM/YYYY-MM-DD.md
-protocol: CLEAR + anxiety-first + Goldsmith accountability
-```
+| I6 | Domain isolation | Personal domain NEVER modifies `signal:` frontmatter block. Only reads/writes `coaching:` block. |
 
 ---
 
 ## Coaching Log Schema
 
-File: `06-coaching/daily/YYYY-MM-DD.md`
+File: config `personal.coaching_log`
 
 ```yaml
 ---
@@ -152,7 +134,7 @@ All 6 fields required. Session output appended as `## Session` section in file b
 
 ## Session Output Format
 
-Append below frontmatter in `06-coaching/daily/YYYY-MM-DD.md`:
+Append below frontmatter in coaching log file:
 
 ```markdown
 ## Session
@@ -168,46 +150,27 @@ Append below frontmatter in `06-coaching/daily/YYYY-MM-DD.md`:
 
 ## Vault Reads
 
-All vault reads are **read-only** and use **graceful degradation** — a missing file never blocks the session.
+All vault reads are **read-only** and use **graceful degradation** — a missing file never blocks the session. Paths come from `coach-config.yaml`.
 
-### Habits (05-tracker)
+### Habits
 
-**Path**: `05-tracker/YYYY/YYYY-MM/YYYY-MM-DD.md`
-
-Example for 2026-02-23: `05-tracker/2026/2026-02/2026-02-23.md`
+**Path**: config `personal.habits_path` (resolve YYYY/MM/DD patterns to today's date)
 
 **Format**: YAML frontmatter with `habits:` list (checked habit names for the day).
 
-```yaml
----
-date: 2026-02-23
-habits:
-  - sleep-11pm
-  - cold-shower
----
-```
-
 **Graceful degradation**: If file missing or empty → skip habit context, continue to Step 2. Do not mention the missing file to user.
 
-### OKRs (02-views)
+### OKRs
 
-**Path**: `02-views/00-okrs.md`
+**Path**: config `personal.okr_file`
 
-**Extract**: Find `## OY7 - Improve personal resilience` section. Read through its `### Key Results` subsections (OY7KR1, OY7KR2, OY7KR3). Stop at next `## ` heading.
+**Extract**: Find the section matching `personal.okr_section` (or first `## OY*` heading if empty). Read through its `### Key Results` subsections. Stop at next `## ` heading.
 
-**OY7 KRs** (confirmed structure):
-- OY7KR1: Maintain good health (sleep, fasting, eye care)
-- OY7KR2: Train mind-body (strength, walks, somatics, martial arts)
-- OY7KR3: Maintain mental health (cold showers, stoic practice, inbox zero)
+**Graceful degradation**: If file missing or section not found → skip OKR linkage in Step 3, continue without it.
 
-**Graceful degradation**: If file missing or OY7 section not found → skip OKR linkage in Step 3, continue without it.
+### Projects
 
-### Health Projects (03-projects)
-
-**Confirmed paths** (verified against vault):
-- `03-projects/37-health/01-health.md` — Physical health habits
-- `03-projects/38-mind-body/01-mind-body.md` — Strength, somatics, martial arts
-- `03-projects/39-mental-health/01-mental-health.md` — Stoic practice, cognitive load
+**Paths**: config `personal.project_refs[]`
 
 **Graceful degradation**: If any project file missing → skip that project, use the others. If all missing → explore in Step 4 without project context.
 
@@ -217,7 +180,7 @@ habits:
 
 To find the last commitment for Step 3 accountability:
 
-1. List all files in `06-coaching/daily/`
+1. List all files in the coaching log directory (parent of `personal.coaching_log`)
 2. Sort by filename descending (filenames are `YYYY-MM-DD.md` — lexicographic = chronological)
 3. Skip today's file
 4. Read the most recent file
@@ -237,49 +200,26 @@ Strategic signal coaching using GROW protocol. Addresses positioning, targeting,
 
 ## Signal Domain Config
 
-```yaml
-domain: signal
-protocol: GROW + Signal Theory + Ibarra network types + AOR measurement
-vault_path: /home/mat/dev/gtd-pcm/
-project_refs:
-  - 03-projects/*/01-*.md  # read-only, for signal-gap scan
-coaching_log: 06-coaching/daily/YYYY-MM-DD.md
-```
+All signal paths and streams are defined in `coach-config.yaml` under the `signal:` key.
 
-### Active Streams (customize per user)
+- `signal.coaching_log` — daily coaching log (shared file with personal domain, isolated frontmatter blocks)
+- `signal.project_refs` — glob pattern for project files (read-only, for signal-gap scan)
+- `signal.streams` — active stream definitions (label, audience, claim, signals)
+- `signal.max_active_streams` — threshold for diffusion warning (default 2)
 
-```yaml
-streams:
-  stream-a:
-    label: "Stream A — Primary Business"
-    audience: Target audience description
-    claim: "One-sentence positioning claim for this audience"
-    signals: [case studies, results, decisions]
-
-  stream-b:
-    label: "Stream B — Training / Consulting"
-    audience: Target audience description
-    claim: "One-sentence positioning claim for this audience"
-    signals: [outcomes, publications, demos]
-
-  stream-c:
-    label: "Stream C — Advisory / Fractional"
-    audience: Target audience description
-    claim: "One-sentence positioning claim for this audience"
-    signals: [architecture decisions, transformation stories]
-```
-
-**Rule**: Max 2 streams active per week. If `streams_active` shows 3+ → diffusion warning (I6).
+**Rule**: If `streams_active` count exceeds `signal.max_active_streams` → diffusion warning (I6).
 
 ---
 
 ## Signal 6-Step Protocol
 
+Before starting: read `coach-config.yaml` and resolve all `signal.*` paths. Replace YYYY-MM-DD with today's date. Load `signal.streams` into memory — you'll reference stream IDs, labels, audiences, and claims throughout.
+
 Run steps 1→2→3→4→5→6 in order. Do not skip, reorder, or defer any step. All 6 steps must appear in a single response. Use numbered headers (Step 1, Step 2, ...).
 
 ### Step 1: SIGNAL SCORECARD (BLOCKING — must complete before any other step)
 
-Read today's coaching log: `06-coaching/daily/YYYY-MM-DD.md` (use today's date).
+Read today's coaching log from config path `signal.coaching_log` (resolve YYYY-MM-DD to today's date).
 
 **If file exists with `signal:` block** → extract scorecard values. Display all 6 fields:
 
@@ -310,7 +250,7 @@ Which streams got signal this week? (list stream IDs)
 
 ### Step 2: POSITIONING CHECK (GROW: Goal)
 
-Read active streams from Signal Domain Config.
+Read active streams from config `signal.streams`.
 
 Ask:
 1. "Any 1:1s or lunches coming up? Who with?"
@@ -325,7 +265,7 @@ Ask:
 
 ### Step 3: ACCOUNTABILITY (Goldsmith)
 
-Scan `06-coaching/daily/` for the most recent previous file (sorted by date, skip today).
+Scan coaching log directory (parent of `signal.coaching_log`) for the most recent previous file (sorted by date, skip today).
 
 **If previous session exists with a `## Signal Session` section** → extract the `**Commit**:` line.
 Ask:
@@ -338,7 +278,7 @@ Accept: done / partial / didn't. Be neutral — no judgment, just data.
 
 ### Step 4: SIGNAL-GAP SCAN (GROW: Options)
 
-Read project files: `03-projects/*/01-*.md` from vault (read-only, graceful degradation if missing).
+Read project files matching config `signal.project_refs` glob from vault (read-only, graceful degradation if missing).
 
 For each active stream:
 - Scan recent work context for signal-worthy accomplishments
@@ -347,7 +287,7 @@ For each active stream:
 
 Bias toward costly signals (grounded in real work) over cheap signals (reshares, generic claims).
 
-**INVARIANT — read-only projects (I4)**: NEVER write to `03-projects/`.
+**INVARIANT — read-only projects (I4)**: NEVER write to project files.
 
 ### Step 5: COMMIT (GROW: Way Forward — BLOCKING)
 
@@ -381,7 +321,7 @@ Then produce the session output block:
 **Debrief**: [1:1s since last session — who, stream, follow-up]
 ```
 
-**Write** to today's coaching file (`06-coaching/daily/YYYY-MM-DD.md`):
+**Write** to today's coaching file (config `signal.coaching_log`):
 1. Add/update `signal:` frontmatter block (never touch `coaching:` block — I5)
 2. Append `## Signal Session` body below any existing content
 
@@ -396,7 +336,7 @@ Write is atomic (I3) — complete the full block before writing.
 | I1 | Scorecard gate | MUST capture all 6 scorecard fields (numbers) before Step 2. No vague values. |
 | I2 | Commitment gate | MUST produce action + target + deadline before Step 6. Infer if user is silent. |
 | I3 | Atomic write | Signal session output written in full or not at all. Never partial `## Signal Session`. |
-| I4 | Read-only projects | NEVER write to `03-projects/`. Only read for signal-gap scan. |
+| I4 | Read-only projects | NEVER write to project files. Only read for signal-gap scan. |
 | I5 | Domain isolation | Signal domain NEVER modifies `coaching:` frontmatter block. Only reads/writes `signal:` block. |
 | I6 | Stream diffusion guard | 3+ streams in `streams_active` → emit diffusion warning before commit step. |
 | I7 | Network rebalance flag | `tech_ratio > 0.8` → flag at positioning check: "where's the business signal?" |
@@ -423,7 +363,7 @@ All 6 fields required. Signal session output appended as `## Signal Session` sec
 
 ## Signal Session Output Format
 
-Append below frontmatter (and any existing `## Session` block) in `06-coaching/daily/YYYY-MM-DD.md`:
+Append below frontmatter (and any existing `## Session` block) in today's coaching log:
 
 ```markdown
 ## Signal Session
@@ -442,7 +382,7 @@ Append below frontmatter (and any existing `## Session` block) in `06-coaching/d
 
 To find the last signal commitment for Step 3 accountability:
 
-1. List all files in `06-coaching/daily/`
+1. List all files in the coaching log directory (parent of `signal.coaching_log`)
 2. Sort by filename descending (lexicographic = chronological)
 3. Skip today's file
 4. Read the most recent file

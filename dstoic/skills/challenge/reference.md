@@ -36,13 +36,24 @@ All subcommand outputs MUST follow this structure:
 **Target**: [what was challenged]
 **Error type**: [anchoring | factual | framing | high-stakes]
 
+### Technique Selection
+
+- **Family**: [anchor (premature commitment) | verify (factual errors) | framing (wrong problem)]
+- **Patterns applied**: [named patterns, e.g., Gatekeeper, Pre-mortem, CoVe]
+- **Why these patterns**: [what about the target triggered this selection — specific observations]
+- **Patterns considered but skipped**: [and why, or "none — full protocol applied"]
+
 ### Findings
 
-[Pattern-specific structured output — see protocol files]
+[Pattern-specific structured output — see protocol files.
+For each finding include: Observation → Technique (family + pattern) → Reasoning → Confidence]
 
 ### Verdict
 
-[Decision holds / Needs revision / Needs rejection]
+- **Assessment**: [Decision holds / Needs revision / Needs rejection]
+- **Confidence**: [High / Medium / Low]
+- **What would flip this**: [specific evidence or condition that would change the verdict]
+- **Strongest counter to this verdict**: [steelman the opposite conclusion]
 
 ### Recommended Action
 

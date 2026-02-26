@@ -40,8 +40,18 @@ AskUserQuestion: "What are you worried about with the current AI response?"
 
 Spawn via Task tool:
 - subagent_type: `devils-advocate`
-- prompt: target description + relevant file paths to read
+- prompt: target description + relevant file paths to read + the following instruction:
+  "Show your reasoning explicitly: for each challenge point, state what you observed in the target, which technique family and named pattern you applied, why it's relevant, and your confidence level."
 - DO NOT pass parent conversation reasoning — fresh context is the point
+
+## Thinking Transparency (applies to all subcommands)
+
+For every finding, make reasoning explicit:
+
+1. **Observation**: What specifically in the target triggered this finding
+2. **Technique family**: Which challenge family (anchor/verify/framing) and named pattern (e.g., Gatekeeper, CoVe, Steelman) — cite mechanism from `reference.md` pattern catalog
+3. **Reasoning**: Why this observation matters — what cognitive bias or error it reveals
+4. **Confidence**: How certain is this finding (High/Medium/Low) and what evidence supports that rating
 
 ## Output
 

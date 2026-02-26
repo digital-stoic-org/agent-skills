@@ -67,28 +67,50 @@ Record: failure scenarios, early warning signals, mitigation actions.
 **Target**: [decision or approach challenged]
 **Error type**: anchoring / premature commitment
 
+### Technique Selection
+
+- **Family**: Anchor — premature commitment / anchoring bias
+- **Patterns applied**: Gatekeeper, Reset, Alternative Approaches, Pre-mortem
+- **Why these patterns**: [what in the target suggests premature commitment — e.g., single option considered, no alternatives listed, early convergence]
+- **Patterns considered but skipped**: none — full anchor protocol applied
+
 ### Findings
 
-**Gatekeeper**
+**Gatekeeper** *(anchor family — blocks premature acceptance by demanding pass/fail criteria)*
+- Observation: [what specifically triggered this — e.g., "decision accepted without listing success criteria"]
 - Unverified criteria: [list]
 - Conditions for failure: [list]
+- Reasoning: [why these gaps matter]
+- Confidence: [High/Med/Low]
 
-**Reset**
+**Reset** *(anchor family — reveals anchoring by comparing fresh first-principles answer)*
+- Observation: [what about the current approach suggested anchoring]
 - Fresh first-principles answer: [brief]
 - Divergence from current approach: [list]
+- Reasoning: [what the divergences reveal about the original thinking]
+- Confidence: [High/Med/Low]
 
-**Alternative Approaches**
+**Alternative Approaches** *(anchor family — tests whether alternatives were genuinely evaluated)*
+- Observation: [were alternatives mentioned? dismissed too quickly?]
 - Alt A: [description] — Reason not chosen: [or "not considered"]
 - Alt B: [description] — Reason not chosen: [or "not considered"]
+- Reasoning: [what missing consideration reveals]
+- Confidence: [High/Med/Low]
 
-**Pre-mortem**
+**Pre-mortem** *(anchor family — surfaces failure modes before commitment)*
+- Observation: [what risk signals exist in the target]
 - Failure 1 (likely): [scenario] → Mitigation: [action]
 - Failure 2 (indirect): [scenario] → Mitigation: [action]
 - Failure 3 (black swan): [scenario] → Mitigation: [action]
+- Reasoning: [why these failure modes are plausible given the target]
+- Confidence: [High/Med/Low]
 
 ### Verdict
 
-[Decision holds / Needs revision / Needs rejection]
+- **Assessment**: [Decision holds / Needs revision / Needs rejection]
+- **Confidence**: [High / Medium / Low]
+- **What would flip this**: [specific evidence that would change the verdict]
+- **Strongest counter to this verdict**: [steelman the opposite conclusion]
 
 ### Recommended Action
 

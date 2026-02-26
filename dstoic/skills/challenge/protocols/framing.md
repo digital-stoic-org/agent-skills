@@ -69,24 +69,40 @@ Record: steelmanned counter, stress test results, framing verdict.
 **Target**: [problem statement or framing challenged]
 **Error type**: framing / wrong problem
 
+### Technique Selection
+
+- **Family**: Framing — wrong problem / framing errors
+- **Patterns applied**: Socratic, Steelman
+- **Why these patterns**: [what about the target suggests a framing issue — e.g., solution seems correct but goal unclear, key terms ambiguous, assumptions unstated]
+- **Patterns considered but skipped**: none — full framing protocol applied
+
 ### Findings
 
-**Socratic Questioning**
+**Socratic Questioning** *(framing family — 6-stage questioning surfaces hidden assumptions)*
+- Observation: [what specifically triggered framing concern]
 - Definition surfaced: [what key terms actually mean]
 - Hidden contradictions: [list]
 - Real goal (post-maieutics): [stripped-down actual objective]
 - Broader pattern: [local issue or systemic symptom]
 - Counterfactual: [what should actually change]
+- Reasoning: [what the Socratic stages revealed about the framing's validity]
+- Confidence: [High/Med/Low]
 
-**Steelman Counter-Argument**
+**Steelman Counter-Argument** *(framing family — strongest possible counter to current framing)*
+- Observation: [what weakness in the framing the steelman exploits]
 - Current framing: [X is the problem]
 - Steelman: [strongest case that X is NOT the problem]
 - Stress test: [does framing survive?]
+- Reasoning: [why the steelman succeeds or fails against the framing]
 - Framing verdict: [Framing holds / Framing needs revision / Wrong problem entirely]
+- Confidence: [High/Med/Low]
 
 ### Verdict
 
-[Framing holds / Needs revision / Wrong problem — reframe before proceeding]
+- **Assessment**: [Framing holds / Needs revision / Wrong problem — reframe before proceeding]
+- **Confidence**: [High / Medium / Low]
+- **What would flip this**: [specific evidence that would change the verdict]
+- **Strongest counter to this verdict**: [steelman the opposite conclusion]
 
 ### Recommended Action
 

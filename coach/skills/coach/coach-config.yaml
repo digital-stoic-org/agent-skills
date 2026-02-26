@@ -1,0 +1,33 @@
+# Coach Skill Configuration
+# Copy this file and customize paths/streams for your vault structure.
+# All paths are relative to vault_path unless absolute.
+
+vault_path: ~/vault  # Root of your GTD/PKM vault
+
+# --- Personal Domain ---
+personal:
+  coaching_log: 06-coaching/daily/YYYY-MM-DD.md
+  habits_path: 05-tracker/YYYY/YYYY-MM/YYYY-MM-DD.md  # read-only
+  okr_file: 02-views/00-okrs.md
+  okr_section: ""  # heading text to match (e.g., "OY7 - Improve personal resilience"), empty = first ## OY* heading
+  project_refs:  # read-only, for explore/reframe context
+    - 03-projects/37-health/01-health.md
+    - 03-projects/38-mind-body/01-mind-body.md
+    - 03-projects/39-mental-health/01-mental-health.md
+
+# --- Signal Domain ---
+signal:
+  coaching_log: 06-coaching/daily/YYYY-MM-DD.md  # shared file, isolated frontmatter blocks
+  project_refs: "03-projects/*/01-*.md"  # read-only glob, for signal-gap scan
+  streams:
+    stream-a:
+      label: "Stream A"
+      audience: Your primary audience
+      claim: "One-sentence positioning claim"
+      signals: [results, decisions, case studies]
+    stream-b:
+      label: "Stream B"
+      audience: Your secondary audience
+      claim: "One-sentence positioning claim"
+      signals: [outcomes, publications, demos]
+  max_active_streams: 2  # 3+ triggers diffusion warning

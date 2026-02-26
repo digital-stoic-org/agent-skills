@@ -64,26 +64,36 @@ Record: atomic claim list with confidence ratings and verification actions.
 **Target**: [claim or response challenged]
 **Error type**: factual / hallucination
 
+### Technique Selection
+
+- **Family**: Verify — factual errors / hallucination
+- **Patterns applied**: Proof Demand, CoVe, Fact Check List
+- **Why these patterns**: [what about the target triggered factual scrutiny — e.g., specific claims, numbers cited without source, confident assertions]
+- **Patterns considered but skipped**: none — full verify protocol applied
+
 ### Findings
 
-**Proof Demand**
-| Claim | Source Status | Notes |
-|-------|--------------|-------|
-| [claim] | ✅/⚠️/❌ | [source or gap] |
+**Proof Demand** *(verify family — classifies claims by evidence status)*
+| Claim | Source Status | Reasoning | Notes |
+|-------|--------------|-----------|-------|
+| [claim] | ✅/⚠️/❌ | [why this classification — what evidence was checked or missing] | [source or gap] |
 
-**CoVe Verification**
-| Verification Question | Independent Answer | Discrepancy? |
-|-----------------------|-------------------|--------------|
-| [question] | [answer] | [yes/no — detail] |
+**CoVe Verification** *(verify family — independent re-derivation exposes confirmation bias)*
+| Verification Question | Independent Answer | Discrepancy? | Reasoning |
+|-----------------------|-------------------|--------------|-----------|
+| [question] | [answer] | [yes/no — detail] | [what the discrepancy reveals about the original claim] |
 
-**Fact Check List**
-| Assertion | Confidence | Verification Action |
-|-----------|-----------|---------------------|
-| [claim] | High/Med/Low | [how to check] |
+**Fact Check List** *(verify family — priority-ranks claims by impact × uncertainty)*
+| Assertion | Confidence | Reasoning | Verification Action |
+|-----------|-----------|-----------|---------------------|
+| [claim] | High/Med/Low | [why this confidence level] | [how to check] |
 
 ### Verdict
 
-[Claims verified / Some claims need checking / Claims likely wrong]
+- **Assessment**: [Claims verified / Some claims need checking / Claims likely wrong]
+- **Confidence**: [High / Medium / Low]
+- **What would flip this**: [specific evidence that would change the verdict]
+- **Strongest counter to this verdict**: [steelman the opposite conclusion]
 
 ### Recommended Action
 
