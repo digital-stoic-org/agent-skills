@@ -22,8 +22,8 @@
     {
       "name": "gtd",
       "source": "./gtd",
-      "description": "GTD workflow automation for Obsidian vaults",
-      "version": "0.2.1",
+      "description": "GTD workflow automation for Obsidian vaults: capture, triage, route, focus",
+      "version": "0.3.1",
       "author": {
         "name": "dstoic"
       },

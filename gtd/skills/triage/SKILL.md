@@ -68,14 +68,19 @@ On invocation, detect which pass to run:
 
 ## Routing Rules
 
+Standard project template sections (see CLAUDE.md § Project Template):
+
 | Type | Destination | Section |
 |------|-------------|---------|
-| task | project `01-{name}.md` | `## Tasks` |
-| reference | project file | `## Reference` |
-| waiting-for | project `01-{name}.md` | `## Waiting For` with `#waiting/Name` |
-| someday | 50-59 project | `## Tasks` |
+| task + `#next`/`#frog` | project `01-{name}.md` | `### ⚡ Next` |
+| task (no priority tag) | project `01-{name}.md` | `### 📋 Backlog` |
+| waiting-for | project `01-{name}.md` | `### 👥 Waiting For` with `#waiting/Name` |
+| reference | project file | `## 📎 Reference` |
+| someday | 50-59 project | `### 📋 Backlog` |
 | trash | (delete) | Remove from inbox |
 | project-seed | (flag ❓) | Needs new project — ask human |
+
+**Fallback** (if section not found): `### 📋 Backlog` → `## ✅ Tasks` → before `## 📎 Reference` → end of file
 
 ## Scope
 

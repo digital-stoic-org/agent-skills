@@ -8,6 +8,7 @@
 flowchart LR
     A["📥 Capture"] --> B["🔄 Triage"]
     B --> C["📋 Projects"]
+    R["🚀 Route"] --> C
     C --> D["🎯 Focus"]
 
     classDef default fill:#f9f9f9,stroke:#333,color:#000
@@ -17,7 +18,8 @@ flowchart LR
 |---|-------|---------|
 | 1 | 📥 **capture** | Quick inbox add from CLI/voice |
 | 2 | 🔄 **triage** | Classify & route inbox items |
-| 3 | 🎯 **focus** | Daily top 3-5 ranked tasks |
+| 3 | 🚀 **route** | Direct-to-project when target is known |
+| 4 | 🎯 **focus** | Daily top 3-5 ranked tasks |
 
 ## 🚀 Quick Start
 
@@ -28,7 +30,10 @@ flowchart LR
 # Natural language (auto-invoked)
 "add buy milk to inbox"
 
-# Process inbox
+# Route directly to project (known target)
+/gtd:route Read Citi report https://example.com/r.pdf → 35-read #read-deep
+
+# Process inbox (unknown targets)
 /gtd:triage
 
 # Daily focus list
@@ -37,7 +42,7 @@ flowchart LR
 
 ## 📦 Version
 
-`0.2.1`
+`0.3.1`
 
 ## 🎯 Skills
 
@@ -61,6 +66,20 @@ Workflow:
 1. **Pass 1**: Annotate each `### New` item with `// → target #tags`
 2. Human reviews in Obsidian, appends `// ok` / `// delete` / `// override`
 3. **Pass 2**: Route all double-`//` lines, leave single-`//` untouched
+
+### route
+
+Direct-to-project routing. Skip inbox when you know the target.
+
+- **Model**: haiku (simple file operation)
+- **Tools**: Read, Edit, Glob
+- **Invocation**: `/gtd:route <item> → <target> #tags`
+
+Workflow:
+1. Parse item, target shorthand, and tags from arguments
+2. Resolve target project file via Glob
+3. Find standard section by tag (`#next`→⚡ Next, `#waiting`→👥 Waiting For, default→📋 Backlog)
+4. Append task with `[created:: date]`
 
 ### focus
 
