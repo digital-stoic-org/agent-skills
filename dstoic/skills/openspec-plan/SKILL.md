@@ -3,6 +3,8 @@ name: openspec-plan
 description: "Create OpenSpec change proposals. Use when: user wants to plan a feature, create a proposal, or start a new OpenSpec change."
 model: sonnet
 allowed-tools: [Read, Edit, Write, Glob, Grep, WebSearch, WebFetch]
+cynefin-domain: complicated
+cynefin-verb: analyze
 ---
 
 # OpenSpec Plan

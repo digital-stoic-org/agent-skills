@@ -5,6 +5,8 @@ allowed-tools: Read, Glob, Grep, Task, AskUserQuestion
 model: opus
 argument-hint: "[anchor|verify|framing|deep] <target>"
 user-invocable: true
+cynefin-domain: complicated
+cynefin-verb: analyze
 ---
 
 # Challenge

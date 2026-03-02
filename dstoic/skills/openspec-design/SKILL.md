@@ -3,6 +3,8 @@ name: openspec-design
 description: "Create OpenSpec design artifacts. Use when: user wants to design a feature before tasking, run a bounded context check, produce design.md, or create C4/ER/flow diagrams for an OpenSpec change. Triggers: design, openspec-design, BC check, bounded context, design.md."
 model: opus
 argument-hint: "design <change-id> | maintain <change-id>"
+cynefin-domain: complicated
+cynefin-verb: analyze
 ---
 
 # OpenSpec Design

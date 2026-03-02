@@ -4,6 +4,8 @@ description: "Deep proactive analysis for complex technical problems requiring u
 allowed-tools: WebSearch, WebFetch, AskUserQuestion, Read, Glob, Grep, Task
 model: opus
 argument-hint: <complex problem description>
+cynefin-domain: complicated
+cynefin-verb: analyze
 ---
 
 # Investigate

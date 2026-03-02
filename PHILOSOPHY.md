@@ -20,7 +20,7 @@ It's not about making AI do more. It's about **thinking better together**.
 
 Don't jump into the first approach that comes to mind. Classify the problem first. Is it clear? Complicated? Complex? Chaotic? The answer determines everything — which tools to use, how much planning is needed, whether to think divergently or converge fast.
 
-`/frame-problem` uses Cynefin + Stacey frameworks to map your situation and route you to the right skill chain.
+`/frame-problem` uses the Cynefin framework to classify constraint type and route you to the right skill chain. Domain classification doesn't just select a skill — it determines the agent pattern: whether to probe safe-to-fail experiments (Complex), apply expertise (Complicated), execute a known process (Clear), or act and sense (Chaotic). The response verbs — `probe`, `analyze`, `execute`, `act`, `decompose` — are agent verbs, not just labels. They encode *how* the agent behaves, not just *what* it does.
 
 ### 🧠 Think before build
 

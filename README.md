@@ -50,10 +50,10 @@ flowchart LR
 
 | Mode | What | Hero Skills |
 |------|------|-------------|
-| 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin + Stacey), `/pick-model` |
-| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem), `/challenge` (Devil's Advocate) |
+| 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin), `/pick-model` |
+| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem), `/probe` (safe-to-fail), `/challenge` (Devil's Advocate) |
 | ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (7 skills, human-gated sections) |
-| 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA) |
+| 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` (Chaotic act-sense) |
 | 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |
 
 Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors), **conversions** (PDF, EPUB, Google Docs), and a **GTD plugin** for task capture.
@@ -64,7 +64,7 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 43 skills, 0 commands, 4 hooks | ✅ v0.17.7 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 45 skills, 0 commands, 4 hooks | ✅ v0.18.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
 | ... | More planned | 🔜 |
 
@@ -85,7 +85,7 @@ This installs all plugins (dstoic, gtd). To install a specific plugin only, add 
 
 ```bash
 /frame-problem how should I approach building a new auth system
-# → Classifies as Complicated (HOW) + Boulder
+# → Classifies as Complicated (governing constraints) + Boulder
 # → Routes to: /investigate → /openspec-plan
 
 /brainstorm product naming ideas for my CLI tool

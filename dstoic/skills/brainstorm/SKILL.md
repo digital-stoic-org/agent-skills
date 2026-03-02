@@ -6,6 +6,8 @@ allowed-tools: [WebSearch, Read, Write, AskUserQuestion]
 model: opus
 context: main
 user-invocable: true
+cynefin-domain: complex
+cynefin-verb: probe
 ---
 
 # Brainstorming Protocol

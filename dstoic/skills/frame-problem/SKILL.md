@@ -1,16 +1,34 @@
 ---
 name: frame-problem
-description: "Sense-making before action. Classify problem using Cynefin + Stacey to route to the right skill chain. Use when: frame, what approach, how should I start, which skill, where to begin, unsure what to do. NOT for known tasks — just do them."
+description: "Sense-making before action. Classify problem using Cynefin to route to the right skill chain. Use when: frame, what approach, how should I start, which skill, where to begin, unsure what to do. NOT for known tasks — just do them."
 allowed-tools: AskUserQuestion
 model: sonnet
 argument-hint: <task or problem to frame>
+cynefin-domain: confused
+cynefin-verb: decompose
 ---
 
 # Frame
 
-Classify → route to right skill chain.
+Classify → route to right skill chain. Domain determines agent pattern, not just skill.
 
 **Framing:** **$ARGUMENTS**
+
+## 0. Auto-classify (skip if no $ARGUMENTS)
+
+Read `$ARGUMENTS`. Attempt Cynefin domain classification using constraint language.
+
+**If confidence ≥80%**: Propose classification — do NOT decide unilaterally.
+```
+🎯 Auto-classified: [Domain] (constraint: [type])
+→ Verb: [probe|analyze|execute|act|decompose]
+→ Suggested route: [skill chain]
+Confirm? [Yes / Re-classify manually]
+```
+
+**If confidence <80%** or no $ARGUMENTS: Skip to Q1 (full qualification).
+
+For Complicated domain with ≥80% confidence: also determine evolving vs degraded from context if possible. If clear → skip Q1.1 and route directly.
 
 ## 1. Qualify
 
@@ -18,34 +36,40 @@ Classify → route to right skill chain.
 
 AskUserQuestion — both questions in one call:
 
-**Q1 "Situation"** (4 options):
-- 🚨 Broken/urgent → Chaotic
-- 🤔 Know WHAT, not HOW → Complicated/certainty
-- 💬 Don't agree on WHAT → Complicated/agreement
-- 🌫️ Unknown unknowns → Complex
+**Q1 "Constraints"** (5 options, constraint-based):
+- 🔒 **Rigid** — rules are fixed, process is known → Clear
+- 📐 **Governing** — experts exist, best practices apply → Complicated
+- 🌱 **Enabling** — experimentation needed, cause-effect unclear → Complex
+- 🚨 **Absent** — no constraints, crisis or deliberate disruption → Chaotic
+- ❓ **Can't tell** — none match or situation is mixed → Confused
 
-If none match → Clear (just do it).
+**Q1.1 "Complicated sub-question"** (only if Q1 = Governing/Complicated):
+- 📈 **Evolving** — system improving, capacity growing → `/investigate`
+- 📉 **Degraded** — system failing, quality declining → `/troubleshoot`
+
+*(Skip Q1.1 if auto-classify already determined evolving vs degraded)*
 
 **Q2 "Scale"** (3 options, skip if Chaotic):
-- 🪨 Boulder (multi-step, ambiguous)
-- 🫧 Pebble (single file, obvious)
+- 🪨 Boulder (multi-step, ambiguous, architectural)
+- 🫧 Pebble (single file, obvious implementation)
 - ❓ Not sure
 
 ## 2. Classify + Route
 
-Map answers to domain → skill chain:
+Map constraint type → domain → verb → skill chain:
 
-| Domain | Route | OpenSpec? |
-|--------|-------|-----------|
-| Clear | Just code it | No |
-| Complicated (HOW?) | `/investigate` → `/openspec-plan` | Boulder: yes |
-| Complicated (WHAT?) | `/brainstorm` → decide → code | Boulder: yes |
-| Complex | `/brainstorm` → `/investigate` → `/openspec-plan` | Yes |
-| Chaotic | `/troubleshoot` → stabilize → re-frame | No |
+| Domain | Constraint | Verb | Scale | Route | OpenSpec? |
+|--------|-----------|------|-------|-------|-----------|
+| Clear | Rigid | execute | Pebble | Just code it | No |
+| Clear | Rigid | execute | Boulder | `/openspec-develop` directly | Yes |
+| Complicated | Governing/Evolving | analyze | Any | `/investigate` → `/openspec-plan` | Boulder: yes |
+| Complicated | Governing/Degraded | analyze | Any | `/troubleshoot` → stabilize → re-frame | No |
+| Complex | Enabling/no hypothesis | probe | Any | `/brainstorm` → `/probe` → `/openspec-plan` | Yes |
+| Complex | Enabling/has hypothesis | probe | Any | `/probe` → sense → `/openspec-plan` | Yes |
+| Chaotic | Absent | act | — | `/experiment` → stabilize → `/frame-problem` | No |
+| Confused | Unknown | decompose | Any | `/frame-problem` (re-classify after clarifying) | — |
 
-Show: Mermaid quadrantChart — x: Certainty(HOW), y: Agreement(WHAT). Plot task position.
-
-Present: `🎯 [Domain] → [skill chain] | OpenSpec: [yes/no] | Scale: [boulder/pebble]`
+Present: `🎯 [Domain] → [Verb] → [skill chain] | OpenSpec: [yes/no] | Scale: [boulder/pebble]`
 
 ## 3. Handoff
 

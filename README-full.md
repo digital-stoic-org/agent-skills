@@ -35,7 +35,7 @@ You don't always go through every mode. A pebble (small fix) skips straight to B
 
 ---
 
-## 🧭 Frame — Sense-Making (4 skills)
+## 🧭 Frame — Sense-Making (6 skills)
 
 *Before acting, understand the problem space.*
 
@@ -59,7 +59,9 @@ flowchart TD
 
 | Skill | Purpose |
 |-------|---------|
-| `frame-problem` | 🧭 Classify problem (Cynefin + Stacey) → route to right skill chain |
+| `frame-problem` | 🧭 Classify problem (Cynefin) → route to right skill chain |
+| `probe` | 🔬 Safe-to-fail experiment for Complex domain (two-phase: qualify → probe → sense) |
+| `experiment` | ⚡ Act-sense loop for Chaotic domain (gate after every action) |
 | `pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
 | `search-skill` | 🔍 Discover existing skills before building new ones |
 | `edit-tool` | 🎯 Decision tree — routes to correct tool editor (skill/command/agent) |
@@ -68,24 +70,24 @@ flowchart TD
 
 ```mermaid
 quadrantChart
-    title Cynefin + Stacey Mapping
-    x-axis "Low Certainty (HOW?)" --> "High Certainty (HOW?)"
-    y-axis "Low Agreement (WHAT?)" --> "High Agreement (WHAT?)"
-    quadrant-1 "Clear"
-    quadrant-2 "Complicated HOW"
-    quadrant-3 "Complex"
-    quadrant-4 "Complicated WHAT"
+    title Cynefin Domain Classification
+    x-axis "Absent constraints" --> "Rigid constraints"
+    y-axis "Enabling constraints" --> "Governing constraints"
+    quadrant-1 "Clear (execute)"
+    quadrant-2 "Complicated (analyze)"
+    quadrant-3 "Complex (probe)"
+    quadrant-4 "Chaotic (act)"
 ```
 
-| Domain | Route | OpenSpec? |
-|--------|-------|-----------|
-| **Clear** | Just code it | No |
-| **Complicated (HOW?)** | `/investigate` → `/openspec-plan` | Boulder: yes |
-| **Complicated (WHAT?)** | `/brainstorm` → decide → code | Boulder: yes |
-| **Complex** | `/brainstorm` → `/investigate` → `/openspec-plan` | Yes |
-| **Chaotic** | `/troubleshoot` → stabilize → re-frame | No |
+| Domain | Constraint | Route | OpenSpec? |
+|--------|-----------|-------|-----------|
+| **Clear** | Rigid | Just code it | No |
+| **Complicated** | Governing | `/investigate` → `/openspec-plan` | Boulder: yes |
+| **Complex** | Enabling | `/probe` → sense → `/investigate` | Yes |
+| **Chaotic** | Absent | `/experiment` → act-sense → `/probe` | No |
+| **Confused** | Unknown | `/frame-problem` decompose → re-classify | No |
 
-Frame asks 2 questions (situation + scale), maps to a domain, suggests the skill chain, and hands off.
+Frame auto-classifies the domain (≥80% confidence) or asks constraint-based questions, then routes to the right skill chain with handoff context.
 
 ---
 

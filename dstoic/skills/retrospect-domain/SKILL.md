@@ -6,6 +6,8 @@ allowed-tools: [Bash, Read, Write, Grep]
 model: opus
 context: main
 user-invocable: true
+cynefin-domain: clear
+cynefin-verb: execute
 ---
 
 # Retrospect Domain — Domain Insights Analysis

@@ -3,6 +3,8 @@ name: openspec-reflect
 description: "Pre-gate self-check for drift detection and philosophy alignment. Use when: preparing for human gate review, checking implementation quality, or detecting scope drift."
 model: sonnet
 allowed-tools: [Glob, Grep, Read, Edit, Bash]
+cynefin-domain: complicated
+cynefin-verb: analyze
 ---
 
 # OpenSpec Reflect
