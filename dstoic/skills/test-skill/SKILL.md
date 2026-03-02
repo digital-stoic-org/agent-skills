@@ -3,6 +3,7 @@ name: test-skill
 description: "Scaffold and run behavioral tests for skills. Triggers: test my-skill, add test for X, run skill test, test-skill. Generates pytest file from template + runs in Docker."
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion, Glob
 model: sonnet
+context: main
 user-invocable: true
 argument-hint: "<skill-name> [--run-only | --scaffold-only]"
 ---

@@ -7,6 +7,7 @@ description: >
 allowed-tools:
   - Bash
   - AskUserQuestion
+context: main
 ---
 
 # Install Dependency

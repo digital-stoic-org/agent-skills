@@ -2,6 +2,7 @@
 name: openspec-replan
 description: "Adaptive refinement for blocked or drifted changes. Use when: implementation is blocked, scope drifts >20%, or direction needs to change."
 model: sonnet
+context: main
 allowed-tools: [Glob, Grep, Read, Edit, Write, Bash, AskUserQuestion]
 ---
 

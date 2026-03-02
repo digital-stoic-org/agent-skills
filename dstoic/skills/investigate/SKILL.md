@@ -3,6 +3,7 @@ name: investigate
 description: "Deep proactive analysis for complex technical problems requiring upfront thinking and design. Use when: investigate, deep dive, technical spike, design strategy, complex multi-constraint problem, figure out how to, how should I approach. NOT for errors (use troubleshoot) or option brainstorming (use brainstorm)."
 allowed-tools: WebSearch, WebFetch, AskUserQuestion, Read, Glob, Grep, Task
 model: opus
+context: main
 argument-hint: <complex problem description>
 cynefin-domain: complicated
 cynefin-verb: analyze

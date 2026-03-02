@@ -5,7 +5,8 @@ allowed-tools: AskUserQuestion, Read, Glob, Grep, Bash, EnterWorktree
 argument-hint: <situation or crisis description>
 cynefin-domain: chaotic
 cynefin-verb: act
-model: sonnet
+model: opus
+context: main
 ---
 
 # Experiment

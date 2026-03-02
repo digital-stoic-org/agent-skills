@@ -4,6 +4,7 @@ description: "Automates agent-skills plugin version bumps and release metadata. 
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion
 argument-hint: "[bump-type: patch|minor] [changelog description]"
 model: sonnet
+context: main
 ---
 
 # Edit Plugin

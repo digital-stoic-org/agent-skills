@@ -2,7 +2,8 @@
 name: frame-problem
 description: "Sense-making before action. Classify problem using Cynefin to route to the right skill chain. Use when: frame, what approach, how should I start, which skill, where to begin, unsure what to do. NOT for known tasks — just do them."
 allowed-tools: AskUserQuestion
-model: sonnet
+model: opus
+context: main
 argument-hint: <task or problem to frame>
 cynefin-domain: confused
 cynefin-verb: decompose
@@ -29,6 +30,15 @@ Confirm? [Yes / Re-classify manually]
 **If confidence <80%** or no $ARGUMENTS: Skip to Q1 (full qualification).
 
 For Complicated domain with ≥80% confidence: also determine evolving vs degraded from context if possible. If clear → skip Q1.1 and route directly.
+
+## ⚠️ AskUserQuestion Guard
+
+**CRITICAL**: After EVERY `AskUserQuestion` call, check if answers are empty/blank. Known Claude Code bug: outside Plan Mode, AskUserQuestion silently returns empty answers without showing UI.
+
+**If answers are empty**: DO NOT proceed with assumptions. Instead:
+1. Output: "⚠️ Questions didn't display (known Claude Code bug outside Plan Mode)."
+2. Present the options as a **numbered text list** and ask user to reply with their choice number.
+3. WAIT for user reply before continuing.
 
 ## 1. Qualify
 

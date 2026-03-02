@@ -2,6 +2,7 @@
 name: openspec-develop
 description: "Implement OpenSpec change proposals. Use when: implementing approved changes, working through task lists, or checking implementation progress."
 model: sonnet
+context: main
 allowed-tools: [Glob, Grep, Read, Edit, Write, Bash, TodoWrite, AskUserQuestion]
 cynefin-domain: clear
 cynefin-verb: execute

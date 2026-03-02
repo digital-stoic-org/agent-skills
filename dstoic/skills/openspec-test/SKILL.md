@@ -2,6 +2,7 @@
 name: openspec-test
 description: "Generic test executor for OpenSpec changes. Use when: running checkpoint verification at gates, executing test.md strategies."
 model: sonnet
+context: main
 allowed-tools: [Glob, Grep, Read, Edit, Bash]
 ---
 
