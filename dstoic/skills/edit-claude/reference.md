@@ -837,7 +837,7 @@ This optimization applies universally to instruction sets:
 8. Checklists (final safety)
 ```
 
-See "Instruction Ordering" in edit-skill reference.md for universal implementation guidance.
+See "Instruction Ordering" in edit-tool/references/skill-guide.md for universal implementation guidance.
 
 ### For Future Edit-Claude Modifications
 

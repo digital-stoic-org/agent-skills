@@ -5,14 +5,14 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.18.6"
+    "version": "0.18.8"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core cognitive toolkit: OpenSpec workflow, context management, retrospectives, troubleshooting, investigation",
-      "version": "0.18.6",
+      "version": "0.18.8",
       "author": {
         "name": "dstoic"
       },

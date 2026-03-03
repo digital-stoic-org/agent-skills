@@ -88,10 +88,10 @@ docker compose -f test/docker-compose.test.yml run --rm skill-tester pytest test
 **Single judge assertion** (most common — pick-model, tldr, brainstorm):
 - invoke_skill → llm_judge → assert verdict == YES
 
-**Deterministic + judge** (edit-skill):
+**Deterministic + judge** (edit-tool):
 - invoke_skill → check YAML validity, token count → llm_judge for content quality
 
-**Multi-test file** (edit-skill has 3 tests):
+**Multi-test file** (edit-tool has 3+4 tests):
 - Each test gets unique `test_id` for cost tracking
 - Same SKILL_PATH, different prompts
 

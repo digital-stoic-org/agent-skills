@@ -6,7 +6,7 @@ edit_tool_uncertain: Uncertain type — edit-tool presents options or explains t
 edit_tool_pollution: Pollution cost routing — high-token request routes to progressive disclosure or fork
 edit_tool_command_to_skill: Command → skill routing — "slash command" request creates a skill (not a command file)
 
-Uses --plugin-dir for native skill discovery (edit-tool delegates to edit-skill, etc.)
+Uses --plugin-dir for native skill discovery (edit-tool is the unified editor)
 and --dangerously-skip-permissions (sandboxed Docker) for full e2e validation.
 """
 import pytest
@@ -132,7 +132,7 @@ def test_edit_tool_command_to_skill(workspace, sandbox):
             "Does this response create or recommend creating a SKILL (SKILL.md in a skills/ directory) "
             "rather than a legacy command file in a commands/ directory? "
             "Acceptable: creating skills/deploy-preview/SKILL.md, recommending a skill, "
-            "explaining the triage decision to use edit-skill, or asking clarifying questions "
+            "explaining the triage decision to create a skill, or asking clarifying questions "
             "while framing the solution as a skill. "
             "Answer NO only if it explicitly creates a file in commands/ directory "
             "or recommends the legacy command format."

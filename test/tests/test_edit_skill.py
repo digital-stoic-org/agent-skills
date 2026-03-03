@@ -1,5 +1,5 @@
 """
-test_edit_skill.py — L1/L3 behavioral tests for the edit-skill skill.
+test_edit_skill.py — L1/L3 behavioral tests for skill-creation via edit-tool (unified).
 
 edit_skill_create: Happy CREATE — deterministic assertions (file exists, YAML valid, token count <500)
 pick_model_arch: Model selection — LLM-judge asserts correct model picked for architectural prompt
@@ -12,7 +12,7 @@ import yaml
 
 from harness.behavioral import check_cost_cap, invoke_skill, llm_judge
 
-EDIT_SKILL_PATH = "/workspace/skills/edit-skill/SKILL.md"
+EDIT_SKILL_PATH = "/workspace/skills/edit-tool/SKILL.md"
 PICK_MODEL_PATH = "/workspace/skills/pick-model/SKILL.md"
 PLUGIN_DIR = "/workspace/dstoic"
 
