@@ -39,6 +39,16 @@ Bash: rtk ls openspec/changes/ + rtk ls -t CONTEXT-*llm.md
 
 **Stream resolution**: First word of `$ARGUMENTS` = stream name (`^[a-zA-Z0-9_-]{1,50}$`), rest = description. Empty → reuse prior `/load-context` stream or AskUserQuestion.
 
+### Phase 1b: Detect Thinking Artifacts (parallel with Phase 1)
+
+If `$THINKING_DIR` is set:
+```
+Bash: ls -t "$THINKING_DIR"/*/{project}/ 2>/dev/null | head -10
+```
+Where `{project}` = current project folder name. Collect recent artifact paths written during this session (match conversation timestamps/topics).
+
+If `$THINKING_DIR` is unset or empty: skip silently — no error, no warning.
+
 ### Phase 2: Analyze & Synthesize (single pass)
 
 From conversation (last 15-20 messages):
@@ -46,6 +56,7 @@ From conversation (last 15-20 messages):
 2. **Session** — progression, decisions, thinking, unexpected (780 tokens max)
 3. **Hot Files** — max 10 discussed/edited
 4. **Focus & Goal** — 1-2 sentence focus + goal
+5. **Thinking Artifacts** (if Phase 1b found any) — list paths only, no content
 
 ### Phase 3: Write & Report
 

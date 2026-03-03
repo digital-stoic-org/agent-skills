@@ -65,6 +65,26 @@ Only if diagnosis inconclusive.
 
 Exit when root cause confirmed and fix verified.
 
+### 4b. Write diagnostic artifact
+
+After root cause confirmed and fix verified, persist the diagnostic session to `$THINKING_DIR/troubleshoot/{project}/{date}-{slug}-llm.md`.
+
+`{project}` = current project folder name. `{slug}` = lowercase hyphenated from primary symptom/error. Create directory if missing.
+
+**Collision handling**: If filename exists, append sequence: `{date}-{slug}-2-llm.md`, `{date}-{slug}-3-llm.md`. First write gets clean name.
+
+**Guard**: If `$THINKING_DIR` is unset, skip artifact persistence silently (troubleshooting must not fail because of missing env var).
+
+**Content** (required sections):
+- Symptoms (as reported)
+- Hypotheses tested (ordered list with result: confirmed/eliminated)
+- OODA loops (if Phase 4 was entered)
+- Root cause (as confirmed)
+- Resolution (fix applied)
+- Cynefin transition (if problem re-classified during diagnosis)
+
+This is the **active thinking trail** — distinct from `learnings.yaml` which captures distilled, reusable conclusions.
+
 ### 5. Learn
 
 After resolution, AskUserQuestion: "Save this learning?"

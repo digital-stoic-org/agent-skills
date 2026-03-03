@@ -48,6 +48,6 @@ Constraint shift: absent → enabling. Actions imposed enough structure for patt
 
 ## Accumulated Context
 
-Token guidance: target 300 tokens inline. For depth, use **references** — point to `$KNOWLEDGE_DIR/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
+Token guidance: target 300 tokens inline. For depth, use **references** — point to `$THINKING_DIR/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
 Soft cap: 600 tokens inline per handoff. If you need more, move detail to a knowledge file and reference it.
 Accumulated cap: 800 tokens across a chain — compress to 200 at cap (keep: decisions, constraints, rejected paths). References do NOT count toward the cap.

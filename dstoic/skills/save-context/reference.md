@@ -39,6 +39,12 @@ unexpected:
 
 - {path}: {brief role}
 
+## Thinking Artifacts
+
+{Optional — only include if $THINKING_DIR is set and artifacts were written during session}
+
+- {$THINKING_DIR/type/project/filename.md}: {brief description}
+
 ## Refs
 
 - {external references if any}

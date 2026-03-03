@@ -488,6 +488,12 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 
 ## 📦 Dependencies
 
+### Environment Variables
+
+| Variable | Purpose | Setup |
+|----------|---------|-------|
+| `THINKING_DIR` | Global thinking artifact store for cognitive skills | `export THINKING_DIR="$HOME/dev/praxis/thinking"` in shell profile, then `mkdir -p "$THINKING_DIR"/{frames,brainstorms,probes,investigations,experiments,troubleshoot}` |
+
 ### Required
 
 | Feature | Requires | Install |

@@ -50,6 +50,11 @@ If multiple streams and no selection → AskUserQuestion with options (mark done
 Parallel Read: OpenSpec project/proposal/tasks.md, top 3 hot files, manifest.yaml.
 **DO NOT restore tasks** — informational only.
 
+**Thinking Artifacts** (if `## Thinking Artifacts` section exists in CONTEXT file):
+- Default mode: display artifact paths in resume report (no content read)
+- `--full` mode: Read referenced `$THINKING_DIR` artifacts and include brief summaries in report
+- If `$THINKING_DIR` is unset: display paths as-is, note `⚠️ $THINKING_DIR not set`
+
 ### Phase 3: Format Resume Report
 
 Parse key-value header + markdown sections → human-friendly report.
