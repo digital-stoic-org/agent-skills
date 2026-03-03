@@ -1,7 +1,7 @@
 ---
 name: investigate
 description: "Deep proactive analysis for complex technical problems requiring upfront thinking and design. Use when: investigate, deep dive, technical spike, design strategy, complex multi-constraint problem, figure out how to, how should I approach. NOT for errors (use troubleshoot) or option brainstorming (use brainstorm)."
-allowed-tools: WebSearch, WebFetch, AskUserQuestion, Read, Glob, Grep, Task
+allowed-tools: WebSearch, WebFetch, AskUserQuestion, Read, Write, Glob, Grep, Task
 model: opus
 context: main
 argument-hint: <complex problem description>
@@ -75,6 +75,24 @@ Output: Alternatives table with trade-offs.
 3. **Assumptions list**: What must be true for this approach to work?
 
 Output: Recommended approach + explicit risks.
+
+### 4b. Write investigation artifact
+
+Write investigation to `$THINKING_DIR/investigations/{project}/{date}-{slug}-llm.md`.
+
+`{project}` = current project folder name (e.g., `agent-skills`, `gtd-pcm`). `{slug}` = lowercase hyphenated from problem statement. Create directory if missing.
+
+**Collision handling**: If filename exists, append sequence: `{date}-{slug}-2-llm.md`, `{date}-{slug}-3-llm.md`. First write gets clean name.
+
+**Guard**: If `$THINKING_DIR` is unset, warn user and skip artifact persistence: `⚠️ $THINKING_DIR not set — artifact not persisted. Set via: export THINKING_DIR="$HOME/dev/praxis/thinking"`
+
+Content (required sections):
+- Problem statement (from Scope)
+- Decomposition (sub-problems + constraints)
+- Research findings (per sub-problem)
+- Alternatives evaluated (trade-off matrix)
+- Decision + risks
+- Bridge (next action: OpenSpec/pebble/spike)
 
 ### 5. Bridge
 

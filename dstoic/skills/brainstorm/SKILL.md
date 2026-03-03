@@ -53,4 +53,16 @@ Identify top 2-3 finalists with trade-offs.
 2. Flag assumptions to validate
 3. Auto-detect boulder vs. pebble → suggest OpenSpec or direct implementation
 
+## Phase 4b: Write brainstorm artifact
+
+Write brainstorm to `$THINKING_DIR/brainstorms/{project}/{date}-{slug}-llm.md`.
+
+`{project}` = current project folder name (e.g., `agent-skills`, `gtd-pcm`). `{slug}` = lowercase hyphenated from brainstorm topic. Create directory if missing.
+
+**Collision handling**: If filename exists, append sequence: `{date}-{slug}-2-llm.md`, `{date}-{slug}-3-llm.md`. First write gets clean name.
+
+**Guard**: If `$THINKING_DIR` is unset, warn user and skip artifact persistence: `⚠️ $THINKING_DIR not set — artifact not persisted. Set via: export THINKING_DIR="$HOME/dev/praxis/thinking"`
+
+Content: problem/topic + research findings + options generated (SCAMPER) + convergence analysis + recommendation + assumptions to validate.
+
 See `reference.md` for SCAMPER details, Starbursting dimensions, and convergence frameworks.
