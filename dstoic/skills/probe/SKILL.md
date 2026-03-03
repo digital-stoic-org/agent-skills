@@ -17,6 +17,15 @@ Safe-to-fail experiment in Complex domain. Cause-effect only visible in retrospe
 
 Check for handoff context: if `$ARGUMENTS` references a `probe->-probe-llm.md` file, load it before Phase 1 — carried context accelerates qualification.
 
+## ⚠️ AskUserQuestion Guard
+
+**CRITICAL**: After EVERY `AskUserQuestion` call, check if answers are empty/blank. Known Claude Code bug: outside Plan Mode, AskUserQuestion silently returns empty answers without showing UI.
+
+**If answers are empty**: DO NOT proceed with assumptions. Instead:
+1. Output: "⚠️ Questions didn't display (known Claude Code bug outside Plan Mode)."
+2. Present the options as a **numbered text list** and ask user to reply with their choice number.
+3. WAIT for user reply before continuing.
+
 ## Phase 1: Qualify (foreground — MANDATORY)
 
 **ENTRY GATE: Phase 2 does not start until Phase 1 is complete. No bypass path exists.**

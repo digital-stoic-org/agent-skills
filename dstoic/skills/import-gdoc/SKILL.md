@@ -12,6 +12,15 @@ user-invocable: true
 
 Import Google Docs from Drive into `google-in/` with manifest tracking.
 
+## ⚠️ AskUserQuestion Guard
+
+**CRITICAL**: After EVERY `AskUserQuestion` call, check if answers are empty/blank. Known Claude Code bug: outside Plan Mode, AskUserQuestion silently returns empty answers without showing UI.
+
+**If answers are empty**: DO NOT proceed with assumptions. Instead:
+1. Output: "⚠️ Questions didn't display (known Claude Code bug outside Plan Mode)."
+2. Present the options as a **numbered text list** and ask user to reply with their choice number.
+3. WAIT for user reply before continuing.
+
 ## Steps
 
 1. **Get user email** (required for MCP auth): AskUserQuestion

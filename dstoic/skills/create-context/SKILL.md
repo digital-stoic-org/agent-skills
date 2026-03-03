@@ -11,6 +11,15 @@ user-invocable: true
 
 Bootstrap project context from `.in/` folder → `.ctx/` snapshot + baseline + RISEN INPUT table.
 
+## ⚠️ AskUserQuestion Guard
+
+**CRITICAL**: After EVERY `AskUserQuestion` call, check if answers are empty/blank. Known Claude Code bug: outside Plan Mode, AskUserQuestion silently returns empty answers without showing UI.
+
+**If answers are empty**: DO NOT proceed with assumptions. Instead:
+1. Output: "⚠️ Questions didn't display (known Claude Code bug outside Plan Mode)."
+2. Present the options as a **numbered text list** and ask user to reply with their choice number.
+3. WAIT for user reply before continuing.
+
 ## Folder Architecture
 
 - **`.in/`**: Immutable bootstrap (user dumps raw docs, never modified by commands)

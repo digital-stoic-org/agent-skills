@@ -10,6 +10,15 @@ allowed-tools: [Glob, Grep, Read, Edit, Write, Bash, AskUserQuestion]
 
 Adaptive refinement skill for blocked or drifted changes. Proposes revised tasks or pivots.
 
+## ⚠️ AskUserQuestion Guard
+
+**CRITICAL**: After EVERY `AskUserQuestion` call, check if answers are empty/blank. Known Claude Code bug: outside Plan Mode, AskUserQuestion silently returns empty answers without showing UI.
+
+**If answers are empty**: DO NOT proceed with assumptions. Instead:
+1. Output: "⚠️ Questions didn't display (known Claude Code bug outside Plan Mode)."
+2. Present the options as a **numbered text list** and ask user to reply with their choice number.
+3. WAIT for user reply before continuing.
+
 ## Workflow: Analyze → Propose → Confirm → Apply
 
 ```mermaid
