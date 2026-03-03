@@ -473,6 +473,15 @@ flowchart LR
 
 ---
 
+## 🤖 Agents (2)
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| `devil-advocate` | 🔥 Comprehensive debiasing — all 9 patterns (anchor + verify + framing) | opus |
+| `browser-verify` | 🌐 Verify web pages against criteria — structured pass/fail report with evidence · requires `agent-browser` | sonnet |
+
+---
+
 ## 🪝 Hooks (3)
 
 | Hook | Purpose |
