@@ -443,7 +443,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (5 skills)
+## 🔧 Utilities (6 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -452,6 +452,7 @@ flowchart LR
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
+| `browse` | 🌐 Headless browser snapshot (accessibility tree or screenshot) · requires `agent-browser` |
 
 ## 📥 Conversions & Imports (6 skills)
 
