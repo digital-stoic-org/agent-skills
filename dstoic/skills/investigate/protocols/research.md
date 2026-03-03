@@ -79,4 +79,7 @@ Task(subagent_type="Explore", prompt="Research [sub-problem X]: ...")
 Task(subagent_type="Explore", prompt="Research [sub-problem Y]: ...")
 ```
 
+**Tool mandate for sub-agents**: Always include this instruction in Explore prompts:
+> Use Glob (not find/ls), Grep (not grep/rg), and Read (not cat/head/tail) for all file operations. NEVER use Bash for file discovery or content search — dedicated tools need no permissions and are faster.
+
 Merge findings into unified matrix before Design phase.
