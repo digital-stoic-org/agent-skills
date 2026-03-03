@@ -4,7 +4,7 @@
 
 ## 📦 Version
 
-`0.18.5`
+`0.18.7`
 
 ## 🔗 Quick Links
 
@@ -14,7 +14,7 @@
 - [Build — Structured Development](../README-full.md#️-build--structured-development-9-skills)
 - [Debug — Troubleshooting](../README-full.md#-debug--troubleshooting-1-skill)
 - [Learn — Retrospectives & Sessions](../README-full.md#-learn--retrospectives--session-memory-8-skills)
-- [Tool Creation](../README-full.md#-create--tool-orchestration-6-skills)
+- [Tool Creation](../README-full.md#-create--tool-orchestration-4-skills)
 - [Hooks](../README-full.md#-hooks-3)
 - [Dependencies](../README-full.md#-dependencies)
 - [Philosophy & Principles](../PHILOSOPHY.md)

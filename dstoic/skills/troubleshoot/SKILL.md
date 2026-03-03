@@ -24,7 +24,7 @@ Search-first diagnostic workflow. Human executes commands.
 
 ## Workflow
 
-`0.Load → 1.Search → 2.Qualify → 3.Diagnose → 4.Investigate → 5.Learn`
+`0.Load → 1.Search → 2.Qualify → 3.Diagnose → 4.Investigate → 5.Persist → 6.Learn`
 
 ### 0. Load Learnings
 
@@ -65,9 +65,11 @@ Only if diagnosis inconclusive.
 
 Exit when root cause confirmed and fix verified.
 
-### 4b. Write diagnostic artifact
+### 5. Persist Thinking Artifact ⚠️ MANDATORY
 
-After root cause confirmed and fix verified, persist the diagnostic session to `$THINKING_DIR/troubleshoot/{project}/{date}-{slug}-llm.md`.
+**MUST execute after root cause confirmed and fix verified. DO NOT skip. DO NOT wait for user to ask.**
+
+Persist the diagnostic session to `$THINKING_DIR/troubleshoot/{project}/{date}-{slug}-llm.md`.
 
 `{project}` = current project folder name. `{slug}` = lowercase hyphenated from primary symptom/error. Create directory if missing.
 
@@ -85,12 +87,17 @@ After root cause confirmed and fix verified, persist the diagnostic session to `
 
 This is the **active thinking trail** — distinct from `learnings.yaml` which captures distilled, reusable conclusions.
 
-### 5. Learn
+### 6. Learn
 
 After resolution, AskUserQuestion: "Save this learning?"
 - Global → append to `/praxis/reference/troubleshoot/learnings.yaml`
 - Project → append with `scope: project:<name>`
 - Skip
+
+## ✅ Completion Checklist
+
+Before responding to user, verify:
+- [ ] Artifact written to `$THINKING_DIR` (or guard triggered if unset)
 
 ## Refs
 

@@ -92,7 +92,9 @@ Observe results against confirm/refute criteria:
 - What was unexpected?
 - What constraints were discovered during execution?
 
-### 2.3 Write knowledge artifact
+### 2.3 Persist Thinking Artifact ⚠️ MANDATORY
+
+**MUST execute before exit gate. DO NOT skip. DO NOT wait for user to ask.**
 
 Write probe result to `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md`.
 

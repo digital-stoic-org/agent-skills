@@ -53,7 +53,9 @@ Identify top 2-3 finalists with trade-offs.
 2. Flag assumptions to validate
 3. Auto-detect boulder vs. pebble → suggest OpenSpec or direct implementation
 
-## Phase 4b: Write brainstorm artifact
+## Phase 5: Persist Thinking Artifact ⚠️ MANDATORY
+
+**MUST execute before finishing. DO NOT skip. DO NOT wait for user to ask.**
 
 Write brainstorm to `$THINKING_DIR/brainstorms/{project}/{date}-{slug}-llm.md`.
 
@@ -66,3 +68,8 @@ Write brainstorm to `$THINKING_DIR/brainstorms/{project}/{date}-{slug}-llm.md`.
 Content: problem/topic + research findings + options generated (SCAMPER) + convergence analysis + recommendation + assumptions to validate.
 
 See `reference.md` for SCAMPER details, Starbursting dimensions, and convergence frameworks.
+
+## ✅ Completion Checklist
+
+Before responding to user, verify:
+- [ ] Artifact written to `$THINKING_DIR` (or guard triggered if unset)

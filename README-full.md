@@ -64,7 +64,7 @@ flowchart TD
 | `experiment` | ⚡ Act-sense loop for Chaotic domain (gate after every action) |
 | `pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
 | `search-skill` | 🔍 Discover existing skills before building new ones |
-| `edit-tool` | 🎯 Decision tree — routes to correct tool editor (skill/command/agent) |
+| `edit-tool` | 🎯 Unified skill/agent/script editor — triages and creates/modifies tools |
 
 ### `/frame-problem` — The Entry Point
 
@@ -408,36 +408,34 @@ flowchart LR
 
 ---
 
-## 🔨 Create — Tool Orchestration (6 skills)
+## 🔨 Create — Tool Orchestration (4 skills)
 
 *Build your own skills and agents.*
 
 ```mermaid
 flowchart LR
     search["🔍 search-skill"] -.->|"exists?"| edit["🎯 edit-tool"]
-    edit -->|"<500 tokens"| skill["✨ edit-skill"]
-    edit -->|"isolated context"| agent["🤖 edit-agent"]
+    edit -->|"skill"| skill["✨ Skill"]
+    edit -->|"agent"| agent["🤖 Agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
 
-    pick["🎯 pick-model"] -.->|"which model?"| skill & agent
+    pick["🎯 pick-model"] -.->|"which model?"| edit
 
-    skill & agent -->|"added/removed?"| plugin["📦 edit-plugin"]
+    edit -->|"added/removed?"| plugin["📦 edit-plugin"]
 
     classDef router fill:#FFE4B5,stroke:#333,color:#000
-    classDef editor fill:#f9f9f9,stroke:#333,color:#000
+    classDef output fill:#f9f9f9,stroke:#333,color:#000
     classDef support fill:#E0E7FF,stroke:#333,color:#000
     classDef post fill:#C8E6C9,stroke:#333,color:#000
     class edit router
-    class skill,agent,claude editor
-    class search,pick support
+    class skill,agent output
+    class claude,search,pick support
     class plugin post
 ```
 
 | Skill | When to Use |
 |-------|-------------|
-| `edit-tool` | 🎯 Decision tree — routes to correct editor |
-| `edit-skill` | ✨ Auto-invoked capabilities (<500 tokens) |
-| `edit-agent` | 🤖 Isolated context, complex tasks |
+| `edit-tool` | 🎯 Unified skill/agent/script editor — triages and creates/modifies tools |
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `edit-plugin` | 📦 Version bumps and plugin metadata sync |
 | `search-skill` | 🔍 Discover & evaluate skills from curated sources |

@@ -26,7 +26,7 @@ Deep analysis for complex technical problems. Proactive (design-first), not reac
 
 ## Workflow
 
-`0.Scope → 1.Decompose → 2.Research → 3.Design → 4.Decide → 5.Bridge`
+`0.Scope → 1.Decompose → 2.Research → 3.Design → 4.Decide → 5.Persist → 6.Bridge`
 
 ### 0. Scope
 
@@ -76,7 +76,9 @@ Output: Alternatives table with trade-offs.
 
 Output: Recommended approach + explicit risks.
 
-### 4b. Write investigation artifact
+### 5. Persist Thinking Artifact ⚠️ MANDATORY
+
+**MUST execute before finishing. DO NOT skip. DO NOT wait for user to ask.**
 
 Write investigation to `$THINKING_DIR/investigations/{project}/{date}-{slug}-llm.md`.
 
@@ -94,12 +96,17 @@ Content (required sections):
 - Decision + risks
 - Bridge (next action: OpenSpec/pebble/spike)
 
-### 5. Bridge
+### 6. Bridge
 
 Handoff to execution:
 - **Boulder** → Generate OpenSpec proposal (`/openspec-plan`)
 - **Pebble** → Direct implementation plan (task list)
 - **Still unclear** → Identify next spike/experiment needed
+
+## ✅ Completion Checklist
+
+Before responding to user, verify:
+- [ ] Artifact written to `$THINKING_DIR` (or guard triggered if unset)
 
 ## Refs
 
