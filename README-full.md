@@ -79,13 +79,13 @@ quadrantChart
     quadrant-4 "Chaotic (act)"
 ```
 
-| Domain | Constraint | Route | OpenSpec? |
-|--------|-----------|-------|-----------|
-| **Clear** | Rigid | Just code it | No |
-| **Complicated** | Governing | `/investigate` → `/openspec-plan` | Boulder: yes |
-| **Complex** | Enabling | `/probe` → sense → `/investigate` | Yes |
-| **Chaotic** | Absent | `/experiment` → act-sense → `/probe` | No |
-| **Confused** | Unknown | `/frame-problem` decompose → re-classify | No |
+| Domain | In plain English | Constraint | Route | OpenSpec? |
+|--------|------------------|-----------|-------|-----------|
+| **Clear** | Cause-effect obvious — best practice exists | Rigid | Just code it | 🪨 Boulder: yes · 🪹 Pebble: no |
+| **Complicated** | Cause-effect discoverable — needs expert analysis | Governing | `/investigate` → `/openspec-plan` | 🪨 Boulder: yes |
+| **Complex** | Cause-effect only visible in hindsight — must probe first | Enabling | `/probe` → sense → `/investigate` | ✅ Yes |
+| **Chaotic** | No cause-effect visible — act first, stabilize | Absent | `/experiment` → act-sense → `/probe` | ❌ No (act first) |
+| **Confused** | Don't know which domain — decompose and re-classify | Unknown | `/frame-problem` decompose → re-classify | ❌ No |
 
 Frame auto-classifies the domain (≥80% confidence) or asks constraint-based questions, then routes to the right skill chain with handoff context.
 
