@@ -443,7 +443,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (6 skills)
+## 🔧 Utilities (5 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -452,7 +452,7 @@ flowchart LR
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
-| `browse` | 🌐 Headless browser snapshot (accessibility tree or screenshot) · requires `agent-browser` |
+
 
 ## 📥 Conversions & Imports (6 skills)
 
@@ -473,12 +473,12 @@ flowchart LR
 
 ---
 
-## 🤖 Agents (2)
+## 🤖 Agents (1)
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
 | `devil-advocate` | 🔥 Comprehensive debiasing — all 9 patterns (anchor + verify + framing) | opus |
-| `browser-verify` | 🌐 Verify web pages against criteria — structured pass/fail report with evidence · requires `agent-browser` | sonnet |
+
 
 ---
 
@@ -518,6 +518,7 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 
 | Feature | Requires | Install |
 |---------|----------|---------|
+| Browser automation | [agent-browser](https://github.com/anthropics/agent-browser) | `bun install -g agent-browser` |
 | Token-optimized output | [rtk](https://github.com/pszymkowiak/rtk) | See repo for install |
 | Node.js packages | [bun](https://bun.sh) | `curl -fsSL https://bun.sh/install \| bash` |
 

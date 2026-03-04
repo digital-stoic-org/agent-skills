@@ -42,17 +42,9 @@ Plus: tool creation, conversions, and hooks.
 /troubleshoot "error: module not found"
 ```
 
-## 🔧 Prerequisites
-
-Some skills require external tools installed on your system:
-
-| Tool | Install | Required by |
-|------|---------|-------------|
-| `agent-browser` | `bun install -g agent-browser` | `/browse`, `browser-verify` agent |
-
 ## 📦 Version
 
-`0.19.0` · 45 skills · 0 commands · 4 hooks
+`0.19.1` · 44 skills · 0 commands · 4 hooks
 
 ---
 
