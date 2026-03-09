@@ -8,7 +8,7 @@ user-invocable: true
 
 # Output Dump Toggle
 
-Toggle automatic dumping of Claude's complete output to `.dump/` folder.
+Toggle automatic dumping of Claude's complete output. Saves to `$THINKING_DIR/dumps/{project}/` when set, falls back to `.dump/` folder.
 
 ## Instructions
 
