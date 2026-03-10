@@ -97,6 +97,9 @@ Coverage rules:
 - `**Implementation**: Always use /openspec-develop {change-id} — never implement tasks ad-hoc.`
 - `**Design**: See design.md for BC scope, invariants, C4 containers, key flows, and ADRs.` (only when design.md was consumed)
 
+**Next step** (ALWAYS display after writing tasks.md/tests.md):
+`✅ tasks.md written → Next: /openspec-review {change-id} (tech lead gate) → Then: /openspec-develop {change-id}`
+
 **Output**:
 1. `tasks.md` - verifiable outcomes with gates
 2. `tests.md` - verification strategy (unless --skip-test or garage mode + simple change)

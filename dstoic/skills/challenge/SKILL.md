@@ -1,7 +1,7 @@
 ---
 name: challenge
 description: "Challenge, push back, play devil's advocate on AI output. Use when: challenge this, are you sure, push back, prove it, what if you're wrong, devil's advocate, stress test, poke holes, second opinion, sanity check, too confident, really?, question this decision. Subcommands: anchor (committed too fast), verify (facts wrong?), framing (wrong problem?), deep (full devil's advocate in separate context)."
-allowed-tools: Read, Glob, Grep, Task, AskUserQuestion
+allowed-tools: Read, Glob, Grep, Agent, AskUserQuestion
 model: opus
 context: main
 argument-hint: "[anchor|verify|framing|deep] <target>"
@@ -34,7 +34,7 @@ Parse first word of $ARGUMENTS as subcommand:
 | `anchor` | Premature commitment / anchoring bias | Read `protocols/anchor.md` → execute |
 | `verify` | Factual errors / hallucination | Read `protocols/verify.md` → execute |
 | `framing` | Wrong problem / framing errors | Read `protocols/framing.md` → execute |
-| `deep` | High stakes — all 9 patterns in fresh context | Spawn devil-advocate sub-agent via Task |
+| `deep` | High stakes — all 9 patterns in fresh context | Spawn devil-advocate sub-agent via Agent |
 
 ## No-Subcommand Fallback
 
@@ -50,8 +50,8 @@ AskUserQuestion: "What are you worried about with the current AI response?"
 
 ## Deep Subcommand
 
-Spawn via Task tool:
-- subagent_type: `devil-advocate`
+Spawn via Agent tool:
+- subagent_type: `dstoic:devil-advocate:devil-advocate`
 - prompt: target description + relevant file paths to read
 - The agent runs ALL 9 patterns (anchor: Gatekeeper, Reset, Alt Approaches, Pre-mortem · verify: Proof Demand, CoVe, Fact Check List · framing: Socratic, Steelman) comprehensively in fresh context
 - DO NOT pass parent conversation reasoning — fresh context is the point

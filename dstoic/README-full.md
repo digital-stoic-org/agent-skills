@@ -4,14 +4,14 @@
 
 ## 📦 Version
 
-`0.19.2`
+`0.19.3`
 
 ## 🔗 Quick Links
 
 - [Cognitive Modes Overview](../README-full.md#-cognitive-modes)
 - [Frame & Sense-Making](../README-full.md#-frame--sense-making-6-skills)
 - [Think — Ideation & Analysis](../README-full.md#-think--ideation--analysis-3-skills)
-- [Build — Structured Development](../README-full.md#️-build--structured-development-9-skills)
+- [Build — Structured Development](../README-full.md#️-build--structured-development-10-skills)
 - [Debug — Troubleshooting](../README-full.md#-debug--troubleshooting-1-skill)
 - [Learn — Retrospectives & Sessions](../README-full.md#-learn--retrospectives--session-memory-8-skills)
 - [Tool Creation](../README-full.md#-create--tool-orchestration-4-skills)

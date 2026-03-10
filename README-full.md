@@ -187,7 +187,7 @@ flowchart LR
 
 ---
 
-## ⚙️ Build — Structured Development (9 skills)
+## ⚙️ Build — Structured Development (10 skills)
 
 *Plan → implement → gate → test → sync. Human-in-the-loop iteration.*
 
@@ -219,6 +219,7 @@ flowchart LR
 | `openspec-init` | 🎬 Setup project (set mode: garage/scale/maintenance) |
 | `openspec-design` | 🏗️ BC-first structural design — produces `design.md` between proposal and tasks |
 | `openspec-plan` | 📝 Design proposal + test.md strategy (human reviews test plan upfront) |
+| `openspec-review` | 🔍 Pre-implementation tech lead gate — reviews all artifacts as coherent whole |
 | `openspec-develop` | ⚙️ Implement sections, stop at gates for human review |
 | `openspec-test` | 🧪 Execute test.md verification, log to test-logs/ (no improvisation) |
 | `openspec-reflect` | 🪞 Pre-gate drift check (flags missing test.md in scale/maintenance) |
@@ -361,7 +362,8 @@ flowchart LR
         plan["📋 /openspec-plan"]
         risen["✍️ /edit-risen-prompt"]
         plan --> design["🏗️ /openspec-design"]
-        design --> dev["⚙️ /openspec-develop"]
+        design --> review["🔍 /openspec-review"]
+        review --> dev["⚙️ /openspec-develop"]
         dev --> test["🧪 /openspec-test"]
         dev --> reflect["🪞 /openspec-reflect"]
         reflect -->|"blocked"| replan["🔀 /openspec-replan"]
