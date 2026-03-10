@@ -445,7 +445,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (5 skills)
+## 🔧 Utilities (6 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -454,6 +454,7 @@ flowchart LR
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
+| `literatize` | 📝 Add section-level comments to code capturing intent, rationale, and gotchas for LLM re-entry |
 
 
 ## 📥 Conversions & Imports (6 skills)
