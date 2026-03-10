@@ -445,7 +445,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (6 skills)
+## 🔧 Utilities (7 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -455,6 +455,7 @@ flowchart LR
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 | `literatize` | 📝 Add section-level comments to code capturing intent, rationale, and gotchas for LLM re-entry |
+| `scratch` | 🗒️ Zero-friction session scratch pad — park side-thoughts during deep work without losing flow |
 
 
 ## 📥 Conversions & Imports (6 skills)
