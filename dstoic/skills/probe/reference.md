@@ -50,7 +50,7 @@ Five elements required for a valid probe. If any are missing or weak, the agent 
 | Hypothesis | Specific, falsifiable statement: "X will behave like Y under condition Z" | Vague goal: "I want to see if this works" | AskUserQuestion: "State one specific hypothesis — what do you believe is true, and under what condition?" |
 | Enabling constraints | Named: scope, reversibility boundary, time box | Absent or implied | Agent proposes based on context: "I suggest constraining to [worktree / staging / 30 min]. Confirm or adjust." |
 | Confirm/refute criteria | Observable signals defined before execution | "We'll know it works when it works" | Agent proposes: "Confirmed if [X]. Refuted if [Y]. Surprise if [Z]. Revise or proceed?" |
-| Prior probe results | Carried from `probe->-probe-llm.md` handoff context | First cycle — none expected | Skip gracefully: no prior context needed on first invocation |
+| Prior probe results | Carried from `probe-to-probe-llm.md` handoff context | First cycle — none expected | Skip gracefully: no prior context needed on first invocation |
 | Scope boundary | Explicit system/component boundary stated | Unbounded ("the whole system") | Agent proposes minimum viable scope: "I suggest scoping to [component]. Expand if needed." |
 
 Fallback rule: agent asks or proposes — user validates. Never skip an element silently. Never assume a hypothesis the user did not state.
@@ -62,7 +62,7 @@ Fallback rule: agent asks or proposes — user validates. Never skip an element 
 When result is `partial` and a refined hypothesis is identifiable:
 
 1. Write full probe result to `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md` (collision: append `-2`, `-3`, etc.)
-2. Fill `probe->-probe-llm.md` with:
+2. Fill `probe-to-probe-llm.md` with:
    - Refined hypothesis (sharpened, not repeated)
    - Carried enabling constraints (unchanged unless probe discovered new ones)
    - What was confirmed (do not re-test)

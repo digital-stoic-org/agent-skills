@@ -83,8 +83,8 @@ Constraint type now:
 AskUserQuestion: "Which transition? [Probe — structure emerged / Frame-problem — misclassified / Troubleshoot — crisis was failure]"
 
 Populate handoff template:
-- Structure emerged → `experiment->-probe-llm.md`
-- Re-classify → `experiment->-frame-problem-llm.md`
+- Structure emerged → `experiment-to-probe-llm.md`
+- Re-classify → `experiment-to-frame-problem-llm.md`
 - Crisis / failure → invoke `/troubleshoot` with action log as context
 
 Observability: `⚡ Experiment → {mode} → {N} acts → {N} gates → {structure} → TRANSITION`

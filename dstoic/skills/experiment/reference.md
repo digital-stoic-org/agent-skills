@@ -83,7 +83,7 @@ Criteria (any one sufficient):
 - An expert says "this looks like a known class of problem"
 - The action log shows a direction (not just noise)
 
-Handoff: populate `experiment->-probe-llm.md`
+Handoff: populate `experiment-to-probe-llm.md`
 - Carry: action log, emerged constraints, hypothesis candidate
 - Do NOT assume stability — probe should test it
 
@@ -96,7 +96,7 @@ Criteria:
 - Constraints exist but were misidentified
 - The situation is actually a mix of domains
 
-Handoff: populate `experiment->-frame-problem-llm.md`
+Handoff: populate `experiment-to-frame-problem-llm.md`
 - Carry: action log, what the experiment revealed
 - Do NOT default back to Chaotic — re-classify with fresh eyes
 

@@ -15,7 +15,7 @@ Safe-to-fail experiment in Complex domain. Cause-effect only visible in retrospe
 
 **Probing:** **$ARGUMENTS**
 
-Check for handoff context: if `$ARGUMENTS` references a `probe->-probe-llm.md` file, load it before Phase 1 — carried context accelerates qualification.
+Check for handoff context: if `$ARGUMENTS` references a `probe-to-probe-llm.md` file, load it before Phase 1 — carried context accelerates qualification.
 
 ## ⚠️ AskUserQuestion Guard
 
@@ -114,20 +114,20 @@ Produce B4-compatible handoff:
 
 | Result | When | Transition | Template |
 |--------|------|-----------|----------|
-| confirmed | Hypothesis holds | Complex → Complicated | `probe->-investigate-llm.md` |
-| partial (enough signal) | Some evidence, ready for expert analysis | Complex → Complicated | `probe->-investigate-llm.md` |
-| partial (need another angle) | Some evidence, hypothesis needs sharpening | Complex → Complex (re-probe) | `probe->-probe-llm.md` |
-| refuted / surprise | Hypothesis failed or unexpected result | Complex → Complex (brainstorm) | `probe->-brainstorm-llm.md` |
+| confirmed | Hypothesis holds | Complex → Complicated | `probe-to-investigate-llm.md` |
+| partial (enough signal) | Some evidence, ready for expert analysis | Complex → Complicated | `probe-to-investigate-llm.md` |
+| partial (need another angle) | Some evidence, hypothesis needs sharpening | Complex → Complex (re-probe) | `probe-to-probe-llm.md` |
+| refuted / surprise | Hypothesis failed or unexpected result | Complex → Complex (brainstorm) | `probe-to-brainstorm-llm.md` |
 
 Handoff token budget: target 300 tokens inline, flex 200-500, hard cap 600. References to `$THINKING_DIR` files do not count toward cap.
 
-Self-transition: if result is `partial` and hypothesis can be sharpened, re-invoke `/probe` via `probe->-probe-llm.md` with accumulated context. Prior cycles compressed to 200 tokens at 800-token accumulated cap.
+Self-transition: if result is `partial` and hypothesis can be sharpened, re-invoke `/probe` via `probe-to-probe-llm.md` with accumulated context. Prior cycles compressed to 200 tokens at 800-token accumulated cap.
 
 ---
 
 ## Refs
 
 - `reference.md` — probe types, observability format, input quality table
-- `probe->-investigate-llm.md` — handoff: confirmed/partial → Complicated
-- `probe->-brainstorm-llm.md` — handoff: refuted/surprise → Complex (brainstorm)
-- `probe->-probe-llm.md` — handoff: partial → Complex (self-transition)
+- `probe-to-investigate-llm.md` — handoff: confirmed/partial → Complicated
+- `probe-to-brainstorm-llm.md` — handoff: refuted/surprise → Complex (brainstorm)
+- `probe-to-probe-llm.md` — handoff: partial → Complex (self-transition)
