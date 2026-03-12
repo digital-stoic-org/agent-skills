@@ -66,7 +66,7 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 |--------|-------------|--------|
 | [dstoic](dstoic/) | Core cognitive toolkit: 46 skills, 0 commands, 4 hooks | ✅ v0.22.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
-| [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.1.0 |
+| [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.2.0 |
 | ... | More planned | 🔜 |
 
 ## 📦 Install
