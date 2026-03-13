@@ -198,75 +198,75 @@ implementation:
 ```yaml
 # 🧭 Frame — Sense-Making (route to right approach)
 frame:
-  - { skill: frame-problem, model: sonnet, domain: agnostic, purpose: "Cynefin classify → skill chain" }
-  - { skill: probe, model: sonnet, domain: agnostic, purpose: "safe-to-fail experiment (complex domain)" }
-  - { skill: experiment, model: sonnet, domain: agnostic, purpose: "act-sense loop (chaotic domain)" }
-  - { skill: pick-model, model: haiku, domain: agnostic, purpose: "recommend haiku/sonnet/opus" }
-  - { skill: search-skill, model: sonnet, domain: agnostic, purpose: "discover existing skills" }
+  - { skill: frame-problem, path: dstoic/skills/frame-problem/SKILL.md, model: sonnet, domain: agnostic, purpose: "Cynefin classify → skill chain" }
+  - { skill: probe, path: dstoic/skills/probe/SKILL.md, model: sonnet, domain: agnostic, purpose: "safe-to-fail experiment (complex domain)" }
+  - { skill: experiment, path: dstoic/skills/experiment/SKILL.md, model: sonnet, domain: agnostic, purpose: "act-sense loop (chaotic domain)" }
+  - { skill: pick-model, path: dstoic/skills/pick-model/SKILL.md, model: haiku, domain: agnostic, purpose: "recommend haiku/sonnet/opus" }
+  - { skill: search-skill, path: dstoic/skills/search-skill/SKILL.md, model: sonnet, domain: agnostic, purpose: "discover existing skills" }
 
 # 🧠 Think — Ideation & Analysis
 think:
-  - { skill: brainstorm, model: opus, domain: agnostic, purpose: "SCAMPER divergence → weighted scoring" }
-  - { skill: investigate, model: opus, domain: agnostic, purpose: "deep analysis (Issue Trees, Pre-mortem)" }
-  - { skill: challenge, model: opus, domain: agnostic, purpose: "adversarial review (3 families)" }
-  - { agent: devil-advocate, model: opus, domain: agnostic, purpose: "fresh-context 9-pattern debiasing" }
+  - { skill: brainstorm, path: dstoic/skills/brainstorm/SKILL.md, model: opus, domain: agnostic, purpose: "SCAMPER divergence → weighted scoring" }
+  - { skill: investigate, path: dstoic/skills/investigate/SKILL.md, model: opus, domain: agnostic, purpose: "deep analysis (Issue Trees, Pre-mortem)" }
+  - { skill: challenge, path: dstoic/skills/challenge/SKILL.md, model: opus, domain: agnostic, purpose: "adversarial review (3 families)" }
+  - { agent: devil-advocate, path: dstoic/agents/devil-advocate/agent.md, model: opus, domain: agnostic, purpose: "fresh-context 9-pattern debiasing" }
 
 # ⚙️ Build — Structured Development
 build:
-  - { skill: openspec-init, model: sonnet, domain: tech_agnostic, purpose: "setup project (garage/scale/maintenance)" }
-  - { skill: openspec-design, model: opus, domain: tech_agnostic, purpose: "BC-first structural design" }
-  - { skill: openspec-plan, model: opus, domain: tech_agnostic, purpose: "proposal + test strategy" }
-  - { skill: openspec-review, model: opus, domain: tech_agnostic, purpose: "pre-implementation tech lead gate" }
-  - { skill: openspec-develop, model: sonnet, domain: tech_agnostic, purpose: "implement sections, stop at gates" }
-  - { skill: openspec-test, model: sonnet, domain: tech_agnostic, purpose: "execute test.md, log results" }
-  - { skill: openspec-reflect, model: sonnet, domain: tech_agnostic, purpose: "pre-gate drift check" }
-  - { skill: openspec-replan, model: sonnet, domain: tech_agnostic, purpose: "pivot when blocked" }
-  - { skill: openspec-sync, model: sonnet, domain: tech_agnostic, purpose: "save session state" }
-  - { skill: edit-risen-prompt, model: sonnet, domain: agnostic, purpose: "create/audit RISEN prompts" }
+  - { skill: openspec-init, path: dstoic/skills/openspec-init/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "setup project (garage/scale/maintenance)" }
+  - { skill: openspec-design, path: dstoic/skills/openspec-design/SKILL.md, model: opus, domain: tech_agnostic, purpose: "BC-first structural design" }
+  - { skill: openspec-plan, path: dstoic/skills/openspec-plan/SKILL.md, model: opus, domain: tech_agnostic, purpose: "proposal + test strategy" }
+  - { skill: openspec-review, path: dstoic/skills/openspec-review/SKILL.md, model: opus, domain: tech_agnostic, purpose: "pre-implementation tech lead gate" }
+  - { skill: openspec-develop, path: dstoic/skills/openspec-develop/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "implement sections, stop at gates" }
+  - { skill: openspec-test, path: dstoic/skills/openspec-test/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "execute test.md, log results" }
+  - { skill: openspec-reflect, path: dstoic/skills/openspec-reflect/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "pre-gate drift check" }
+  - { skill: openspec-replan, path: dstoic/skills/openspec-replan/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "pivot when blocked" }
+  - { skill: openspec-sync, path: dstoic/skills/openspec-sync/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "save session state" }
+  - { skill: edit-risen-prompt, path: dstoic/skills/edit-risen-prompt/SKILL.md, model: sonnet, domain: agnostic, purpose: "create/audit RISEN prompts" }
 
 # 🔧 Debug — Troubleshooting
 debug:
-  - { skill: troubleshoot, model: sonnet, domain: tech_agnostic, purpose: "Wolf Fence, 5 Whys, Fishbone, OODA" }
+  - { skill: troubleshoot, path: dstoic/skills/troubleshoot/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "Wolf Fence, 5 Whys, Fishbone, OODA" }
 
 # 🪞 Learn — Retrospectives & Memory
 learn:
-  - { skill: tldr, model: sonnet, domain: agnostic, purpose: "concise session recap" }
-  - { skill: retrospect-domain, model: opus, domain: agnostic, purpose: "extract WHAT/WHY learnings" }
-  - { skill: retrospect-collab, model: opus, domain: agnostic, purpose: "analyze HOW collaboration" }
-  - { skill: retrospect-report, model: opus, domain: agnostic, purpose: "aggregate trends + visualizations" }
-  - { skill: save-context, model: sonnet, domain: agnostic, purpose: "serialize session → CONTEXT-llm.md" }
-  - { skill: load-context, model: sonnet, domain: agnostic, purpose: "resume from CONTEXT-llm.md" }
-  - { skill: create-context, model: sonnet, domain: agnostic, purpose: "bootstrap from .in/ folder" }
-  - { skill: list-contexts, model: sonnet, domain: agnostic, purpose: "registry across projects" }
-  - { agent: summarize-for-context, model: haiku, domain: agnostic, purpose: "compress >25K files" }
+  - { skill: tldr, path: dstoic/skills/tldr/SKILL.md, model: sonnet, domain: agnostic, purpose: "concise session recap" }
+  - { skill: retrospect-domain, path: dstoic/skills/retrospect-domain/SKILL.md, model: opus, domain: agnostic, purpose: "extract WHAT/WHY learnings" }
+  - { skill: retrospect-collab, path: dstoic/skills/retrospect-collab/SKILL.md, model: opus, domain: agnostic, purpose: "analyze HOW collaboration" }
+  - { skill: retrospect-report, path: dstoic/skills/retrospect-report/SKILL.md, model: opus, domain: agnostic, purpose: "aggregate trends + visualizations" }
+  - { skill: save-context, path: dstoic/skills/save-context/SKILL.md, model: sonnet, domain: agnostic, purpose: "serialize session → CONTEXT-llm.md" }
+  - { skill: load-context, path: dstoic/skills/load-context/SKILL.md, model: sonnet, domain: agnostic, purpose: "resume from CONTEXT-llm.md" }
+  - { skill: create-context, path: dstoic/skills/create-context/SKILL.md, model: sonnet, domain: agnostic, purpose: "bootstrap from .in/ folder" }
+  - { skill: list-contexts, path: dstoic/skills/list-contexts/SKILL.md, model: sonnet, domain: agnostic, purpose: "registry across projects" }
+  - { agent: summarize-for-context, path: dstoic/agents/summarize-for-context.md, model: haiku, domain: agnostic, purpose: "compress >25K files" }
 
 # 🔨 Create — Tool Orchestration
 create:
-  - { skill: edit-tool, model: sonnet, domain: tech_specific, purpose: "unified skill/agent/script editor" }
-  - { skill: edit-claude, model: sonnet, domain: tech_specific, purpose: "CLAUDE.md creation/optimization" }
-  - { skill: edit-plugin, model: sonnet, domain: tech_specific, purpose: "version bumps + plugin metadata" }
-  - { skill: test-skill, model: sonnet, domain: tech_specific, purpose: "behavioral tests for skills" }
-  - { skill: literatize, model: sonnet, domain: tech_agnostic, purpose: "add intent comments to code" }
+  - { skill: edit-tool, path: dstoic/skills/edit-tool/SKILL.md, model: sonnet, domain: tech_specific, purpose: "unified skill/agent/script editor" }
+  - { skill: edit-claude, path: dstoic/skills/edit-claude/SKILL.md, model: sonnet, domain: tech_specific, purpose: "CLAUDE.md creation/optimization" }
+  - { skill: edit-plugin, path: dstoic/skills/edit-plugin/SKILL.md, model: sonnet, domain: tech_specific, purpose: "version bumps + plugin metadata" }
+  - { skill: test-skill, path: dstoic/skills/test-skill/SKILL.md, model: sonnet, domain: tech_specific, purpose: "behavioral tests for skills" }
+  - { skill: literatize, path: dstoic/skills/literatize/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "add intent comments to code" }
 
 # 🔧 Utilities
 utilities:
-  - { skill: anonymize-doc, model: sonnet, domain: agnostic, purpose: "PII detection + 5 anonymization strategies" }
-  - { skill: install-dependency, model: sonnet, domain: tech_agnostic, purpose: "monorepo-aware package install" }
-  - { skill: convert-md-to-pdf, model: sonnet, domain: agnostic, purpose: "markdown + Mermaid → PDF" }
-  - { skill: infographize, model: sonnet, domain: agnostic, purpose: "markdown → AntV infographic SVG" }
-  - { skill: dump-output, model: sonnet, domain: tech_specific, purpose: "toggle debug artifact dumps" }
-  - { skill: scratch, model: sonnet, domain: agnostic, purpose: "session scratchpad" }
-  - { skill: background, model: sonnet, domain: agnostic, purpose: "async task execution" }
-  - { skill: toshl, model: sonnet, domain: personal, purpose: "financial data sync + reports" }
+  - { skill: anonymize-doc, path: dstoic/skills/anonymize-doc/SKILL.md, model: sonnet, domain: agnostic, purpose: "PII detection + 5 anonymization strategies" }
+  - { skill: install-dependency, path: dstoic/skills/install-dependency/SKILL.md, model: sonnet, domain: tech_agnostic, purpose: "monorepo-aware package install" }
+  - { skill: convert-md-to-pdf, path: dstoic/skills/convert-md-to-pdf/SKILL.md, model: sonnet, domain: agnostic, purpose: "markdown + Mermaid → PDF" }
+  - { skill: infographize, path: dstoic/skills/infographize/SKILL.md, model: sonnet, domain: agnostic, purpose: "markdown → AntV infographic SVG" }
+  - { skill: dump-output, path: dstoic/skills/dump-output/SKILL.md, model: sonnet, domain: tech_specific, purpose: "toggle debug artifact dumps" }
+  - { skill: scratch, path: dstoic/skills/scratch/SKILL.md, model: sonnet, domain: agnostic, purpose: "session scratchpad" }
+  - { skill: background, path: dstoic/skills/background/SKILL.md, model: sonnet, domain: agnostic, purpose: "async task execution" }
+  - { skill: toshl, path: dstoic/skills/toshl/SKILL.md, model: sonnet, domain: personal, purpose: "financial data sync + reports" }
 
 # 📥 Conversions & Imports
 conversions:
-  - { skill: convert-pdf, model: sonnet, domain: agnostic, purpose: "PDF → markdown (Docling)" }
-  - { skill: convert-docx, model: sonnet, domain: agnostic, purpose: "Word → markdown (markitdown)" }
-  - { skill: convert-pptx, model: sonnet, domain: agnostic, purpose: "PowerPoint → markdown" }
-  - { skill: convert-epub, model: sonnet, domain: agnostic, purpose: "EPUB → markdown" }
-  - { skill: import-gdoc, model: sonnet, domain: agnostic, purpose: "Google Docs → local with manifest" }
-  - { skill: deploy-surge, model: sonnet, domain: tech_specific, purpose: "static site deploy + inventory" }
+  - { skill: convert-pdf, path: dstoic/skills/convert-pdf/SKILL.md, model: sonnet, domain: agnostic, purpose: "PDF → markdown (Docling)" }
+  - { skill: convert-docx, path: dstoic/skills/convert-docx/SKILL.md, model: sonnet, domain: agnostic, purpose: "Word → markdown (markitdown)" }
+  - { skill: convert-pptx, path: dstoic/skills/convert-pptx/SKILL.md, model: sonnet, domain: agnostic, purpose: "PowerPoint → markdown" }
+  - { skill: convert-epub, path: dstoic/skills/convert-epub/SKILL.md, model: sonnet, domain: agnostic, purpose: "EPUB → markdown" }
+  - { skill: import-gdoc, path: dstoic/skills/import-gdoc/SKILL.md, model: sonnet, domain: agnostic, purpose: "Google Docs → local with manifest" }
+  - { skill: deploy-surge, path: dstoic/skills/deploy-surge/SKILL.md, model: sonnet, domain: tech_specific, purpose: "static site deploy + inventory" }
 ```
 
 ### By Domain Scope
@@ -301,20 +301,26 @@ plugins:
   gtd:
     version: 0.3.1
     domain: personal_productivity
-    skills: [capture, triage, route, focus]
+    skills:
+      - { skill: capture, path: gtd/skills/capture/SKILL.md }
+      - { skill: triage, path: gtd/skills/triage/SKILL.md }
+      - { skill: route, path: gtd/skills/route/SKILL.md }
+      - { skill: focus, path: gtd/skills/focus/SKILL.md }
     scope: "Obsidian vault GTD automation"
 
   coach:
     version: 0.3.0
     domain: personal_development
-    skills: [coach]
+    skills:
+      - { skill: coach, path: coach/skills/coach/SKILL.md }
     subcommands: [personal (CLEAR), signal (GROW)]
     scope: "Coaching sessions with protocol routing"
 
   biz:
     version: 0.2.0
     domain: business_analysis
-    skills: [analyze-competition]
+    skills:
+      - { skill: analyze-competition, path: biz/skills/analyze-competition/SKILL.md }
     scope: "Competitive analysis, feature matrix, go/no-go"
 ```
 

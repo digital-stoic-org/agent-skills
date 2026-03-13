@@ -42,7 +42,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/edit-plugin/scripts/bump-version.sh <current-versio
 
 Read current version from `dstoic/.claude-plugin/plugin.json`.
 
-## 3. Update All 5 Files
+## 3. Update Version (all files)
 
 **Atomic — never partially update.**
 
@@ -56,9 +56,19 @@ Read current version from `dstoic/.claude-plugin/plugin.json`.
 
 Use Edit tool: old version string → new version string. See `reference.md` for exact patterns.
 
-## 4. Update Sections (if added/removed)
+## 4. Update Counts (if skills/commands/hooks added/removed)
 
-Add/remove table entries in appropriate cognitive mode sections of `README-full.md`. Update counts in section headings if present. See `reference.md` for section categories.
+**All files with skill/command/hook counts must stay in sync.**
+
+| # | File | What to update |
+|---|------|----------------|
+| 1 | `README.md` | "By the Numbers" section (`**N skills**`) + plugin table description (`N skills, N commands, N hooks`) |
+| 2 | `README-full.md` | Section heading counts (e.g., `(6 skills)`, `(3 skills + 1 agent)`) |
+| 3 | `PRACTICE.md` | Domain classification table (agnostic/tech-agnostic/tech-specific counts) |
+| 4 | `PRACTICE-llm.md` | `domain_classification` YAML `count:` fields |
+| 5 | `dstoic/README.md` | `## 📦 Version` line (`N skills · N commands · N hooks`) |
+
+Also add/remove table entries in appropriate cognitive mode sections of `README-full.md`. See `reference.md` for section categories.
 
 ## 5. Review
 

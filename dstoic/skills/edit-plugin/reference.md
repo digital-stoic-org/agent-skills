@@ -34,12 +34,15 @@ Two locations to update:
 
 ### 3. `README.md`
 
-Plugin table row pattern:
+**Plugin table row** (version + counts):
 ```
-| [dstoic](dstoic/) | Core cognitive toolkit: 22 skills, 12 commands, 3 hooks | ✅ vX.Y.Z |
+| [dstoic](dstoic/) | Core cognitive toolkit: N skills, N commands, N hooks | ✅ vX.Y.Z |
 ```
 
-Replace version in the `✅ vX.Y.Z` cell.
+**"By the Numbers" section** (total skill count):
+```
+- **N skills** across 5 cognitive modes + utilities
+```
 
 ### 4. `dstoic/README.md`
 
@@ -47,7 +50,7 @@ Version section pattern:
 ```markdown
 ## 📦 Version
 
-`X.Y.Z` · 22 skills · 12 commands · 3 hooks
+`X.Y.Z` · N skills · N commands · N hooks
 ```
 
 Replace the backtick-wrapped version string. Update skill/command/hook counts if changed.
@@ -61,7 +64,31 @@ Version section pattern:
 `X.Y.Z`
 ```
 
-Replace the backtick-wrapped version string.
+Replace the backtick-wrapped version string. Also update section heading counts (e.g., `(6 skills)`, `(3 skills + 1 agent)`).
+
+### 6. `PRACTICE.md`
+
+Domain classification table (update counts when skills added/removed):
+```
+| 🌍 **Domain-agnostic** | Any professional, any field | N skills | ... |
+| 💻 **Tech (stack-agnostic)** | Any software project | N skills | ... |
+| 🔧 **Tech (stack-specific)** | Tied to specific tooling | N skills | ... |
+```
+
+### 7. `PRACTICE-llm.md`
+
+Domain classification YAML (update `count:` fields when skills added/removed):
+```yaml
+domain_classification:
+  agnostic:
+    count: N
+  tech_agnostic:
+    count: N
+  tech_specific:
+    count: N
+  personal:
+    count: N
+```
 
 ## README-full.md Skill/Command Sections
 

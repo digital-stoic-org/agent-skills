@@ -18,6 +18,8 @@ AI tools are powerful but chaotic. Most people either **micromanage** every prom
 
 This toolkit treats **AI collaboration as cognitive discipline** — a set of thinking modes you activate depending on the situation, where the AI also pushes back on your assumptions. The goal is not to make AI do more. It's to **think better together** — and that includes letting AI challenge the human.
 
+Deeper why → [PHILOSOPHY.md](PHILOSOPHY.md)
+
 ---
 
 ## 🧭 The Flow
@@ -100,7 +102,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 46 skills, 0 commands, 4 hooks | ✅ v0.22.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 46 skills, 0 commands, 4 hooks | ✅ v0.22.1 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.2.0 |
