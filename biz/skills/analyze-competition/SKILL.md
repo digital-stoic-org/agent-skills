@@ -39,3 +39,4 @@ Write `analysis/competitive-analysis.md` using the template in `references/metho
 - Kill-criteria: if any criterion breaches threshold → explicit kill recommendation
 - No speculation — mark uncertain data with confidence level (high/medium/low)
 - See `references/methodology.md` for output template, Perplexity prompt, and FR sources
+- **Next step**: At end of output, suggest `/ux-strategize empathy-map {subject}` to start building UX artifacts from the analysis
