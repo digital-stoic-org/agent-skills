@@ -1,6 +1,8 @@
-# 🧭 Philosophy & Principles
+# 🧭 Digital Stoic Praxis — Philosophy & Principles
 
 > Human+AI collaboration as metacognitive practice.
+
+📖 **Reading order**: [README](README.md) (what + how?) → **this file** (why?) → [PRACTICE](PRACTICE.md) (deep how) → [README-full](README-full.md) (every skill)
 
 ---
 
@@ -28,11 +30,11 @@ Research exists. Patterns exist. Don't reinvent. Before writing code: brainstorm
 
 `/brainstorm` and `/investigate` encode structured thinking methods — SCAMPER, Issue Trees, Morphological Analysis, Pre-mortem — so you don't skip them under time pressure.
 
-### 🚧 Human controls the pace
+### 🚧 Human controls execution, AI challenges thinking
 
-AI is fast. Humans need to verify. The **gate pattern** solves this: AI implements a section, stops, human reviews, marks pass, AI continues. No runaway AI building the wrong thing for 20 minutes.
+For *execution*, the human controls the pace. The **gate pattern** ensures this: AI implements a section, stops, human reviews, marks pass, AI continues. No runaway AI building the wrong thing for 20 minutes. Gates also enable crash recovery — checkboxes persist, so you can resume where you left off.
 
-Gates also enable crash recovery — checkboxes persist, so you can resume where you left off.
+For *thinking*, the relationship is **bidirectional**. The human sets intent and direction — but the AI pushes back on assumptions, surfaces blind spots, and reveals patterns the human can't self-observe. `/challenge` and the devil's advocate agent exist specifically so AI can correct-check the human. Controlling execution while inviting challenge on thinking — that's the balance.
 
 ### 📌 Micro-commits at every gate
 
@@ -130,4 +132,4 @@ Issues & ideas: [github.com/digital-stoic-org/agent-skills/issues](https://githu
 
 ---
 
-📄 **TL;DR:** [README.md](README.md) · 📚 **Full catalog:** [README-full.md](README-full.md)
+📄 **TL;DR:** [README.md](README.md) · 📚 **Full catalog:** [README-full.md](README-full.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md)

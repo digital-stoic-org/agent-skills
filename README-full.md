@@ -1,8 +1,8 @@
-# 📚 Agent Skills — Full Catalog
+# 📚 Digital Stoic Praxis — Full Catalog
 
 > ⚠️ Live experiment. Highly personalized to my working style. Fork it, adapt it to *your* brain.
 
-📖 **Principles & mindset:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md)
+📖 **Reading order**: [README](README.md) (what + how?) → [PHILOSOPHY](PHILOSOPHY.md) (why?) → [PRACTICE](PRACTICE.md) (deep how) → **this file** (every skill)
 
 ---
 
@@ -552,4 +552,4 @@ This installs all plugins (dstoic, gtd). To install a specific plugin only, add 
 
 📄 **License:** MIT — Fork it, adapt it, make it yours.
 
-🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md)
+🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md)

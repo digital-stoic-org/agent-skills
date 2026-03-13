@@ -1,31 +1,26 @@
-# 🧠 Agent Skills Marketplace
+# 🧠 Digital Stoic Praxis
 
-> **Structured human+AI collaboration for knowledge work.**
+> **Praxis** (πρᾶξις) = practice. Knowledge enacted, not just known.
 
 ⚠️ Live experiment. My cognitive toolkit — fork it, adapt it to *your* brain.
 
 ---
 
-## 💡 Why This Exists
+## 🎯 In One Sentence
 
-AI coding tools are powerful but chaotic. Most people either **micromanage** every prompt or **let AI run wild** and pray. Neither scales to real work.
-
-This toolkit treats **AI collaboration as cognitive discipline** — a set of thinking modes you activate depending on the situation, with the human always setting the pace.
-
-## 🎯 Principles
-
-- 🧭 **Frame before act** — classify the problem, then pick the right approach
-- 🧠 **Think before build** — brainstorm, investigate, design *before* writing code
-- 🚧 **Human controls pace** — gates between sections, you verify, AI continues
-- 🪨 **Boulder → Pebbles** — scale your process to the problem (OpenSpec for big, just code for small)
-- 💾 **Sessions persist** — save context, resume tomorrow without re-explaining
-- 🪞 **Learn from patterns** — retrospectives extract what worked and what didn't
-
-📖 Deep dive: [PHILOSOPHY.md](PHILOSOPHY.md)
+A cognitive discipline for human-AI collaboration built on **mutual sharpening** — the human sets intent and directs, the AI challenges and reveals blind spots, and both learn from the loop.
 
 ---
 
-## 🔄 Cognitive Modes
+## 💡 Why This Exists
+
+AI tools are powerful but chaotic. Most people either **micromanage** every prompt or **let AI run wild** and pray. Neither scales to real work.
+
+This toolkit treats **AI collaboration as cognitive discipline** — a set of thinking modes you activate depending on the situation, where the AI also pushes back on your assumptions. The goal is not to make AI do more. It's to **think better together** — and that includes letting AI challenge the human.
+
+---
+
+## 🧭 The Flow
 
 ```mermaid
 flowchart LR
@@ -33,7 +28,7 @@ flowchart LR
     T --> B["⚙️ Build"]
     B --> D["🔧 Debug"]
     D --> L["🪞 Learn"]
-    L -.->|"next problem"| F
+    L -.->|"compounding loop"| F
 
     classDef frame fill:#E8EAF6,stroke:#3F51B5,color:#000
     classDef think fill:#E1BEE7,stroke:#7B1FA2,color:#000
@@ -51,12 +46,53 @@ flowchart LR
 | Mode | What | Hero Skills |
 |------|------|-------------|
 | 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin), `/pick-model` |
-| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate` (Issue Trees, Pre-mortem), `/probe` (safe-to-fail), `/challenge` (Devil's Advocate) |
-| ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (7 skills, human-gated sections) |
-| 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` (Chaotic act-sense) |
+| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate`, `/probe`, `/challenge` |
+| ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (9 skills, human-gated sections) |
+| 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` |
 | 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |
 
-Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors), **conversions** (PDF, EPUB, Google Docs), and a **GTD plugin** for task capture.
+Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs), and domain plugins (GTD, coaching, business analysis).
+
+---
+
+## 🤝 Human-AI Blend
+
+Not human-drives-AI. Not AI-drives-human. **Mutual sharpening:**
+
+- **Human → AI**: Sets intent, chooses cognitive mode, directs execution, verifies at gates
+- **AI → Human**: Challenges assumptions, surfaces blind spots, reveals patterns the human can't self-observe
+- **Together**: The human thinks more clearly *because* the AI pushes back. The AI produces better work *because* the human sets precise intent.
+
+**Key**: Posture before technique — but posture includes the willingness to be challenged.
+
+Full autonomy spectrum + orchestrated agency → [PRACTICE.md](PRACTICE.md#-the-human-ai-blend)
+
+---
+
+## 💰 Cognitive ROI (Return on Tokens)
+
+Not "how fast" — **how deep**:
+
+| Tier | What | Value/Token |
+|------|------|-------------|
+| ⚙️ Automation | Rote tasks (convert, deploy, format) | Low |
+| 🤝 Assisted Thinking | AI structures human thought | Medium |
+| 🧠 Amplified Judgment | AI challenges/deepens reasoning | **High** |
+
+**Maturity = shifting tokens from ⚙️ toward 🧠.**
+
+Multiplied by **context efficiency** (don't waste tokens re-explaining) and **compounding** (learnings reduce future spend). Full model → [PRACTICE.md](PRACTICE.md#-cognitive-roi-return-on-tokens)
+
+---
+
+## 📊 By the Numbers
+
+- **46 skills** across 5 cognitive modes + utilities
+- **4 plugins**: core (dstoic), GTD, coaching, business analysis
+- **2 agents**: devil's advocate (debiasing), context summarizer
+- **4 hooks**: notifications, session capture, debug dumps, daily sync
+- **3 execution modes**: garage (default), scale, maintenance
+- **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
 
 ---
 
@@ -65,19 +101,17 @@ Plus: **tool creation** (`/edit-tool` → routes to skill/command/agent editors)
 | Plugin | Description | Status |
 |--------|-------------|--------|
 | [dstoic](dstoic/) | Core cognitive toolkit: 46 skills, 0 commands, 4 hooks | ✅ v0.22.0 |
-| [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.1.0 |
+| [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
+| [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.2.0 |
-| ... | More planned | 🔜 |
 
 ## 📦 Install
-
-Install from the Claude Code marketplace:
 
 ```
 /install-plugin https://github.com/digital-stoic-org/agent-skills
 ```
 
-This installs all plugins (dstoic, gtd). To install a specific plugin only, add it to `.claude/settings.json`:
+To install a specific plugin only, add it to `.claude/settings.json`:
 ```json
 {"plugins": ["digital-stoic-org/agent-skills/dstoic"]}
 ```
@@ -98,25 +132,29 @@ This installs all plugins (dstoic, gtd). To install a specific plugin only, add 
 
 ---
 
-## 📖 Documentation Philosophy
+## 📖 Documentation — Two Cognitions, One Practice
 
-GenAI makes it too easy to generate walls of text → **cognitive overload** for humans.
+This toolkit serves **two kinds of readers** with fundamentally different needs:
 
-| Doc Type | For | Example |
-|----------|-----|---------|
-| 📄 `README.md` | Humans (1 min scan) | This file |
-| 📚 `README-full.md` | Humans (deep dive) | [Full catalog](README-full.md) |
-| 🧭 `PHILOSOPHY.md` | Humans (mindset) | [Principles](PHILOSOPHY.md) |
-| 🤖 `SKILL.md` | LLMs (token-optimized) | Not for human reading |
+**👤 Human cognition** — scans, skims, needs cognitive ease. Overwhelmed by walls of text. Seeks the "aha" moment, then dives deeper only when motivated. Diagrams and structure reduce cognitive load.
 
-Respect your attention. Start here, dive deeper only when needed.
+**🤖 LLM cognition** — parses tokens. Needs directive density, structured data, zero filler. Diagrams are nice but YAML is better. Self-contained is better than linked.
+
+The practice itself is about **combining both**: a human who thinks consciously and an AI that both amplifies and challenges that thinking. The documentation mirrors this — each layer optimized for its reader:
+
+| # | Document | Reader | Job |
+|---|----------|--------|-----|
+| 1 | 📄 **README.md** | 👤 Human | **"What + How (TL;DR)"** — This file. The GitHub landing page. |
+| 2 | 🧭 [PHILOSOPHY.md](PHILOSOPHY.md) | 👤 Human | **"Why"** — Beliefs, 7 principles, execution modes, toothbrush principle |
+| 3 | 🎯 [PRACTICE.md](PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI model, autonomy spectrum, benchmarking |
+| 4 | 📚 [README-full.md](README-full.md) | 👤 Human | **"Every Skill"** — Complete catalog, reference |
+| 5 | 🤖 [PRACTICE-llm.md](PRACTICE-llm.md) | 🤖 LLM | **Self-contained benchmark** — Token-optimized, YAML-heavy, all-in-one |
+| — | 🤖 `SKILL.md` (per skill) | 🤖 LLM | **Execution directives** — What the LLM actually runs |
+
+Human docs link to each other (progressive depth). LLM docs are **self-contained** (no navigation, everything in one shot). The practice works because both cognitions play to their strengths.
 
 ---
 
-⚠️ 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](CLAUDE.md.example) for inspiration, don't copy. ([Why?](PHILOSOPHY.md#-claudemd--toothbrush))
+⚠️ 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](CLAUDE.md.example) for inspiration, don't copy. ([Why?](PHILOSOPHY.md#-the-toothbrush-principle))
 
 The example uses [`rtk`](https://github.com/pszymkowiak/rtk) for token-optimized command output. Install it separately if you want to use the rtk instructions.
-
----
-
-📚 **Full skill catalog:** [README-full.md](README-full.md) · 🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md)
