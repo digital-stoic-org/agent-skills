@@ -445,10 +445,11 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (7 skills)
+## 🔧 Utilities (8 skills)
 
 | Skill | Purpose |
 |-------|---------|
+| `commit-repo` | 🗂️ Streamlined git commit with single human gate (scope + message review) |
 | `anonymize-doc` | 🔒 Detect/anonymize PII + business data (GDPR/HIPAA aware) |
 | `install-dependency` | 📦 Monorepo-aware package installation (pip/bun/apt) |
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |

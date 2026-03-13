@@ -29,10 +29,10 @@
 
 ## Alias Paths
 
-- **gtd-pcm**: control `/praxis/vaults/gtd-pcm` | data `/vaults/gtd-pcm`
-- **agent-skills**: control `/home/mat/dev/praxis` | data `/home/mat/dev/agent-skills`
+- **gtd-pcm**: control `/praxis/repos/gtd-pcm` | data `/repos/gtd-pcm`
+- **agent-skills**: control `/praxis` | data `/repos/agent-skills`
 
-(Control: instructions, OpenSpec, context. Data: project files in separate git repo.)
+(Control: instructions, OpenSpec, context. Data: project files in separate git repo. Used by `/commit-repo` to resolve repo aliases.)
 
 ## Planning
 

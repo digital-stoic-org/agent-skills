@@ -89,7 +89,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **46 skills** across 5 cognitive modes + utilities
+- **47 skills** across 5 cognitive modes + utilities
 - **4 plugins**: core (dstoic), GTD, coaching, business analysis
 - **2 agents**: devil's advocate (debiasing), context summarizer
 - **4 hooks**: notifications, session capture, debug dumps, daily sync
@@ -102,7 +102,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 46 skills, 0 commands, 4 hooks | ✅ v0.22.1 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 47 skills, 0 commands, 4 hooks | ✅ v0.23.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.2.0 |
