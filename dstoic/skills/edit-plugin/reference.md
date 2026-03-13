@@ -1,155 +1,87 @@
 # Edit Plugin — Reference
 
-## File Format Patterns
+## Plugin Resolution
 
-### 1. `dstoic/.claude-plugin/plugin.json`
+Known plugins (dirs with `.claude-plugin/plugin.json`):
+- `dstoic` — Core cognitive toolkit
+- `biz` — Business analysis skills
+- `gtd` — GTD workflow skills
+- `coach` — Coaching skills
 
-```json
-{
-  "version": "X.Y.Z"
-}
+Discovery command:
+```bash
+find . -maxdepth 2 -path '*/.claude-plugin/plugin.json' | sed 's|./\(.*\)/.claude-plugin/plugin.json|\1|'
 ```
 
+## Version Patterns
+
+### Required: `plugin.json`
+
+Every plugin has `{plugin}/.claude-plugin/plugin.json`:
+```json
+{ "version": "X.Y.Z" }
+```
 Replace: `"version": "OLD"` → `"version": "NEW"`
 
-### 2. `.claude-plugin/marketplace.json`
+### Optional: `marketplace.json`
 
-Two locations to update:
-
+Repo-level `.claude-plugin/marketplace.json` (multi-plugin repos only):
 ```json
 {
   "metadata": {
-    "version": "X.Y.Z"    // ← location 1
+    "version": "X.Y.Z"           // ← only if this plugin is primary
   },
   "plugins": [
-    {
-      "name": "dstoic",
-      "version": "X.Y.Z"  // ← location 2
-    }
+    { "name": "PLUGIN", "version": "X.Y.Z" }  // ← match by name
   ]
 }
 ```
+**Important:** Only update the matching `plugins[name=PLUGIN].version` entry. Update `metadata.version` only if this plugin is the primary (currently dstoic).
 
-**Important:** Do NOT update `gtd` plugin version — it's independent.
+### Discovered: grep for old version string
 
-### 3. `README.md`
+Common matches:
+- **README badge**: `✅ vX.Y.Z` in plugin table row
+- **Backtick version**: `` `X.Y.Z` `` under `## 📦 Version`
+- **Inline version**: `vX.Y.Z` in prose
 
-**Plugin table row** (version + counts):
-```
-| [dstoic](dstoic/) | Core cognitive toolkit: N skills, N commands, N hooks | ✅ vX.Y.Z |
-```
+Filter grep results: include `${PLUGIN_DIR}/` files + repo-root files referencing this plugin. Exclude `.git/`, `SKILL.md`, `reference.md`.
 
-**"By the Numbers" section** (total skill count):
-```
-- **N skills** across 5 cognitive modes + utilities
-```
+## Count Patterns
 
-### 4. `dstoic/README.md`
+Grep-discovered — only update if skills/commands were added/removed:
 
-Version section pattern:
-```markdown
-## 📦 Version
+- `N skills` (e.g., `**6 skills**`, `(6 skills)`, `6 skills ·`)
+- `N commands` (e.g., `3 commands`)
+- `N hooks` (e.g., `2 hooks`)
+- Count fields in YAML: `count: N`
+- Description strings: `N skills, N commands, N hooks`
 
-`X.Y.Z` · N skills · N commands · N hooks
-```
-
-Replace the backtick-wrapped version string. Update skill/command/hook counts if changed.
-
-### 5. `dstoic/README-full.md`
-
-Version section pattern:
-```markdown
-## 📦 Version
-
-`X.Y.Z`
-```
-
-Replace the backtick-wrapped version string. Also update section heading counts (e.g., `(6 skills)`, `(3 skills + 1 agent)`).
-
-### 6. `PRACTICE.md`
-
-Domain classification table (update counts when skills added/removed):
-```
-| 🌍 **Domain-agnostic** | Any professional, any field | N skills | ... |
-| 💻 **Tech (stack-agnostic)** | Any software project | N skills | ... |
-| 🔧 **Tech (stack-specific)** | Tied to specific tooling | N skills | ... |
-```
-
-### 7. `PRACTICE-llm.md`
-
-Domain classification YAML (update `count:` fields when skills added/removed):
-```yaml
-domain_classification:
-  agnostic:
-    count: N
-  tech_agnostic:
-    count: N
-  tech_specific:
-    count: N
-  personal:
-    count: N
-```
-
-## README-full.md Skill/Command Sections
-
-README-full.md is organized by **cognitive modes**, not skill types.
-
-### Adding a New Skill
-
-1. Identify the correct cognitive mode section:
-   - `## 🧭 Frame — Sense-Making` — frame-problem, pick-model, edit-tool
-   - `## 🧠 Think — Ideation & Analysis` — brainstorm, investigate
-   - `## ⚙️ Build — Structured Development` — openspec-* skills
-   - `## 🔧 Debug — Troubleshooting` — troubleshoot
-   - `## 🪞 Learn — Retrospectives & Session Memory` — retrospect-*, context commands
-   - `## 🔨 Create — Tool Orchestration` — edit-*, search-skill
-   - `## 🔧 Utilities` — everything else
-
-2. Add table row in the appropriate section:
-   ```
-   | `skill-name` | 📎 Brief description |
-   ```
-
-3. Update skill count in the section heading if present (e.g., `(N skills)`)
-
-### Adding a New Command
-
-1. Identify the correct cognitive mode section:
-   - `## 🪞 Learn` — retrospect commands, context management commands
-   - `## 📥 Conversions & Imports` — convert-*, import-*
-   - `## 🔧 Utilities` — everything else
-
-2. Add table row:
-   ```
-   | `/command-name` | 📎 Brief description | model |
-   ```
+Files commonly containing counts (dstoic-specific, discovered via grep):
+- `README.md` — plugin table, "By the Numbers"
+- `{plugin}/README.md` — version line with counts
+- `PRACTICE.md` / `PRACTICE-llm.md` — domain classification counts
 
 ## Change Detection Logic
 
 ### Skills directory scan
 ```
-dstoic/skills/*/SKILL.md
+${PLUGIN_DIR}/skills/*/SKILL.md
 ```
 Each directory = one skill. Skill name = directory name.
 
 ### Commands directory scan
 ```
-dstoic/commands/*.md
+${PLUGIN_DIR}/commands/*.md
 ```
 Each .md file = one command. Command name = filename without .md extension.
 
 ### Detecting changes since last release
-
-Compare current state vs last git tag:
 ```bash
-git diff --name-status $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10) HEAD -- dstoic/skills/ dstoic/commands/
+git diff --name-status $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10) HEAD -- ${PLUGIN_DIR}/skills/ ${PLUGIN_DIR}/commands/
 ```
 
-Status codes:
-- `A` = added (new skill/command)
-- `M` = modified (updated)
-- `D` = deleted (removed)
-- `R` = renamed
+Status codes: `A` = added, `M` = modified, `D` = deleted, `R` = renamed
 
 ## Version Bump Rules
 

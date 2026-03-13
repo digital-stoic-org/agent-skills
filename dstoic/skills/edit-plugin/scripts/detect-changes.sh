@@ -1,12 +1,13 @@
 #!/bin/bash
 # Detect skill/command changes since last git tag
-# Usage: detect-changes.sh <plugin-root>
+# Usage: detect-changes.sh <repo-root> <plugin-dir>
 # Output: YAML-formatted change list (deduplicated by name, priority: added > removed > renamed > modified)
 
 set -euo pipefail
 
-PLUGIN_ROOT="${1:-.}"
-cd "$PLUGIN_ROOT"
+REPO_ROOT="${1:?Usage: detect-changes.sh <repo-root> <plugin-dir>}"
+PLUGIN_DIR="${2:?Usage: detect-changes.sh <repo-root> <plugin-dir>}"
+cd "$REPO_ROOT"
 
 # Use rtk if available, fall back to standard commands
 if command -v rtk &>/dev/null; then
@@ -42,50 +43,53 @@ action_priority() {
 # Collect all changes, deduplicate by (type, name), keep highest priority action
 declare -A seen
 
-# git diff --name-status needs raw git (rtk reformats output)
-# Use raw git here since we parse structured output
-while IFS=$'\t' read -r status path; do
-    skill_name=$(echo "$path" | sed 's|dstoic/skills/||' | cut -d'/' -f1)
-    case "$status" in
-        A*) action="added" ;;
-        M*) action="modified" ;;
-        D*) action="removed" ;;
-        R*) action="renamed" ;;
-        *) continue ;;
-    esac
-    key="skill:$skill_name"
-    new_pri=$(action_priority "$action")
-    if [ -z "${seen[$key]:-}" ]; then
-        seen[$key]="$action"
-    else
-        old_pri=$(action_priority "${seen[$key]}")
-        if [ "$new_pri" -lt "$old_pri" ]; then
+# Detect skill changes (only if skills dir exists)
+if [ -d "${PLUGIN_DIR}/skills" ]; then
+    while IFS=$'\t' read -r status path; do
+        skill_name=$(echo "$path" | sed "s|${PLUGIN_DIR}/skills/||" | cut -d'/' -f1)
+        case "$status" in
+            A*) action="added" ;;
+            M*) action="modified" ;;
+            D*) action="removed" ;;
+            R*) action="renamed" ;;
+            *) continue ;;
+        esac
+        key="skill:$skill_name"
+        new_pri=$(action_priority "$action")
+        if [ -z "${seen[$key]:-}" ]; then
             seen[$key]="$action"
+        else
+            old_pri=$(action_priority "${seen[$key]}")
+            if [ "$new_pri" -lt "$old_pri" ]; then
+                seen[$key]="$action"
+            fi
         fi
-    fi
-done < <(git diff --name-status "$BASE" HEAD -- dstoic/skills/ 2>/dev/null)
+    done < <(git diff --name-status "$BASE" HEAD -- "${PLUGIN_DIR}/skills/" 2>/dev/null)
+fi
 
-# Detect command changes
-while IFS=$'\t' read -r status path; do
-    cmd_name=$(basename "$path" .md)
-    case "$status" in
-        A*) action="added" ;;
-        M*) action="modified" ;;
-        D*) action="removed" ;;
-        R*) action="renamed" ;;
-        *) continue ;;
-    esac
-    key="command:$cmd_name"
-    new_pri=$(action_priority "$action")
-    if [ -z "${seen[$key]:-}" ]; then
-        seen[$key]="$action"
-    else
-        old_pri=$(action_priority "${seen[$key]}")
-        if [ "$new_pri" -lt "$old_pri" ]; then
+# Detect command changes (only if commands dir exists)
+if [ -d "${PLUGIN_DIR}/commands" ]; then
+    while IFS=$'\t' read -r status path; do
+        cmd_name=$(basename "$path" .md)
+        case "$status" in
+            A*) action="added" ;;
+            M*) action="modified" ;;
+            D*) action="removed" ;;
+            R*) action="renamed" ;;
+            *) continue ;;
+        esac
+        key="command:$cmd_name"
+        new_pri=$(action_priority "$action")
+        if [ -z "${seen[$key]:-}" ]; then
             seen[$key]="$action"
+        else
+            old_pri=$(action_priority "${seen[$key]}")
+            if [ "$new_pri" -lt "$old_pri" ]; then
+                seen[$key]="$action"
+            fi
         fi
-    fi
-done < <(git diff --name-status "$BASE" HEAD -- dstoic/commands/ 2>/dev/null)
+    done < <(git diff --name-status "$BASE" HEAD -- "${PLUGIN_DIR}/commands/" 2>/dev/null)
+fi
 
 # Output
 echo "changes:"
@@ -96,10 +100,18 @@ for key in $(echo "${!seen[@]}" | tr ' ' '\n' | sort); do
     echo "  - type: $type, name: $name, action: $action"
 done
 
-# Current counts — use rtk find for display, raw find for counting
+# Current counts
 echo ""
 echo "counts:"
-SKILL_COUNT=$(find dstoic/skills -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
-CMD_COUNT=$(find dstoic/commands -maxdepth 1 -name '*.md' 2>/dev/null | wc -l)
+if [ -d "${PLUGIN_DIR}/skills" ]; then
+    SKILL_COUNT=$(find "${PLUGIN_DIR}/skills" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
+else
+    SKILL_COUNT=0
+fi
+if [ -d "${PLUGIN_DIR}/commands" ]; then
+    CMD_COUNT=$(find "${PLUGIN_DIR}/commands" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l)
+else
+    CMD_COUNT=0
+fi
 echo "  skills: $SKILL_COUNT"
 echo "  commands: $CMD_COUNT"
