@@ -523,7 +523,7 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 
 | Feature | Requires | Install |
 |---------|----------|---------|
-| Browser automation | [agent-browser](https://github.com/anthropics/agent-browser) | `bun install -g agent-browser` |
+| Browser automation | [agent-browser](https://github.com/vercel-labs/agent-browser) | CLI: `bun install -g agent-browser` · Skill: `bunx skills add vercel-labs/agent-browser --skill agent-browser -y` |
 | Token-optimized output | [rtk](https://github.com/pszymkowiak/rtk) | See repo for install |
 | Node.js packages | [bun](https://bun.sh) | `curl -fsSL https://bun.sh/install \| bash` |
 

@@ -2,7 +2,7 @@
 name: commit-repo
 description: Streamlined git commit for praxis-managed repos. Single human gate for scope + message approval. Use when committing changes, "commit repo", "commit praxis", "commit nano-vc".
 argument-hint: "<repo-alias> [--all]"
-allowed-tools: [Bash, Read, Edit]
+allowed-tools: [Bash, Read, Edit, AskUserQuestion]
 model: sonnet
 context: main
 user-invocable: true
@@ -57,12 +57,11 @@ From the recon output:
 2. Determine conventional commit `type(scope): description` per CLAUDE.md rules
 3. Draft commit body: `What:` bullets + `Why:` line
 
-### Phase 3: Propose + Execute (single human gate)
+### Phase 3: Propose + Confirm + Execute
 
-**DO NOT wait for user confirmation after the proposal.** Output the proposal text, then immediately fire the commit command. The Bash permission prompt on `git commit` IS the single human gate.
-
-1. Output the proposal as text (no pause):
+1. Output the proposal as text:
 ```
+---
 📦 Commit proposal for <alias> (<branch>)
 
 Staged files:
@@ -79,8 +78,16 @@ What:
 Why: reason
 ```
 
-2. If `--all`: `git -C <data-path> add -A` (user approves this Bash call)
-3. Immediately run `git -C <data-path> commit -m "<message>"` — user approves or denies here. If denied, ask what to change.
+2. **⚠️ MANDATORY HUMAN GATE — use AskUserQuestion:**
+   - Question: "Proceed with commit? (y/n/edit)"
+   - If answer is empty/blank (known bug outside Plan Mode): fall back to inline text — output "Reply **y** to commit, **n** to abort, or **edit** to modify" and WAIT for user text reply
+   - If "n" or denied: abort, report "❌ Commit aborted"
+   - If "edit": ask what to change, revise, re-propose
+   - If "y" or approved: proceed to step 3
+
+3. If `--all`: `git -C <data-path> add -A`
+4. Run `git -C <data-path> commit -m "<message>"`
+   - If commit fails, report error and exit
 
 Use HEREDOC for multi-line messages:
 ```
@@ -96,7 +103,7 @@ EOF
 )"
 ```
 
-4. After successful commit: `git -C <data-path> log --oneline -1` (auto-approved, verify success)
+5. After successful commit: `git -C <data-path> log --oneline -1` (auto-approved, verify success)
 
 Report: ✅ Committed `<short-hash>` to `<branch>` in `<alias>`
 
@@ -136,4 +143,4 @@ Add auto-approve rules for read-only git commands on each repo path. Example for
 }
 ```
 
-This keeps recon (Phase 1) zero-approval. The `git add` and `git commit` calls in Phase 3 remain prompted — serving as the single human gate.
+This keeps recon (Phase 1) zero-approval. The explicit AskUserQuestion in Phase 3 serves as the single human gate (do NOT rely on Bash permission prompts — they fail open inside skills, see Claude Code bug #18950/#25181).
