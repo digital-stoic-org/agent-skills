@@ -57,9 +57,11 @@ From the recon output:
 2. Determine conventional commit `type(scope): description` per CLAUDE.md rules
 3. Draft commit body: `What:` bullets + `Why:` line
 
-### Phase 3: Propose
+### Phase 3: Propose + Execute (single human gate)
 
-Output a clear summary:
+**DO NOT wait for user confirmation after the proposal.** Output the proposal text, then immediately fire the commit command. The Bash permission prompt on `git commit` IS the single human gate.
+
+1. Output the proposal as text (no pause):
 ```
 📦 Commit proposal for <alias> (<branch>)
 
@@ -77,12 +79,8 @@ What:
 Why: reason
 ```
 
-### Phase 4: Execute (human approves via Bash permission prompt)
-
-Run as **separate sequential Bash calls**:
-
-1. If `--all`: `git -C <data-path> add -A` (user approves this Bash call)
-2. `git -C <data-path> commit -m "<message>"` (user approves this Bash call — THIS is the human gate)
+2. If `--all`: `git -C <data-path> add -A` (user approves this Bash call)
+3. Immediately run `git -C <data-path> commit -m "<message>"` — user approves or denies here. If denied, ask what to change.
 
 Use HEREDOC for multi-line messages:
 ```
@@ -98,9 +96,7 @@ EOF
 )"
 ```
 
-The user sees the full commit command and can approve or deny. If denied, ask what to change.
-
-3. After successful commit: `git -C <data-path> log --oneline -1` (auto-approved, verify success)
+4. After successful commit: `git -C <data-path> log --oneline -1` (auto-approved, verify success)
 
 Report: ✅ Committed `<short-hash>` to `<branch>` in `<alias>`
 
@@ -140,4 +136,4 @@ Add auto-approve rules for read-only git commands on each repo path. Example for
 }
 ```
 
-This keeps recon (Phase 1) zero-approval. The `git add` and `git commit` calls in Phase 4 remain prompted — serving as the single human gate.
+This keeps recon (Phase 1) zero-approval. The `git add` and `git commit` calls in Phase 3 remain prompted — serving as the single human gate.
