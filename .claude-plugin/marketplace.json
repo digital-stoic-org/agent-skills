@@ -44,8 +44,8 @@
     {
       "name": "biz",
       "source": "./biz",
-      "description": "Business analysis toolkit: competitive analysis, market sizing, canvas, PRD, personas",
-      "version": "0.2.0",
+      "description": "Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, market sizing, canvas, PRD, personas",
+      "version": "0.3.2",
       "author": {
         "name": "dstoic"
       },

@@ -105,7 +105,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [dstoic](dstoic/) | Core cognitive toolkit: 47 skills, 0 commands, 4 hooks | ✅ v0.24.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
-| [biz](biz/) | Business analysis toolkit: competitive analysis, market sizing | 🆕 v0.2.0 |
+| [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes | ✅ v0.3.2 |
 
 ## 📦 Install
 
