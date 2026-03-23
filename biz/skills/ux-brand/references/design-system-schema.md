@@ -100,10 +100,23 @@ icons:
   color: str                   # "currentColor"
 
 imagery:
-  strategy: str                # "minimal" | "photos" | "illustrations" | "mixed"
+  strategy: str                # "zero-asset" | "minimal" | "photos" | "illustrations" | "mixed"
   photos: bool
   illustrations: bool
   empty-states: str            # "text-with-icon" | "text-only" | "illustration"
+  # Zero-asset visual strategy (when strategy = "zero-asset" or "minimal")
+  # Common for early-stage nano-apps with no design budget
+  visual-layers:               # Ordered list of visual substitutes for imagery
+    - str                      # "emoji" | "color-blocks" | "typography-as-design" | "whitespace"
+  emoji-vocabulary:            # Semantic emoji mapping (when emoji is a visual layer)
+    # Map UI concepts → consistent emoji. One emoji per concept, never decorative.
+    # Example: { status-done: "✅", status-overdue: "🔴", status-pending: "⏳",
+    #            action-generate: "📄", action-share: "📱", alert: "⚠️" }
+    map: dict[str, str]
+  hero-style: str              # "gradient" | "solid-color" | "none"
+  hero-gradient: str           # CSS gradient value (when hero-style = "gradient")
+  stat-cards: bool             # Use large-number stat cards as visual anchors
+  upgrade-path: str            # What to invest in for v2+ (e.g., "line illustrations")
 
 corners:
   button: str
