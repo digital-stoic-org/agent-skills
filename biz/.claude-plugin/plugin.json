@@ -1,7 +1,7 @@
 {
   "name": "biz",
   "description": "Business analysis toolkit: competitive analysis, UX strategy artifacts, market sizing, canvas, PRD, personas",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

@@ -45,7 +45,7 @@
       "name": "biz",
       "source": "./biz",
       "description": "Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX polish, market sizing, canvas, PRD, personas",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "author": {
         "name": "dstoic"
       },

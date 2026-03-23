@@ -1,0 +1,311 @@
+# Fallback reference sites when WebSearch unavailable
+# Organized by archetype × tech-comfort level
+# 3-5 sites per cell, high-signal only
+
+calming_trust:
+  low_tech:
+    familiarity:
+      - url: impots.gouv.fr
+        why: Used quarterly by all French taxpayers — internalized layout patterns
+      - url: ameli.fr
+        why: Health insurance portal — trusted institutional visual language
+      - url: credit-agricole.fr/app
+        why: Most-used banking app in rural France — their daily trust reference
+    ceiling:
+      - url: doctolib.fr
+        why: Successfully adopted by low-tech users — the "best UX they know"
+      - url: leboncoin.fr
+        why: Mainstream adoption across demographics — familiar marketplace UX
+    anti:
+      - url: notion.so
+        why: Signals "tech tool" — would alienate artisan audience
+      - url: linear.app
+        why: Developer aesthetic — opposite of institutional trust
+    cross_industry:
+      - pattern: Doctolib appointment flow
+        why: Same emotional job (reduce anxiety about complex process) in healthcare
+  medium_tech:
+    familiarity:
+      - url: doctolib.fr
+        why: Regular healthcare booking — comfortable with forms and appointment flows
+      - url: leboncoin.fr
+        why: Marketplace browsing with filters and messaging — daily pattern
+      - url: boursorama.com
+        why: Online banking — trusted financial interface for moderate-tech users
+    ceiling:
+      - url: alan.com
+        why: Modern health insurance with clean UX — adopted by mainstream users
+      - url: qonto.com
+        why: Business banking with calming design — successfully bridges trust + modern
+    anti:
+      - url: linear.app
+        why: Developer-focused density and keyboard-first navigation
+    cross_industry:
+      - pattern: Alan health dashboard
+        why: Calming trust with modern patterns — accessible to mainstream users
+  high_tech:
+    familiarity:
+      - url: stripe.com/dashboard
+        why: Daily tool for tech-savvy finance users
+      - url: github.com
+        why: Familiar interface patterns for developers
+    ceiling:
+      - url: mercury.com
+        why: Premium banking with clean, calming design for tech users
+      - url: wise.com
+        why: Financial trust with modern UX
+    anti:
+      - url: impots.gouv.fr
+        why: Too basic — would signal lack of sophistication
+    cross_industry:
+      - pattern: Calm app meditation flow
+        why: Anxiety reduction through design — muted palette, generous whitespace
+
+urgent_action:
+  low_tech:
+    familiarity:
+      - url: ameli.fr
+        why: Known institutional UI for important administrative actions
+      - url: pole-emploi.fr
+        why: Deadline-driven government service — familiar urgency patterns
+    ceiling:
+      - url: doctolib.fr
+        why: Urgent appointment booking with clear CTAs
+      - url: vinted.fr
+        why: Time-sensitive marketplace actions (offers, shipping deadlines)
+    anti:
+      - url: figma.com
+        why: Creative tool aesthetic — wrong context for urgency
+    cross_industry:
+      - pattern: SNCF train booking urgency flow
+        why: Time pressure + clear steps + prominent CTAs for mass-market audience
+  medium_tech:
+    familiarity:
+      - url: vinted.fr
+        why: Time-sensitive offers and shipping deadlines — urgency in marketplace context
+      - url: doctolib.fr
+        why: Urgent appointment booking — clear CTAs and status
+    ceiling:
+      - url: qonto.com
+        why: Business banking with clear transaction status and deadline alerts
+      - url: trainline.eu
+        why: Booking urgency with countdown timers — adopted by mainstream travelers
+    anti:
+      - url: dribbble.com
+        why: Aesthetic-first portfolio — no urgency patterns
+    cross_industry:
+      - pattern: Trainline countdown booking flow
+        why: Time pressure + progress steps for mainstream audience
+  high_tech:
+    familiarity:
+      - url: pagerduty.com
+        why: Urgency-native interface for tech professionals
+      - url: datadog.com
+        why: Real-time monitoring with urgent alert patterns
+    ceiling:
+      - url: linear.app
+        why: Fast, keyboard-driven task urgency for tech teams
+    anti:
+      - url: behance.net
+        why: Portfolio/creative aesthetic — contradicts urgency
+    cross_industry:
+      - pattern: GitHub Actions failure flow
+        why: CI urgency pattern — clear status, quick remediation path
+
+playful_approachable:
+  low_tech:
+    familiarity:
+      - url: vinted.fr
+        why: Playful marketplace used by broad demographic
+      - url: leboncoin.fr
+        why: Approachable classifieds — familiar to non-tech users
+    ceiling:
+      - url: blablacar.fr
+        why: Friendly, trust-building UX adopted by mainstream users
+    anti:
+      - url: bloomberg.com
+        why: Dense financial data — intimidating for casual users
+    cross_industry:
+      - pattern: Duolingo onboarding
+        why: Gamified learning with low barrier — playful without being childish
+  medium_tech:
+    familiarity:
+      - url: vinted.fr
+        why: Playful marketplace with personality and gamification elements
+      - url: blablacar.fr
+        why: Friendly carpooling with trust signals and approachable design
+    ceiling:
+      - url: backmarket.fr
+        why: Playful e-commerce with brand personality — adopted by mainstream users
+      - url: lydia-app.com
+        why: Friendly fintech with playful interactions
+    anti:
+      - url: sage.com
+        why: Enterprise accounting — too corporate and dense
+    cross_industry:
+      - pattern: Too Good To Go app flow
+        why: Playful food rescue with approachable design — mainstream adoption
+  high_tech:
+    familiarity:
+      - url: slack.com
+        why: Playful professional tool — emoji, personality, but functional
+      - url: figma.com
+        why: Creative, approachable design tool
+    ceiling:
+      - url: arc.net
+        why: Innovative, playful browser with personality
+    anti:
+      - url: bloomberg.com
+        why: Dense, serious — opposite of playful
+    cross_industry:
+      - pattern: Raycast command palette
+        why: Playful + fast — personality without sacrificing efficiency
+
+premium_authority:
+  low_tech:
+    familiarity:
+      - url: credit-agricole.fr
+        why: Banking authority — trusted premium institutional feel
+      - url: maif.fr
+        why: Premium insurance — authority with accessibility
+    ceiling:
+      - url: boursorama.com
+        why: Online banking premium — adopted by moderate-tech users
+    anti:
+      - url: wish.com
+        why: Cheap marketplace aesthetic — destroys authority
+    cross_industry:
+      - pattern: Notaire online portal
+        why: Legal authority in French context — institutional premium
+  medium_tech:
+    familiarity:
+      - url: boursorama.com
+        why: Online banking with premium feel — daily financial management
+      - url: axa.fr
+        why: Insurance authority with digital presence — institutional trust
+    ceiling:
+      - url: qonto.com
+        why: Premium business banking — clean authority without enterprise density
+      - url: alan.com
+        why: Modern premium health insurance — authority with elegance
+    anti:
+      - url: leboncoin.fr
+        why: Classifieds marketplace — too casual for authority positioning
+    cross_industry:
+      - pattern: Boursorama investment dashboard
+        why: Financial authority with clean data presentation for mainstream users
+  high_tech:
+    familiarity:
+      - url: stripe.com
+        why: Premium financial infrastructure — authority in tech
+      - url: github.com
+        why: Developer authority platform
+    ceiling:
+      - url: mercury.com
+        why: Premium banking with sophisticated design
+      - url: vercel.com
+        why: Clean, authoritative developer platform
+    anti:
+      - url: canva.com
+        why: Too playful/consumer for premium positioning
+    cross_industry:
+      - pattern: Bloomberg Terminal density
+        why: Information authority through density and precision
+
+utilitarian_tool:
+  low_tech:
+    familiarity:
+      - url: impots.gouv.fr
+        why: Functional government tool — no decoration, just forms
+      - url: ameli.fr
+        why: Utilitarian health admin — task-focused
+    ceiling:
+      - url: doctolib.fr
+        why: Clean, functional — no decoration but usable
+    anti:
+      - url: dribbble.com
+        why: Design showcase — opposite of utilitarian
+    cross_industry:
+      - pattern: Excel/Google Sheets
+        why: Ultimate utilitarian tool — data-first, zero decoration
+  medium_tech:
+    familiarity:
+      - url: doctolib.fr
+        why: Functional booking tool — task-focused with clean interface
+      - url: leboncoin.fr
+        why: Utilitarian classifieds — search, filter, list patterns
+    ceiling:
+      - url: pennylane.com
+        why: Accounting tool with clean utility — adopted by small business owners
+      - url: qonto.com
+        why: Business banking utility — functional without decoration
+    anti:
+      - url: airbnb.com
+        why: Experience-focused with large imagery — too aspirational for utility
+    cross_industry:
+      - pattern: Google Sheets mobile
+        why: Functional data tool accessible to moderate-tech users
+  high_tech:
+    familiarity:
+      - url: github.com
+        why: Developer utility — dense, functional, minimal
+      - url: linear.app
+        why: Productivity tool — clean utility
+    ceiling:
+      - url: vercel.com/dashboard
+        why: Clean utility with just enough polish
+    anti:
+      - url: squarespace.com
+        why: Marketing-heavy — too polished for utility
+    cross_industry:
+      - pattern: Grafana dashboards
+        why: Pure utility — data density, zero decoration
+
+empowering_guide:
+  low_tech:
+    familiarity:
+      - url: ameli.fr
+        why: Step-by-step government guidance — familiar instructional pattern
+      - url: service-public.fr
+        why: "How to" guides for administrative processes
+    ceiling:
+      - url: doctolib.fr
+        why: Guided booking flow — clear steps, encouraging progress
+    anti:
+      - url: notion.so
+        why: Assumes prior knowledge — no guidance for beginners
+    cross_industry:
+      - pattern: Mon Compte Formation
+        why: Guided learning/training flow for non-tech French workers
+  medium_tech:
+    familiarity:
+      - url: doctolib.fr
+        why: Guided appointment flow with clear steps and progress
+      - url: leboncoin.fr
+        why: Guided selling flow — step-by-step listing creation
+    ceiling:
+      - url: alan.com
+        why: Guided health insurance onboarding — empowering with clear explanations
+      - url: shine.fr
+        why: Freelancer banking with guided admin — empowering non-experts
+    anti:
+      - url: github.com
+        why: Developer-first with assumed knowledge — no guided experience
+    cross_industry:
+      - pattern: Shine freelancer onboarding
+        why: Step-by-step business admin guidance for non-expert users
+  high_tech:
+    familiarity:
+      - url: stripe.com/docs
+        why: Best-in-class documentation and onboarding
+      - url: vercel.com/docs
+        why: Guided developer experience
+    ceiling:
+      - url: linear.app
+        why: Opinionated guidance through methodology
+    anti:
+      - url: aws.amazon.com/console
+        why: Overwhelming without guidance — anti-pattern for empowerment
+    cross_industry:
+      - pattern: Duolingo learning progression
+        why: Empowering through guided, incremental skill building
