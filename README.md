@@ -53,7 +53,7 @@ flowchart LR
 | 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` |
 | 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |
 
-Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs), and domain plugins (GTD, coaching, business analysis).
+Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs), and domain plugins (GTD, coaching, business analysis, philosopher personas).
 
 ---
 
@@ -90,7 +90,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 ## 📊 By the Numbers
 
 - **47 skills** across 5 cognitive modes + utilities
-- **4 plugins**: core (dstoic), GTD, coaching, business analysis
+- **5 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas
 - **2 agents**: devil's advocate (debiasing), context summarizer
 - **4 hooks**: notifications, session capture, debug dumps, daily sync
 - **3 execution modes**: garage (default), scale, maintenance
@@ -106,6 +106,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity | ✅ v0.7.1 |
+| [philosopher](philosopher/) | Philosopher personas: historically-grounded dialogue, source attribution, AI meta-cognition | ✅ v0.1.0 |
 
 ## 📦 Install
 

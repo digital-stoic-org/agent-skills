@@ -51,6 +51,17 @@
       },
       "license": "MIT",
       "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "philosopher",
+      "source": "./philosopher",
+      "description": "Philosopher personas: historically-grounded dialogue with source attribution, period awareness, and AI meta-cognition",
+      "version": "0.1.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
     }
   ]
 }
