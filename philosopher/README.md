@@ -70,8 +70,9 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 
 | Skill | Status | Description |
 |-------|--------|-------------|
-| `/nietzsche` | ✅ v0.2.0 | Friedrich Nietzsche (1844–1900), all periods |
-| `/create` | ✅ v0.2.0 | Meta-skill: generate new philosopher personas from historical thinkers |
+| `/nietzsche` | ✅ v0.3.0 | Friedrich Nietzsche (1844–1900), all periods |
+| `/hadot` | ✅ v0.3.0 | Pierre Hadot (1922–2010) — philosophy as way of life, spiritual exercises |
+| `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
 | `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
