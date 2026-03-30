@@ -1,0 +1,11 @@
+{
+  "name": "cowork",
+  "description": "Multi-project context management: switch projects, save/load sessions. Designed for non-CLI interfaces (Cowork desktop, Telegram).",
+  "version": "0.1.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

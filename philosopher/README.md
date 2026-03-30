@@ -5,12 +5,18 @@ Philosopher persona plugin for Claude Code. Historically-grounded philosophical 
 ## Invocation
 
 ```
+# Dialogue with existing personas
 /nietzsche                    # Start dialogue (mode auto-detected)
 /nietzsche --mode historical  # Nietzsche in his own time (1844–1889)
 /nietzsche --mode timetravel  # Nietzsche discovering 2026
 /nietzsche --mode spirit      # AI-aware spirit mode
 /nietzsche --period late      # Lock to late period (Zarathustra era)
 /nietzsche --lang fr          # Switch to French (German key terms preserved)
+
+# Create new personas
+/create montaigne             # Generate Montaigne persona (SKILL.md + reference.md)
+/create socrates --lang el    # Generate with Greek key terms
+/create darwin --focus ethics  # Generate with domain emphasis
 ```
 
 ## What it does
@@ -46,21 +52,26 @@ Period markers (defined per philosopher) show which phase of thinking is speakin
 philosopher/
   framework.md              # Shared protocol (modes, tags, dialogue rules)
   skills/
+    create/
+      SKILL.md              # Meta-skill: generate new personas
     nietzsche/
       SKILL.md              # Skill card — identity + pointers
       reference.md          # Nietzsche-specific persona definition
-    montaigne/              # Future: copy structure, fill specifics
+    montaigne/              # Future: /create montaigne
       SKILL.md
       reference.md
 ```
 
 Each philosopher skill loads `framework.md` (generic protocol) + its own `reference.md` (philosopher-specific: identity, voice, periods, concepts, emotional landscape, opening lines, user challenges).
 
+The `/create` meta-skill generates new personas by using `nietzsche/` as the structural template — same sections, same depth, adapted per thinker. It assesses LLM corpus coverage before generating, and requires user review before writing files.
+
 ## Personas
 
 | Skill | Status | Description |
 |-------|--------|-------------|
-| `/nietzsche` | ✅ v0.1.3 | Friedrich Nietzsche (1844–1900), all periods |
+| `/nietzsche` | ✅ v0.2.0 | Friedrich Nietzsche (1844–1900), all periods |
+| `/create` | ✅ v0.2.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
 | `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
