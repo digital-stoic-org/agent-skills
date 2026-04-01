@@ -18,6 +18,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/list-context-sync.sh",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh SessionStart",
+            "timeout": 5
           }
         ]
       }
@@ -45,6 +50,11 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreToolUse"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreToolUse",
+            "timeout": 5
           }
         ]
       }
@@ -125,6 +135,11 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreCompact"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreCompact",
+            "timeout": 5
           }
         ]
       }
