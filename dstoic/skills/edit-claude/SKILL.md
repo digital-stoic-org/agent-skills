@@ -122,6 +122,25 @@ See `reference.md` for optimization strategies and examples.
 
 See `reference.md § Templates` for starter examples and `§ Modular Rules` for .claude/rules/ patterns.
 
+## ⚠️ Hard Char Limits (from Claude Code source)
+
+Claude Code enforces **hard character limits** on instruction files. Content beyond these limits is **silently truncated** with `[truncated]` appended — no warning to the user.
+
+| Limit | Value | Source |
+|---|---|---|
+| **Per file** | 4,000 chars | `MAX_INSTRUCTION_FILE_CHARS` |
+| **Total across all files** | 12,000 chars | `MAX_TOTAL_INSTRUCTION_CHARS` |
+
+**Loading order**: Files are loaded walking from filesystem root to CWD. Once total budget is exhausted: `"Additional instruction content omitted after reaching the prompt budget."` — deeper files (closer to CWD) are the ones that get dropped.
+
+**Implications**:
+- A CLAUDE.md chain of 4 files (e.g., `~/.claude/` → praxis root → repo → subfolder) shares the 12K budget
+- Files with **identical content** (after whitespace normalization) are auto-deduped
+- Run `claude --dump-system-prompt` to verify what actually loads
+- Run `wc -c` on each file in the chain to check headroom
+
+**When creating/updating**: Always check current chain total. Warn user if any file is >3,500 chars or chain total >10,000 chars.
+
 ## Key Principles
 
 - **Specific over generic**: "Run `npm test`" not "Test the code"
@@ -181,6 +200,7 @@ Use `/memory` command during session to view/edit loaded memories.
 
 ## Constraints
 
+- **Hard char limits**: 4,000 chars/file, 12,000 chars total chain (see ⚠️ Hard Char Limits above)
 - **Instruction budget**: LLMs follow ~150-200 instructions reliably. Claude Code's system prompt uses ~50, leaving ~100 for CLAUDE.md
 - **Token target**: Main CLAUDE.md <200 tokens ideal, <500 acceptable for universal cohesive content
 - **Universal relevance**: Every line should apply to most sessions, not task-specific work

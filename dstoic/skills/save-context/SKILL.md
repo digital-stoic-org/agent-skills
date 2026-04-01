@@ -52,7 +52,7 @@ If `$THINKING_DIR` is unset or empty: skip silently — no error, no warning.
 ### Phase 2: Analyze & Synthesize (single pass)
 
 From conversation (last 15-20 messages):
-1. **NextTasks** — infer 3 from OpenSpec/conversation
+1. **Next** — infer 3 tasks from OpenSpec/conversation (IMPORTANT: use heading "Next" — Claude Code compaction grep-matches `next`/`todo`/`pending`/`remaining` keywords for survival priority)
 2. **Session** — progression, decisions, thinking, unexpected (780 tokens max)
 3. **Hot Files** — max 10 discussed/edited
 4. **Focus & Goal** — 1-2 sentence focus + goal

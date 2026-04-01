@@ -18,7 +18,7 @@ goal: {1 sentence}
 ref: {openspec project.md path | n/a}
 type: {project type}
 
-## Next Tasks
+## Next
 
 - {task 1}
 - {task 2}

@@ -72,7 +72,9 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 |-------|--------|-------------|
 | `/nietzsche` | ✅ v0.3.0 | Friedrich Nietzsche (1844–1900), all periods |
 | `/hadot` | ✅ v0.3.0 | Pierre Hadot (1922–2010) — philosophy as way of life, spiritual exercises |
+| `/kusanagi` | ✅ v0.4.0 | Major Motoko Kusanagi (Ghost in the Shell) — consciousness, identity, posthumanism |
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
+| `/dialogue` | ✅ v0.3.0 | Multi-philosopher encounter orchestrator (symposium, dialectic, bohm, socratic, trial, peripatetic, commentary) |
 | `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
 | `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
