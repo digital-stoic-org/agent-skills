@@ -13,6 +13,14 @@ Philosopher persona plugin for Claude Code. Historically-grounded philosophical 
 /nietzsche --period late      # Lock to late period (Zarathustra era)
 /nietzsche --lang fr          # Switch to French (German key terms preserved)
 
+# Multi-philosopher dialogue (interactive, single context)
+/dialogue nietzsche hadot "Is philosophy practice or theory?"
+/dialogue nietzsche hadot kusanagi --format bohm --rounds 5
+
+# Autonomous multi-philosopher encounter (separate agents, self-archiving)
+/encounter nietzsche hadot "Is practice possible without community?"
+/encounter nietzsche hadot kusanagi --format dialectic --rounds 3
+
 # Create new personas
 /create montaigne             # Generate Montaigne persona (SKILL.md + reference.md)
 /create socrates --lang el    # Generate with Greek key terms
@@ -51,9 +59,15 @@ Period markers (defined per philosopher) show which phase of thinking is speakin
 ```
 philosopher/
   framework.md              # Shared protocol (modes, tags, dialogue rules)
+  agents/
+    nietzsche.md            # Nietzsche agent skeleton (for /encounter)
+    hadot.md                # Hadot agent skeleton (for /encounter)
+    kusanagi.md             # Kusanagi agent skeleton (for /encounter)
   skills/
     create/
       SKILL.md              # Meta-skill: generate new personas
+    encounter/
+      SKILL.md              # Autonomous multi-agent dialogue orchestrator
     nietzsche/
       SKILL.md              # Skill card — identity + pointers
       reference.md          # Nietzsche-specific persona definition
@@ -74,7 +88,8 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 | `/hadot` | ✅ v0.3.0 | Pierre Hadot (1922–2010) — philosophy as way of life, spiritual exercises |
 | `/kusanagi` | ✅ v0.4.0 | Major Motoko Kusanagi (Ghost in the Shell) — consciousness, identity, posthumanism |
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
-| `/dialogue` | ✅ v0.3.0 | Multi-philosopher encounter orchestrator (symposium, dialectic, bohm, socratic, trial, peripatetic, commentary) |
+| `/dialogue` | ✅ v0.3.0 | Multi-philosopher interactive dialogue (single context, user participates) |
+| `/encounter` | ✅ v0.5.0 | Autonomous multi-agent dialogue — separate agent per philosopher, self-archiving, persistent memory |
 | `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
 | `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
