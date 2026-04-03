@@ -1,7 +1,7 @@
 ---
 name: commit-repo
 description: Streamlined git commit for praxis-managed repos. Single human gate for scope + message approval. Use when committing changes, "commit repo", "commit praxis", "commit nano-vc".
-argument-hint: "<repo-alias> [--all]"
+argument-hint: "<repo-alias> [--all] [--yes]"
 allowed-tools: [Bash, Read, Edit, AskUserQuestion]
 model: sonnet
 context: main
@@ -35,6 +35,7 @@ If alias not found, list available aliases from CLAUDE.md and exit.
 
 - `$ARGUMENTS` first word = repo alias (required)
 - `--all` flag: stage all modified files before committing (runs `git add -A`)
+- `--yes` flag: skip human confirmation gate — auto-approve the commit proposal
 - Without `--all`: only commits what's already staged
 
 ## Flow
@@ -78,7 +79,8 @@ What:
 Why: reason
 ```
 
-2. **⚠️ MANDATORY HUMAN GATE — use AskUserQuestion:**
+2. **If `--yes` flag is set:** skip confirmation, proceed directly to step 3.
+   **Otherwise — ⚠️ MANDATORY HUMAN GATE — use AskUserQuestion:**
    - Question: "Proceed with commit? (y/n/edit)"
    - If answer is empty/blank (known bug outside Plan Mode): fall back to inline text — output "Reply **y** to commit, **n** to abort, or **edit** to modify" and WAIT for user text reply
    - If "n" or denied: abort, report "❌ Commit aborted"
