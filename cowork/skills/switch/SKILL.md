@@ -1,6 +1,6 @@
 ---
 name: switch
-description: "Switch project context with guided menu. Loads CLAUDE.md chain + CONTEXT files + ref/ index. Use when: \"switch project\", \"change context\", \"work on X\", \"/switch\", \"/switch -\", \"/switch path/to/project\"."
+description: 'Switch project context with guided menu. Loads CLAUDE.md chain + CONTEXT files + ref/ index. Use when: switch project, change context, work on X, /switch, /switch -, /switch path/to/project.'
 allowed-tools: ["Bash", "Read", "Glob", "AskUserQuestion"]
 model: sonnet
 context: main
