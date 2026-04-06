@@ -66,8 +66,8 @@
     {
       "name": "cowork",
       "source": "./cowork",
-      "description": "Multi-project context management: switch projects, save/load sessions, ref/wip file zones. Designed for non-CLI interfaces (Cowork desktop, Telegram).",
-      "version": "0.3.0",
+      "description": "Multi-project context management: switch projects, save/load sessions, ref/wip file zones + sync. Designed for non-CLI interfaces (Cowork desktop, Telegram).",
+      "version": "0.4.0",
       "author": {
         "name": "dstoic"
       },

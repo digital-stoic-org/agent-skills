@@ -110,11 +110,7 @@ Quick scan — must complete in < 5 seconds, no deep content analysis.
 🔧 Want me to fix these? (yes/no)
 ```
 
-If user says **yes** → for EACH drift item, spawn Agent (subagent_type: `cowork:sync-ref-wip`) with:
-- `ref_file`: absolute path to the ref file
-- `wip_file`: absolute path to the wip file
-- `drift_description`: what specifically is wrong
-- The agent auto-detects direction (ref→wip or wip→ref) from timestamps and content maturity, proposes edits to the stale side only, shows diff before writing.
+If user says **yes** → invoke `/sync-ref-wip` skill with the detected file pairs. It handles direction detection, diff display, and user approval.
 
 If user says **no** or skips → continue to Phase 4. Save drift warnings in CONTEXT file under `## Session > unexpected:` for future reference.
 

@@ -1,11 +1,11 @@
 ---
 name: sync-ref-wip
-description: "Bidirectional ref/wip sync. Auto-detects direction from file timestamps, content maturity, and drift signals. Fresh context — reads both files, proposes minimal edits to the stale side only."
-tools:
-  - Read
-  - Edit
-  - Bash
+description: 'Bidirectional ref/wip sync. Auto-detects direction from timestamps and content maturity. Triggers: "sync ref", "align ref wip", "promote to ref", "update wip", /sync-ref-wip.'
+allowed-tools: [Read, Edit, Bash, Glob, Grep, AskUserQuestion]
 model: sonnet
+context: main
+user-invocable: true
+argument-hint: "[ref-file wip-file | auto]"
 ---
 
 # Sync ref ↔ wip
@@ -14,15 +14,36 @@ Bidirectional alignment between ref (stable reference) and wip (working document
 
 **Folder aliases**: ref folder may be named `ref/` or `reference/`. Wip folder may be named `wip/` or `work-in-progress/`. Detect from the paths provided — both are equivalent.
 
-You operate in **fresh context** — no prior conversation. You receive two files and a drift description.
+## ⚠️ AskUserQuestion Guard
 
-## Input
+After EVERY `AskUserQuestion` call, check if answers are empty/blank. If empty: output "⚠️ Questions didn't display (known bug).", present options as numbered text list, WAIT for user reply.
 
-You receive via the Agent prompt:
-- `ref_file`: absolute path to the ref file
-- `wip_file`: absolute path to the wip file
-- `drift_description`: what specifically is misaligned (stale link, old terminology, dead reference, mature wip content)
-- `action`: (optional) `apply` — apply previously proposed edits
+## Phase 0: Resolve Files
+
+**If called by user** (`$ARGUMENTS` is empty or `auto`):
+1. Glob for ref folder (`ref/` or `reference/`) and wip folder (`wip/` or `work-in-progress/`) in current directory
+2. If neither found → abort: "⚠️ No ref/ or wip/ folder found. Use /switch to navigate to a project first."
+3. List files in both folders with last-modified dates
+4. Present menu:
+   ```
+   🔄 Sync ref ↔ wip
+
+   🔒 ref/ files:
+     1. persona-claire-v2.md (Mar 16)
+     2. positioning-frameworks-v2.md (Mar 16)
+
+   ✏️ wip/ files:
+     3. brand-instance.md (Mar 16)
+     4. content-marketing.md (Feb 27)
+
+   Pick ref + wip file to sync (e.g. "1 3"), or "all" to scan everything:
+   ```
+5. If user picks specific pair → set `ref_file` and `wip_file`
+6. If user picks "all" → scan all wip files for ref references, report drift for each pair found, ask which to fix
+
+**If called with arguments** (two paths or by `/save-work`):
+- Parse `ref_file` and `wip_file` from arguments
+- `drift_description` from context or "auto-detect"
 
 ## Phase 1: Detect Direction
 
@@ -64,13 +85,15 @@ Report detected direction before proposing changes.
 
 Output each proposed change as: `line N: "old text" → "new text"` with brief reason.
 
-Do NOT apply edits yet. Return the diff report to the parent.
+Do NOT apply edits yet. Show the diff to the user and ask:
 
-The parent conversation will show the diff to the user. If approved, the parent will call you again with `action: apply`.
+```
+Apply these changes? (yes / no / pick numbers to apply selectively)
+```
 
-If called with `action: apply`:
-- Apply all proposed edits via Edit tool
-- Report what was changed
+If user says **yes** → apply all proposed edits via Edit tool, report what was changed.
+If user picks numbers → apply only selected edits.
+If user says **no** → stop, no changes.
 
 ## Constraints
 

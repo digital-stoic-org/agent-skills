@@ -9,12 +9,7 @@ Multi-project context management for non-CLI interfaces (Cowork desktop, Telegra
 | `/switch` | "switch project", "work on X" | Menu-driven project switcher. Loads CLAUDE.md chain + CONTEXT files |
 | `/save-work` | "save", "checkpoint", "I'm done" | Menu-driven session save. 3-choice status (checkpoint/done/parking) + stream picker + drift detection |
 | `/load-work` | "load", "resume", "continue" | Menu-driven session resume. Shows available sessions with focus preview |
-
-## Agents
-
-| Agent | What it does |
-|-------|--------------|
-| `sync-ref-wip` | Bidirectional ref/wip alignment. Auto-detects direction from timestamps + content maturity. Proposes minimal edits to the stale side. |
+| `/sync-ref-wip` | "sync ref", "promote to ref", "align" | Bidirectional ref/wip sync. Auto-detects direction from timestamps + content maturity |
 
 ## Design Principles
 
