@@ -544,7 +544,7 @@ Install from the Claude Code marketplace:
 /install-plugin https://github.com/digital-stoic-org/agent-skills
 ```
 
-This installs all plugins (dstoic, gtd). To install a specific plugin only, add it to `.claude/settings.json`:
+This installs all plugins (dstoic, gtd, cowork, etc.). To install a specific plugin only, add it to `.claude/settings.json`:
 ```json
 {"plugins": ["digital-stoic-org/agent-skills/dstoic"]}
 ```

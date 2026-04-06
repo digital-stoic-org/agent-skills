@@ -107,18 +107,22 @@ See `reference.md` for optimization strategies and examples.
 
    **Key principle:** Cohesion and semantic grouping matter more than strict token limits. A well-organized 430-token CLAUDE.md with universal sections (Git 90 + Security 50 + Planning 45 + Style 200 = 385 tokens) is better than fragmenting conceptually related content across multiple files.
 
-6. **Structure content** (token-efficient):
+6. **H1 = Project Name** (required):
+   - First line MUST be `# Project Name` — used by `/switch`, `/save-context`, `/load-context` for project identification
+   - Examples: `# Praxis`, `# NanoVC — Control Repo`, `# GTD-PCM Control Plane`
+
+7. **Structure content** (token-efficient):
    - Use markdown headings for organization
    - Use tables and bullets over prose
    - Be specific (e.g., "Use 2-space indentation" not "Format code properly")
    - Group related items logically
 
-7. **Include sanity marker** (optional but recommended):
+8. **Include sanity marker** (optional but recommended):
    ```
    sanity check: [random-number]
    ```
 
-8. **Write file** with appropriate sections based on user context
+9. **Write file** with appropriate sections based on user context
 
 See `reference.md § Templates` for starter examples and `§ Modular Rules` for .claude/rules/ patterns.
 
