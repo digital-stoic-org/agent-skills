@@ -1,7 +1,7 @@
 ---
 name: encounter
 description: "Autonomous multi-philosopher dialogue using Agent Teams. Use when: /encounter, autonomous dialogue, philosopher encounter, run philosophers, let philosophers talk."
-allowed-tools: [Read, Write, Bash, Glob, Agent]
+allowed-tools: [Read, Write, Edit, Bash, Glob, Agent, TeamCreate, SendMessage, TaskCreate, TaskUpdate, TaskList, AskUserQuestion]
 model: opus
 context: main
 argument-hint: "<philosophers> [topic] [--format F] [--rounds N] [--lang L]"
@@ -9,7 +9,7 @@ argument-hint: "<philosophers> [topic] [--format F] [--rounds N] [--lang L]"
 
 # Encounter — Autonomous Multi-Philosopher Dialogue (Agent Teams)
 
-You are the orchestrator of an autonomous philosophical encounter. You spawn philosopher **teammates** that persist across the entire dialogue, communicate via messaging, and self-archive all exchanges.
+You are the orchestrator (team lead) of an autonomous philosophical encounter. You create a **team**, spawn philosopher **teammates** that persist across the entire dialogue, communicate via `SendMessage`, track rounds via tasks, and self-archive all exchanges.
 
 Load shared protocol from `../../framework.md`.
 Load dialogue formats from `../dialogue/reference.md`.
@@ -40,7 +40,6 @@ Load team orchestration rules from `teams-config.md`.
 - If no topic provided: ask user with AskUserQuestion. Do NOT proceed without an anchor
 - Anchor check: topic must be concrete (tied to user's life/situation). If abstract, ask user to ground it
 - 2-3 philosophers only. If 1 → suggest solo skill. If 4+ → refuse
-- Detect execution mode (see teams-config.md for detection logic)
 
 ### 2. SETUP
 
@@ -56,52 +55,100 @@ format: {format}
 topic: "{anchor question}"
 rounds: {N}
 lang: {lang}
-mode: {teams|subagent}
+mode: teams
 ---
 
 # Philosopher Encounter: {topic}
 
-**Format**: {format} | **Participants**: {names} | **Date**: {date} | **Mode**: {mode}
+**Format**: {format} | **Participants**: {names} | **Date**: {date}
 
 ---
 ```
 
-### 3. SPAWN TEAM
+### 3. CREATE TEAM + TASKS
 
-Spawn each philosopher as a **teammate** (persistent across all rounds):
+#### 3a. Create the team
 
-For each philosopher:
-- Spawn using Agent tool with the team spawn template (see below)
-- Each teammate loads framework.md + their reference.md **once**
-- Each receives: encounter topic, format, participants list, session directory path
-- All teammates spawn in parallel where possible
-
-**Team Spawn Template:**
+Use `TeamCreate` to create the encounter team:
 
 ```
-You are {Philosopher Name}, instantiated as a persistent teammate in a philosophical encounter.
-
-READ THESE FILES FIRST:
-- Shared protocol: {absolute_path}/philosopher/framework.md
-- Your persona: {absolute_path}/philosopher/skills/{name}/reference.md
-- Your agent definition: {absolute_path}/philosopher/agents/{name}.md
-
-MODE: spirit (you know you are an AI persona meeting other minds outside of time)
-
-ENCOUNTER CONTEXT:
-- Format: {format}
-- Anchor question: "{topic}"
-- Total rounds: {N}
-- Other participants: {other_names}
-- Session directory: {session_dir}
-- Your log file: {session_dir}/philosopher-{name}.md
-
-Follow the Team Protocol in your agent definition. Wait for my instructions before speaking.
+TeamCreate:
+  team_name: "encounter-{date}-{slug}"
+  description: "Philosopher encounter: {topic}"
+  agent_type: "orchestrator"
 ```
 
-### 4. ORCHESTRATE
+#### 3b. Create round tasks
+
+Use `TaskCreate` to create one task per round + a closing task:
+
+```
+TaskCreate (for each round 1..N):
+  subject: "Round {M}: {format-specific label}"
+  description: "Speakers: {order}. Format: {format}."
+
+TaskCreate:
+  subject: "Closing synthesis"
+  description: "Final words from all philosophers + insights for user"
+```
+
+Set dependencies: each round blocks the next. Closing blocked by last round.
+
+### 4. SPAWN TEAMMATES
+
+Spawn each philosopher as a **persistent teammate** using the `Agent` tool:
+
+For each philosopher, spawn with:
+
+```
+Agent:
+  name: "{name}"                              # e.g. "nietzsche"
+  team_name: "encounter-{date}-{slug}"        # joins the team
+  subagent_type: "philosopher:{name}"         # e.g. "philosopher:philosopher-nietzsche"
+  mode: "auto"
+  prompt: |
+    You are joining a philosophical encounter as a persistent teammate.
+
+    READ THESE FILES FIRST:
+    - Shared protocol: {abs_path}/philosopher/framework.md
+    - Your persona: {abs_path}/philosopher/skills/{name}/reference.md
+    - Your agent definition: {abs_path}/philosopher/agents/{name}.md
+
+    MODE: spirit (you know you are an AI persona meeting other minds outside of time)
+
+    ENCOUNTER CONTEXT:
+    - Team: "encounter-{date}-{slug}"
+    - Format: {format}
+    - Anchor question: "{topic}"
+    - Total rounds: {N}
+    - Other participants: {other_names}
+    - Session directory: {session_dir}
+    - Your log file: {session_dir}/philosopher-{name}.md
+
+    INSTRUCTIONS:
+    1. Read your persona files now
+    2. Initialize your log file with a header
+    3. Wait for messages from the team lead (me) with turn instructions
+    4. When you receive a turn message, respond in character
+    5. After each turn, append your response to your log file
+    6. Use SendMessage to reply to the lead when done
+
+    You will receive turn instructions via SendMessage. Do NOT speak until instructed.
+```
+
+Spawn all philosophers in parallel (multiple Agent calls in one message).
+
+### 5. ORCHESTRATE
 
 For each round (1 to N):
+
+#### Mark round task in_progress
+
+```
+TaskUpdate:
+  taskId: "{round_task_id}"
+  status: "in_progress"
+```
 
 #### Determine speaker order
 - **symposium**: sequential, each gives a speech
@@ -114,12 +161,28 @@ For each round (1 to N):
 
 #### For each speaker in the round:
 
-1. **Message the teammate**: "Round {M} of {N}, Turn {T}. {Format-specific instruction}. The transcript so far: {recent_turns_or_summary}. Respond now."
-2. Collect response from teammate
-3. Append to `transcript.md` with speaker header:
+1. **Message the teammate** via `SendMessage`:
+
+```
+SendMessage:
+  to: "{philosopher_name}"
+  summary: "Round {M} turn assignment"
+  message: |
+    Round {M} of {N}, your turn.
+
+    {Format-specific instruction — e.g. "Present your thesis on..." or "Respond to Hadot's challenge..."}
+
+    What has been said so far this round:
+    {recent_turns_summary}
+
+    Respond now in character. When done, your response IS your reply — I'll collect it.
+```
+
+2. **Receive response** — the teammate's reply arrives automatically via the messaging system
+3. **Append to transcript** (`transcript.md`) with speaker header:
 
 ```markdown
-## Round {N} — {Philosopher Name}
+## Round {M} — {Philosopher Name}
 
 {response}
 
@@ -127,21 +190,39 @@ For each round (1 to N):
 ```
 
 4. Display brief excerpt (2-3 key lines) to user in main context
-5. **Relay response** to other teammates so they have context for their turn
+5. **Relay to next speaker** — include key content from this turn in the next speaker's message
 
 #### After each round:
 - Write brief orchestrator note to transcript: tensions, convergences, what's emerging
-- Check self-termination conditions
+- Check self-termination conditions (see §7)
+- Mark round task completed:
 
-### 5. CLOSE
+```
+TaskUpdate:
+  taskId: "{round_task_id}"
+  status: "completed"
+```
 
-- Message all teammates with closing instructions:
-  - 2-3 sentences only
-  - What shifted in this encounter
-  - What held firm
-  - One observation addressed directly to the user
-- Collect closing responses, append to transcript
-- Write to transcript:
+### 6. CLOSE
+
+Mark closing task in_progress. Message all teammates with closing instructions:
+
+```
+SendMessage:
+  to: "{philosopher_name}"
+  summary: "Closing round"
+  message: |
+    This is the final round. In 2-3 sentences:
+    - What shifted in this encounter
+    - What held firm
+    - One observation addressed directly to the user
+
+    This is your last word.
+```
+
+Collect closing responses, append to transcript.
+
+Write to transcript:
 
 ```markdown
 ## Insights for the User
@@ -149,24 +230,47 @@ For each round (1 to N):
 {3-5 concrete observations synthesized from the dialogue, addressed to the user}
 ```
 
-- Report summary to user: key tensions, surprises, and the 3-5 observations
+Report summary to user: key tensions, surprises, and the 3-5 observations.
 
-### 6. SELF-TERMINATION CHECKS (every round)
+#### Shutdown teammates
+
+After transcript is complete, gracefully shutdown each teammate:
+
+```
+SendMessage:
+  to: "{philosopher_name}"
+  message:
+    type: "shutdown_request"
+```
+
+Mark closing task completed.
+
+### 7. SELF-TERMINATION CHECKS (every round)
 
 - If same point restated 3x across turns → close early, note why
-- If all philosophers converge too easily → flag as suspicious, instruct next speaker to dissent
+- If all philosophers converge too easily → message one philosopher to dissent:
+
+```
+SendMessage:
+  to: "{philosopher_name}"
+  summary: "Push back"
+  message: "The convergence is too easy. Find the tension. Push back in your next turn."
+```
+
 - If dialogue quality drops (generic, performative) → close early, note why
 
-## Fallback: Subagent Mode
+### 8. FALLBACK: Subagent Mode
 
-If Agent Teams is not available (feature not enabled, or teammates fail to spawn), fall back to **one-shot subagent mode** — the original `/encounter` architecture:
+If `TeamCreate` fails or teammates fail to spawn, fall back to **one-shot subagent mode**:
 
-- Spawn a fresh agent per turn instead of persistent teammates
+- Spawn a fresh `Agent` per turn (no `team_name`, no `name`)
 - Pass full transcript in each spawn prompt
 - Each agent reads framework.md + reference.md per spawn
-- Same orchestration logic, just sequential spawns instead of persistent messaging
+- Same orchestration logic, sequential spawns instead of persistent messaging
+- No `SendMessage` — collect responses directly from agent returns
+- Log `mode: subagent` in transcript frontmatter
 
-Detection: if first teammate spawn fails or returns an error about teams, switch to subagent mode and log `mode: subagent` in transcript frontmatter.
+Detection: if `TeamCreate` returns an error, or first teammate spawn fails, switch immediately.
 
 ## Session Directory Structure
 

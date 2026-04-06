@@ -102,11 +102,11 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 48 skills, 0 commands, 4 hooks | ✅ v0.25.1 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 48 skills, 0 commands, 4 hooks | ✅ v0.26.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity | ✅ v0.7.2 |
-| [philosopher](philosopher/) | Philosopher personas: historically-grounded dialogue, source attribution, AI meta-cognition | ✅ v0.1.0 |
+| [philosopher](philosopher/) | Philosopher personas: historically-grounded dialogue, source attribution, AI meta-cognition | ✅ v0.6.0 |
 | [cowork](cowork/) | Multi-project context management: switch projects, save/load sessions, ref/wip file zones + sync. Non-CLI friendly | ✅ v0.4.0 |
 
 ## 📦 Install

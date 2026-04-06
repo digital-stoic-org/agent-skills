@@ -1,40 +1,41 @@
 # Agent Teams — Orchestration Configuration
 
-Reference for team-specific orchestration rules used by `/encounter`.
+Reference for team-specific orchestration rules used by `/encounter`. Uses Claude Code native Agent Teams: `TeamCreate`, `SendMessage`, `TaskCreate`/`TaskUpdate`.
 
-## Mode Detection
-
-Determine execution mode at startup:
+## Team Lifecycle
 
 ```
-1. Attempt to spawn first philosopher as teammate
-2. If spawn succeeds with persistent session → teams mode
-3. If spawn fails or returns one-shot → subagent mode (fallback)
-4. Log detected mode in transcript frontmatter
+1. TeamCreate → creates team + shared task list
+2. Agent (with team_name + name) → spawn persistent teammates
+3. SendMessage → orchestrate turns, relay context
+4. TaskUpdate → track round progress
+5. SendMessage (shutdown_request) → graceful teardown
 ```
 
 ## Team Composition
 
 ```
-Team Lead = /encounter orchestrator
-  ├─ Philosopher teammate 1 (persistent)
-  ├─ Philosopher teammate 2 (persistent)
+Team Lead = /encounter orchestrator (you)
+  ├─ Philosopher teammate 1 (persistent, named by philosopher)
+  ├─ Philosopher teammate 2 (persistent, named by philosopher)
   └─ Philosopher teammate 3 (persistent, optional)
 ```
 
-- Lead does NOT roleplay any philosopher — it manages format, timing, synthesis
+- Lead does NOT roleplay any philosopher — manages format, timing, synthesis
 - Lead monitors all exchanges and writes to transcript
 - Lead controls round transitions and self-termination
+- Team config readable at `~/.claude/teams/{team-name}/config.json`
 
-## Communication Patterns
+## Communication via SendMessage
 
 ### Pattern 1: Lead-Relayed (default for most formats)
 
 ```
-Lead → messages Speaker with turn instructions
-Speaker → responds with philosophical turn
-Lead → appends to transcript
-Lead → relays key content to next Speaker
+Lead → SendMessage(to: "nietzsche", "Round 1, your turn. Topic: ...")
+Nietzsche → responds (auto-delivered to Lead)
+Lead → appends response to transcript.md
+Lead → SendMessage(to: "hadot", "Round 1, your turn. Nietzsche said: {summary}...")
+Hadot → responds (auto-delivered to Lead)
 ```
 
 Best for: symposium, dialectic, trial, commentary, peripatetic
@@ -42,66 +43,86 @@ Best for: symposium, dialectic, trial, commentary, peripatetic
 ### Pattern 2: Direct Exchange (for free-form formats)
 
 ```
-Lead → signals round start, gives open prompt
-Philosophers → message each other directly when moved
-Lead → monitors, collects, appends to transcript
-Lead → signals round end
+Lead → SendMessage(to: "*", "Round start. Bohm format — respond when moved.")
+Philosophers → SendMessage to each other directly
+Lead → monitors via idle notifications (peer DM summaries visible)
+Lead → SendMessage(to: "*", "Round ending. Final thoughts.")
 ```
 
 Best for: bohm
 
+**Note**: In bohm format, Lead broadcasts round start/end but philosophers message each other freely. Lead collects turns from peer DM summaries in idle notifications.
+
 ### Pattern 3: Structured Debate (for adversarial formats)
 
 ```
-Lead → assigns thesis to Speaker A
-Speaker A → presents thesis
-Lead → relays to Speaker B with "challenge this"
-Speaker B → responds with antithesis
-Lead → relays both to Speaker C (if present) for synthesis
+Lead → SendMessage(to: "nietzsche", "Present your thesis on...")
+Nietzsche → responds with thesis
+Lead → SendMessage(to: "hadot", "Challenge this thesis: {nietzsche_thesis}")
+Hadot → responds with antithesis
+Lead → SendMessage(to: "kusanagi", "Synthesize: {thesis} vs {antithesis}")
 ```
 
 Best for: dialectic, socratic, trial
 
 ## Transcript Relay Strategy
 
-### Teams Mode (incremental)
-- After each turn: relay **key content** (not full transcript) to next speaker
-- For context-heavy formats: include last 2-3 turns verbatim
-- For free-form: let teammates accumulate context naturally via messages
+### Teams Mode (incremental via SendMessage)
+- After each turn: relay **key content** (not full transcript) to next speaker in the message
+- For context-heavy formats: include last 2-3 turns verbatim in the message
+- For bohm: philosophers accumulate context naturally via direct messaging
 
-### Subagent Fallback (full transcript)
-- Pass complete transcript in each spawn prompt
+### Subagent Fallback (full transcript in prompt)
+- Pass complete transcript in each Agent spawn prompt
 - Transcript grows per round — accept the overhead
+
+## Task-Based Round Tracking
+
+Use `TaskCreate` at setup to create one task per round + closing:
+
+```
+Task #1: "Round 1: Opening positions"     (pending)
+Task #2: "Round 2: Responses"             (blocked by #1)
+Task #3: "Round 3: Synthesis"             (blocked by #2)
+Task #4: "Closing synthesis"              (blocked by #3)
+```
+
+Progress flow:
+- `TaskUpdate(status: "in_progress")` when round begins
+- `TaskUpdate(status: "completed")` when all speakers in round have spoken + orchestrator note written
+
+This gives the user visible progress in the UI as the encounter unfolds.
 
 ## Turn Management per Format
 
-| Format | Speaker Selection | Turn Signal | Round End |
+| Format | Speaker Selection | Turn Signal (SendMessage) | Round End |
 |---|---|---|---|
-| symposium | Sequential order | Lead assigns | All have spoken |
-| dialectic | Thesis → antithesis → synthesis | Lead assigns roles | Synthesis attempted |
-| bohm | Most-moved (Lead decides) | Lead invites, or philosopher requests | Lead calls time |
-| socratic | Questioner ↔ responder | Lead alternates | N exchanges completed |
-| trial | Prosecution → defense → judge | Lead assigns roles | Verdict delivered |
-| peripatetic | React to scene in turn | Lead sets scene, assigns order | All have reacted |
-| commentary | Each reads differently | Lead assigns order | All have read |
+| symposium | Sequential order | Lead messages each in order | All have spoken |
+| dialectic | Thesis → antithesis → synthesis | Lead assigns roles via message | Synthesis attempted |
+| bohm | Most-moved (Lead decides) | Lead invites, or broadcast round | Lead calls time |
+| socratic | Questioner ↔ responder | Lead alternates messages | N exchanges completed |
+| trial | Prosecution → defense → judge | Lead assigns roles via message | Verdict delivered |
+| peripatetic | React to scene in turn | Lead sets scene in message, assigns order | All have reacted |
+| commentary | Each reads differently | Lead assigns order via message | All have read |
 
-## Self-Termination Protocol (Teams)
+## Self-Termination Protocol
 
 Lead monitors for:
 
-1. **Circling** — same point restated 3x → message all: "Encounter closing early. Final words in 2-3 sentences."
-2. **Premature convergence** — all agree too quickly → message one philosopher: "Push back. Find the tension."
+1. **Circling** — same point restated 3x → `SendMessage(to: "*", "Encounter closing early. Final words in 2-3 sentences.")`
+2. **Premature convergence** — all agree too quickly → `SendMessage(to: "{one_philosopher}", "Push back. Find the tension.")`
 3. **Quality drop** — generic or performative responses → close early with note
-4. **Teammate failure** — if a teammate stops responding → note absence, continue with remaining
+4. **Teammate failure** — if a teammate stops responding after 2 messages → note absence in transcript, continue with remaining
 
 ## Graceful Shutdown
 
 ```
-1. Lead messages all teammates: "Final round. Closing instructions: [what shifted, what held, one observation for user]."
-2. Collect responses (timeout: 60s per teammate)
-3. If teammate doesn't respond: note in transcript, proceed without
-4. Lead writes synthesis + insights
-5. Teammates naturally end when encounter skill completes
+1. Lead collects final closing responses (already done in CLOSE step)
+2. Lead writes synthesis + insights to transcript
+3. Lead sends shutdown to each teammate:
+   SendMessage(to: "{name}", message: {type: "shutdown_request"})
+4. Teammates approve shutdown (auto-terminates their process)
+5. Task list shows all tasks completed
 ```
 
 ## Resource Considerations
@@ -111,7 +132,7 @@ Lead monitors for:
 | Spawns | 2-3 (once) | 2-3 × rounds (6-9 total) |
 | Context per philosopher | Grows naturally | Reset each spawn |
 | File re-reads | Once per philosopher | Once per spawn |
-| Inter-philosopher awareness | Direct messaging | Via transcript relay |
+| Inter-philosopher awareness | Direct SendMessage | Via transcript relay |
 | Cold-start overhead | Low (once) | High (every turn) |
-| Token cost per session | Higher (persistent) | Lower (ephemeral) |
+| Round tracking | TaskCreate/TaskUpdate | Manual in transcript |
 | Expected speed | ~2-3× faster | Baseline |
