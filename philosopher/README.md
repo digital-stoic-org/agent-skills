@@ -89,7 +89,7 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 | `/kusanagi` | ✅ v0.4.0 | Major Motoko Kusanagi (Ghost in the Shell) — consciousness, identity, posthumanism |
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/dialogue` | ✅ v0.3.0 | Multi-philosopher interactive dialogue (single context, user participates) |
-| `/encounter` | ✅ v0.5.0 | Autonomous multi-agent dialogue — separate agent per philosopher, self-archiving, persistent memory |
+| `/encounter` | ✅ v0.5.1 | Autonomous multi-agent dialogue — separate agent per philosopher, self-archiving, persistent memory |
 | `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
 | `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
