@@ -26,6 +26,26 @@ Multi-project context management for non-CLI interfaces (Cowork desktop, Telegra
 - **Client-agnostic output** — works in terminal, Cowork, Telegram. Simple lists + emoji, no tables or Mermaid
 - **File Zones** — projects use `ref/` (or `reference/`) for read-only stable docs and `wip/` (or `work-in-progress/`) for active work
 
+## Sync Script
+
+`Sync-CoworkSkills.ps1` — standalone PowerShell script that downloads skills from GitHub and packages them as ZIPs for Cowork Desktop import. No CC CLI, no git, no Syncthing needed.
+
+```powershell
+# One-time download
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/digital-stoic-org/agent-skills/main/cowork/Sync-CoworkSkills.ps1" -OutFile "$HOME\Sync-CoworkSkills.ps1"
+
+# Package all skills, open output folder
+.\Sync-CoworkSkills.ps1 -Force -Open
+
+# List available plugins and skills
+.\Sync-CoworkSkills.ps1 -ListPlugins
+
+# Package specific skills only
+.\Sync-CoworkSkills.ps1 -Skills switch,save-work,load-work
+```
+
+See [WINDOWS-SETUP.md](../../code/cowork/WINDOWS-SETUP.md) in praxis for full setup guide.
+
 ## Compatibility
 
 CONTEXT files written by cowork `/save-work` are readable by dstoic `/load-context` and vice versa. Same format, different UX.
