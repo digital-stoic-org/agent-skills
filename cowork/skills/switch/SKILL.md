@@ -67,8 +67,8 @@ Execute in parallel:
 
 1. **Walk CLAUDE.md chain** — root → intermediate → target (skip missing)
 2. **Scan CONTEXT files** — `CONTEXT-*-llm.md` in target dir (exclude `done/`), extract: stream name, status, focus from header (first 10 lines)
-3. **Scan ref/** (if exists) — list files + one-line description
-4. **Scan wip/** (if exists) — list files + one-line description
+3. **Scan ref folder** (if exists) — check for `ref/` or `reference/`. List files + one-line description. These are READ-ONLY reference files.
+4. **Scan wip folder** (if exists) — check for `wip/` or `work-in-progress/`. List files + one-line description. This is the default workspace for edits.
 
 ## Phase 3.5: Write State File
 
@@ -92,8 +92,8 @@ Read existing file first to preserve `previous_*` fields. Current `active_*` bec
   - [root CLAUDE.md — 2-3 non-obvious constraints]
   - [project CLAUDE.md — 2-3 non-obvious constraints]
 
-📚 ref/: [list if exists]
-✏️ wip/: [list if exists]
+🔒 ref/ (read-only): [list if exists — may be named ref/ or reference/]
+✏️ wip/ (your workspace): [list if exists — may be named wip/ or work-in-progress/]
 📍 Sessions: [CONTEXT files with status + age, if any]
 ⚠️ Traps: [gotchas from CONTEXT headers, if any]
 

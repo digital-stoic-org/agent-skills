@@ -5,14 +5,14 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.25.0"
+    "version": "0.25.1"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core cognitive toolkit: OpenSpec workflow, context management, retrospectives, troubleshooting, investigation",
-      "version": "0.25.0",
+      "version": "0.25.1",
       "author": {
         "name": "dstoic"
       },
@@ -45,7 +45,7 @@
       "name": "biz",
       "source": "./biz",
       "description": "Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX polish, market sizing, canvas, PRD, personas",
-      "version": "0.7.0",
+      "version": "0.7.2",
       "author": {
         "name": "dstoic"
       },
@@ -66,8 +66,8 @@
     {
       "name": "cowork",
       "source": "./cowork",
-      "description": "Multi-project context management: switch projects, save/load sessions. Designed for non-CLI interfaces (Cowork desktop, Telegram).",
-      "version": "0.2.0",
+      "description": "Multi-project context management: switch projects, save/load sessions, ref/wip file zones. Designed for non-CLI interfaces (Cowork desktop, Telegram).",
+      "version": "0.3.0",
       "author": {
         "name": "dstoic"
       },

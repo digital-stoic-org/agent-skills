@@ -136,6 +136,33 @@ sanity check: 789
 - Config files in `/config`
 ```
 
+### Non-Technical Project with File Zones (ref/wip)
+
+For creative/business projects where users work with reference docs + working documents:
+
+```markdown
+# Project: Lendemain Branding
+
+## Identity
+
+**State**: [brand identity statement]
+**Persona**: [target description]
+**Voice**: [communication style]
+
+## File Zones
+
+- 🔒 ref/ (or reference/) — READ-ONLY. Never edit unless user explicitly says "update ref". Show diff and ask first.
+- ✏️ wip/ (or work-in-progress/) — Default workspace. All new files and edits go here.
+- 🔒 .in/ — READ-ONLY archive. Never modify.
+
+## Rules
+
+1. Stay sober, precise, zero excessive promises
+2. Keep brand voice consistent with ref/persona
+3. All content in French unless otherwise requested
+4. Persona data lives in ref/ — never duplicate in wip/
+```
+
 ### Minimal Template (Token-Efficient)
 
 ```markdown

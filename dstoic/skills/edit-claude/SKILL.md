@@ -83,8 +83,19 @@ See `reference.md` for optimization strategies and examples.
    **Memory load order** (later overrides earlier):
    1. Enterprise policy → 2. Project memory → 3. Project rules (.claude/rules/) → 4. User memory (~/.claude/) → 5. Project local (CLAUDE.local.md)
 
-4. **Organization decision tree**:
-   - Universal + cohesive (Git/Security/Planning)? → Main CLAUDE.md (even if 200-500 tokens)
+4. **File Zones (if project uses ref/wip pattern)**:
+   - Detect folder names: `ref/` or `reference/` (read-only), `wip/` or `work-in-progress/` (workspace). Use whichever name the project already has.
+   - Add to CLAUDE.md:
+     ```
+     ## File Zones
+     - 🔒 ref/ (or reference/) — READ-ONLY. Never edit unless user explicitly says "update ref". Show diff and ask first.
+     - ✏️ wip/ (or work-in-progress/) — Default workspace. All new files and edits go here.
+     - 🔒 .in/ — READ-ONLY archive. Never modify.
+     ```
+   - Include this section in main CLAUDE.md for all projects using ref/wip (non-technical users especially benefit from visual clarity)
+
+5. **Organization decision tree**:
+   - Universal + cohesive (Git/Security/Planning/File Zones)? → Main CLAUDE.md (even if 200-500 tokens)
    - Path/language-specific (Python/JS/Bash rules)? → .claude/rules/lang.md with frontmatter
    - Domain-specific (frontend/backend patterns)? → .claude/rules/domain/
    - Topic >300 tokens standalone? → Consider .claude/rules/topic.md

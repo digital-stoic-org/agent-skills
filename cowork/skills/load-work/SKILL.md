@@ -1,5 +1,5 @@
 ---
-name: load-context
+name: load-work
 description: 'Menu-driven session resume. Guided UX wrapper for context loading. Triggers: "load", "resume", "continue where I left off", "what was I working on?".'
 allowed-tools: [Bash, Read, Glob, AskUserQuestion]
 model: haiku
@@ -11,7 +11,7 @@ argument-hint: ""
 # Load Session
 
 Menu-driven session resume for non-CLI interfaces (Cowork desktop, Telegram, CC CLI).
-Reads CONTEXT files written by both `/save-context` (cowork) and `/save-context` (dstoic) — same format.
+Reads CONTEXT files written by both `/save-work` (cowork) and `/save-context` (dstoic) — same format.
 
 ## Phase 1: Scan Available Sessions
 

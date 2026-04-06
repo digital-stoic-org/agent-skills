@@ -1,8 +1,8 @@
 ---
-name: save-context
+name: save-work
 description: 'Menu-driven session save. Guided UX wrapper for context saving. Triggers: "save", "save my work", "checkpoint", "I''m done for now".'
-allowed-tools: [Bash, Read, Write, Glob, AskUserQuestion]
-model: haiku
+allowed-tools: [Bash, Read, Write, Glob, Grep, Agent, AskUserQuestion]
+model: sonnet
 context: main
 user-invocable: true
 argument-hint: ""
@@ -11,7 +11,7 @@ argument-hint: ""
 # Save Session
 
 Menu-driven session save for non-CLI interfaces (Cowork desktop, Telegram, CC CLI).
-Same CONTEXT file format as `dstoic:save-context` — files are interchangeable.
+Same CONTEXT file format as `dstoic:save-context` / `dstoic:load-context` — files are interchangeable.
 
 **Target**: 1200-1500 tokens MAX for CONTEXT file
 
@@ -78,6 +78,46 @@ Mapping:
 
 **Stream naming**: pattern `^[a-zA-Z0-9_-]{1,50}$`. Reserved: `default` → `CONTEXT-llm.md`, `baseline`.
 
+## Phase 3: Drift Check (ref/ vs wip/)
+
+**Skip if** no ref or wip folder exists in the current project.
+
+**Folder aliases**: `ref/` or `reference/` (whichever exists). `wip/` or `work-in-progress/` (whichever exists). Use the actual folder name found for all subsequent operations.
+
+Quick scan — must complete in < 5 seconds, no deep content analysis.
+
+**Step 1: Collect ref keys** (parallel Glob + Read)
+- Glob `{ref|reference}/*.md` — get filenames
+- For each ref file, Read first 5 lines to extract: filename, version suffix (v1/v2), H1 title
+
+**Step 2: Scan wip for stale refs** (parallel Grep per wip file)
+- Grep each `{wip|work-in-progress}/*.md` for `ref/` or `reference/` string matches
+- Detect:
+  - **Stale links**: wip references `ref/X-v1.md` but `ref/X-v2.md` exists
+  - **Dead links**: wip references `ref/Y.md` that doesn't exist
+  - **Version-locked terms**: extract key terms from CLAUDE.md `## Identity` or `## Decisions` section (persona name, positioning label, locked values), grep wip for contradicting old terms
+  - **Mature wip**: wip files significantly newer than corresponding ref, with `[Proposition]` markers removed, versioned headers, or dated validations — may be ready to promote to ref
+
+**Step 3: Report** (only if issues found)
+
+```
+⚠️ Drift detected:
+  - wip/{file}.md links ref/{old}-v1.md → v2 exists
+  - wip/{file}.md says "{old term}" → ref says "{new term}"
+  - wip/{file}.md links ref/{gone}.md → file missing
+  - 🆙 wip/{file}.md looks mature — may be ready to promote to ref
+
+🔧 Want me to fix these? (yes/no)
+```
+
+If user says **yes** → for EACH drift item, spawn Agent (subagent_type: `cowork:sync-ref-wip`) with:
+- `ref_file`: absolute path to the ref file
+- `wip_file`: absolute path to the wip file
+- `drift_description`: what specifically is wrong
+- The agent auto-detects direction (ref→wip or wip→ref) from timestamps and content maturity, proposes edits to the stale side only, shows diff before writing.
+
+If user says **no** or skips → continue to Phase 4. Save drift warnings in CONTEXT file under `## Session > unexpected:` for future reference.
+
 ## Phase 4: Synthesize & Write
 
 From conversation (last 15-20 messages), synthesize:
@@ -122,7 +162,7 @@ If archived: `📦 Archived to done/ (status: {status})`
 1. **Never ask for stream name as free text first** — always offer existing streams or auto-suggest
 2. **3 choices max per menu** — don't overwhelm
 3. **Auto-detect over ask** — project name, stream name, status should be inferred when possible
-4. **Same CONTEXT file format** as dstoic:save-context — files must be readable by both /load and /load-context
+4. **Same CONTEXT file format** as dstoic:save-context — files must be readable by both /load-work and dstoic:load-context
 5. **Client-agnostic output** — works in terminal, Cowork, Telegram
 6. **Token budget** — CONTEXT file stays under 1500 tokens
 7. **No shell scripts** — pure tool calls only (Glob, Read, Write, Edit). Only Bash for `mkdir -p done && mv`
