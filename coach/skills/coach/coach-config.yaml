@@ -2,7 +2,7 @@
 # Copy this file and customize paths/streams for your vault structure.
 # All paths are relative to vault_path unless absolute.
 
-vault_path: ~/vault  # Root of your GTD/PKM vault
+vault_path: /vaults/gtd-pcm  # Root of your GTD/PKM vault
 
 # --- Personal Domain ---
 personal:
