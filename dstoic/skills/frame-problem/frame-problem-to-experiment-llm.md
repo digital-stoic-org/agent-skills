@@ -11,7 +11,8 @@ scale: "-"
 - **Considered**: {what approaches were weighed during framing}
 - **Rejected**: {why structured domains didn't fit — constraints are absent}
 - **Surprised by**: {chaos signals — urgency, incoherence, novel disruption}
-- **Models used**: Cynefin constraint classification
+- **Triangulation**: T1={Keogh level}, T2={predictability}, T3={disassembly} — {convergence}
+- **Models used**: Cynefin triangulation (Keogh + Predictability + Disassembly)
 - **Constraints discovered**: None — that's the point. Constraints are absent.
 
 ## Decisions

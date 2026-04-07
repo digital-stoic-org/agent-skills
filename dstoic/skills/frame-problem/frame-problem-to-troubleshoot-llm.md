@@ -11,7 +11,8 @@ scale: "{boulder|pebble}"
 - **Considered**: {what approaches were weighed during framing}
 - **Rejected**: {why complex/chaotic didn't fit — governing constraints exist}
 - **Surprised by**: {degradation signals — errors, declining quality}
-- **Models used**: Cynefin constraint classification + Q1.1 sub-question
+- **Triangulation**: T1={Keogh level}, T2={predictability}, T3={disassembly} — {convergence}
+- **Models used**: Cynefin triangulation (Keogh + Predictability + Disassembly)
 - **Constraints discovered**: {governing constraints — known system, degrading behavior}
 
 ## Decisions

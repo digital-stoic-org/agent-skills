@@ -11,7 +11,8 @@ scale: "{boulder|pebble}"
 - **Considered**: {what approaches were weighed during framing}
 - **Rejected**: {why other domains didn't fit}
 - **Surprised by**: {unexpected signals}
-- **Models used**: Cynefin constraint classification
+- **Triangulation**: T1={Keogh level}, T2={predictability}, T3={disassembly} — {convergence}
+- **Models used**: Cynefin triangulation (Keogh + Predictability + Disassembly)
 - **Constraints discovered**: {enabling constraints — cause-effect unclear but hypothesis exists}
 
 ## Decisions

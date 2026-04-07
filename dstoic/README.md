@@ -26,7 +26,7 @@ flowchart LR
 
 | Mode | What it does |
 |------|-------------|
-| 🧭 **Frame** | Classify problem → route to right skill chain (`/frame-problem`, `/pick-model`) |
+| 🧭 **Frame** | Triangulate problem (3 tests) → route to right skill chain (`/frame-problem`, `/pick-model`) |
 | 🧠 **Think** | Brainstorm, investigate, deep analysis (`/brainstorm`, `/investigate`) |
 | ⚙️ **Build** | Plan → develop → gate → test → sync (`/openspec-*` suite) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings (`/troubleshoot`) |
@@ -44,7 +44,7 @@ Plus: tool creation, conversions, and hooks.
 
 ## 📦 Version
 
-`0.26.0` · 48 skills · 0 commands · 4 hooks
+`0.27.0` · 48 skills · 0 commands · 4 hooks
 
 ---
 

@@ -68,26 +68,55 @@ flowchart TD
 
 ### `/frame-problem` — The Entry Point
 
+Cynefin is a **sense-making framework**, not a categorization tool. The skill doesn't ask "which box?" — it **triangulates** using 3 concrete tests anyone can answer, then routes (or decomposes if the problem spans multiple domains).
+
 ```mermaid
-quadrantChart
-    title Cynefin Domain Classification
-    x-axis "Absent constraints" --> "Rigid constraints"
-    y-axis "Enabling constraints" --> "Governing constraints"
-    quadrant-1 "Clear (execute)"
-    quadrant-2 "Complicated (analyze)"
-    quadrant-3 "Complex (probe)"
-    quadrant-4 "Chaotic (act)"
+flowchart TD
+    task["❓ Problem"] --> t1["🔮 T1: Who's done this?<br/>(Keogh Scale)"]
+    task --> t2["🔁 T2: Same inputs = same result?<br/>(Predictability)"]
+    task --> t3["🧩 T3: Can you take it apart?<br/>(Disassembly)"]
+
+    t1 & t2 & t3 --> tri{"Triangulate"}
+
+    tri -->|"all agree"| classify["🎯 High confidence<br/>Single domain"]
+    tri -->|"2 of 3"| liminal["⚠️ Liminal state<br/>Boundary signal"]
+    tri -->|"disagree"| decompose["🧩 Decompose<br/>Sub-problems in different domains"]
+
+    classify --> route["Route to skill chain"]
+    liminal --> route
+    decompose --> route
+
+    classDef test fill:#E8EAF6,stroke:#3F51B5,color:#000
+    classDef decision fill:#FFE0B2,stroke:#F57C00,color:#000
+    classDef output fill:#C8E6C9,stroke:#388E3C,color:#000
+    classDef warn fill:#FFCDD2,stroke:#C62828,color:#000
+
+    class t1,t2,t3 test
+    class tri decision
+    class classify,route output
+    class liminal,decompose warn
 ```
+
+**The 3 tests (in plain English):**
+
+| Test | Question | What it catches |
+|------|----------|----------------|
+| 🔮 **Keogh** | "Who has done this before?" (everyone → nobody) | Distinguishes Clear/Complicated from Complex |
+| 🔁 **Predictability** | "If you reran this, same result?" | Catches engineers who think they can analyze what's actually unpredictable |
+| 🧩 **Disassembly** | "Can you break it apart and reassemble?" | Targets the hardest boundary: Complicated vs Complex |
+
+**Domain routing:**
 
 | Domain | In plain English | Constraint | Route | OpenSpec? |
 |--------|------------------|-----------|-------|-----------|
-| **Clear** | Cause-effect obvious — best practice exists | Rigid | Just code it | 🪨 Boulder: yes · 🪹 Pebble: no |
-| **Complicated** | Cause-effect discoverable — needs expert analysis | Governing | `/investigate` → `/openspec-plan` | 🪨 Boulder: yes |
-| **Complex** | Cause-effect only visible in hindsight — must probe first | Enabling | `/probe` → sense → `/investigate` | ✅ Yes |
+| **Clear** | Everyone knows how — just follow the process | Rigid | Just code it | 🪨 Boulder: yes · 🫧 Pebble: no |
+| **Complicated** | Experts can solve — needs analysis, not experimentation | Governing | `/investigate` → `/openspec-plan` | 🪨 Boulder: yes |
+| **Complex** | Only makes sense in hindsight — must probe first | Enabling | `/probe` → sense → `/openspec-plan` | ✅ Yes |
 | **Chaotic** | No cause-effect visible — act first, stabilize | Absent | `/experiment` → act-sense → `/probe` | ❌ No (act first) |
-| **Confused** | Don't know which domain — decompose and re-classify | Unknown | `/frame-problem` decompose → re-classify | ❌ No |
+| **Liminal** | On the boundary between two domains | Mixed | `/probe` to resolve boundary → re-frame | Deferred |
+| **Composite** | Sub-parts in different domains | Mixed | Decompose → route each part separately | Per part |
 
-Frame auto-classifies the domain (≥80% confidence) or asks constraint-based questions, then routes to the right skill chain with handoff context.
+**Key design choice:** The skill never asks "what type of constraint?" directly — people systematically misclassify (engineers see Complex as Complicated, novices see Complicated as Chaotic). The 3 tests triangulate to the same answer from different angles.
 
 ---
 

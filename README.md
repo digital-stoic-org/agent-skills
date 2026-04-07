@@ -47,7 +47,7 @@ flowchart LR
 
 | Mode | What | Hero Skills |
 |------|------|-------------|
-| 🧭 **Frame** | Classify the problem → route to the right skill chain | `/frame-problem` (Cynefin), `/pick-model` |
+| 🧭 **Frame** | Triangulate the problem (3 tests) → route to the right skill chain | `/frame-problem` (Cynefin triangulation), `/pick-model` |
 | 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate`, `/probe`, `/challenge` |
 | ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (9 skills, human-gated sections) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` |
@@ -103,7 +103,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 48 skills, 0 commands, 4 hooks | ✅ v0.26.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 48 skills, 0 commands, 4 hooks | ✅ v0.27.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity | ✅ v0.7.2 |
@@ -125,8 +125,8 @@ To install a specific plugin only, add it to `.claude/settings.json`:
 
 ```bash
 /frame-problem how should I approach building a new auth system
-# → Classifies as Complicated (governing constraints) + Boulder
-# → Routes to: /investigate → /openspec-plan
+# → Triangulates: Keogh=2 (team expertise), Predictable=yes, Disassemble=yes
+# → Complicated (3/3 agree) + Boulder → /investigate → /openspec-plan
 
 /brainstorm product naming ideas for my CLI tool
 # → Research → SCAMPER divergence → weighted scoring → recommendation
