@@ -87,11 +87,22 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 | `/nietzsche` | ✅ v0.3.0 | Friedrich Nietzsche (1844–1900), all periods |
 | `/hadot` | ✅ v0.3.0 | Pierre Hadot (1922–2010) — philosophy as way of life, spiritual exercises |
 | `/kusanagi` | ✅ v0.4.0 | Major Motoko Kusanagi (Ghost in the Shell) — consciousness, identity, posthumanism |
+| `/marcus-aurelius` | ✅ v0.7.0 | Marcus Aurelius (121–180 CE) — Stoic self-examination, duty, Meditations |
+| `/montaigne` | ✅ v0.7.0 | Michel de Montaigne (1533–1592) — radical self-examination, "Que sais-je?" |
+| `/morin` | ✅ v0.7.0 | Edgar Morin (1921–2025) — complex thought, recursion, dialogic method |
+| `/arendt` | ✅ v0.7.0 | Hannah Arendt (1906–1975) — political philosophy, vita activa, appearance |
+| `/weil` | ✅ v0.7.0 | Simone Weil (1909–1943) — attention, gravity and grace, decreation |
+| `/spinoza` | ✅ v0.7.0 | Baruch Spinoza (1632–1677) — ethics, conatus, affects, sub specie aeternitatis |
+| `/sartre` | ✅ v0.7.0 | Jean-Paul Sartre (1905–1980) — radical freedom, mauvaise foi, engagement |
+| `/epictetus` | ✅ v0.7.0 | Epictetus (c. 50–135 CE) — prohairesis, dichotomy of control, Stoic practice |
+| `/sunzi` | ✅ v0.7.0 | Sun Zi (c. 544–496 BCE) — strategic cognition, terrain, momentum (shì) |
+| `/diogenes` | ✅ v0.7.0 | Diogenes of Sinope (c. 412–323 BCE) — Cynic parrhesia, anti-status, lived philosophy |
+| `/musashi` | ✅ v0.7.0 | Miyamoto Musashi (c. 1584–1645) — embodied combat cognition, the Void, two-sword way |
+| `/leto-ii` | ✅ v0.7.0 | Leto II Atreides (God Emperor of Dune) — prescience, Golden Path, sacrifice |
+| `/buber` | ✅ v0.7.0 | Martin Buber (1878–1965) — I-Thou, dialogue, encounter, the Between |
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/dialogue` | ✅ v0.3.0 | Multi-philosopher interactive dialogue (single context, user participates) |
 | `/encounter` | ✅ v0.6.0 | Autonomous multi-agent dialogue — native Agent Teams (TeamCreate + SendMessage), task-tracked rounds, self-archiving |
-| `/montaigne` | 🔜 planned | Michel de Montaigne — radical self-examination, "Que sais-je?" |
-| `/socrates` | 🔜 planned | Socrates via Plato — elenctic method, with source-limitation awareness |
 
 ## Design
 
