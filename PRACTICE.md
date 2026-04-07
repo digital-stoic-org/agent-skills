@@ -180,4 +180,22 @@ When comparing this practice against other approaches, evaluate across:
 
 ---
 
+## 🏆 Benchmark Results (April 2026)
+
+Systematically compared against 7 frameworks across the AI coding agent ecosystem. Full details → [benchmarks/](benchmarks/)
+
+| Framework | Focus | Verdict |
+|-----------|-------|---------|
+| [ECC](benchmarks/2026-04-07-ecc.md) (144K⭐) | Automated learning, instincts, cross-harness | Praxis leads context quality & cognitive depth. ECC leads automation & scale |
+| [SuperClaude](benchmarks/2026-04-07-context-format.md) (22K⭐) | Progressive loading, ReflexionMemory | Mostly prompt engineering as framework. Progressive loading worth studying |
+| [ACP](benchmarks/2026-04-02-acp.md) (45 patterns) | Pattern language for AI-augmented dev | ~70% coverage. Praxis exceeds on debiasing & compounding |
+| [BMAD v6](benchmarks/2026-03-13-bmad.md) (36K⭐) | Role-based agent methodology | **Only framework that edges ahead** — for greenfield teams |
+| [HumanLayer](benchmarks/2026-03-18-humanlayer-harness.md) | Harness engineering taxonomy | All 7 harness principles natively covered |
+| [Ralph Loop](benchmarks/2026-03-15-ralph-loop.md) | Fully autonomous coding agent | Deliberately rejected. Building controlled equivalent |
+| [ICM + QMD](benchmarks/2026-03-19-icm-qmd-memory.md) | Memory architecture (episodic + semantic) | Complementary. Watching — manual discipline reduces urgency |
+
+**Key insight**: Depth > breadth. Manual phase-transition discipline produces higher-quality context than automated capture. The "automation gap" is a philosophical choice, not a missing feature.
+
+---
+
 📄 **TL;DR**: [README.md](README.md) · 🤖 **LLM reference**: [PRACTICE-llm.md](PRACTICE-llm.md) · 🧭 **Philosophy**: [PHILOSOPHY.md](PHILOSOPHY.md) · 📖 **Skill catalog**: [README-full.md](README-full.md)

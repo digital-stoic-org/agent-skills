@@ -132,4 +132,4 @@ Issues & ideas: [github.com/digital-stoic-org/agent-skills/issues](https://githu
 
 ---
 
-📄 **TL;DR:** [README.md](README.md) · 📚 **Full catalog:** [README-full.md](README-full.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md)
+📄 **TL;DR:** [README.md](README.md) · 📚 **Full catalog:** [README-full.md](README-full.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** [benchmarks/](benchmarks/)

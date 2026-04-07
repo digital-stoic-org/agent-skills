@@ -553,4 +553,4 @@ This installs all plugins (dstoic, gtd, cowork, etc.). To install a specific plu
 
 📄 **License:** MIT — Fork it, adapt it, make it yours.
 
-🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md)
+🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** [benchmarks/](benchmarks/) (vs ECC, BMAD, ACP, HumanLayer, Ralph, ICM)

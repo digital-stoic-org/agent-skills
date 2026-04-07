@@ -95,6 +95,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 - **4 hooks**: notifications, session capture, debug dumps, daily sync
 - **3 execution modes**: garage (default), scale, maintenance
 - **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
+- **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](PRACTICE.md#-benchmark-results-april-2026) · [benchmarks/](benchmarks/)
 
 ---
 

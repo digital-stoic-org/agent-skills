@@ -409,3 +409,33 @@ dimensions:
   10_domain_applicability: Generic vs tech-specific vs personal?
   11_personalization: Toothbrush principle? Adaptable to different practitioners?
 ```
+
+## Benchmark Results (April 2026)
+
+```yaml
+total_benchmarks: 7
+artifacts: benchmarks/
+
+compared_against:
+  ecc: { stars: 144K, verdict: "Praxis leads context quality + cognitive depth. ECC leads automation + cross-harness + scale." }
+  superclaude: { stars: 22K, verdict: "Progressive loading useful. Rest is prompt engineering as framework." }
+  acp: { patterns: 45, verdict: "~70% coverage. Praxis exceeds on debiasing + compounding." }
+  bmad: { stars: 36K, verdict: "Only framework that edges ahead — greenfield teams. Praxis dominates solo + brownfield." }
+  humanlayer: { verdict: "All 7 harness principles natively covered." }
+  ralph: { verdict: "Deliberately rejected. Lacks human gates, rollback, cost controls." }
+  icm_qmd: { verdict: "Complementary memory architecture. Watching — manual discipline reduces urgency." }
+
+context_format_scores:
+  actionability:        { praxis: high, ecc: medium, superclaude: low }
+  reasoning_preserved:  { praxis: high, ecc: none, superclaude: none }
+  token_efficiency:     { praxis: high, ecc: low, superclaude: unknown }
+  verification_state:   { praxis: high, ecc: none, superclaude: none }
+  multi_surface:        { praxis: high, ecc: none, superclaude: none }
+  automated_capture:    { praxis: none, ecc: high, superclaude: medium }
+
+key_insights:
+  - "Manual phase-transition discipline > automated capture for context quality"
+  - "The automation gap is a philosophical choice, not a missing feature"
+  - "Depth (cognitive framework, adversarial thinking) > breadth (cross-harness, automation)"
+  - "BMAD is the only framework that edges ahead, and only for greenfield team contexts"
+```
