@@ -21,6 +21,12 @@ Philosopher persona plugin for Claude Code. Historically-grounded philosophical 
 /encounter nietzsche hadot "Is practice possible without community?"
 /encounter nietzsche hadot kusanagi --format dialectic --rounds 3
 
+# Philosopher council — parallel Delphi ensemble with curator synthesis
+/council "Should I leave my job to build my own thing?"
+/council "How do I handle this conflict?" --count 3
+/council "What does courage mean here?" --pick nietzsche weil musashi
+/council "Is this the right time to act?" --all --depth quick
+
 # Create new personas
 /create montaigne             # Generate Montaigne persona (SKILL.md + reference.md)
 /create socrates --lang el    # Generate with Greek key terms
@@ -66,6 +72,8 @@ philosopher/
   skills/
     create/
       SKILL.md              # Meta-skill: generate new personas
+    council/
+      SKILL.md              # Parallel Delphi ensemble with curator synthesis
     encounter/
       SKILL.md              # Autonomous multi-agent dialogue orchestrator
     nietzsche/
@@ -103,6 +111,8 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/dialogue` | ✅ v0.3.0 | Multi-philosopher interactive dialogue (single context, user participates) |
 | `/encounter` | ✅ v0.6.0 | Autonomous multi-agent dialogue — native Agent Teams (TeamCreate + SendMessage), task-tracked rounds, self-archiving |
+| `/council` | ✅ v0.8.0 | Parallel Delphi ensemble — independent philosopher responses + curator synthesis (convergences, tensions, blind spots) |
+
 
 ## Design
 
