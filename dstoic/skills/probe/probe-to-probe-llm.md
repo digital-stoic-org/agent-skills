@@ -25,7 +25,7 @@ scale: "{boulder|pebble}"
 
 - Prior probe executed: {summary of cycle N}
 - Partial result: {what was confirmed, what remains uncertain}
-- Knowledge written: `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md`
+- Knowledge written: `$PRAXIS_DIR/thinking/probes/{project}/{date}-{slug}-llm.md`
 
 ## Output
 
@@ -47,12 +47,12 @@ Self-transition — staying in Complex. Prior probe produced partial result. Ref
 - **What's confirmed**: {from prior cycle — do NOT re-test}
 - **What's refuted**: {from prior cycle — do NOT retry}
 - **New angle**: {what to test differently this cycle}
-- **Accumulated probe history**: Cycle {N} → partial. See `$THINKING_DIR/probes/` for full trail.
+- **Accumulated probe history**: Cycle {N} → partial. See `$PRAXIS_DIR/thinking/probes/` for full trail.
 - **Do NOT**: Re-qualify from scratch — Phase 1 should be faster with carried context
 
 ## Accumulated Context
 
-Token guidance: target 300 tokens inline. For depth, use **references** — point to `$THINKING_DIR/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
+Token guidance: target 300 tokens inline. For depth, use **references** — point to `$PRAXIS_DIR/thinking/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
 Soft cap: 600 tokens inline per handoff. If you need more, move detail to a knowledge file and reference it.
 Accumulated cap: 800 tokens across a chain — compress to 200 at cap (keep: decisions, constraints, rejected paths). References do NOT count toward the cap.
 Prior cycles: {count}. If total accumulated > 800 tokens, compress prior trails to 200 tokens (keep: confirmed facts, active constraints, rejected paths only).

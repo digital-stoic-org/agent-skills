@@ -51,7 +51,7 @@ Do NOT pin:
 
 ## State File
 
-Path: `/home/mat/dev/praxis/.session-logs/<slug>/pins.json`
+Path: `$PRAXIS_DIR/.session-logs/<slug>/pins.json`
 
 Derive slug from CWD:
 
@@ -59,7 +59,7 @@ Derive slug from CWD:
 GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 REL_PATH="${PWD#$GIT_ROOT/}"
 SLUG=$(echo "$REL_PATH" | tr '/' '-')
-PINS_DIR="/home/mat/dev/praxis/.session-logs/$SLUG"
+PINS_DIR="$PRAXIS_DIR/.session-logs/$SLUG"
 PINS_FILE="$PINS_DIR/pins.json"
 ```
 

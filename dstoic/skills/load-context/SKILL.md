@@ -52,8 +52,8 @@ Parallel Read: OpenSpec project/proposal/tasks.md, top 3 hot files, manifest.yam
 
 **Thinking Artifacts** (if `## Thinking Artifacts` section exists in CONTEXT file):
 - Default mode: display artifact paths in resume report (no content read)
-- `--full` mode: Read referenced `$THINKING_DIR` artifacts and include brief summaries in report
-- If `$THINKING_DIR` is unset: display paths as-is, note `⚠️ $THINKING_DIR not set`
+- `--full` mode: Read referenced `$PRAXIS_DIR/thinking` artifacts and include brief summaries in report
+- If `$PRAXIS_DIR` is unset: display paths as-is, note `⚠️ $PRAXIS_DIR not set`
 
 ### Phase 3: Format Resume Report
 

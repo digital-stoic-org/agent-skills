@@ -23,8 +23,8 @@ Example CLAUDE.md format:
 ```
 ## Alias Paths
 
-- **nano-vc**: control `/praxis/repos/nano-vc` | data `/home/mat/dev/nano-vc`
-- **agent-skills**: control `/praxis/repos/agent-skills` | data `/home/mat/dev/agent-skills`
+- **nano-vc**: control `$PRAXIS_DIR/repos/nano-vc` | data `/home/mat/dev/nano-vc`
+- **agent-skills**: control `$PRAXIS_DIR/repos/agent-skills` | data `/home/mat/dev/agent-skills`
 ```
 
 The `data` value = the git repo path to commit in.
@@ -126,7 +126,7 @@ Your project CLAUDE.md must have an `## Alias Paths` section with `data` paths p
 ```markdown
 ## Alias Paths
 
-- **my-repo**: control `/praxis/repos/my-repo` | data `/path/to/my-repo`
+- **my-repo**: control `$PRAXIS_DIR/repos/my-repo` | data `/path/to/my-repo`
 ```
 
 ### 2. Permission Rules (settings.json)

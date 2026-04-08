@@ -12,7 +12,7 @@ Mental Models → Isolation → Root Cause Drill → (OODA if still stuck)
 
 ### Step 1: Check learnings.yaml
 
-Read `/praxis/reference/troubleshoot/learnings.yaml` for user's accumulated patterns:
+Read `$PRAXIS_DIR/reference/troubleshoot/learnings.yaml` for user's accumulated patterns:
 ```yaml
 # Look for matching symptom
 mental_models:

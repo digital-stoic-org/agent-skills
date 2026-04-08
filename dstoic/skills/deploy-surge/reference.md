@@ -3,7 +3,7 @@
 ## Inventory Schema
 
 ```yaml
-# /praxis/reference/deploy/surge-inventory.yaml
+# $PRAXIS_DIR/reference/deploy/surge-inventory.yaml
 deployments:
   - slug: rpt-a3f9d2e1
     url: https://rpt-a3f9d2e1.surge.sh

@@ -96,13 +96,13 @@ Observe results against confirm/refute criteria:
 
 **MUST execute before exit gate. DO NOT skip. DO NOT wait for user to ask.**
 
-Write probe result to `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md`.
+Write probe result to `$PRAXIS_DIR/thinking/probes/{project}/{date}-{slug}-llm.md`.
 
-`{project}` = current project folder name (e.g., `agent-skills`, `gtd-pcm`). Create `$THINKING_DIR/probes/{project}/` if missing.
+`{project}` = current project folder name (e.g., `agent-skills`, `gtd-pcm`). Create `$PRAXIS_DIR/thinking/probes/{project}/` if missing.
 
 **Collision handling**: If filename exists, append sequence: `{date}-{slug}-2-llm.md`, `{date}-{slug}-3-llm.md`, etc. First write gets clean name.
 
-**Guard**: If `$THINKING_DIR` is unset, warn user and skip artifact persistence: `⚠️ $THINKING_DIR not set — artifact not persisted. Set via: export THINKING_DIR="$HOME/dev/praxis/thinking"`
+**Guard**: If `$PRAXIS_DIR` is unset, warn user and skip artifact persistence: `⚠️ $PRAXIS_DIR not set — artifact not persisted. Set via: export PRAXIS_DIR="$HOME/dev/praxis"`
 
 Content: hypothesis + enabling constraints + steps taken + observations + sensed patterns + result classification.
 
@@ -119,7 +119,7 @@ Produce B4-compatible handoff:
 | partial (need another angle) | Some evidence, hypothesis needs sharpening | Complex → Complex (re-probe) | `probe-to-probe-llm.md` |
 | refuted / surprise | Hypothesis failed or unexpected result | Complex → Complex (brainstorm) | `probe-to-brainstorm-llm.md` |
 
-Handoff token budget: target 300 tokens inline, flex 200-500, hard cap 600. References to `$THINKING_DIR` files do not count toward cap.
+Handoff token budget: target 300 tokens inline, flex 200-500, hard cap 600. References to `$PRAXIS_DIR/thinking` files do not count toward cap.
 
 Self-transition: if result is `partial` and hypothesis can be sharpened, re-invoke `/probe` via `probe-to-probe-llm.md` with accumulated context. Prior cycles compressed to 200 tokens at 800-token accumulated cap.
 

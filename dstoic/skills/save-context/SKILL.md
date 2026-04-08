@@ -41,13 +41,13 @@ Bash: rtk ls openspec/changes/ + rtk ls -t CONTEXT-*llm.md
 
 ### Phase 1b: Detect Thinking Artifacts (parallel with Phase 1)
 
-If `$THINKING_DIR` is set:
+If `$PRAXIS_DIR` is set:
 ```
-Bash: ls -t "$THINKING_DIR"/*/{project}/ 2>/dev/null | head -10
+Bash: ls -t "$PRAXIS_DIR/thinking"/*/{project}/ 2>/dev/null | head -10
 ```
 Where `{project}` = current project folder name. Collect recent artifact paths written during this session (match conversation timestamps/topics).
 
-If `$THINKING_DIR` is unset or empty: skip silently — no error, no warning.
+If `$PRAXIS_DIR` is unset or empty: skip silently — no error, no warning.
 
 ### Phase 2: Analyze & Synthesize (single pass)
 

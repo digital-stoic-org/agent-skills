@@ -61,7 +61,7 @@ Fallback rule: agent asks or proposes — user validates. Never skip an element 
 
 When result is `partial` and a refined hypothesis is identifiable:
 
-1. Write full probe result to `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md` (collision: append `-2`, `-3`, etc.)
+1. Write full probe result to `$PRAXIS_DIR/thinking/probes/{project}/{date}-{slug}-llm.md` (collision: append `-2`, `-3`, etc.)
 2. Fill `probe-to-probe-llm.md` with:
    - Refined hypothesis (sharpened, not repeated)
    - Carried enabling constraints (unchanged unless probe discovered new ones)
@@ -71,13 +71,13 @@ When result is `partial` and a refined hypothesis is identifiable:
 3. Re-invoke `/probe` with the filled handoff as `$ARGUMENTS`
 4. Phase 1 qualification is faster — skip rediscovery of confirmed facts
 
-Accumulated context cap: 800 tokens total across a chain. At cap, compress prior cycles to 200 tokens (keep: confirmed facts, active constraints, rejected paths). References to `$THINKING_DIR` files do not count toward cap.
+Accumulated context cap: 800 tokens total across a chain. At cap, compress prior cycles to 200 tokens (keep: confirmed facts, active constraints, rejected paths). References to `$PRAXIS_DIR/thinking` files do not count toward cap.
 
 ---
 
 ## Knowledge File Convention
 
-Output path: `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md`
+Output path: `$PRAXIS_DIR/thinking/probes/{project}/{date}-{slug}-llm.md`
 
 `{project}` = current project folder name. On collision (file exists), append sequence: `-2`, `-3`, etc.
 

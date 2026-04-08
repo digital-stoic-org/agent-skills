@@ -23,14 +23,14 @@ Bridges are discovered during work, not during planning. When you're deep in a m
 
 ## Step 0: Load Config
 
-Read `/praxis/config/projects.yaml`. This file contains:
+Read `$PRAXIS_DIR/config/projects.yaml`. This file contains:
 - Project aliases (keys), names, roles, tiers, goals, flywheel roles
 - Stakeholders with `also_in` cross-references (for people-bridge detection)
 - GTD and praxis paths
 
 Use project YAML keys as aliases (case-insensitive matching). If a user types a project name instead of alias, fuzzy-match against `name` fields.
 
-If config missing → `⚠️ No project config found at /praxis/config/projects.yaml. Create it with your project definitions.`
+If config missing → `⚠️ No project config found at $PRAXIS_DIR/config/projects.yaml. Create it with your project definitions.`
 
 ## Archetypes
 
@@ -62,7 +62,7 @@ Every bridge has a type. The 10 archetypes:
 
 ## Storage
 
-**Directory:** `$THINKING_DIR/bridges/`
+**Directory:** `$PRAXIS_DIR/thinking/bridges/`
 
 Each bridge is a YAML file: `{date}-{seq}-{source}-to-{target}.yaml`
 
@@ -138,8 +138,8 @@ If ambiguous, default to `knowledge` and mention in response.
 
 ### Write File
 
-1. Guard: check `$THINKING_DIR` is set. If not: `⚠️ $THINKING_DIR not set. Run: export THINKING_DIR="$HOME/dev/praxis/thinking"`
-2. `mkdir -p $THINKING_DIR/bridges/`
+1. Guard: check `$PRAXIS_DIR` is set. If not: `⚠️ $PRAXIS_DIR not set. Set via: export PRAXIS_DIR="$HOME/dev/praxis"`
+2. `mkdir -p $PRAXIS_DIR/thinking/bridges/`
 3. Determine seq: count existing `{date}-*` files + 1
 4. Write YAML file
 5. Respond (one line): `🔗 Bridge #N: {emoji} {source} → {target} ({archetype}) — {short desc}`
@@ -148,7 +148,7 @@ If ambiguous, default to `knowledge` and mention in response.
 
 ## List (`/bridge list [project]`)
 
-1. `Glob` for `$THINKING_DIR/bridges/*.yaml`
+1. `Glob` for `$PRAXIS_DIR/thinking/bridges/*.yaml`
 2. Read each file, parse YAML
 3. If project filter: match against config aliases or names (case-insensitive)
 4. Sort by date desc, show last 10
@@ -221,4 +221,4 @@ graph LR
 - **Auto-detect but don't over-think.** If archetype is ambiguous, pick the closest and move on.
 - **Weekly nudge, not nag.** Mention reconciliation opportunity only when pattern is clear (≥3 same pair).
 - **No GTD writes.** This skill only writes to `thinking/bridges/`. GTD `## 🔗 Ponts Stratégiques` updates are manual during weekly review.
-- **Config-driven.** All project aliases come from `/praxis/config/projects.yaml`. If a project isn't in config, warn and suggest adding it.
+- **Config-driven.** All project aliases come from `$PRAXIS_DIR/config/projects.yaml`. If a project isn't in config, warn and suggest adding it.

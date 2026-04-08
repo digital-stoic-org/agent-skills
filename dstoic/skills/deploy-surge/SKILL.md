@@ -12,7 +12,7 @@ user-invocable: true
 
 Deploy static files to Surge.sh with YAML inventory lifecycle management.
 
-**Inventory**: `/praxis/reference/deploy/surge-inventory.yaml`
+**Inventory**: `$PRAXIS_DIR/reference/deploy/surge-inventory.yaml`
 
 ## Argument Parsing
 

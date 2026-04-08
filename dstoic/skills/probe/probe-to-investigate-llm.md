@@ -24,7 +24,7 @@ scale: "{boulder|pebble}"
 
 - Probe executed: {summary of probe steps}
 - Patterns sensed: {what emerged}
-- Knowledge written: `$THINKING_DIR/probes/{project}/{date}-{slug}-llm.md`
+- Knowledge written: `$PRAXIS_DIR/thinking/probes/{project}/{date}-{slug}-llm.md`
 
 ## Output
 
@@ -41,13 +41,13 @@ Constraint shift: enabling → governing. Probe revealed cause-effect relationsh
 
 - **Investigation focus**: {specific question informed by probe findings}
 - **Known constraints**: {governing constraints revealed by probe}
-- **Probe evidence**: {key data points from probe — reference `$THINKING_DIR/probes/` file}
+- **Probe evidence**: {key data points from probe — reference `$PRAXIS_DIR/thinking/probes/` file}
 - **Patterns to investigate**: {what the probe surfaced that needs deeper analysis}
 - **Eliminated causes**: {DO NOT re-investigate — probe already ruled these out}
 - **Do NOT**: Re-probe — sufficient structure exists. Analyze with expertise.
 
 ## Accumulated Context
 
-Token guidance: target 300 tokens inline. For depth, use **references** — point to `$THINKING_DIR/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
+Token guidance: target 300 tokens inline. For depth, use **references** — point to `$PRAXIS_DIR/thinking/{type}/{date}-{slug}-llm.md` files rather than embedding full content.
 Soft cap: 600 tokens inline per handoff. If you need more, move detail to a knowledge file and reference it.
 Accumulated cap: 800 tokens across a chain — compress to 200 at cap (keep: decisions, constraints, rejected paths). References do NOT count toward the cap.

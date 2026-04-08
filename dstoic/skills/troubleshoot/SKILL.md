@@ -28,7 +28,7 @@ Search-first diagnostic workflow. Human executes commands.
 
 ### 0. Load Learnings
 
-Read `/praxis/reference/troubleshoot/learnings.yaml` if exists. Apply known patterns before searching.
+Read `$PRAXIS_DIR/reference/troubleshoot/learnings.yaml` if exists. Apply known patterns before searching.
 
 ### 1. Search (do first)
 
@@ -69,13 +69,13 @@ Exit when root cause confirmed and fix verified.
 
 **MUST execute after root cause confirmed and fix verified. DO NOT skip. DO NOT wait for user to ask.**
 
-Persist the diagnostic session to `$THINKING_DIR/troubleshoot/{project}/{date}-{slug}-llm.md`.
+Persist the diagnostic session to `$PRAXIS_DIR/thinking/troubleshoot/{project}/{date}-{slug}-llm.md`.
 
 `{project}` = current project folder name. `{slug}` = lowercase hyphenated from primary symptom/error. Create directory if missing.
 
 **Collision handling**: If filename exists, append sequence: `{date}-{slug}-2-llm.md`, `{date}-{slug}-3-llm.md`. First write gets clean name.
 
-**Guard**: If `$THINKING_DIR` is unset, skip artifact persistence silently (troubleshooting must not fail because of missing env var).
+**Guard**: If `$PRAXIS_DIR` is unset, skip artifact persistence silently (troubleshooting must not fail because of missing env var).
 
 **Content** (required sections):
 - Symptoms (as reported)
@@ -90,14 +90,14 @@ This is the **active thinking trail** — distinct from `learnings.yaml` which c
 ### 6. Learn
 
 After resolution, AskUserQuestion: "Save this learning?"
-- Global → append to `/praxis/reference/troubleshoot/learnings.yaml`
+- Global → append to `$PRAXIS_DIR/reference/troubleshoot/learnings.yaml`
 - Project → append with `scope: project:<name>`
 - Skip
 
 ## ✅ Completion Checklist
 
 Before responding to user, verify:
-- [ ] Artifact written to `$THINKING_DIR` (or guard triggered if unset)
+- [ ] Artifact written to `$PRAXIS_DIR/thinking` (or guard triggered if unset)
 
 ## Refs
 

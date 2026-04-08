@@ -41,9 +41,9 @@ unexpected:
 
 ## Thinking Artifacts
 
-{Optional — only include if $THINKING_DIR is set and artifacts were written during session}
+{Optional — only include if $PRAXIS_DIR/thinking is set and artifacts were written during session}
 
-- {$THINKING_DIR/type/project/filename.md}: {brief description}
+- {$PRAXIS_DIR/thinking/type/project/filename.md}: {brief description}
 
 ## Refs
 

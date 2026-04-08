@@ -1,5 +1,5 @@
 # Coach Skill Configuration — TEMPLATE
-# This file is a template. The actual config lives at /praxis/config/coach.yaml
+# This file is a template. The actual config lives at $PRAXIS_DIR/config/coach.yaml
 # Copy this template there and customize for your vault structure.
 
 vault_path: /vaults/gtd-pcm  # Root of your GTD/PKM vault

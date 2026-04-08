@@ -21,7 +21,7 @@ REL_PATH="${CWD#$GIT_ROOT/}"
 # If CWD == GIT_ROOT, REL_PATH equals CWD (no strip happened)
 [ "$REL_PATH" != "$CWD" ] || REL_PATH="root"
 SLUG=$(echo "$REL_PATH" | tr '/' '-')
-PINS_FILE="/home/mat/dev/praxis/.session-logs/$SLUG/pins.json"
+PINS_FILE="${PRAXIS_DIR:?PRAXIS_DIR not set}/.session-logs/$SLUG/pins.json"
 
 case "$EVENT" in
   PreToolUse|PreCompact)

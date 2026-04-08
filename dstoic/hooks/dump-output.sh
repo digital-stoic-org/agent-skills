@@ -8,7 +8,7 @@ set -e
 # Purpose: Automatically dump Claude's last output when enabled
 # Usage: Triggered by Stop hook event
 # Input: JSON on stdin (from Claude Code hooks)
-# Output: Saves to $THINKING_DIR/dumps/$project/ (fallback: $CLAUDE_PROJECT_DIR/.dump/)
+# Output: Saves to $PRAXIS_DIR/thinking/dumps/$project/ (fallback: $CLAUDE_PROJECT_DIR/.dump/)
 # ==============================================================================
 
 # Check if dumping is enabled (look for toggle file)
@@ -44,9 +44,9 @@ if [ -z "$last_output" ] || [ "$last_output" = "null" ]; then
 fi
 
 # Determine output directory: centralized thinking/dumps/ or fallback to .dump/
-if [ -n "$THINKING_DIR" ] && [ -d "$THINKING_DIR" ]; then
+if [ -n "$PRAXIS_DIR" ] && [ -d "$PRAXIS_DIR/thinking" ]; then
   project_name=$(basename "$CLAUDE_PROJECT_DIR")
-  output_dir="$THINKING_DIR/dumps/$project_name"
+  output_dir="$PRAXIS_DIR/thinking/dumps/$project_name"
 else
   output_dir="$CLAUDE_PROJECT_DIR/.dump"
 fi

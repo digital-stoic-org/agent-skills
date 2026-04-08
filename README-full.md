@@ -455,11 +455,11 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 
 | Variable | Purpose | Setup |
 |----------|---------|-------|
-| `THINKING_DIR` | Global thinking artifact store for cognitive skills | `export THINKING_DIR="$HOME/dev/praxis/thinking"` in shell profile, then `mkdir -p "$THINKING_DIR"/{frames,brainstorms,probes,investigations,experiments,troubleshoot,bridges}` |
+| `PRAXIS_DIR` | Root of your praxis data directory (config, reference, thinking, session logs) | `export PRAXIS_DIR="$HOME/dev/praxis"` in shell profile, then `mkdir -p "$PRAXIS_DIR/thinking"/{frames,brainstorms,probes,investigations,experiments,troubleshoot,bridges,dumps}` |
 
 ### Config Files
 
-Skills that need user-specific configuration read from `/praxis/config/` (outside the plugin repo — user data, not skill code):
+Skills that need user-specific configuration read from `$PRAXIS_DIR/config/` (outside the plugin repo — user data, not skill code):
 
 | File | Used by | Purpose |
 |------|---------|---------|

@@ -14,9 +14,9 @@ Run a structured coaching session.
 
 ## Step 0: Load Config
 
-Read `/praxis/config/coach.yaml`. All vault paths in this skill and `reference.md` refer to keys from this config. Resolve `YYYY-MM-DD` patterns with today's date. All paths are relative to `vault_path` from config.
+Read `$PRAXIS_DIR/config/coach.yaml`. All vault paths in this skill and `reference.md` refer to keys from this config. Resolve `YYYY-MM-DD` patterns with today's date. All paths are relative to `vault_path` from config.
 
-If config file missing → ask user: "No coach config found at /praxis/config/coach.yaml. Copy the template from the skill directory and customize your vault paths."
+If config file missing → ask user: "No coach config found at $PRAXIS_DIR/config/coach.yaml. Copy the template from the skill directory and customize your vault paths."
 
 ## Subcommand Routing
 

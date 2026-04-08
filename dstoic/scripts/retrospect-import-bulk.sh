@@ -59,8 +59,8 @@ EXAMPLES:
   ./retrospect-import-bulk.sh --all --from ~/.claude/projects/-data-lq2-Lean-lq --project lean
 
 OUTPUT:
-  Sessions imported to: /praxis/.retro/<project-name>/sessions/
-  Import log: /praxis/.retro/logs/import.log
+  Sessions imported to: \$PRAXIS_DIR/.retro/<project-name>/sessions/
+  Import log: \$PRAXIS_DIR/.retro/logs/import.log
 
 EOF
       exit 0
