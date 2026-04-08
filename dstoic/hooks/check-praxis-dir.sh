@@ -4,21 +4,24 @@ set -euo pipefail
 # ==============================================================================
 # PRAXIS_DIR Guard: Verify env var is set and points to a valid directory
 # ==============================================================================
-# Event: SessionStart
-# Exit 2 + stderr = shown to user in terminal (degraded mode, not blocking).
-# Skills that need PRAXIS_DIR will degrade gracefully on their own.
+# Event: SessionStart (observability only — cannot block)
+# stdout → enters Claude's context (visible to the model next turn)
+# stderr → swallowed (goes to debug log only, user never sees it)
+# exit 0 always — exit 2 is ignored on SessionStart
+#
+# Hard gate lives in check-praxis-dir-gate.sh (PreToolUse, exit 2 = blocks)
 # ==============================================================================
 
 if [ -z "${PRAXIS_DIR:-}" ]; then
-  cat >&2 <<'EOF'
+  cat <<'EOF'
 ⚠️  PRAXIS_DIR is not set — running in degraded mode.
     Some skills (thinking artifacts, session logs, config) will be limited.
     Fix: export PRAXIS_DIR="$HOME/dev/praxis" in your shell profile.
 EOF
-  exit 2
+  exit 0
 fi
 
 if [ ! -d "$PRAXIS_DIR" ]; then
-  echo "⚠️  PRAXIS_DIR=$PRAXIS_DIR does not exist — running in degraded mode." >&2
-  exit 2
+  echo "⚠️  PRAXIS_DIR=$PRAXIS_DIR does not exist — running in degraded mode."
+  exit 0
 fi
