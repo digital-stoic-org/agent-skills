@@ -163,3 +163,5 @@ Human docs link to each other (progressive depth). LLM docs are **self-contained
 ⚠️ 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](CLAUDE.md.example) for inspiration, don't copy. ([Why?](PHILOSOPHY.md#-the-toothbrush-principle))
 
 The example uses [`rtk`](https://github.com/pszymkowiak/rtk) for token-optimized command output. Install it separately if you want to use the rtk instructions.
+
+💡 [IDEAS.md](IDEAS.md) — Future ideas & what I'm deliberately *not* building yet.
