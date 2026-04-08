@@ -49,11 +49,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-praxis-dir-gate.sh",
-            "timeout": 3
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh",
             "timeout": 10
           },

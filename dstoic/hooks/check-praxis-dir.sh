@@ -8,8 +8,6 @@ set -euo pipefail
 # stdout → enters Claude's context (visible to the model next turn)
 # stderr → swallowed (goes to debug log only, user never sees it)
 # exit 0 always — exit 2 is ignored on SessionStart
-#
-# Hard gate lives in check-praxis-dir-gate.sh (PreToolUse, exit 2 = blocks)
 # ==============================================================================
 
 if [ -z "${PRAXIS_DIR:-}" ]; then
