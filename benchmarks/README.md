@@ -2,7 +2,7 @@
 
 Systematic comparisons of Digital Stoic Praxis against AI coding agent frameworks, methodologies, and tools. Each benchmark distills a full investigation into key findings.
 
-**Last updated:** 2026-04-07 | **Total benchmarks:** 7
+**Last updated:** 2026-04-08 | **Total benchmarks:** 8
 
 ## Summary
 
@@ -12,7 +12,8 @@ Systematic comparisons of Digital Stoic Praxis against AI coding agent framework
 | [Context Format](2026-04-07-context-format.md) | Session persistence format comparison | Praxis CONTEXT-llm.md significantly more actionable than ECC & SuperClaude | 2026-04-07 |
 | [ACP](2026-04-02-acp.md) (45 patterns) | Pattern language for AI-augmented dev | ~70% coverage. Praxis exceeds on debiasing & compounding | 2026-04-02 |
 | [BMAD v6](2026-03-13-bmad.md) (36K⭐) | Role-based agent methodology | **Only framework that edges ahead** — for greenfield teams. Praxis dominates solo & brownfield | 2026-03-13 |
-| [HumanLayer](2026-03-18-humanlayer-harness.md) | Foundational harness engineering taxonomy | All 7 harness principles natively covered | 2026-03-18 |
+| [Harness Engineering](2026-04-08-harness-engineering.md) | Fowler model (guides/sensors × 3 layers) + Horthy 7 principles + maturity | Solid L2, aspiring L3 — all layers, feedback loops human-triggered | 2026-04-08 |
+| [HumanLayer](2026-03-18-humanlayer-harness.md) | Foundational harness engineering taxonomy (superseded by above) | All 7 harness principles natively covered | 2026-03-18 |
 | [Ralph Loop](2026-03-15-ralph-loop.md) | Fully autonomous coding agent | Deliberately rejected. Building controlled equivalent (~20% gap) | 2026-03-15 |
 | [ICM + QMD](2026-03-19-icm-qmd-memory.md) | Memory architecture (episodic + semantic + retrieval) | Complementary. Watching for integration — manual discipline reduces urgency | 2026-03-19 |
 

@@ -48,7 +48,7 @@ flowchart LR
 | Mode | What | Hero Skills |
 |------|------|-------------|
 | 🧭 **Frame** | Triangulate the problem (3 tests) → route to the right skill chain | `/frame-problem` (Cynefin triangulation), `/pick-model` |
-| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review | `/brainstorm` (SCAMPER), `/investigate`, `/probe`, `/challenge` |
+| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review, cross-project bridging | `/brainstorm` (SCAMPER), `/investigate`, `/probe`, `/challenge`, `/bridge` |
 | ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (9 skills, human-gated sections) |
 | 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` |
 | 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |
@@ -89,10 +89,10 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **49 skills** across 5 cognitive modes + utilities
+- **84 skills** across 6 plugins and 5 cognitive modes + utilities
 - **6 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas, cowork
-- **2 agents**: devil's advocate (debiasing), context summarizer
-- **4 hooks**: notifications, session capture, debug dumps, daily sync
+- **18 agents**: devil's advocate, context summarizer, 16 philosopher personas
+- **5 hooks**: notifications, session capture, debug dumps, context sync, session pins
 - **3 execution modes**: garage (default), scale, maintenance
 - **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
 - **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](PRACTICE.md#-benchmark-results-april-2026) · [benchmarks/](benchmarks/)
@@ -103,11 +103,11 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 48 skills, 0 commands, 4 hooks | ✅ v0.27.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 49 skills, 2 agents, 5 hooks | ✅ v0.28.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.1 |
-| [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
+| [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.1.0 |
 | [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity | ✅ v0.7.2 |
-| [philosopher](philosopher/) | Philosopher personas: historically-grounded dialogue, source attribution, AI meta-cognition | ✅ v0.6.0 |
+| [philosopher](philosopher/) | Philosopher personas: 16 personas, 16 agents, dialogue, encounter, council | ✅ v0.8.0 |
 | [cowork](cowork/) | Multi-project context management: switch projects, save/load sessions, ref/wip file zones + sync. Non-CLI friendly | ✅ v0.4.0 |
 
 ## 📦 Install
@@ -152,6 +152,7 @@ The practice itself is about **combining both**: a human who thinks consciously 
 | 1 | 📄 **README.md** | 👤 Human | **"What + How (TL;DR)"** — This file. The GitHub landing page. |
 | 2 | 🧭 [PHILOSOPHY.md](PHILOSOPHY.md) | 👤 Human | **"Why"** — Beliefs, 7 principles, execution modes, toothbrush principle |
 | 3 | 🎯 [PRACTICE.md](PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI model, autonomy spectrum, benchmarking |
+| 3b | 🔧 [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md) | 👤 Human | **"The Harness"** — Guides/sensors model, session lifecycle, maturity levels |
 | 4 | 📚 [README-full.md](README-full.md) | 👤 Human | **"Every Skill"** — Complete catalog, reference |
 | 5 | 🤖 [PRACTICE-llm.md](PRACTICE-llm.md) | 🤖 LLM | **Self-contained benchmark** — Token-optimized, YAML-heavy, all-in-one |
 | — | 🤖 `SKILL.md` (per skill) | 🤖 LLM | **Execution directives** — What the LLM actually runs |

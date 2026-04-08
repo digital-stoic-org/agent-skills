@@ -2,7 +2,7 @@
 
 > ⚠️ Live experiment. Highly personalized to my working style. Fork it, adapt it to *your* brain.
 
-📖 **Reading order**: [README](README.md) (what + how?) → [PHILOSOPHY](PHILOSOPHY.md) (why?) → [PRACTICE](PRACTICE.md) (deep how) → **this file** (every skill)
+📖 **Reading order**: [README](README.md) (what + how?) → [PHILOSOPHY](PHILOSOPHY.md) (why?) → [PRACTICE](PRACTICE.md) (deep how) → [HARNESS-ENGINEERING](HARNESS-ENGINEERING.md) (the harness) → **this file** (every skill)
 
 ---
 
@@ -120,7 +120,7 @@ flowchart TD
 
 ---
 
-## 🧠 Think — Ideation & Analysis (3 skills + 1 agent)
+## 🧠 Think — Ideation & Analysis (4 skills + 1 agent)
 
 *Diverge before you converge. Analyze before you design. Challenge before you commit.*
 
@@ -213,6 +213,21 @@ flowchart LR
 | **Bridge** | Handoff → OpenSpec (boulder) or direct implementation (pebble) |
 
 **Key distinction:** Troubleshoot = reactive (error → fix). Brainstorm = divergent (options → pick). Investigate = proactive (complex problem → decompose → design → decide).
+
+### `/bridge` (skill, haiku)
+
+Capture cross-project connections on the fly. Persists to `thinking/bridges/` as structured YAML.
+
+| Command | Action |
+|---|---|
+| `/bridge HP → Brand: philosopher encounters reframe positioning` | Capture a bridge (auto-detect archetype) |
+| `/bridge list [project]` | Show recent bridges, optionally filtered |
+| `/bridge map` | Generate mermaid bridge map |
+| `/bridge stats` | Weekly summary by project and archetype |
+
+**10 bridge archetypes:** 🔄 flywheel · 🧠 knowledge · 👤 people · 🌱 terrain · 📖 narrative · 🎭 identity · 🔬 complexity · 🤝 local · ⚡ option · 🪞 mirror
+
+**Design:** Bridges are knowledge, not tasks. Captured during work, reconciled during weekly review. No GTD writes — `thinking/bridges/` accumulates evidence, GTD `## 🔗 Ponts Stratégiques` holds strategic intent.
 
 ---
 
@@ -329,113 +344,7 @@ flowchart LR
 > Chunked reading for files >25K tokens · Read + python3 + wc only
 > Returns: token-budgeted markdown summary preserving key facts, decisions, and actionable items
 
-### 🧬 Context Engineering Workflow
-
-This plugin implements **context engineering** — the discipline of designing what task-relevant information the model has access to, not just how you prompt it.
-
-🎤 **Accessible intro:** [Context Engineering FTW — Making Claude actually work in real codebases](https://link.excalidraw.com/p/readonly/cz2KRei6ueIPyvbXaThj) by [Mehdi Mehlah](https://www.linkedin.com/in/mehlah/) (Lyon.rb) — visual walkthrough of micro-agents in DAGs, context window mechanics, and why traditional large agents break after 10-20 turns.
-
-📖 **Deep dive:** [Advanced Context Engineering for Agents](https://www.youtube.com/watch?v=VvkhYWFWaKI) ([paper](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents)) by Dexter Horthy — the original framework: *"The contents of your context window are the ONLY lever you have to affect the quality of your output."*
-
-**Core principle: Frequent Intentional Compaction** — pause before context saturation, distill progress into structured artifacts (CONTEXT-llm.md, research docs, specs), restart fresh with compressed knowledge. Target 40-60% context utilization.
-
-#### 🗺️ High-level lifecycle (stable)
-
-The session lifecycle pattern itself is generic — it applies to any AI-assisted workflow, regardless of tooling.
-
-```mermaid
-flowchart LR
-    START["🟢 Start<br/>Load context"] --> RESEARCH["🔍 Research<br/>Understand problem"]
-    RESEARCH -->|"compressed<br/>research doc"| PLAN["📝 Plan<br/>Design solution"]
-    PLAN -->|"detailed spec"| IMPLEMENT["⚙️ Implement<br/>Build + verify"]
-    IMPLEMENT -->|"compaction<br/>trigger"| COMPACT["📦 Compact<br/>Distill progress"]
-    COMPACT --> END["🔴 End<br/>Save context"]
-
-    COMPACT -.->|"🔄 fresh window"| START
-
-    classDef session fill:#BBDEFB,stroke:#1976D2,color:#000
-    classDef research fill:#E8EAF6,stroke:#3F51B5,color:#000
-    classDef plan fill:#E1BEE7,stroke:#7B1FA2,color:#000
-    classDef implement fill:#C8E6C9,stroke:#388E3C,color:#000
-    classDef compact fill:#FFE0B2,stroke:#F57C00,color:#000
-
-    class START,END session
-    class RESEARCH research
-    class PLAN plan
-    class IMPLEMENT implement
-    class COMPACT compact
-```
-
----
-
-#### 🔧 Detailed implementation (permanent WIP)
-
-How this plugin maps each phase to concrete skills and commands — evolves as new tools are added.
-
-```mermaid
-flowchart LR
-    subgraph START["🟢 Start"]
-        load["📥 /load-context"]
-        claude["📄 CLAUDE.md"]
-        hooks_start["🪝 Hooks"]
-    end
-
-    subgraph SENSE["🔍 Sense-Make"]
-        frame["🧭 /frame-problem"]
-        search["🔍 /search-skill"]
-        frame --> brainstorm["🧠 /brainstorm"]
-        frame --> investigate["🔬 /investigate"]
-    end
-
-    subgraph BUILD["⚙️ Plan + Build"]
-        plan["📋 /openspec-plan"]
-        risen["✍️ /edit-risen-prompt"]
-        plan --> design["🏗️ /openspec-design"]
-        design --> review["🔍 /openspec-review"]
-        review --> dev["⚙️ /openspec-develop"]
-        dev --> test["🧪 /openspec-test"]
-        dev --> reflect["🪞 /openspec-reflect"]
-        reflect -->|"blocked"| replan["🔀 /openspec-replan"]
-        replan --> dev
-    end
-
-    subgraph PERSIST["📦 Persist"]
-        sync["💾 /openspec-sync"]
-        save["💾 /save-context"]
-        retro["🪞 /retrospect-*"]
-        hooks_stop["🪝 Hooks"]
-    end
-
-    START --> SENSE
-    brainstorm --> plan
-    investigate --> plan
-    BUILD --> PERSIST
-    PERSIST -->|"🔄 next session"| NEXT["🟢 /load-context"]
-
-    classDef start fill:#BBDEFB,stroke:#1976D2,color:#000
-    classDef sense fill:#E8EAF6,stroke:#3F51B5,color:#000
-    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
-    classDef persist fill:#FFE0B2,stroke:#F57C00,color:#000
-    classDef loop fill:#E8F5E9,stroke:#2E7D32,color:#000,stroke-dasharray:5
-
-    class START start
-    class SENSE sense
-    class BUILD build
-    class PERSIST persist
-    class NEXT loop
-```
-
-**How it maps to Horthy's principles:**
-
-| Principle | Plugin Implementation |
-|-----------|----------------------|
-| **Research phase** | `/frame-problem` → `/brainstorm` or `/investigate` — map the problem space before coding |
-| **Plan phase** | `/openspec-plan` — precise spec with test strategy, human reviews before execution |
-| **Implement phase** | `/openspec-develop` — gate-driven, section-by-section with human checkpoints |
-| **Frequent compaction** | `/save-context` + `/openspec-sync` — serialize state to markdown artifacts |
-| **Session continuity** | `/load-context` resumes from CONTEXT-llm.md — no context loss between sessions |
-| **Human leverage** | Gates shift human review upstream (research → plan) where impact compounds |
-| **Subagent isolation** | Skills run as isolated context windows, return compressed summaries to parent |
+🧬 **Harness Engineering**: Session lifecycle, guides/sensors model, and maturity levels → [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md)
 
 ---
 
@@ -474,7 +383,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (8 skills)
+## 🔧 Utilities (9 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -486,6 +395,7 @@ flowchart LR
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 | `literatize` | 📝 Add section-level comments to code capturing intent, rationale, and gotchas for LLM re-entry |
 | `scratch` | 🗒️ Zero-friction session scratch pad — park side-thoughts during deep work without losing flow |
+| `bridge` | 🔗 Cross-project connection capture — 10 archetypes, YAML to `thinking/bridges/`, weekly reconciliation nudge |
 
 
 ## 📥 Conversions & Imports (6 skills)
@@ -507,22 +417,33 @@ flowchart LR
 
 ---
 
-## 🤖 Agents (1)
+> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (49 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 84 skills, 18 agents.**
+
+---
+
+## 🤖 Agents (2 dstoic + 16 philosopher)
+
+**dstoic agents:**
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
 | `devil-advocate` | 🔥 Comprehensive debiasing — all 9 patterns (anchor + verify + framing) | opus |
+| `summarize-for-context` | 📦 Chunked reading for files >25K tokens — token-budgeted summaries | haiku |
+
+**philosopher agents:** 16 persona agents (one per philosopher) used by `/encounter` for autonomous multi-agent dialogue. See [philosopher/README.md](philosopher/README.md) for the full roster.
 
 
 ---
 
-## 🪝 Hooks (3)
+## 🪝 Hooks (5)
 
 | Hook | Purpose |
 |------|---------|
 | `notify-tmux.sh` | 🖥️ Visual feedback in tmux status bar |
 | `retrospect-capture.sh` | 📝 Auto-log session events for retrospective analysis |
 | `dump-output.sh` | 📤 Debug artifacts to `.dump/` directory |
+| `list-context-sync.sh` | 🔄 Context file sync on session start |
+| `session-pin.sh` | 📌 Session pin persistence across compaction |
 
 Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for details.
 
@@ -534,7 +455,16 @@ Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for det
 
 | Variable | Purpose | Setup |
 |----------|---------|-------|
-| `THINKING_DIR` | Global thinking artifact store for cognitive skills | `export THINKING_DIR="$HOME/dev/praxis/thinking"` in shell profile, then `mkdir -p "$THINKING_DIR"/{frames,brainstorms,probes,investigations,experiments,troubleshoot}` |
+| `THINKING_DIR` | Global thinking artifact store for cognitive skills | `export THINKING_DIR="$HOME/dev/praxis/thinking"` in shell profile, then `mkdir -p "$THINKING_DIR"/{frames,brainstorms,probes,investigations,experiments,troubleshoot,bridges}` |
+
+### Config Files
+
+Skills that need user-specific configuration read from `/praxis/config/` (outside the plugin repo — user data, not skill code):
+
+| File | Used by | Purpose |
+|------|---------|---------|
+| `projects.yaml` | `/bridge`, `/save-context` | Portfolio: aliases, roles, tiers, goals, flywheel roles, stakeholders |
+| `coach.yaml` | `/coach` | Coaching: vault paths, streams, signal definitions |
 
 ### Required
 

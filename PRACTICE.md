@@ -158,7 +158,7 @@ The toolkit spans from universal to personal:
 
 The core cognitive skills (Frame, Think, Learn) are domain-agnostic. The Build and Debug skills are tech-agnostic. Only a handful are stack-specific or personal.
 
-For the complete skill-by-skill breakdown, see [README-full.md](README-full.md).
+For the complete skill-by-skill breakdown, see [README-full.md](README-full.md). For how these skills form an agent harness (guides, sensors, maturity model), see [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md).
 
 ---
 
@@ -190,7 +190,8 @@ Systematically compared against 7 frameworks across the AI coding agent ecosyste
 | [SuperClaude](benchmarks/2026-04-07-context-format.md) (22K⭐) | Progressive loading, ReflexionMemory | Mostly prompt engineering as framework. Progressive loading worth studying |
 | [ACP](benchmarks/2026-04-02-acp.md) (45 patterns) | Pattern language for AI-augmented dev | ~70% coverage. Praxis exceeds on debiasing & compounding |
 | [BMAD v6](benchmarks/2026-03-13-bmad.md) (36K⭐) | Role-based agent methodology | **Only framework that edges ahead** — for greenfield teams |
-| [HumanLayer](benchmarks/2026-03-18-humanlayer-harness.md) | Harness engineering taxonomy | All 7 harness principles natively covered |
+| [Harness Engineering](benchmarks/2026-04-08-harness-engineering.md) | Fowler model + Horthy principles + maturity | **Solid L2, aspiring L3** — all layers covered, feedback loops human-triggered |
+| [HumanLayer](benchmarks/2026-03-18-humanlayer-harness.md) | Foundational taxonomy (superseded) | All 7 principles natively covered |
 | [Ralph Loop](benchmarks/2026-03-15-ralph-loop.md) | Fully autonomous coding agent | Deliberately rejected. Building controlled equivalent |
 | [ICM + QMD](benchmarks/2026-03-19-icm-qmd-memory.md) | Memory architecture (episodic + semantic) | Complementary. Watching — manual discipline reduces urgency |
 
