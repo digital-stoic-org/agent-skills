@@ -61,7 +61,7 @@ Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs)
 
 Not human-drives-AI. Not AI-drives-human. **Mutual sharpening:**
 
-- **Human → AI**: Sets intent, chooses cognitive mode, directs execution, verifies at gates
+- **Human → AI**: Sets intent, chooses workflow phase, directs execution, verifies at gates
 - **AI → Human**: Challenges assumptions, surfaces blind spots, reveals patterns the human can't self-observe
 - **Together**: The human thinks more clearly *because* the AI pushes back. The AI produces better work *because* the human sets precise intent.
 
@@ -89,7 +89,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **84 skills** across 6 plugins and 5 cognitive modes + utilities
+- **84 skills** across 6 plugins and 5 workflow phases + utilities
 - **6 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas, cowork
 - **18 agents**: devil's advocate, context summarizer, 16 philosopher personas
 - **5 hooks**: notifications, session capture, debug dumps, context sync, session pins

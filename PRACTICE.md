@@ -95,29 +95,15 @@ Before engaging AI, the practitioner activates a deliberate thinking mode. Not "
 
 The protocol:
 
-1. **Clarify**: What's my role? What's my objective? Which cognitive mode am I in?
+1. **Clarify**: What's my role? What's my objective? Which workflow phase am I in (Frame/Think/Build/Debug/Learn)?
 2. **Engage**: Use AI to sharpen thinking, not outsource it — and **invite it to push back**
 3. **Measure**: Quality of questions asked, clarity of reasoning developed, blind spots surfaced — not time saved
 
 > **Posture before technique.** And posture includes the willingness to be challenged.
 
-### Five Cognitive Modes
+### Workflow Phases
 
-These patterns existed long before AI. AI now amplifies *and challenges* them when engaged consciously:
-
-```mermaid
-graph LR
-    A["🔍 Analyze<br/>Sense-making<br/>Question assumptions"] --> B["🏗️ Design<br/>Structure with<br/>coherence & foresight"]
-    B --> C["⚖️ Decide<br/>Weigh trade-offs<br/>Commit to action"]
-    C --> D["✨ Create<br/>Generate ideas<br/>Reframe & prototype"]
-    D --> E["🔧 Improve<br/>Iterate, refine<br/>Learn from patterns"]
-    E -.->|"feeds back"| A
-
-    classDef mode fill:#E8E0F0,stroke:#333,color:#000
-    class A,B,C,D,E mode
-```
-
-These modes map to the toolkit's cognitive flow (Frame → Think → Build → Debug → Learn). See [README-full.md](README-full.md) for which skills map to which mode.
+Skills organize into a development lifecycle — **Frame → Think → Build → Debug → Learn**. The practitioner identifies which phase they're in before engaging AI. See [README-full.md](README-full.md) for which skills map to which phase.
 
 ### Autonomy Spectrum
 
@@ -137,7 +123,7 @@ The default for execution is **gated delegation**. The default for thinking is *
 
 The key distinction: **agency amplified by systems, not replaced by automation**.
 
-An agent isn't magic. It's a structured expression of a thinking posture: Role + Objective + Cognitive Mode + Context + Autonomy Level. Without the human's conscious direction, an agentic system is just automation — fast but hollow.
+An agent isn't magic. It's a structured expression of a thinking posture: Role + Objective + Context + Autonomy Level. Without the human's conscious direction, an agentic system is just automation — fast but hollow.
 
 The anti-pattern is delegating without directing. But the equal-and-opposite anti-pattern is **directing without listening** — orchestrating agents that only execute, never challenge. The most valuable agents are the ones that tell you you're wrong: devil's advocate running 9 debiasing patterns in fresh context, `/challenge` demanding proof for your assumptions, `/retrospect-collab` revealing collaboration patterns you couldn't see from inside the session.
 
@@ -167,7 +153,7 @@ For the complete skill-by-skill breakdown, see [README-full.md](README-full.md).
 When comparing this practice against other approaches, evaluate across:
 
 1. **Philosophy** — What beliefs drive the approach? → [PHILOSOPHY.md](PHILOSOPHY.md)
-2. **Skill coverage** — What's automated/augmented, by cognitive mode? → [README-full.md](README-full.md)
+2. **Skill coverage** — What's automated/augmented, by workflow phase? → [README-full.md](README-full.md)
 3. **Human-AI blend** — Mutual sharpening or one-way? Does AI challenge the human? → [this file, above](#-the-human-ai-blend)
 4. **Conscious activation** — Deliberate mode selection + willingness to be challenged? → [this file, above](#conscious-cognitive-activation)
 5. **Orchestrated agency** — Human-directed AND AI-challenges-human, or just automation? → [this file, above](#orchestrated-agency)

@@ -48,7 +48,7 @@ Builds on Horthy's 7 principles (HumanLayer, 2025) which remain the foundational
 
 | Capability | Fowler Model | Praxis |
 |---|---|---|
-| Cognitive mode routing | Not addressed | `/frame-problem` (Cynefin) routes to appropriate skill chains |
+| Workflow phase routing | Not addressed | `/frame-problem` (Cynefin) routes to appropriate skill chains |
 | Adversarial review | Implied by inferential sensors | Explicit: `/challenge` (4 modes) + `devil-advocate` (fresh context, 9 debiasing patterns) |
 | Cognitive ROI measurement | Not addressed | Three-tier model (Automation → Assisted → Amplified) |
 | Mutual sharpening | User harness = one-way (human → agent) | Bidirectional: AI challenges human assumptions |
@@ -56,7 +56,7 @@ Builds on Horthy's 7 principles (HumanLayer, 2025) which remain the foundational
 
 ## Verdict
 
-**All Fowler layers and Horthy principles natively covered. Solid L2 maturity with L3 building blocks in place.** Praxis extends the model with cognitive mode routing, adversarial depth, mutual sharpening, and cross-project compounding — but feedback loops remain human-triggered, not autonomous. The gap to L3 is automation of the learning capture, not the learning itself.
+**All Fowler layers and Horthy principles natively covered. Solid L2 maturity with L3 building blocks in place.** Praxis extends the model with workflow phase routing, adversarial depth, mutual sharpening, and cross-project compounding — but feedback loops remain human-triggered, not autonomous. The gap to L3 is automation of the learning capture, not the learning itself.
 
 ## Full Details
 

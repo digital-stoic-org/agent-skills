@@ -121,22 +121,11 @@ Before engaging AI, the practitioner activates a deliberate thinking mode:
 
 ```yaml
 protocol:
-  step_1: "Clarify: Role → Objective → Cognitive Mode"
+  step_1: "Clarify: Role → Objective → Workflow Phase (Frame/Think/Build/Debug/Learn)"
   step_2: "Use AI to sharpen thinking — both amplify AND challenge"
   step_3: "Measure: quality of questions, clarity of reasoning, blind spots surfaced — NOT time saved"
 
 posture: "Posture before technique. Posture includes willingness to be challenged."
-```
-
-### 5 Cognitive Modes (Pre-AI Patterns, AI-Amplified)
-
-```yaml
-modes:
-  analyze: { icon: 🔍, pattern: "sense-making, questioning assumptions", skills: [investigate, challenge, frame-problem] }
-  design:  { icon: 🏗️, pattern: "structuring with coherence and foresight", skills: [openspec-design, openspec-plan] }
-  decide:  { icon: ⚖️, pattern: "weighing trade-offs, committing", skills: [brainstorm, devil-advocate, pick-model] }
-  create:  { icon: ✨, pattern: "generating ideas, reframing, prototyping", skills: [brainstorm, edit-tool, infographize] }
-  improve: { icon: 🔧, pattern: "iterating, refining, learning", skills: [retrospect-domain, retrospect-collab, troubleshoot] }
 ```
 
 ### Autonomy Spectrum
@@ -171,22 +160,14 @@ levels:
 
 ```yaml
 principle: "Agency amplified by agentic systems, NOT replaced by automation"
-agent_definition: "Role + Objective + Cognitive Mode + Context + Autonomy Level"
 anti_patterns:
   - "Agentic without agency = automation. Pure delegation without conscious direction."
   - "Directing without listening = wasted potential. Most valuable agents are the ones that tell you you're wrong."
 highest_value_agents: "devil-advocate, challenge, retrospect-collab — AI corrects the human"
 
-agent_types:
-  analyst: { purpose: "examine assumptions, identify blind spots", model: opus }
-  designer: { purpose: "structure plans, organize workflows", model: sonnet }
-  decision: { purpose: "simulate scenarios, evaluate trade-offs", model: opus }
-  creative: { purpose: "reframe problems, generate perspectives", model: opus }
-  improvement: { purpose: "refine processes, optimize", model: sonnet }
-
 implementation:
-  devil_advocate: { type: analyst, fresh_context: true, patterns: 9, families: [anchor, verify, framing] }
-  summarize_for_context: { type: improvement, model: haiku, purpose: "compress large files" }
+  devil_advocate: { fresh_context: true, patterns: 9, families: [anchor, verify, framing] }
+  summarize_for_context: { model: haiku, purpose: "compress large files" }
 ```
 
 ---
@@ -398,7 +379,7 @@ For comparing this practice against other approaches:
 ```yaml
 dimensions:
   1_philosophy: What beliefs drive the approach?
-  2_skill_coverage: What tasks are automated/augmented, by cognitive mode?
+  2_skill_coverage: What tasks are automated/augmented, by workflow phase?
   3_human_ai_blend: Mutual sharpening or one-way? Does AI challenge the human?
   4_conscious_activation: Deliberate mode selection + willingness to be challenged?
   5_orchestrated_agency: Human-directed AND AI-challenges-human, or just automation?

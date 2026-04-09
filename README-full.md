@@ -6,9 +6,9 @@
 
 ---
 
-## 🔄 Cognitive Modes
+## 🔄 Workflow Phases
 
-Everything in this toolkit maps to a cognitive mode — a way of engaging with a problem.
+Everything in this toolkit maps to a workflow phase — a stage in how you engage with a problem.
 
 ```mermaid
 flowchart LR
@@ -31,7 +31,7 @@ flowchart LR
     class L learn
 ```
 
-You don't always go through every mode. A pebble (small fix) skips straight to Build. A crisis starts at Debug. The point is: **know which mode you're in**.
+You don't always go through every phase. A pebble (small fix) skips straight to Build. A crisis starts at Debug. The point is: **know which phase you're in**.
 
 ---
 

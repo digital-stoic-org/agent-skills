@@ -8,7 +8,7 @@
 
 ## 🔗 Quick Links
 
-- [Cognitive Modes Overview](../README-full.md#-cognitive-modes)
+- [Workflow Phases Overview](../README-full.md#-workflow-phases)
 - [Frame & Sense-Making](../README-full.md#-frame--sense-making-6-skills)
 - [Think — Ideation & Analysis](../README-full.md#-think--ideation--analysis-3-skills)
 - [Build — Structured Development](../README-full.md#️-build--structured-development-10-skills)
