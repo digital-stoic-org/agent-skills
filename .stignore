@@ -1,0 +1,11 @@
+// Syncthing ignore patterns
+// https://docs.syncthing.net/users/ignoring
+
+// Python virtual environments
+**/.venv
+
+// Node
+**/node_modules
+
+// Git
+.git
