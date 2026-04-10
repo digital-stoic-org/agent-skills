@@ -4,13 +4,13 @@
 
 ## 📦 Version
 
-`0.30.0`
+`0.31.0`
 
 ## 🔗 Quick Links
 
 - [Workflow Phases Overview](../README-full.md#-workflow-phases)
 - [Frame & Sense-Making](../README-full.md#-frame--sense-making-6-skills)
-- [Think — Ideation & Analysis](../README-full.md#-think--ideation--analysis-3-skills)
+- [Think — Ideation & Analysis](../README-full.md#-think--ideation--analysis-5-skills--1-agent)
 - [Build — Structured Development](../README-full.md#️-build--structured-development-10-skills)
 - [Debug — Troubleshooting](../README-full.md#-debug--troubleshooting-1-skill)
 - [Learn — Retrospectives & Sessions](../README-full.md#-learn--retrospectives--session-memory-8-skills)

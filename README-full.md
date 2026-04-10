@@ -120,7 +120,7 @@ flowchart TD
 
 ---
 
-## 🧠 Think — Ideation & Analysis (4 skills + 1 agent)
+## 🧠 Think — Ideation & Analysis (5 skills + 1 agent)
 
 *Diverge before you converge. Analyze before you design. Challenge before you commit.*
 
@@ -228,6 +228,20 @@ Capture cross-project connections on the fly. Persists to `thinking/bridges/` as
 **10 bridge archetypes:** 🔄 flywheel · 🧠 knowledge · 👤 people · 🌱 terrain · 📖 narrative · 🎭 identity · 🔬 complexity · 🤝 local · ⚡ option · 🪞 mirror
 
 **Design:** Bridges are knowledge, not tasks. Captured during work, reconciled during weekly review. No GTD writes — `thinking/bridges/` accumulates evidence, GTD `## 🔗 Ponts Stratégiques` holds strategic intent.
+
+### `/benchmark-praxis` (skill, opus)
+
+Structured benchmarking of Praxis methodology against external frameworks/tools. 3 modes:
+
+| Mode | Command | What it does |
+|---|---|---|
+| **Full** | `/benchmark-praxis <url-or-name>` | Deep research → score all 8 Set 1 dims → verdict → actions |
+| **Quick** | `/benchmark-praxis quick <name>` | Lightweight — 4-5 relevant dims, no deep research |
+| **Gap** | `/benchmark-praxis gap [target]` | Self-assessment on 4 aspirational dims (Set 2) vs holy grail |
+
+**Evaluation:** 4-layer taxonomy (Beliefs → Principles → Practices → Observables). Set 1 = 8 external benchmarking dims. Set 2 = 4 aspirational self-assessment dims. Scoring: 🟢🟢🟢 to 🔴 + ⬜ (N/A).
+
+**Output:** Investigation artifacts + inventory updates → `$PRAXIS_DIR/thinking/benchmarks/`.
 
 ---
 
@@ -417,7 +431,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (49 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 84 skills, 18 agents.**
+> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (50 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 85 skills, 18 agents.**
 
 ---
 
@@ -512,4 +526,4 @@ This installs all plugins (dstoic, gtd, cowork, etc.). To install a specific plu
 
 📄 **License:** MIT — Fork it, adapt it, make it yours.
 
-🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** [benchmarks/](benchmarks/) (vs ECC, BMAD, ACP, HumanLayer, Ralph, ICM)
+🧭 **Philosophy:** [PHILOSOPHY.md](PHILOSOPHY.md) · 📄 **TL;DR:** [README.md](README.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** `/benchmark-praxis` skill (vs ECC, BMAD, ACP, HumanLayer, Ralph, ICM)
