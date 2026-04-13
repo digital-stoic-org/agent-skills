@@ -130,12 +130,65 @@ actions:
       status: implemented|gap|not-applicable
 ```
 
+## Feature Ledger Schema (track mode)
+
+Per-subject feature ledger lives at `$PRAXIS_DIR/thinking/benchmarks/features/{subject}.yaml`. Durable across runs.
+
+```yaml
+subject: claude-code
+canonical_changelog: https://docs.claude.com/en/release-notes/claude-code
+last_reviewed: 2026-04-13
+features:
+  - name: "Shell exec in skills (!command)"
+    version_first_seen: "v2.1.40"
+    description: "Inline shell that preprocesses skill content before LLM sees it"
+    source: "https://docs.claude.com/..."
+    status: cherry-pick     # adopt | cherry-pick | watch | reject | new | review
+    why: "200-500 tokens saved per invocation, eliminates 1-2 tool round-trips"
+    target: "/load-context, /gtd:focus, /save-context"
+    last_status_change: 2026-04-09
+  - name: "ultrathink keyword"
+    version_first_seen: "v2.0.x"
+    description: "Extended thinking for skill execution"
+    source: "..."
+    status: adopt
+    why: "Better reasoning quality on /challenge, /investigate, /council"
+    target: "6 reasoning skills"
+    last_status_change: 2026-04-09
+```
+
+**Status semantics**:
+- `new` — appeared in changelog, not yet triaged (human review needed)
+- `review` — was watching, now changed — re-evaluate
+- `adopt` — committed to import, awaiting implementation
+- `cherry-pick` — adapt the idea, not the implementation
+- `watch` — monitor for maturity / re-evaluate trigger
+- `reject` — deliberately not adopting (record `why`)
+
+**Append-only at entry level**: never delete entries. Status changes are normal; deletions lose history.
+
+## Feature Triage Rubric (track mode step 1b)
+
+For each new feature in the changelog, classify using these prompts:
+
+| Question | If yes... |
+|---|---|
+| Does it replace an existing Praxis hack with a platform-native solution? | `adopt` |
+| Does it unlock a capability Praxis can't currently do? | `adopt` or `cherry-pick` |
+| Does it save tokens / reduce friction without changing capabilities? | `cherry-pick` (low effort) or `watch` (high effort) |
+| Is it experimental / unstable / behind a flag? | `watch` with trigger = "GA" |
+| Does it contradict a Praxis principle (e.g., never-auto-commit)? | `reject` with reason |
+| Is it irrelevant to Praxis's domain (e.g., enterprise SSO, IDE integrations)? | `reject` with reason |
+| Unclear value, needs human judgment? | `new` (flag for review) |
+
+Default to `watch` when in doubt — cheaper to revisit later than to misclassify as `reject`.
+
 ## Investigation Artifact Template
 
 ```markdown
 # Benchmark: {Name} vs Praxis
 
-**Date:** {YYYY-MM-DD} | **Mode:** full|quick|gap | **Verdict:** adopt|cherry-pick|watch|reject|complement
+**Date:** {YYYY-MM-DD} | **Mode:** full|quick|gap|track | **Verdict:** adopt|cherry-pick|watch|reject|complement
 
 ## What It Is
 
