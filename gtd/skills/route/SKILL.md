@@ -5,7 +5,7 @@ context: fork
 allowed-tools: [Read, Edit, Glob]
 model: haiku
 user-invocable: true
-argument-hint: <item> → <target> #tags
+argument-hint: <item> [→] <target> #tags
 ---
 
 # GTD Route
@@ -14,10 +14,11 @@ Put a known item directly into a known project. No inbox, no triage.
 
 ## Instructions
 
-1. Parse `$ARGUMENTS`: `<item> → <target> #tags`
-   - `→` (or `->`) separates item from target
-   - Item: everything before `→` (may contain URLs)
-   - Target: project folder shorthand after `→` (e.g., `35-read`, `38-mind-body`)
+1. Parse `$ARGUMENTS`: `<item> [→] <target> #tags`
+   - `→` (or `->`) separates item from target **if present** (explicit form)
+   - **Shortcut form** (no `→`): target is the last non-tag token before `#tags`; item is everything before it. Only accept if that token resolves to a project via Glob (Step 2). If it doesn't resolve, ask the user.
+   - Item: everything before `→` / before target token (may contain URLs)
+   - Target: project folder shorthand (e.g., `read`, `35-read`, `38-mind-body`, `prax`)
    - Tags: `#tag` tokens anywhere in arguments
 2. Resolve target: Glob `/vaults/gtd-pcm/03-projects/{target}*/01-*.md`
 3. If no match: report error + list close matches via Glob `03-projects/*/`
@@ -41,7 +42,10 @@ Route by tag to standard project template sections:
 
 ## Implementation
 
-**Step 1**: Parse arguments. Split on `→` or `->`. Extract item text, target shorthand, and all `#tag` tokens.
+**Step 1**: Parse arguments.
+- Extract all `#tag` tokens first (remove from working string).
+- If `→` or `->` present: split on it → left=item, right=target.
+- Else (shortcut form): split remaining string into tokens; last token = candidate target, everything before = item. Validate candidate via Step 2 Glob; if no match, STOP and ask user to disambiguate.
 
 **Step 2**: Glob `/vaults/gtd-pcm/03-projects/{target}*/01-*.md`
 - If multiple matches: use exact prefix match (e.g., `35` matches `35-read/`)
@@ -67,6 +71,12 @@ Route by tag to standard project template sections:
 /gtd:route Check if Marie sent contract → 01-homo-promptus #waiting/Marie
 → 01-homo-promptus/👥 Waiting For
 → - [ ] Check if Marie sent contract #waiting/Marie [created:: 2026-02-27]
+
+# Shortcut form (no →): last non-tag token is target
+/gtd:route https://arxiv.org/pdf/2603.28052 read #read-quick
+→ item="https://arxiv.org/pdf/2603.28052", target="read" → 35-read/
+→ 35-read/📋 Backlog
+→ - [ ] https://arxiv.org/pdf/2603.28052 #read-quick [created:: 2026-04-13]
 ```
 
 ## Constraints

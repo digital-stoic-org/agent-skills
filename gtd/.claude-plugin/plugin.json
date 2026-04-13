@@ -1,7 +1,7 @@
 {
   "name": "gtd",
   "description": "GTD workflow automation for Obsidian vaults: capture, triage, route, focus",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

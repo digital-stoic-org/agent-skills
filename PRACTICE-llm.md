@@ -280,7 +280,7 @@ domain_classification:
 ```yaml
 plugins:
   gtd:
-    version: 0.3.1
+    version: 0.3.2
     domain: personal_productivity
     skills:
       - { skill: capture, path: gtd/skills/capture/SKILL.md }

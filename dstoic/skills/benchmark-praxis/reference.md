@@ -167,6 +167,42 @@ features:
 
 **Append-only at entry level**: never delete entries. Status changes are normal; deletions lose history.
 
+**Inventory mode additions**: entries seeded by `inventory` mode include a `subsystem` field for batch-triage grouping (e.g., `hooks`, `skills`, `plugins`, `settings`, `agents`, `sandbox`, `mcp`, `scheduling`, `cli`, `misc`). All inventory-seeded entries start with `status: new` and empty `why` — the user fills these during batched triage sessions.
+
+```yaml
+  - name: "FileChanged hook event"
+    version_first_seen: "v2.1.83"
+    description: "Hook fires when files change on disk during a session"
+    source: "https://docs.claude.com/en/docs/claude-code/hooks"
+    subsystem: hooks       # inventory-mode field, used for batch triage grouping
+    status: new
+    why: ""                # filled during triage
+    last_status_change: 2026-04-13
+```
+
+## Inventory Triage Worksheet (inventory mode)
+
+Inventory mode emits a per-subsystem worksheet in the investigation artifact. Format:
+
+```markdown
+## Triage Queue (batch by subsystem)
+
+### hooks (12 entries — ~10 min)
+- [ ] FileChanged hook — fires on file mod
+- [ ] CwdChanged hook — fires on cwd switch
+- [ ] StopFailure hook — fires on API error
+- ... (one bullet per `new` entry)
+
+### skills (8 entries — ~7 min)
+- [ ] paths frontmatter — conditional skill loading
+- ...
+
+### agents (6 entries — ~5 min)
+- ...
+```
+
+User runs each subsystem as a focused triage session. After triage, run track mode for ongoing maintenance.
+
 ## Feature Triage Rubric (track mode step 1b)
 
 For each new feature in the changelog, classify using these prompts:
@@ -188,7 +224,7 @@ Default to `watch` when in doubt — cheaper to revisit later than to misclassif
 ```markdown
 # Benchmark: {Name} vs Praxis
 
-**Date:** {YYYY-MM-DD} | **Mode:** full|quick|gap|track | **Verdict:** adopt|cherry-pick|watch|reject|complement
+**Date:** {YYYY-MM-DD} | **Mode:** full|quick|gap|track|inventory | **Verdict:** adopt|cherry-pick|watch|reject|complement|triage-batched
 
 ## What It Is
 
