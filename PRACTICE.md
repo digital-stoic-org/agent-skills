@@ -87,21 +87,19 @@ graph TD
 
 ---
 
-## 🤝 The Human-AI Blend
+## 🤝 Human-AI Governance
 
-### Conscious Cognitive Activation
+Three ingredients make the collaboration work: a **conscious activation protocol** (posture before technique), an **autonomy spectrum** (five levels from human-drives to fire-and-forget), and **orchestrated agency** (systems that both extend and *correct* reasoning). Together they produce the governance observable scored in [Set 1 #6](#set-1--external-benchmarking-8-observables).
 
-Before engaging AI, the practitioner activates a deliberate thinking mode. Not "use AI to do X" but "activate my analytical sense, then use AI to both amplify and challenge it."
+### Conscious Activation Protocol
 
-The protocol:
+Before engaging AI, activate a deliberate thinking mode. Not "use AI to do X" but "activate my analytical sense, then use AI to both amplify and challenge it."
 
 1. **Clarify**: What's my role? What's my objective? Which workflow phase am I in (Frame/Think/Build/Debug/Learn)?
 2. **Engage**: Use AI to sharpen thinking, not outsource it — and **invite it to push back**
 3. **Measure**: Quality of questions asked, clarity of reasoning developed, blind spots surfaced — not time saved
 
 > **Posture before technique.** And posture includes the willingness to be challenged.
-
-### Workflow Phases
 
 Skills organize into a development lifecycle — **Frame → Think → Build → Debug → Learn**. The practitioner identifies which phase they're in before engaging AI. See [README-full.md](README-full.md) for which skills map to which phase.
 
@@ -117,17 +115,11 @@ Not everything needs the same level of human involvement — and the direction o
 | 👁️ **Supervised automation** | AI → Human (notify) | AI runs autonomously, human monitors | Background tasks, hook-driven capture |
 | 🔥 **Fire & forget** | AI only | Fully autonomous, no human in loop | Tmux notifications, session logging, RTK proxy |
 
-The default for execution is **gated delegation**. The default for thinking is **mutual sharpening** — the human sets direction, but the AI pushes back on assumptions, surfaces blind spots, and reveals patterns the human can't self-observe. See [PHILOSOPHY.md](PHILOSOPHY.md#-human-controls-execution-ai-challenges-thinking).
+The default for execution is **gated delegation**. The default for thinking is **mutual sharpening** — the human sets direction, but the AI pushes back on assumptions, surfaces blind spots, and reveals patterns the human can't self-observe. See [PHILOSOPHY.md](PHILOSOPHY.md#-p2--p3-human-controls-execution-ai-challenges-thinking).
 
 ### Orchestrated Agency
 
-The key distinction: **agency amplified by systems, not replaced by automation**.
-
-An agent isn't magic. It's a structured expression of a thinking posture: Role + Objective + Context + Autonomy Level. Without the human's conscious direction, an agentic system is just automation — fast but hollow.
-
-The anti-pattern is delegating without directing. But the equal-and-opposite anti-pattern is **directing without listening** — orchestrating agents that only execute, never challenge. The most valuable agents are the ones that tell you you're wrong: devil's advocate running 9 debiasing patterns in fresh context, `/challenge` demanding proof for your assumptions, `/retrospect-collab` revealing collaboration patterns you couldn't see from inside the session.
-
-The goal: a human who thinks more clearly *because* they built systems that both extend and correct their reasoning.
+**Agency amplified by systems, not replaced by automation.** An agent isn't magic — it's a structured expression of a thinking posture: Role + Objective + Context + Autonomy Level. The anti-pattern is delegating without directing; the equal-and-opposite anti-pattern is **directing without listening** — orchestrating agents that only execute, never challenge. The most valuable agents are the ones that tell you you're wrong: devil's advocate running 9 debiasing patterns in fresh context, `/challenge` demanding proof for your assumptions, `/retrospect-collab` revealing collaboration patterns you couldn't see from inside the session.
 
 ---
 
@@ -150,19 +142,42 @@ For the complete skill-by-skill breakdown, see [README-full.md](README-full.md).
 
 ## 📐 Benchmarking Dimensions
 
-When comparing this practice against other approaches, evaluate across:
+Two sets of observables serve two different questions. **Set 1** compares Praxis against other frameworks in the ecosystem. **Set 2** compares Praxis against the holy grail of what AI-augmented cognition could be.
 
-1. **Philosophy** — What beliefs drive the approach? → [PHILOSOPHY.md](PHILOSOPHY.md)
-2. **Skill coverage** — What's automated/augmented, by workflow phase? → [README-full.md](README-full.md)
-3. **Human-AI blend** — Mutual sharpening or one-way? Does AI challenge the human? → [this file, above](#-the-human-ai-blend)
-4. **Conscious activation** — Deliberate mode selection + willingness to be challenged? → [this file, above](#conscious-cognitive-activation)
-5. **Orchestrated agency** — Human-directed AND AI-challenges-human, or just automation? → [this file, above](#orchestrated-agency)
-6. **Cognitive ROI** — Where do tokens go? (automation → assisted → amplified) → [this file, above](#-cognitive-roi-return-on-tokens)
-7. **Context efficiency** — Session persistence, compression, token savings? → [this file, above](#the-multipliers)
-8. **Compounding** — Do learnings feed back into future sessions? → [this file, above](#the-multipliers)
-9. **Goal types** — What scope? Boulder vs pebble? → [PHILOSOPHY.md](PHILOSOPHY.md#-boulder--pebbles)
-10. **Domain applicability** — Generic vs specialized vs personal? → [this file, above](#-domain-applicability)
-11. **Personalization** — Adaptable? Toothbrush principle? → [PHILOSOPHY.md](PHILOSOPHY.md#-the-toothbrush-principle)
+These observables sit at Layer 4 of the [Beliefs → Principles → Practices → Observables taxonomy](PHILOSOPHY.md#-taxonomy-beliefs--principles--practices--observables). The old 11-dimension list (through April 2026) mixed layers — beliefs, principles, practices, and observables scored side-by-side — producing noisy, overlapping signal. The 8 + 4 split below keeps benchmarking at the observable layer only.
+
+### Set 1 — External Benchmarking (8 observables)
+
+*"Where does Praxis stand in the ecosystem?"* Used by `/benchmark-praxis` full and quick modes.
+
+| # | Observable | Measures | Scoring |
+|---|------------|----------|---------|
+| 1 | 💰 **Cognitive ROI** | Token allocation: % to automation vs assisted vs amplified thinking | 🟢🟢🟢 60%+ amplified · 🟡 balanced · 🔴 automation-heavy |
+| 2 | 🔇 **Context efficiency** | Token waste reduction: session persistence, compression, filtering, doc layering | 🟢🟢🟢 <1500/session + reuse · 🟡 ~2000 · 🔴 unbounded |
+| 3 | 🪞 **Compounding** | Session-over-session improvement: learnings DB, retrospect coverage, pattern reuse | 🟢🟢🟢 structured retrospect + learnings DB · 🟡 basic logs · 🔴 none |
+| 4 | 🛠️ **Skill coverage** | Workflow phases automated/augmented (Frame/Think/Build/Debug/Learn) + boulder/pebble scale | 🟢🟢🟢 all 5 phases + scale sensitivity · 🟡 3–4 phases · 🔴 1–2 phases |
+| 5 | 🌍 **Domain breadth** | Universal → personal tier count: domain-agnostic, tech-agnostic, stack-specific, personal | 🟢🟢🟢 all 4 tiers · 🟡 2–3 · 🔴 single tier |
+| 6 | 🤝 **Human-AI governance** | Autonomy spectrum (5 levels) + gate strength + learning-loop closure | 🟢🟢🟢 all 5 levels + hard gates + human closure · 🟡 3 levels + soft gates · 🔴 1 level + no gates |
+| 7 | 🔒 **Safety & containment** | Permission architecture + blast radius controls + secret exfiltration prevention | 🟢🟢🟢 multi-layer (deny lists, hooks, sandboxing) · 🟡 single layer · 🔴 none/advisory |
+| 8 | 🪥 **Adaptability** | Fork-ability + customization depth + toothbrush principle | 🟢🟢🟢 modular + swap frameworks + tune without code · 🟡 basic config · 🔴 rigid |
+
+**Governance sub-dimensions (#6):**
+- *Autonomy spectrum coverage* — does it offer human-drives, mutual sharpening, gated, supervised, fire-and-forget?
+- *Gate strength* — hard (deny-first) vs advisory (warn-first) vs none
+- *Learning autonomy* — who closes feedback loops (human-triggered, hybrid, autonomous)?
+
+### Set 2 — Self-Assessment vs Holy Grail (4 aspirational dimensions)
+
+*"How far am I from where I want to be?"* Used by `/benchmark-praxis gap` mode. Most frameworks aren't even attempting these.
+
+| # | Dimension | Measures | Current State |
+|---|-----------|----------|---------------|
+| 1 | 🚀 **Frontier autonomy** | How far toward full agentic loops? Scheduling, self-healing, autonomous decisions | Mostly gated delegation. Some fire-and-forget (hooks, RTK). No autonomous scheduling |
+| 2 | 🧘 **Meta-cognitive depth** | Does the system think about its own thinking? Self-assessment, calibration, self-improvement | Retrospect suite exists but human-triggered. No autonomous calibration |
+| 3 | 🔬 **Epistemic rigor** | Knowledge quality: debiasing, falsifiability, source verification, knowledge decay | Devil's advocate + challenge exist. No decay detection or source verification |
+| 4 | ✨ **Emergence capacity** | Cross-session insights, unexpected connections, bridge captures between domains | Bridge captures manual. No autonomous cross-domain discovery |
+
+**Scoring (Set 2)**: 🟢🟢🟢 = full aspiration achieved · 🟡 = partial / human-triggered version exists · 🔴 = no mechanism. Current Praxis state sits at 🟡 for all four — the gap is the point.
 
 ---
 

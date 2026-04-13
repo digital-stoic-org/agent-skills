@@ -27,4 +27,6 @@ Systematic comparisons of Digital Stoic Praxis against AI coding agent framework
 
 ## Methodology
 
-Each benchmark evaluates against the [11 Benchmarking Dimensions](../PRACTICE.md#-benchmarking-dimensions) defined in PRACTICE.md. Source investigations with full reasoning available in `praxis/thinking/investigations/`.
+Each benchmark evaluates against the [8 external observables + 4 aspirational dimensions](../PRACTICE.md#-benchmarking-dimensions) defined in PRACTICE.md (Set 1 external + Set 2 self-assessment, Layer 4 of the [Beliefs → Principles → Practices → Observables taxonomy](../PHILOSOPHY.md#-taxonomy-beliefs--principles--practices--observables)).
+
+Benchmarks dated before April 2026 were scored against the prior 11-dimension list, which mixed layers (beliefs, principles, practices, observables). The Set 1 + Set 2 split keeps scoring at the observable layer only, producing cleaner signal. Old→new mapping lives in [PRACTICE-llm.md](../PRACTICE-llm.md#benchmarking-dimensions). Source investigations with full reasoning available in `praxis/thinking/investigations/`.

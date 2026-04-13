@@ -17,42 +17,51 @@ Automate Toshl Finance data synchronization and monthly reporting with multi-ent
 
 ## Commands
 
-### sync-data [start-date] [end-date]
+### sync-data [start-month] [end-month]
 
-Sync Toshl data to local cache. Defaults to current month if no dates provided.
+Sync Toshl data to local CSV cache with reconciliation vs. prior state.
 
 **Usage**:
 ```
-/toshl sync-data                    # Current month
-/toshl sync-data 2020-01            # Specific month
-/toshl sync-data 2020-01 2026-02    # Date range
+/toshl sync-data                    # Current month MTD
+/toshl sync-data 2026-03            # Single month
+/toshl sync-data 2026-01 2026-04    # Inclusive month range
 ```
 
-**Workflow**:
-1. Parse date range from arguments (default: current month YYYY-MM)
-2. Use toshl MCP server to query entries:
-   - Call `get_entries` tool with from/to date range
-   - Get full entry details with account, category, tags
-3. Call `get_accounts` to fetch all accounts
-4. Call `get_categories` to fetch all categories
-5. Call `get_tags` to fetch all tags
-6. Transform entries to denormalized CSV format
-7. Write CSV: `data/{YYYY-MM}_entries.csv`
-8. Write metadata JSON files: `data/accounts.json`, `data/categories.json`, `data/tags.json`
-9. Report: files created, entry count, date range
+**Implementation**: Runs `scripts/monthly_sync.py` which calls the Toshl API directly (not via MCP — avoids token-limit spills). Stdlib only, no venv needed.
+
+```bash
+# Current month MTD
+python3 toshl/scripts/monthly_sync.py --current
+
+# Specific month
+python3 toshl/scripts/monthly_sync.py 2026-03
+
+# Range
+python3 toshl/scripts/monthly_sync.py 2026-01 2026-04
+
+# With reconcile report
+python3 toshl/scripts/monthly_sync.py --current --json-report /tmp/reconcile.json
+```
+
+**Script behavior**:
+1. Reads `TOSHL_API_TOKEN` from `toshl/.env`
+2. Paginates `/entries` (per_page=200) for each month's date range
+3. Resolves account/category/tag IDs against `data/_{account,category,tag}_lookup.json`
+4. Writes `data/{YYYY-MM}_entries.csv` (denormalized, UTF-8, sorted date desc)
+5. Reconciles: prints rows/sum before → after and delta per month
+6. Idempotent — re-running the same month yields Δ=0
 
 **CSV format** (denormalized, human-readable):
 ```csv
 date,description,amount,currency,category,account,tags,type
-2026-02-05,Groceries,-45.50,EUR,Food & Dining,Personal Checking,"shopping,food",expense
-2026-02-10,Freelance Income,2500.00,EUR,Consulting,DS Business,"revenue,consulting",income
+2026-02-05,Groceries,-45.50,EUR,Food & Dining,Cash,shopping,expense
+2026-02-10,Freelance Income,2500.00,EUR,Consulting,Cash,revenue,income
 ```
 
-**Implementation**:
-- Use MCP `get_entries` tool with date filters
-- Denormalize: resolve account/category/tag IDs to names in CSV
-- Handle negative amounts for expenses, positive for income
-- Quote tag fields if they contain commas
+**When to use MCP vs. this script**:
+- **Script** (`monthly_sync.py`): for bulk backfill, monthly ritual, reconciliation. Always preferred for writing CSVs.
+- **MCP tools** (`mcp__toshl__*`): for live querying during analysis ("what did I spend on X?"). Never use for bulk export — token-limit spills on months >40 entries.
 
 ### monthly-report <YYYY-MM>
 

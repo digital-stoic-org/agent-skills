@@ -57,7 +57,7 @@ Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs)
 
 ---
 
-## 🤝 Human-AI Blend
+## 🤝 Human-AI Governance
 
 Not human-drives-AI. Not AI-drives-human. **Mutual sharpening:**
 
@@ -67,7 +67,7 @@ Not human-drives-AI. Not AI-drives-human. **Mutual sharpening:**
 
 **Key**: Posture before technique — but posture includes the willingness to be challenged.
 
-Full autonomy spectrum + orchestrated agency → [PRACTICE.md](PRACTICE.md#-the-human-ai-blend)
+Full autonomy spectrum + orchestrated agency → [PRACTICE.md](PRACTICE.md#-human-ai-governance)
 
 ---
 
@@ -150,8 +150,8 @@ The practice itself is about **combining both**: a human who thinks consciously 
 | # | Document | Reader | Job |
 |---|----------|--------|-----|
 | 1 | 📄 **README.md** | 👤 Human | **"What + How (TL;DR)"** — This file. The GitHub landing page. |
-| 2 | 🧭 [PHILOSOPHY.md](PHILOSOPHY.md) | 👤 Human | **"Why"** — Beliefs, 7 principles, execution modes, toothbrush principle |
-| 3 | 🎯 [PRACTICE.md](PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI model, autonomy spectrum, benchmarking |
+| 2 | 🧭 [PHILOSOPHY.md](PHILOSOPHY.md) | 👤 Human | **"Why"** — 4 beliefs, 7 principles (with belief origins), 4-layer taxonomy, execution modes |
+| 3 | 🎯 [PRACTICE.md](PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI, autonomy spectrum, 8 external + 4 aspirational benchmarking dims |
 | 3b | 🔧 [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md) | 👤 Human | **"The Harness"** — Guides/sensors model, session lifecycle, maturity levels |
 | 4 | 📚 [README-full.md](README-full.md) | 👤 Human | **"Every Skill"** — Complete catalog, reference |
 | 5 | 🤖 [PRACTICE-llm.md](PRACTICE-llm.md) | 🤖 LLM | **Self-contained benchmark** — Token-optimized, YAML-heavy, all-in-one |

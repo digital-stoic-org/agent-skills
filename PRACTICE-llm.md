@@ -14,7 +14,74 @@ AI sharpens thinking, not replaces it. Sharpening without structure = noise. Wor
 
 ---
 
-## Cognitive ROI (Return on Tokens)
+## Taxonomy (4 Layers)
+
+Every Praxis element belongs to exactly one layer. Benchmarking happens only at Layer 4.
+
+```yaml
+layers:
+  1_beliefs:
+    count: 4
+    role: "Why — core convictions about human-AI collaboration"
+    example: "B1 — AI and human sharpen each other (mutual, bidirectional)"
+    section: "§ Beliefs (4)"
+
+  2_principles:
+    count: 7
+    role: "Rules — decision heuristics derived from beliefs"
+    example: "P3 — AI challenges thinking (from B1)"
+    derives_from: beliefs
+    section: "§ Principles (7)"
+    cross_ref: "Each principle carries `from: [Bx]` back-reference to source belief(s)"
+
+  3_practices:
+    count: "~30 skills + 5 hooks + 3 modes + protocols"
+    role: "How — concrete workflows and systems implementing principles"
+    examples: ["devil-advocate agent", "OpenSpec gates", "RTK proxy", "autonomy spectrum"]
+    implements: principles
+    sections:
+      - "§ Cognitive ROI (Return on Tokens) — Layer 3 practice: token budgeting"
+      - "§ Human-AI Collaboration Model (Layer 3) — protocol, autonomy, orchestration"
+      - "§ Skill Inventory (Layer 3) — full skill catalog by phase + domain"
+      - "§ Hooks (Layer 3) — ambient infrastructure"
+      - "§ Execution Modes (Layer 3) — garage/scale/maintenance"
+      - "§ Toothbrush Principle (Layer 3) — personalization constraint"
+
+  4_observables:
+    count: "8 external + 4 aspirational"
+    role: "What you measure — benchmarkable outcomes produced by practices"
+    example: "Cognitive ROI, Context efficiency, Human-AI governance"
+    measures: practices
+    section: "§ Benchmarking Dimensions (Layer 4)"
+    scoring: "🟢🟢🟢 / 🟢🟢 / 🟢 / 🟡 / 🔴 / ⬜"
+    sets:
+      set_1: "External benchmarking vs other frameworks (8 observables)"
+      set_2: "Self-assessment vs holy grail (4 aspirational dimensions)"
+```
+
+**Layer discipline**: the prior 11-dim benchmarking list mixed layers (e.g. "Philosophy" = Layer 1, "Human-AI blend" = Layer 2/3, "Cognitive ROI" = Layer 4) — producing noisy scores with overlapping sub-dimensions. The 8 + 4 split keeps scoring at Layer 4 only.
+
+## Beliefs (4)
+
+```yaml
+beliefs:
+  B1_mutual_sharpening:
+    rule: "AI and human sharpen each other — bidirectional, not one-way amplification"
+    drives: [P2, P3]
+  B2_depth_over_speed:
+    rule: "Cognitive depth and breadth > automation speed"
+    drives: [P1, P4, P5]
+  B3_personal_discipline:
+    rule: "Meta-cognition is personal discipline — shaped to cognitive fingerprint (toothbrush principle)"
+    drives: [P1, P7]
+  B4_reexamine_knowledge:
+    rule: "Prior knowledge must be re-examined, not preserved — adapt, don't fossilize"
+    drives: [P6]
+```
+
+---
+
+## Cognitive ROI (Return on Tokens) — Layer 3 Practice
 
 Three-axis model for measuring value per token spent:
 
@@ -76,44 +143,70 @@ loops:
 
 ```yaml
 principles:
-  1_frame_before_act:
-    rule: Classify problem (Cynefin) before choosing approach
-    mechanism: /frame-problem routes to skill chain based on domain type
+  P1_frame_before_act:
+    from: [B3, B2]
+    rule: "Classify/research/brainstorm before executing"
+    mechanisms:
+      - /frame-problem (Cynefin → skill chain)
+      - /brainstorm (SCAMPER, divergence)
+      - /investigate (Issue Trees, Pre-mortem)
     domains: { clear: execute, complicated: analyze, complex: probe, chaotic: act }
+    why: "cheap thinking prevents expensive building"
 
-  2_think_before_build:
-    rule: Research and ideate before coding
-    mechanism: /brainstorm (SCAMPER) + /investigate (Issue Trees, Pre-mortem)
-    why: cheap thinking prevents expensive building
-
-  3_human_controls_execution_ai_challenges_thinking:
-    rule: "Execution: AI implements → gate → human reviews. Thinking: bidirectional — AI challenges human assumptions."
-    mechanism: "Gates for execution (OpenSpec). Challenge/devil-advocate/retrospect for thinking."
-    anti_pattern: "Execution: runaway AI. Thinking: directing without listening."
-
-  4_micro_commits_at_gates:
-    rule: Every verified gate = git commit
+  P2_human_gates_execution:
+    from: [B1]
+    rule: "Human controls pace — gate pattern, micro-commits, rollback"
+    mechanisms: [OpenSpec gates, micro-commits at each gate, 5-level autonomy spectrum]
+    anti_pattern: "runaway AI building the wrong thing for 20 minutes"
     benefits: [rollback granularity, readable history, gate evidence, crash safety]
 
-  5_boulder_to_pebbles:
-    rule: Scale process to problem size
-    mapping:
-      boulder: Full OpenSpec (plan → design → develop → gate → test → sync)
-      pebble: Just code it
-    note: iterative zoom, not binary
+  P3_ai_challenges_thinking:
+    from: [B1]
+    rule: "AI pushes back on assumptions, surfaces blind spots, debiases"
+    mechanisms:
+      - /challenge (demands proof for assumptions)
+      - devil-advocate agent (9 debiasing patterns, fresh context)
+      - /retrospect-collab (HOW analysis)
+    anti_pattern: "directing without listening — agents that only execute, never challenge"
 
-  6_sessions_persist:
-    rule: Multi-day work needs continuity
-    mechanism: save-context → CONTEXT-llm.md → load-context
+  P4_think_big_start_small_move_fast:
+    from: [B2]
+    rule: "Boulder vision → Pebble execution → fast iteration (iterative zoom, not binary)"
+    mechanisms:
+      boulder: "Full OpenSpec (plan → design → develop → gate → test → sync)"
+      pebble: "Just code it"
+      modes: [garage (default), scale, maintenance]
 
-  7_learn_from_patterns:
-    rule: Compound learning across sessions
-    mechanism: retrospect-* extracts signal; troubleshoot saves patterns
+  P5_persist_across_sessions:
+    from: [B2]
+    rule: "Protect cognitive investment — don't re-explain"
+    mechanisms:
+      - save-context / load-context → CONTEXT-llm.md
+      - thinking/ directory (investigations, bridges, benchmarks — long-term knowledge)
+      - MEMORY.md (cross-conversation user/project/feedback state)
+
+  P6_compound_learnings:
+    from: [B4]
+    rule: "Sessions get smarter over time — re-examine, don't fossilize"
+    mechanisms:
+      - retrospect-domain (WHAT/WHY extraction)
+      - retrospect-collab (HOW analysis)
+      - troubleshoot learnings DB (checked first next time)
+      - skill evolution via edit-tool / edit-plugin
+
+  P7_fit_to_cognitive_capacity:
+    from: [B3]
+    rule: "Attention is finite and fluctuates — right content, right effort, right moment"
+    mechanisms:
+      - 3-layer docs (scan → deep → LLM)
+      - RTK token proxy (60-90% savings, noise filter)
+      - /scratch (park side-thoughts, free working memory)
+      - /cowork:switch (structured context-switching)
 ```
 
 ---
 
-## Human-AI Collaboration Model
+## Human-AI Collaboration Model — Layer 3 Practices
 
 ### Conscious Cognitive Activation
 
@@ -172,7 +265,7 @@ implementation:
 
 ---
 
-## Skill Inventory
+## Skill Inventory — Layer 3 Practices
 
 ### By Cognitive Flow
 
@@ -307,7 +400,7 @@ plugins:
 
 ---
 
-## Hooks (Ambient Infrastructure)
+## Hooks (Ambient Infrastructure) — Layer 3 Practices
 
 ```yaml
 hooks:
@@ -336,7 +429,7 @@ hooks:
 
 ---
 
-## Execution Modes
+## Execution Modes — Layer 3 Practice
 
 ```yaml
 modes:
@@ -359,7 +452,7 @@ modes:
 
 ---
 
-## Toothbrush Principle
+## Toothbrush Principle — Layer 3 Practice (Personalization Constraint)
 
 ```yaml
 core: "Skills and CLAUDE.md are personal — like toothbrushes. Fork, adapt, make yours."
@@ -372,23 +465,98 @@ implication: "This practice document describes ONE practitioner's discipline. Be
 
 ---
 
-## Benchmarking Dimensions
+## Benchmarking Dimensions — Layer 4 Observables
 
-For comparing this practice against other approaches:
+Two sets serving different purposes. Both sit at Layer 4 only — no mixing with beliefs, principles, or practices. The prior 11-dim list mixed layers, producing noisy scores with overlapping sub-dimensions. This 8 + 4 split keeps scoring clean.
+
+### Set 1 — External Benchmarking (8 observables)
 
 ```yaml
-dimensions:
-  1_philosophy: What beliefs drive the approach?
-  2_skill_coverage: What tasks are automated/augmented, by workflow phase?
-  3_human_ai_blend: Mutual sharpening or one-way? Does AI challenge the human?
-  4_conscious_activation: Deliberate mode selection + willingness to be challenged?
-  5_orchestrated_agency: Human-directed AND AI-challenges-human, or just automation?
-  6_cognitive_roi: Where do tokens go? (automation vs assisted vs amplified)
-  7_context_efficiency: Session persistence, compression, token savings?
-  8_compounding: Do learnings feed back into future sessions?
-  9_goal_types: What scope of problems? Boulder vs pebble? Domain coverage?
-  10_domain_applicability: Generic vs tech-specific vs personal?
-  11_personalization: Toothbrush principle? Adaptable to different practitioners?
+# Used by /benchmark-praxis full and quick modes
+# Question: "Where does Praxis stand in the ecosystem?"
+set_1_external:
+  1_cognitive_roi:
+    measures: "Token allocation: % to automation vs assisted vs amplified thinking"
+    scoring: "🟢🟢🟢 60%+ amplified | 🟡 balanced | 🔴 automation-heavy"
+
+  2_context_efficiency:
+    measures: "Token waste reduction: session persistence, compression, filtering, doc layering"
+    scoring: "🟢🟢🟢 <1500 tokens/session + reuse | 🟡 ~2000 | 🔴 unbounded"
+
+  3_compounding:
+    measures: "Session-over-session improvement: learnings DB, retrospect coverage, pattern reuse"
+    scoring: "🟢🟢🟢 structured retrospect + learnings DB | 🟡 basic logs | 🔴 none"
+
+  4_skill_coverage:
+    measures: "Workflow phases automated/augmented (Frame/Think/Build/Debug/Learn) + boulder/pebble scale"
+    scoring: "🟢🟢🟢 all 5 phases + scale sensitivity | 🟡 3-4 phases | 🔴 1-2 phases"
+
+  5_domain_breadth:
+    measures: "Universal → personal tier count: agnostic, tech-agnostic, stack-specific, personal"
+    scoring: "🟢🟢🟢 all 4 tiers | 🟡 2-3 tiers | 🔴 single tier"
+
+  6_human_ai_governance:
+    measures: "Autonomy spectrum (5 levels) + gate strength + learning-loop closure"
+    scoring: "🟢🟢🟢 all 5 levels + hard gates + human closure | 🟡 3 levels + soft gates | 🔴 1 level + no gates"
+    sub_dimensions:
+      autonomy_spectrum_coverage: "human-drives, mutual-sharpening, gated, supervised, fire-and-forget"
+      gate_strength: "hard (deny-first) | advisory (warn-first) | none"
+      learning_autonomy: "human-triggered | hybrid | autonomous"
+    absorbs: [old_human_ai_blend, old_conscious_activation, old_orchestrated_agency]
+
+  7_safety_and_containment:
+    measures: "Permission architecture + blast radius controls + secret exfiltration prevention"
+    scoring: "🟢🟢🟢 multi-layer (deny lists, hooks, sandboxing) | 🟡 single layer | 🔴 none/advisory"
+
+  8_adaptability:
+    measures: "Fork-ability + customization depth + toothbrush principle"
+    scoring: "🟢🟢🟢 modular + swap frameworks + tune without code | 🟡 basic config | 🔴 rigid"
+```
+
+### Set 2 — Self-Assessment vs Holy Grail (4 aspirational)
+
+```yaml
+# Used by /benchmark-praxis gap mode
+# Question: "How far am I from where I want to be?"
+# Most frameworks aren't even attempting these
+set_2_aspirational:
+  1_frontier_autonomy:
+    measures: "How far toward full agentic loops? Scheduling, self-healing, autonomous decisions"
+    praxis_current: "Mostly gated delegation. Some fire-and-forget (hooks, RTK). No autonomous scheduling or self-healing"
+    scoring: "🟢🟢🟢 autonomous + self-healing + adaptive | 🟡 supervised + some autonomous | 🔴 human-triggered only"
+
+  2_meta_cognitive_depth:
+    measures: "Does the system think about its own thinking? Self-assessment, calibration, self-improvement depth"
+    praxis_current: "Retrospect suite exists but human-triggered. No autonomous self-assessment or calibration"
+    scoring: "🟢🟢🟢 autonomous self-assessment + calibration | 🟡 human-triggered retrospect + manual | 🔴 no reflection"
+
+  3_epistemic_rigor:
+    measures: "Knowledge quality: debiasing, falsifiability, source verification, knowledge decay detection"
+    praxis_current: "Devil's advocate + challenge exist. No knowledge decay detection or source verification"
+    scoring: "🟢🟢🟢 active debiasing + decay + verification + falsifiability | 🟡 debiasing only | 🔴 none"
+
+  4_emergence_capacity:
+    measures: "Outcomes greater than sum of parts: cross-session insights, bridge captures between domains"
+    praxis_current: "Bridge captures exist but manual. No autonomous cross-domain connection discovery"
+    scoring: "🟢🟢🟢 autonomous cross-domain insight + serendipity engine | 🟡 manual bridges + structured cross-pollination | 🔴 siloed sessions"
+```
+
+### Mapping: Old 11 → New 8
+
+```yaml
+# For comparison with pre-2026-04 benchmarks
+old_to_new:
+  1_philosophy:          { status: removed, reason: "abstract — belongs in taxonomy intro, not scored" }
+  2_skill_coverage:      { maps_to: 4_skill_coverage }
+  3_human_ai_blend:      { maps_to: 6_human_ai_governance, reason: "merged with conscious-activation + orchestrated-agency" }
+  4_conscious_activation: { maps_to: 6_human_ai_governance, reason: "sub-dim: activation protocol presence" }
+  5_orchestrated_agency:  { maps_to: 6_human_ai_governance, reason: "sub-dim: agency amplified vs replaced" }
+  6_cognitive_roi:       { maps_to: 1_cognitive_roi }
+  7_context_efficiency:  { maps_to: 2_context_efficiency }
+  8_compounding:         { maps_to: 3_compounding }
+  9_goal_types:          { maps_to: 4_skill_coverage, reason: "sub-dim: boulder/pebble coverage" }
+  10_domain_applicability: { maps_to: 5_domain_breadth, reason: "reframed: measure breadth, not just applicability" }
+  11_personalization:    { maps_to: 8_adaptability }
 ```
 
 ## Benchmark Results (April 2026)
