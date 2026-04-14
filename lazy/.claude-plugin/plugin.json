@@ -1,7 +1,7 @@
 {
   "name": "lazy",
   "description": "Lazy skill demand capture: declare placeholder skills that intercept trigger keywords and log hits to measure real demand before building the full implementation. Toggle off to pause demand capture.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

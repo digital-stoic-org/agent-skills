@@ -56,4 +56,4 @@ When hit count justifies building:
 
 ## 📦 Version
 
-`0.1.0` · 1 skill (`/create-lazy`) + generated lazy placeholders
+`0.1.1` · 1 skill (`/create-lazy`) + generated lazy placeholders
