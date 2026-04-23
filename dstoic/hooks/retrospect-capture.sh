@@ -11,6 +11,13 @@ set -euo pipefail
 # Output: Appends to .retro/sessions/.staging/{session-id}.jsonl
 # ==============================================================================
 
+# Portability gate: silently no-op unless dstoic telemetry is opted-in.
+# Requires BOTH: DSTOIC_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
+{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+
+# Hard deps — skip silently if missing (jq is required for JSON parsing)
+command -v jq >/dev/null 2>&1 || exit 0
+
 # --- Configuration ---
 # RETRO_ROOT: centralized at git root of CLAUDE_PROJECT_DIR
 RETRO_ROOT="${RETRO_ROOT:-$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null)/.retro}"

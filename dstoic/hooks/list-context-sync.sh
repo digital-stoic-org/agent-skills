@@ -11,6 +11,10 @@ set -euo pipefail
 # Safety: Idempotent, praxis-only, respects user permission gates
 # ==============================================================================
 
+# Portability gate: silently no-op unless dstoic telemetry is opted-in.
+# Requires BOTH: DSTOIC_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
+{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+
 # --- Read hook input from stdin ---
 INPUT_JSON=$(cat)
 

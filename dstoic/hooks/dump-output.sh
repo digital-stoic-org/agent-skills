@@ -11,6 +11,10 @@ set -e
 # Output: Saves to $PRAXIS_DIR/thinking/dumps/$project/ (fallback: $CLAUDE_PROJECT_DIR/.dump/)
 # ==============================================================================
 
+# Portability gate: silently no-op unless dstoic telemetry is opted-in.
+# Requires BOTH: DSTOIC_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
+{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+
 # Check if dumping is enabled (look for toggle file)
 if [ ! -f "$CLAUDE_PROJECT_DIR/.dump/.enabled" ]; then
   exit 0

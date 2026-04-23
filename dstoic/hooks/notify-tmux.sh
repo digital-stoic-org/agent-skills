@@ -5,6 +5,13 @@
 # States: IDLE (no emoji) | ACTIVE (🤖X) | ALERT (🤖🚨) | COMPLETED (🤖✅)
 # See: ./notify-tmux--state-machine.md
 
+# Portability gate: silently no-op unless dstoic telemetry is opted-in.
+# Requires BOTH: DSTOIC_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
+{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+
+# Require tmux CLI (not just TMUX_PANE env) — macOS/containers may lack it
+command -v tmux >/dev/null 2>&1 || exit 0
+
 TARGET="${TMUX_PANE:-}"
 [[ -z "$TARGET" ]] && exit 0
 

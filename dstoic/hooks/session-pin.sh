@@ -9,6 +9,10 @@ set -euo pipefail
 # Input: JSON on stdin (from Claude Code hooks)
 # ==============================================================================
 
+# Portability gate: silently no-op unless dstoic telemetry is opted-in.
+# Requires BOTH: DSTOIC_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
+{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+
 INPUT=$(cat)
 EVENT="${1:-}"
 
@@ -21,7 +25,7 @@ REL_PATH="${CWD#$GIT_ROOT/}"
 # If CWD == GIT_ROOT, REL_PATH equals CWD (no strip happened)
 [ "$REL_PATH" != "$CWD" ] || REL_PATH="root"
 SLUG=$(echo "$REL_PATH" | tr '/' '-')
-PINS_FILE="${PRAXIS_DIR:?PRAXIS_DIR not set}/.session-logs/$SLUG/pins.json"
+PINS_FILE="$PRAXIS_DIR/.session-logs/$SLUG/pins.json"
 
 case "$EVENT" in
   PreToolUse|PreCompact)
