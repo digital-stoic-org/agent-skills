@@ -362,13 +362,14 @@ flowchart LR
 
 ---
 
-## 🔨 Create — Tool Orchestration (4 skills)
+## 🔨 Create — Tool Orchestration (6 skills)
 
 *Build your own skills and agents.*
 
 ```mermaid
 flowchart LR
-    search["🔍 search-skill"] -.->|"exists?"| edit["🎯 edit-tool"]
+    distill["🎬 distill-skill"] -.->|"session trace"| edit["🎯 edit-tool"]
+    search["🔍 search-skill"] -.->|"exists?"| edit
     edit -->|"skill"| skill["✨ Skill"]
     edit -->|"agent"| agent["🤖 Agent"]
     edit -->|"project context"| claude["📄 edit-claude"]
@@ -383,7 +384,7 @@ flowchart LR
     classDef post fill:#C8E6C9,stroke:#333,color:#000
     class edit router
     class skill,agent output
-    class claude,search,pick support
+    class claude,search,pick,distill support
     class plugin post
 ```
 
@@ -393,6 +394,7 @@ flowchart LR
 | `edit-claude` | 📄 Project CLAUDE.md files |
 | `edit-plugin` | 📦 Version bumps and plugin metadata sync |
 | `search-skill` | 🔍 Discover & evaluate skills from curated sources |
+| `distill-skill` | 🎬 Record a session and distill it into a generalized skill via `edit-tool` |
 | `pick-model` | 🎯 Recommend haiku/sonnet/opus for the task |
 
 ---
@@ -431,7 +433,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (50 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 85 skills, 18 agents.**
+> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (53 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 88 skills, 18 agents.**
 
 ---
 
