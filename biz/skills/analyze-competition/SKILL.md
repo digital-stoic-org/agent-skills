@@ -3,7 +3,7 @@ name: analyze-competition
 description: Competitive analysis — identify competitors, build feature matrix, assess positioning, and produce go/no-go verdict with kill-criteria framing. Use when "competitive analysis", "compare competitors", "positioning vs", "competitive landscape", "battlecard", "who are the competitors". Outputs analysis/competitive-analysis.md.
 allowed-tools: ["Read", "Write", "Glob", "Grep"]
 model: sonnet
-context: fork
+context: subagent
 user-invocable: true
 argument-hint: "<product-or-market>"
 ---

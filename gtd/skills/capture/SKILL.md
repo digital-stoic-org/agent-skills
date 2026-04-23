@@ -1,7 +1,7 @@
 ---
 name: capture
 description: Quick capture to GTD inbox from CLI or natural language
-context: fork
+context: subagent
 allowed-tools: [Read, Edit]
 model: haiku
 user-invocable: true

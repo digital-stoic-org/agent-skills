@@ -20,59 +20,58 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 
 ## Context Execution Mode
 
-**PRIMARY DISCRIMINATOR** for tool design. Determines how a skill interacts with the conversation.
+**PRIMARY DISCRIMINATOR** for tool design.
 
-### Modes
+### Modes (3-way, v2.1.117+)
 
-| Mode | Execution | Pollution | Use Case |
-|------|-----------|-----------|----------|
-| **main** (default) | In main conversation | Token cost applies | Quick actions, shared context, interactive |
-| **fork** | Isolated sub-agent | Zero (isolated) | Research, exploration, heavy analysis |
+| Mode | Parent ctx | Pollution | Startup | Best for |
+|------|-----------|-----------|---------|----------|
+| **main** (default) | Full | Full | Instant | Quick actions, interactive, shared state |
+| **fork** | **Inherited** | **Zero (async)** | ~1-2s | Parallel fan-out with shared base (debiasing, multi-perspective). Requires `CLAUDE_CODE_FORK_SUBAGENT=1` |
+| **subagent** | None | Zero | ~1-2s | Research/exploration (parent would bias), heavy output, per-agent config, Team Protocol |
 
-### Decision Tree: Main vs Fork
+### Decision Tree
 
-```mermaid
-flowchart TD
-    A[Skill Design] --> B{Generates verbose output?}
-    B -->|Yes >500 lines| C[context: fork]
-    B -->|No| D{Needs main conversation context?}
-    D -->|Yes| E[context: main]
-    D -->|No| F{Called frequently?}
-    F -->|Yes >5/session| E
-    F -->|No| G{Parallel-safe required?}
-    G -->|Yes| C
-    G -->|No| E
+See `SKILL.md` for canonical 3-branch Mermaid.
 
-    classDef fork fill:#FFB6C1,stroke:#8B0000,color:#000
-    classDef main fill:#98FB98,stroke:#006400,color:#000
+### When to Use Fork (new)
 
-    class C fork
-    class E main
-```
+✅ Fan-out parallel reasoning (N perspectives on same target) · ✅ Debiasing (project ctx, no parent reasoning bias) · ✅ Shares prompt cache across forks · ✅ Parent CLAUDE.md + memories needed by each spawn
+❌ Per-agent model/memory/tools needed · ❌ Team Protocol required · ❌ Named persona identity
 
-### Performance Considerations
+### When to Use Subagent
 
-| Aspect | Main Context | Fork Context |
-|--------|--------------|--------------|
-| Startup time | Instant | ~1-2s (sub-agent spawn) |
-| Context access | Full main conversation | Isolated (only skill context) |
-| Output visibility | Inline in conversation | Returned as summary |
-| Parallelization | Limited (shared state) | Safe (isolated state) |
-| Memory | Shares main context window | Separate context window |
-
-### When to Use Fork
-
-✅ Deep codebase analysis generating verbose output
-✅ Multiple independent tasks running simultaneously
-✅ Long-running analysis (reports, test coverage)
-✅ Task shouldn't affect or be affected by main conversation
+✅ Verbose output >2000 tokens · ✅ Deep codebase analysis, parent state irrelevant · ✅ Long-running analysis · ✅ Per-agent config (model downgrade, scoped memory, narrower tools) · ✅ Named persona / Team Protocol / SendMessage
 
 ### When to Use Main (default)
 
-✅ Quick operations (format conversion, simple transforms)
-✅ Context-dependent (needs conversation history)
-✅ Frequent invocation (fork overhead adds up at 5+/session)
-✅ Interactive workflow (user sees results inline)
+✅ Quick ops · ✅ Context-dependent · ✅ Frequent invocation (5+/session) · ✅ Interactive
+
+### Fork Spawning Contract
+
+A `context: fork` skill's runtime instructions MUST include:
+
+1. **Invocation**: Call `Agent` WITHOUT `subagent_type` — omitting is what makes it a fork
+2. **Restate specifics**: include target/constraint/decision under review in the directive
+3. **Batch parallel**: send N forks in one tool-use block (prompt cache sharing)
+4. **Don't peek**: never Read the fork's `output_file`
+5. **Directive style**: prompt = what to do, not briefing (parent ctx already loaded)
+
+Example fork spawn (inside a `context: fork` skill body):
+
+    Agent({
+      name: "challenger-anchor",
+      description: "Anchor-pattern debiasing",
+      prompt: "Target decision: <RESTATE>. Apply anchor-pattern debiasing. Report <300 words: verdict, evidence, reframe."
+      // NOTE: no subagent_type — fork inherits parent context
+    })
+
+### Counterexample — when fork does NOT fit
+
+- **`philosopher/council`**: 5 parallel philosophers, independent. Fan-out mechanics fit fork BUT per-agent model (haiku qualification + opus deliberation) + scoped memory require subagent.
+- **`philosopher/encounter` / `philosopher/dialogue`**: SendMessage + Team Protocol. Fork has no stable name → must stay subagent.
+
+Rule: per-agent model/memory/tools OR named persona OR Team Protocol → `subagent`, even when fan-out fits fork.
 
 ---
 
@@ -105,7 +104,7 @@ flowchart TD
 | **0 tokens** | Script executed, not read | Bash Script or Skill+scripts/ |
 | **<500 tokens** | Acceptable pollution | Skill (ideal) |
 | **500-2000 tokens** | Use progressive disclosure | Skill + reference.md |
-| **>2000 tokens** | Needs isolation | Sub-Agent or `context:fork` |
+| **>2000 tokens** | Needs isolation | Sub-Agent or `context:subagent` |
 
 **Estimation Tips:**
 - Count prose, not code blocks (code is efficient)
@@ -118,7 +117,8 @@ flowchart TD
 | Need | Rationale | Tool Choice |
 |------|-----------|-------------|
 | **Main context access** | Needs conversation history | Skill (`context:main`) |
-| **Isolated exploration** | Research without pollution | Skill (`context:fork`) or Sub-Agent |
+| **Parallel fan-out w/ shared base** | Debiasing, multi-perspective reasoning | Skill (`context:fork`) — v2.1.117+ |
+| **Isolated exploration** | Research without pollution | Skill (`context:subagent`) or Sub-Agent |
 | **Minimal pollution** | Concise, high-value capability | Skill (<500 tokens) |
 | **Zero pollution** | Execution only | Bash Script |
 
@@ -226,8 +226,9 @@ Agent .md:
 **Solutions:**
 1. **Progressive disclosure**: Move details to reference.md
 2. **Split into multiple skills**: If multiple capabilities
-3. **Fork context**: If research/exploration (`context: fork`)
-4. **Convert to Agent**: If >2000 tokens and exploratory
+3. **Subagent context**: If research/exploration requires isolation (`context: subagent`)
+4. **Fork context**: If parallel fan-out with inherited parent ctx (`context: fork`, v2.1.117+)
+5. **Convert to Agent**: If >2000 tokens and exploratory
 
 ### Case 4: "I need a skill that runs complex scripts"
 
@@ -347,14 +348,15 @@ scripts/ (0 tokens) → Executed, never loaded
 - Example: "Use for .xlsx files" (good) vs "Use for documents" (bad)
 
 **Technique 4: Context Mode**
-- `context: fork` = zero pollution (isolated execution)
-- Use for research, analysis, report generation
+- `context: subagent` = zero pollution (isolated, no parent ctx)
+- `context: fork` = zero pollution (parent ctx inherited, async, v2.1.117+)
+- Subagent for research/analysis; fork for parallel fan-out with shared base
 
 ### When Pollution is Acceptable
 
 ✅ **High-value capabilities**: >2000 tokens worth of procedural knowledge, used 5+ times/session
 ✅ **Zero-inflation skills**: Mostly references `scripts/` (0 token execution), SKILL.md ~200-300 tokens
-❌ **Unacceptable**: >1000 token skill used 1x per session — use progressive disclosure (reference.md) or `context:fork`
+❌ **Unacceptable**: >1000 token skill used 1x per session — use progressive disclosure (reference.md), `context:subagent` (isolation), or `context:fork` (fan-out)
 
 ---
 
@@ -513,10 +515,17 @@ Choose SKILL (with progressive disclosure) when:
   ✅ Any frequency (dual-invocable by default)
   ✅ Workflow with steps
 
-Choose SKILL (forked) when:
+Choose SKILL (context:subagent) when:
   ✅ Research, exploration, heavy analysis
   ✅ Verbose output that would pollute main context
-  ✅ Parallel-safe execution needed
+  ✅ Per-agent config / Team Protocol / named persona
+  Frontmatter: context: subagent
+
+Choose SKILL (context:fork) when:   # v2.1.117+
+  ✅ Parallel fan-out with inherited parent context
+  ✅ Debiasing (each fork gets project ctx, no reasoning bias)
+  ✅ Prompt cache sharing across forks
+  ❌ NOT: per-agent model/memory/tools/persona/Team Protocol
   Frontmatter: context: fork
 
 Choose SUB-AGENT when:

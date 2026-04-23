@@ -27,7 +27,8 @@ graph TD
     B -->|No| E{Pollution<br/>cost?}
     E -->|High >2000 tokens<br/>OR deep exploration| AGENT[✅ Sub-Agent]
     E -->|Medium 500-2000| F{Context<br/>mode?}
-    F -->|Needs isolation| FORK[✅ Skill context:fork]
+    F -->|Needs parent ctx + fan-out| FORK[✅ Skill context:fork<br/>NEW v2.1.117+]
+    F -->|Needs isolation no bias| SUBAGENT[✅ Skill context:subagent]
     F -->|Needs main context| SKILL_BIG[✅ Skill + reference.md]
 
     E -->|Low <500| G{Frequency?}
@@ -41,6 +42,7 @@ graph TD
     style SKILL_REF fill:#FFA500,stroke:#000,stroke-width:2px,color:#000
     style SKILL_BIG fill:#87CEEB,stroke:#000,stroke-width:2px,color:#000
     style FORK fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
+    style SUBAGENT fill:#CE93D8,stroke:#000,stroke-width:2px,color:#000
     style AGENT fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
     style DIRECT fill:#FFB6C1,stroke:#000,stroke-width:2px,color:#000
 ```
@@ -75,7 +77,7 @@ graph TD
 **Skill frontmatter** (quick ref — see `references/skill-guide.md` for full spec):
 - `name` — lowercase-hyphens
 - `description` — triggers + use cases (max 1024 chars)
-- `context` — `main` (default) | `fork`
+- `context` — `main` (default) | `fork` (inherits parent, async) | `subagent` (isolated)
 - `model` — `opus` | `sonnet` | `haiku`
 - `allowed-tools`, `argument-hint`, `hooks` — optional
 
@@ -106,6 +108,33 @@ graph TD
 - **Single responsibility**: One focused purpose per tool
 - **Token-efficient**: Tables, bullets, Mermaid over prose
 - **Context-aware**: Main for quick tasks, fork for research, agent for deep exploration
+
+## Fork vs Subagent (v2.1.117+)
+
+| | `fork` | `subagent` |
+|---|---|---|
+| Parent context | Inherited (CLAUDE.md + MEMORY + transcript) | None |
+| Invocation | `Agent({prompt,...})` — **OMIT** `subagent_type` | `Agent({subagent_type, prompt,...})` |
+| Prompt style | Directive — restate current-turn facts | Self-contained briefing |
+| Per-agent config | ❌ none | ✅ tools/model/memory/maxTurns |
+| Team Protocol | ❌ no stable name | ✅ SendMessage addressable |
+
+**Fork rules** (skill body MUST enforce): omit `subagent_type` · restate target/constraint/decision · batch parallel in one tool-use block · NEVER Read output_file.
+
+**Keep `subagent` when ANY**: (1) per-agent model · (2) scoped memory · (3) narrower tool allowlist · (4) SendMessage/Team Protocol · (5) named persona (`subagent_type: plugin:persona`).
+
+Cases: `philosopher/council` (model+memory), `philosopher/encounter`+`dialogue` (Team Protocol).
+
+## Proactive Audit (run on every create/edit)
+
+**Check 1 — frontmatter compliance**
+- `context:` ∈ {`main`, `fork`, `subagent`} — else reject
+- Legacy `context: fork` (pre-2026-04-23): flag for rename. Body uses `subagent_type` → rename to `subagent`. Body omits `subagent_type` + fan-out w/ parent ctx → keep `fork` (rare).
+
+**Check 2 — fit check** (recommend change, ask confirm)
+- `fork` declared, needs per-agent config/persona/Team Protocol → `subagent`
+- `subagent` declared, generic parallel fan-out (no persona, no cross-talk, no per-agent config) → `fork`
+- `main` declared, body spawns Agent >2×/invocation → declare `fork` or `subagent`
 
 ## Parallelization
 

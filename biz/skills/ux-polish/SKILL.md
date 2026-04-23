@@ -3,7 +3,7 @@ name: ux-polish
 description: Visual design quality skill — elevates HTML wireframes from structural prototypes to polished UI. Applies typography, color, spacing, motion, interaction polish. Works on /ux-wireframe output or any HTML. Use when "ux polish", "polish wireframe", "colorize", "design audit", "design critique", "visual polish", "add color", "improve design".
 allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "AskUserQuestion"]
 model: sonnet
-context: fork
+context: subagent
 user-invocable: true
 argument-hint: "[audit|critique|colorize|polish|animate|typeset|space|bolder|quieter|delight|adapt|extract] <target> [--scope area] [--tone tone] [--preserve-structure] [--diff]"
 ---

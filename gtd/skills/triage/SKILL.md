@@ -1,7 +1,7 @@
 ---
 name: triage
 description: Inline inbox triage — two-pass // comment flow for async Obsidian review. Triggers: process inbox, triage inbox, route inbox, process triage.
-context: fork
+context: subagent
 allowed-tools: [Read, Edit, Glob, Grep]
 model: sonnet
 user-invocable: true

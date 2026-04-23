@@ -1,7 +1,7 @@
 ---
 name: focus
 description: Daily focus list — scan all projects, rank tasks by priority, return top 3-5 for today. Use when user says "focus", "what should I work on", "today's tasks", "daily priorities".
-context: fork
+context: subagent
 allowed-tools: [Glob, Read]
 model: sonnet
 user-invocable: true

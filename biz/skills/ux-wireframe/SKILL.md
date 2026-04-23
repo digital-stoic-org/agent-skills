@@ -3,7 +3,7 @@ name: ux-wireframe
 description: Generate interactive HTML wireframe prototypes grounded in UX research artifacts. Translates empathy maps, JTBD, forces, journey maps, VPC, personas into nuanced interaction design — not just labels, but information hierarchy, trust patterns, friction reduction, emotional pacing. Consumes /ux-strategize output. Use when "wireframe", "prototype", "mockup", "ux wireframe", "html prototype", "interaction design".
 allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "AskUserQuestion"]
 model: sonnet
-context: fork
+context: subagent
 user-invocable: true
 argument-hint: "<subject> [--screens N] [--fidelity bw|clean|polished] [--flow]"
 ---

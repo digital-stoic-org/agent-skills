@@ -3,7 +3,7 @@ name: coach
 description: Coaching session — personal (CLEAR protocol, anxiety-first, Goldsmith accountability) or signal (GROW protocol, strategic positioning, network targeting). Reads pulse/scorecard, surfaces avoidance or signal gaps, reviews last commitment, reframes, commits, persists to coaching log.
 allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash"]
 model: sonnet
-context: fork
+context: subagent
 user-invocable: true
 argument-hint: "[personal|signal|pro|family|review]"
 ---

@@ -1,7 +1,7 @@
 ---
 name: dump-output
 description: Toggle automatic dumping of Claude's output to timestamped markdown files
-context: fork
+context: subagent
 allowed-tools: [Bash]
 user-invocable: true
 ---

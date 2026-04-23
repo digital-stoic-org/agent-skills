@@ -3,7 +3,7 @@ name: ux-brand
 description: Visual identity strategy — derives brand design tokens from audience psychology (Archetype × Tech-Comfort matrix). Produces design-system.yaml + brand-sheet HTML + rationale doc. Consumes /ux-strategize output. Use when "ux brand", "brand identity", "design system", "color palette", "visual identity", "brand strategy".
 allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "AskUserQuestion", "WebSearch", "WebFetch"]
 model: sonnet
-context: fork
+context: subagent
 user-invocable: true
 argument-hint: "[brand|audit|references] <subject> [--tone X] [--tech-comfort N] [--industry X] [--update]"
 ---

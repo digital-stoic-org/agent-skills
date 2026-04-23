@@ -1,7 +1,7 @@
 ---
 name: route
 description: Direct-to-project task routing — skip inbox when target is known. Triggers: route to project, add to project, file in.
-context: fork
+context: subagent
 allowed-tools: [Read, Edit, Glob]
 model: haiku
 user-invocable: true

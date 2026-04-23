@@ -32,8 +32,8 @@ Single source of truth for all skill frontmatter fields.
 | `description` | ✅ | string (max 1024 chars) | Triggers and use cases |
 | `disable-model-invocation` | No | `true`/`false` (default: false) | Opt-out from model auto-invoke; rarely needed since dual-invocable is the default |
 | `user-invocable` | No | `true`/`false` (default: true) | Shows in `/` menu |
-| `context` | No | `main`/`fork` (default: main) | Execution context mode |
-| `agent` | No | agent-type string | Sub-agent type for forked context |
+| `context` | No | `main`/`fork`/`subagent` (default: main) | Execution context mode |
+| `agent` | No | agent-type string | Only with `context: subagent` — which agent type to spawn |
 | `hooks` | No | `[hook-spec, ...]` | Skill-scoped hooks |
 | `allowed-tools` | No | `[Tool1, Tool2, ...]` | Tool restrictions |
 | `argument-hint` | No | pattern string | Argument pattern hint |
@@ -59,7 +59,15 @@ argument-hint: [environment]
 ```yaml
 name: security-audit
 description: Deep security analysis across codebase. Use for security audit, vulnerability scan.
-context: fork
+context: subagent   # isolated; was `fork` pre-2026-04-23 taxonomy change
+model: opus
+```
+
+**Parallel fan-out w/ inherited parent context** (v2.1.117+):
+```yaml
+name: challenge-deep
+description: 9-pattern debiasing fan-out.
+context: fork   # inherits parent context; N parallel forks (full project ctx, no parent reasoning bias)
 model: opus
 ```
 
@@ -75,7 +83,7 @@ name: skill-name
 description: What it does and when to use it. Include file types, keywords, triggers (max 1024 chars)
 allowed-tools: [Read, Edit, Bash]  # Optional
 model: sonnet  # Optional: haiku|sonnet|opus
-context: main  # Optional: main|fork
+context: main  # Optional: main|fork|subagent
 ---
 
 # Skill Name
