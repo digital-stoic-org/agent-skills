@@ -89,7 +89,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **88 skills** across 6 plugins and 5 workflow phases + utilities
+- **89 skills** across 6 plugins and 5 workflow phases + utilities
 - **6 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas, cowork
 - **18 agents**: devil's advocate, context summarizer, 16 philosopher personas
 - **5 hooks**: notifications, session capture, debug dumps, context sync, session pins
@@ -103,10 +103,10 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 53 skills, 2 agents, 6 hooks | ✅ v0.34.0 |
+| [dstoic](dstoic/) | Core cognitive toolkit: 53 skills, 2 agents, 6 hooks | ✅ v0.36.0 |
 | [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.2 |
 | [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.1.0 |
-| [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity | ✅ v0.7.2 |
+| [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity, LinkedIn positioning | ✅ v0.8.0 |
 | [philosopher](philosopher/) | Philosopher personas: 16 personas, 16 agents, dialogue, encounter, council | ✅ v0.8.0 |
 | [cowork](cowork/) | Multi-project context management: switch projects, save/load sessions, ref/wip file zones + sync. Non-CLI friendly | ✅ v0.4.0 |
 

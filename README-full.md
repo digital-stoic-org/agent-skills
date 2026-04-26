@@ -433,7 +433,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (53 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (6 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 88 skills, 18 agents.**
+> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (53 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (7 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 89 skills, 18 agents.**
 
 ---
 
