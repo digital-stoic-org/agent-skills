@@ -44,7 +44,7 @@ Plus: tool creation, conversions, and hooks.
 
 ## 📦 Version
 
-`0.36.1` · 53 skills · 0 commands · 7 hooks
+`0.36.2` · 53 skills · 0 commands · 7 hooks
 
 ---
 

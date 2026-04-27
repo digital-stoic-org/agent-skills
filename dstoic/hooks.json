@@ -31,7 +31,7 @@
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hack-dummy.sh",
+            "command": "HACK_DUMMY_ARM=1 ${CLAUDE_PLUGIN_ROOT}/hooks/hack-dummy.sh",
             "timeout": 5
           }
         ]
