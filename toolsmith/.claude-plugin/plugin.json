@@ -1,0 +1,11 @@
+{
+  "name": "toolsmith",
+  "description": "Plugin and skill authoring tools: create/edit skills, agents, plugins, CLAUDE.md files, search skills, and manage dependencies.",
+  "version": "0.37.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

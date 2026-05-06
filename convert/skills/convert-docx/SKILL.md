@@ -14,7 +14,7 @@ Convert the Word document at `$1` to clean markdown format optimized for LLM con
 
 ## Steps
 
-1. **Install dependency**: Use `dstoic:install-dependency` skill to ensure `markitdown` is installed
+1. **Install dependency**: Use `toolsmith:install-dependency` skill to ensure `markitdown` is installed
 2. **Parse arguments**: Input file `$1` (required), output dir `$2` (optional, defaults to `./converted/`)
 3. **Prepare output dir**: Create `$2` if it doesn't exist
 4. **Convert**:

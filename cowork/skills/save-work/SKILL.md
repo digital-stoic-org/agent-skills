@@ -11,7 +11,7 @@ argument-hint: ""
 # Save Session
 
 Menu-driven session save for non-CLI interfaces (Cowork desktop, Telegram, CC CLI).
-Same CONTEXT file format as `dstoic:save-context` / `dstoic:load-context` — files are interchangeable.
+Same CONTEXT file format as `retrospect:save-context` / `retrospect:load-context` — files are interchangeable.
 
 **Target**: 1200-1500 tokens MAX for CONTEXT file
 
@@ -158,7 +158,7 @@ If archived: `📦 Archived to done/ (status: {status})`
 1. **Never ask for stream name as free text first** — always offer existing streams or auto-suggest
 2. **3 choices max per menu** — don't overwhelm
 3. **Auto-detect over ask** — project name, stream name, status should be inferred when possible
-4. **Same CONTEXT file format** as dstoic:save-context — files must be readable by both /load-work and dstoic:load-context
+4. **Same CONTEXT file format** as retrospect:save-context — files must be readable by both /load-work and retrospect:load-context
 5. **Client-agnostic output** — works in terminal, Cowork, Telegram
 6. **Token budget** — CONTEXT file stays under 1500 tokens
 7. **No shell scripts** — pure tool calls only (Glob, Read, Write, Edit). Only Bash for `mkdir -p done && mv`

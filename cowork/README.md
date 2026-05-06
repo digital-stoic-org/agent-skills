@@ -17,7 +17,7 @@ Multi-project context management for non-CLI interfaces (Cowork desktop, Telegra
 - **3 choices max** per menu — don't overwhelm
 - **Auto-detect over ask** — project name, stream name, status inferred when possible
 - **Zero shell scripts** — pure Claude Code tools (Glob, Read, Write, Edit, AskUserQuestion). Fully portable across Linux, macOS, Windows
-- **Same CONTEXT file format** as `dstoic:save-context` / `dstoic:load-context` — files are interchangeable
+- **Same CONTEXT file format** as `retrospect:save-context` / `retrospect:load-context` — files are interchangeable
 - **Client-agnostic output** — works in terminal, Cowork, Telegram. Simple lists + emoji, no tables or Mermaid
 - **File Zones** — projects use `ref/` (or `reference/`) for read-only stable docs and `wip/` (or `work-in-progress/`) for active work
 

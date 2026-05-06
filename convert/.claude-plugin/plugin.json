@@ -1,0 +1,11 @@
+{
+  "name": "convert",
+  "description": "Document format conversion: PDF, EPUB, DOCX, PPTX to markdown, and markdown to PDF. Uses Docling for intelligent extraction.",
+  "version": "0.37.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

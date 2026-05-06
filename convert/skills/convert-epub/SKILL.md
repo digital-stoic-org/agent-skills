@@ -14,7 +14,7 @@ Convert the EPUB file at `$1` to clean markdown format optimized for Claude Code
 
 ## Steps
 
-1. **Install dependency**: Use `dstoic:install-dependency` skill to ensure `epub-to-markdown` is installed
+1. **Install dependency**: Use `toolsmith:install-dependency` skill to ensure `epub-to-markdown` is installed
 2. **Parse arguments**: Input file `$1` (required), output dir `$2` (optional, defaults to `./.tmp/epub-converted/`)
 3. **Convert**: Run `epub-to-markdown convert "$1"` with `--multiple-files` flag (one file per chapter)
 4. **Report**: Output location, file structure, chapter count, preview of table of contents

@@ -1,0 +1,11 @@
+{
+  "name": "retrospect",
+  "description": "Retrospective analysis and context management: session reports, collaborative retrospectives, domain retrospectives, and context save/load/list/create.",
+  "version": "0.37.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

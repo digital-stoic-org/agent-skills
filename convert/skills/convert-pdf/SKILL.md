@@ -14,7 +14,7 @@ Convert PDF files using IBM's Docling toolkit.
 
 ## Steps
 
-1. **Install dependency**: Use `dstoic:install-dependency` skill to ensure `docling` is installed
+1. **Install dependency**: Use `toolsmith:install-dependency` skill to ensure `docling` is installed
 2. **Parse arguments**: Input file(s) `$1` (required), format (default: markdown), OCR flag
 3. **Prepare output**: Create `./converted/` if missing
 4. **Convert**:

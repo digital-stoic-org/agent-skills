@@ -5,14 +5,91 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.35.0"
+    "version": "0.37.0"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
-      "description": "Core cognitive toolkit: OpenSpec workflow, context management, retrospectives, troubleshooting, investigation",
-      "version": "0.35.0",
+      "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, and devil-advocate agent",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "openspec",
+      "source": "./openspec",
+      "description": "OpenSpec workflow management: init, plan, design, develop, review, test, sync, reflect, replan",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "retrospect",
+      "source": "./retrospect",
+      "description": "Retrospective analysis and context management: session reports, collaborative retrospectives, context save/load/list/create",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "cognitive",
+      "source": "./cognitive",
+      "description": "Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "convert",
+      "source": "./convert",
+      "description": "Document format conversion: PDF, EPUB, DOCX, PPTX to markdown, and markdown to PDF",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "toolsmith",
+      "source": "./toolsmith",
+      "description": "Plugin and skill authoring: create/edit skills, agents, plugins, CLAUDE.md files, search skills, manage dependencies",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "content",
+      "source": "./content",
+      "description": "Content transformation and writing: anonymization, infographics, literary rewriting, bridge captures, expense tracking",
+      "version": "0.37.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "experimental",
+      "source": "./experimental",
+      "description": "Experimental and utility skills: deployment, background tasks, pinning, summarization, skill testing, distillation",
+      "version": "0.37.0",
       "author": {
         "name": "dstoic"
       },

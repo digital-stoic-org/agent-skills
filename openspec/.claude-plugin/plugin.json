@@ -1,0 +1,11 @@
+{
+  "name": "openspec",
+  "description": "OpenSpec workflow management: init, plan, design, develop, review, test, sync, reflect, and replan for structured software development.",
+  "version": "0.37.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}

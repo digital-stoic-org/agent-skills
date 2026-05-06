@@ -60,7 +60,7 @@ if [ ! -f "$SYNC_MARKER" ]; then
   # Invoke list-contexts --sync headlessly (fully detached to avoid blocking session start)
   # See: learnings.yaml "Claude Code headless doesn't load plugins" + "SessionStart hooks block"
   if command -v claude &>/dev/null; then
-    nohup bash -c "cd \"$GIT_ROOT\" && claude --plugin-dir \"$PLUGIN_DIR\" --allowedTools 'Read Glob Bash(git*) Edit(INDEX.md)' -p '/dstoic:list-contexts --sync' >> \"$LOG_FILE\" 2>&1" </dev/null >/dev/null 2>&1 &
+    nohup bash -c "cd \"$GIT_ROOT\" && claude --plugin-dir \"$PLUGIN_DIR\" --allowedTools 'Read Glob Bash(git*) Edit(INDEX.md)' -p '/retrospect:list-contexts --sync' >> \"$LOG_FILE\" 2>&1" </dev/null >/dev/null 2>&1 &
     disown
     log "Phase 1: Context sync spawned (PID: $!)"
   else
