@@ -89,7 +89,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **89 skills** across 6 plugins and 5 workflow phases + utilities
+- **99 skills** across 14 plugins and 5 workflow phases + utilities
 - **6 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas, cowork
 - **18 agents**: devil's advocate, context summarizer, 16 philosopher personas
 - **5 hooks**: notifications, session capture, debug dumps, context sync, session pins
