@@ -17,7 +17,7 @@ Philosopher persona plugin for Claude Code. Historically-grounded philosophical 
 /dialogue nietzsche hadot "Is philosophy practice or theory?"
 /dialogue nietzsche hadot kusanagi --format bohm --rounds 5
 
-# Autonomous multi-philosopher encounter (separate agents, self-archiving)
+# Autonomous multi-philosopher encounter (self-archiving)
 /encounter nietzsche hadot "Is practice possible without community?"
 /encounter nietzsche hadot kusanagi --format dialectic --rounds 3
 
@@ -65,10 +65,6 @@ Period markers (defined per philosopher) show which phase of thinking is speakin
 ```
 philosopher/
   framework.md              # Shared protocol (modes, tags, dialogue rules)
-  agents/
-    nietzsche.md            # Nietzsche agent skeleton (for /encounter)
-    hadot.md                # Hadot agent skeleton (for /encounter)
-    kusanagi.md             # Kusanagi agent skeleton (for /encounter)
   skills/
     create/
       SKILL.md              # Meta-skill: generate new personas
@@ -76,10 +72,12 @@ philosopher/
       SKILL.md              # Parallel Delphi ensemble with curator synthesis
     encounter/
       SKILL.md              # Autonomous multi-agent dialogue orchestrator
+    dialogue/
+      SKILL.md              # Multi-philosopher interactive dialogue
     nietzsche/
       SKILL.md              # Skill card — identity + pointers
       reference.md          # Nietzsche-specific persona definition
-    montaigne/              # Future: /create montaigne
+    morin/                  # ... 20 personas total
       SKILL.md
       reference.md
 ```
@@ -108,9 +106,13 @@ The `/create` meta-skill generates new personas by using `nietzsche/` as the str
 | `/musashi` | ✅ v0.7.0 | Miyamoto Musashi (c. 1584–1645) — embodied combat cognition, the Void, two-sword way |
 | `/leto-ii` | ✅ v0.7.0 | Leto II Atreides (God Emperor of Dune) — prescience, Golden Path, sacrifice |
 | `/buber` | ✅ v0.7.0 | Martin Buber (1878–1965) — I-Thou, dialogue, encounter, the Between |
+| `/fukuyama` | ✅ v0.9.0 | Francis Fukuyama (1952–) — end of history, political order, trust, identity |
+| `/herbert` | ✅ v0.9.0 | Frank Herbert (1920–1986) — Dune, prescience, ecology of power, human potential |
+| `/meadows` | ✅ v0.9.0 | Donella Meadows (1941–2001) — systems thinking, leverage points, limits to growth |
+| `/taleb` | ✅ v0.9.0 | Nassim Nicholas Taleb (1960–) — antifragility, Black Swans, skin in the game, via negativa |
 | `/create` | ✅ v0.3.0 | Meta-skill: generate new philosopher personas from historical thinkers |
 | `/dialogue` | ✅ v0.3.0 | Multi-philosopher interactive dialogue (single context, user participates) |
-| `/encounter` | ✅ v0.6.0 | Autonomous multi-agent dialogue — native Agent Teams (TeamCreate + SendMessage), task-tracked rounds, self-archiving |
+| `/encounter` | ✅ v0.10.0 | Autonomous multi-agent dialogue — Agent Teams (TeamCreate + SendMessage), task-tracked rounds, self-archiving |
 | `/council` | ✅ v0.8.0 | Parallel Delphi ensemble — independent philosopher responses + curator synthesis (convergences, tensions, blind spots) |
 
 

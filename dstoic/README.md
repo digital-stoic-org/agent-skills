@@ -24,27 +24,31 @@ flowchart LR
     class L learn
 ```
 
-| Mode | What it does |
-|------|-------------|
-| 🧭 **Frame** | Triangulate problem (3 tests) → route to right skill chain (`/frame-problem`, `/pick-model`) |
-| 🧠 **Think** | Brainstorm, investigate, deep analysis, cross-project bridging (`/brainstorm`, `/investigate`, `/bridge`) |
-| ⚙️ **Build** | Plan → develop → gate → test → sync (`/openspec-*` suite) |
-| 🔧 **Debug** | Search-first troubleshooting with learnings (`/troubleshoot`) |
-| 🪞 **Learn** | Retrospectives, context save/restore (`/retrospect-*`, `/save-context`) |
+| Skill | Purpose |
+|-------|---------|
+| `/commit-repo` | 🗂️ Streamlined git commit with single human gate |
+| `/pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
+| `/save-context` | 💾 Save session state to CONTEXT-llm.md |
+| `/load-context` | 📥 Resume session from CONTEXT-llm.md |
+| `/scratch` | 🗒️ Session scratch pad for parking side-thoughts |
+| `/kaizen` | ⚡ Capture friction with any Praxis artifact |
+| `/dump-output` | 📤 Toggle auto-dump of output to `.dump/` |
 
-Plus: tool creation, conversions, and hooks.
+Plus: 7 hooks (notifications, session capture, debug dumps) and 1 agent (devil-advocate).
+
+> ℹ️ Skills like `/frame-problem`, `/brainstorm`, `/troubleshoot`, `/openspec-*`, `/retrospect-*` etc. were split into dedicated plugins (cognitive, openspec, retrospect, toolsmith, content, convert). See [README.md](../README.md) for the full plugin table.
 
 ## 🚀 Quick Start
 
 ```bash
-/frame-problem how should I approach this new feature
-/brainstorm naming ideas for my project
-/troubleshoot "error: module not found"
+/pick-model should I use haiku or opus for this code review
+/scratch park this thought about the auth refactor
+/commit-repo
 ```
 
 ## 📦 Version
 
-`0.38.0` · 55 skills · 0 commands · 7 hooks
+`0.38.0` · 7 skills · 1 agent · 7 hooks
 
 ---
 

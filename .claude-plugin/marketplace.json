@@ -111,7 +111,7 @@
       "name": "coach",
       "source": "./coach",
       "description": "Personal coaching with CLEAR protocol, anxiety-first surfacing, and Goldsmith accountability loop",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "author": {
         "name": "dstoic"
       },
@@ -122,7 +122,7 @@
       "name": "biz",
       "source": "./biz",
       "description": "Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX polish, market sizing, canvas, PRD, personas",
-      "version": "0.7.2",
+      "version": "0.8.0",
       "author": {
         "name": "dstoic"
       },

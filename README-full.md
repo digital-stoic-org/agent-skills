@@ -433,20 +433,16 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers the **dstoic** plugin (55 skills). Other plugins have their own catalogs: [gtd](gtd/) (4 skills), [coach](coach/) (1 skill), [biz](biz/) (7 skills), [philosopher](philosopher/) (20 skills), [cowork](cowork/) (4 skills). **Total across all plugins: 89 skills, 18 agents.**
+> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 93 skills across 14 plugins, 2 agents.** See [README.md](README.md) for the plugin table with per-plugin skill counts and versions.
 
 ---
 
-## 🤖 Agents (2 dstoic + 16 philosopher)
+## 🤖 Agents (2)
 
-**dstoic agents:**
-
-| Agent | Purpose | Model |
-|-------|---------|-------|
-| `devil-advocate` | 🔥 Comprehensive debiasing — all 9 patterns (anchor + verify + framing) | opus |
-| `summarize-for-context` | 📦 Chunked reading for files >25K tokens — token-budgeted summaries | haiku |
-
-**philosopher agents:** 16 persona agents (one per philosopher) used by `/encounter` for autonomous multi-agent dialogue. See [philosopher/README.md](philosopher/README.md) for the full roster.
+| Agent | Plugin | Purpose | Model |
+|-------|--------|---------|-------|
+| `devil-advocate` | dstoic | 🔥 Comprehensive debiasing — all 9 patterns (anchor + verify + framing) | opus |
+| `summarize-for-context` | experimental | 📦 Chunked reading for files >25K tokens — token-budgeted summaries | haiku |
 
 
 ---

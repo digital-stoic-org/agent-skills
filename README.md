@@ -89,10 +89,10 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **99 skills** across 14 plugins and 5 workflow phases + utilities
-- **6 plugins**: core (dstoic), GTD, coaching, business analysis, philosopher personas, cowork
-- **18 agents**: devil's advocate, context summarizer, 16 philosopher personas
-- **5 hooks**: notifications, session capture, debug dumps, context sync, session pins
+- **93 skills** across 14 plugins and 5 workflow phases + utilities
+- **14 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy
+- **2 agents**: devil's advocate, context summarizer
+- **7 hooks**: notifications, session capture, debug dumps, context sync, session pins
 - **3 execution modes**: garage (default), scale, maintenance
 - **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
 - **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](PRACTICE.md#-benchmark-results-april-2026) · `/benchmark-praxis` skill
@@ -101,14 +101,22 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 🏪 Plugins
 
-| Plugin | Description | Status |
-|--------|-------------|--------|
-| [dstoic](dstoic/) | Core cognitive toolkit: 53 skills, 2 agents, 7 hooks | ✅ v0.36.2 |
-| [gtd](gtd/) | GTD workflow automation for Obsidian vaults | ✅ v0.3.2 |
-| [coach](coach/) | Personal coaching: CLEAR + GROW protocols | ✅ v0.1.0 |
-| [biz](biz/) | Business analysis toolkit: competitive analysis, UX strategy, UX wireframes, UX evaluation, UX brand identity, LinkedIn positioning | ✅ v0.8.0 |
-| [philosopher](philosopher/) | Philosopher personas: 16 personas, 16 agents, dialogue, encounter, council | ✅ v0.8.0 |
-| [cowork](cowork/) | Multi-project context management: switch projects, save/load sessions, ref/wip file zones + sync. Non-CLI friendly | ✅ v0.4.0 |
+| Plugin | Skills | Description | Status |
+|--------|--------|-------------|--------|
+| [dstoic](dstoic/) | 7 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, 7 hooks | ✅ v0.38.0 |
+| [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark | ✅ v0.37.0 |
+| [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync | ✅ v0.37.0 |
+| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency | ✅ v0.37.0 |
+| [content](content/) | 5 | Content transformation: anonymize, infographize, literatize, bridge, RISEN prompts | ✅ v0.37.0 |
+| [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import | ✅ v0.37.0 |
+| [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports | ✅ v0.38.0 |
+| [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization | ✅ v0.38.0 |
+| [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create | ✅ v0.10.0 |
+| [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas | ✅ v0.8.0 |
+| [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
+| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults | ✅ v0.3.2 |
+| [cowork](cowork/) | 4 | Multi-project context management: switch projects, save/load sessions, ref/wip sync | ✅ v0.4.0 |
+| [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building | ✅ v0.1.1 |
 
 ## 📦 Install
 
