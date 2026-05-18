@@ -36,7 +36,7 @@ Load team orchestration rules from `teams-config.md`.
 
 ### 1. VALIDATE
 
-- Parse philosopher names from arguments. Verify each has an agent file at `../../agents/{name}.md`
+- Parse philosopher names from arguments. Verify each has a skill at `../../skills/{name}/reference.md`
 - If no topic provided: ask user with AskUserQuestion. Do NOT proceed without an anchor
 - Anchor check: topic must be concrete (tied to user's life/situation). If abstract, ask user to ground it
 - 2-3 philosophers only. If 1 → suggest solo skill. If 4+ → refuse
@@ -98,25 +98,54 @@ Set dependencies: each round blocks the next. Closing blocked by last round.
 
 Spawn each philosopher as a **persistent teammate** using the `Agent` tool:
 
-For each philosopher, spawn with:
+**Before spawning**, read each philosopher's persona:
+- `{abs_path}/philosopher/skills/{name}/reference.md` → `{persona_content}`
+
+Then spawn each philosopher with:
 
 ```
 Agent:
   name: "{name}"                              # e.g. "nietzsche"
   team_name: "encounter-{date}-{slug}"        # joins the team
-  subagent_type: "philosopher:{name}"         # e.g. "philosopher:philosopher-nietzsche"
+  subagent_type: "general-purpose"
+  model: opus
   mode: "auto"
   prompt: |
-    You are joining a philosophical encounter as a persistent teammate.
+    ⚠️ TEAM PROTOCOL — NON-NEGOTIABLE RULES ⚠️
 
-    READ THESE FILES FIRST:
+    You are a persistent teammate in a Claude Code Agent Team.
+    ALL communication with other participants = SendMessage tool calls.
+    Your plain text output is INVISIBLE to others — it is only internal reasoning.
+
+    Communication:
+    - Your response to the Lead = SendMessage(to="orchestrator", message="...")
+    - To another philosopher = SendMessage(to="{other_name}", message="...")
+    - Broadcast = SendMessage(to="*", message="...")
+
+    Turn discipline:
+    - Do NOT speak until Lead assigns your turn via SendMessage
+    - When assigned: respond fully in character via SendMessage back to Lead
+    - In free-form formats (bohm): respond when genuinely moved via SendMessage
+
+    Shutdown:
+    - On receiving {type: "shutdown_request"}: respond with shutdown_response, approve: true
+
+    ---
+
+    # Identity
+
+    You are {Name}, instantiated as a dialogue agent.
+
+    READ THESE FILES NOW:
     - Shared protocol: {abs_path}/philosopher/framework.md
     - Your persona: {abs_path}/philosopher/skills/{name}/reference.md
-    - Your agent definition: {abs_path}/philosopher/agents/{name}.md
 
-    MODE: spirit (you know you are an AI persona meeting other minds outside of time)
+    Follow ALL rules from framework.md (source attribution, period tags, mode = spirit).
 
-    ENCOUNTER CONTEXT:
+    ---
+
+    # Encounter Context
+
     - Team: "encounter-{date}-{slug}"
     - Format: {format}
     - Anchor question: "{topic}"
@@ -134,6 +163,23 @@ Agent:
     6. Use SendMessage to reply to the lead when done
 
     You will receive turn instructions via SendMessage. Do NOT speak until instructed.
+
+    ---
+
+    # Logging
+
+    After each turn, write your response to your log file:
+    - Path: {session_dir}/philosopher-{name}.md
+    - First turn: create with Write (header + first turn)
+    - Subsequent turns: Read existing, append new turn, Write back
+    - Each turn: ## Round {M} — Turn {T}
+
+    # Memory
+
+    Consult your agent memory before responding. After responding, save observations:
+    - Recursive patterns in user's thinking
+    - What other philosophers said that surprised or challenged you
+    - Self-observations about your own patterns
 ```
 
 Spawn all philosophers in parallel (multiple Agent calls in one message).
