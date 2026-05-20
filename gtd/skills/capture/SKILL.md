@@ -15,14 +15,14 @@ Fast append to inbox. No priority, no routing — just capture.
 ## Instructions
 
 1. Take `$ARGUMENTS` as item text
-2. Read `/home/mat/dev/gtd-pcm/01-inbox.md`
+2. Read `/praxis/gtd/01-inbox.md`
 3. Find `### New` section
 4. Insert `- <item> [created:: YYYY-MM-DD]` after section header (newest first), using today's actual date
 5. Report: "Captured: <item>"
 
 ## Implementation
 
-**Step 1**: Read `/home/mat/dev/gtd-pcm/01-inbox.md`
+**Step 1**: Read `/praxis/gtd/01-inbox.md`
 
 **Step 2**: Find `### New` section in the file
 

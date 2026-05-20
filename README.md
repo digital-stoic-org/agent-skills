@@ -114,7 +114,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create | ✅ v0.10.0 |
 | [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas | ✅ v0.8.0 |
 | [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
-| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults | ✅ v0.3.2 |
+| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults | ✅ v0.3.3 |
 | [cowork](cowork/) | 4 | Multi-project context management: switch projects, save/load sessions, ref/wip sync | ✅ v0.4.0 |
 | [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building | ✅ v0.1.1 |
 
