@@ -31,73 +31,81 @@ if [[ "$TOOL" == "PreToolUse" ]]; then
     [[ -n "$ACTUAL_TOOL" ]] && TOOL="$ACTUAL_TOOL"
 fi
 
+# --- Source of truth: @cc_base_name tmux user-option ---
+ORIGINAL=$(tmux show-option -t "$TARGET" -qv @cc_base_name 2>/dev/null)
 
-
-CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
-
-# Strip existing emoji prefix if present, store original for reset
-# Remove robot emoji (🤖) and any status emoji with variation selectors
-if [[ "$CURRENT" =~ ^🤖 ]]; then
-    # Strip robot + all non-alphanumeric chars (emoji + variation selectors)
-    ORIGINAL=$(echo "$CURRENT" | sed 's/^🤖//; s/^[^a-zA-Z0-9_-]*//')
-else
-    ORIGINAL="$CURRENT"
-fi
-
-# Fallback if ORIGINAL is empty (shouldn't happen, but safety net)
-[[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
-
-# SessionStart event: Claude starting → show idle state (just robot)
+# SessionStart: capture true name, pin automatic-rename off, show idle
 if [[ "$TOOL" == "SessionStart" ]]; then
-    # Show just robot emoji since you have focus at session start
-    tmux rename-window -t "$TARGET" "🤖$ORIGINAL"
+    CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
+    [[ -z "$CURRENT" ]] && CURRENT="bash"
+
+    tmux set-option -t "$TARGET" @cc_base_name "$CURRENT"
+
+    # Save current automatic-rename value and disable it for this window
+    OLD_AUTO=$(tmux show-option -t "$TARGET" -wqv automatic-rename 2>/dev/null)
+    if [[ -n "$OLD_AUTO" ]]; then
+        tmux set-option -t "$TARGET" @cc_saved_auto_rename "$OLD_AUTO"
+    else
+        tmux set-option -t "$TARGET" @cc_saved_auto_rename "__inherited__"
+    fi
+    tmux set-option -t "$TARGET" -w automatic-rename off
+
+    tmux rename-window -t "$TARGET" "🤖$CURRENT"
     exit 0
 fi
 
-# SessionEnd event: Claude exiting → remove all emojis
+# SessionEnd: restore original name + automatic-rename, clean up
 if [[ "$TOOL" == "SessionEnd" ]]; then
-    # Clear agent state
+    [[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
+    tmux rename-window -t "$TARGET" "$ORIGINAL"
+
+    SAVED_AUTO=$(tmux show-option -t "$TARGET" -qv @cc_saved_auto_rename 2>/dev/null)
+    if [[ "$SAVED_AUTO" == "__inherited__" ]]; then
+        tmux set-option -t "$TARGET" -wu automatic-rename 2>/dev/null
+    elif [[ -n "$SAVED_AUTO" ]]; then
+        tmux set-option -t "$TARGET" -w automatic-rename "$SAVED_AUTO"
+    fi
+
+    tmux set-option -t "$TARGET" -u @cc_base_name 2>/dev/null
+    tmux set-option -t "$TARGET" -u @cc_saved_auto_rename 2>/dev/null
     tmux set-option -t "$TARGET" -u @agent_running 2>/dev/null
     tmux set-option -t "$TARGET" -u @last_completed_time 2>/dev/null
-
-    # Clear focus-in hook
     tmux set-hook -t "$TARGET" -uw pane-focus-in 2>/dev/null
-
-    # Remove all emojis and restore original window name
-    tmux rename-window -t "$TARGET" "$ORIGINAL"
     exit 0
 fi
 
-# Stop event: Claude finished responding → check if Task agent still running
+# Late init: hook fired before SessionStart — capture now
+if [[ -z "$ORIGINAL" ]]; then
+    CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
+    ORIGINAL=$(echo "$CURRENT" | sed 's/^🤖[^[:alnum:]_-]*//')
+    [[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
+    tmux set-option -t "$TARGET" @cc_base_name "$ORIGINAL"
+    tmux set-option -t "$TARGET" -w automatic-rename off
+fi
+
+# Stop event: Claude finished responding
 if [[ -z "$TOOL" ]]; then
     AGENT_RUNNING=$(tmux show-option -t "$TARGET" -v @agent_running 2>/dev/null)
     if [[ "$AGENT_RUNNING" == "true" ]]; then
-        # Task agent spawned, keep working state
         tmux rename-window -t "$TARGET" "🤖⚙️$ORIGINAL"
     else
-        # Normal completion: check if pane has focus
         ACTIVE_PANE=$(tmux display-message -p '#{pane_id}')
         if [[ "$TARGET" == "$ACTIVE_PANE" ]]; then
-            # Focused: show just robot emoji (no green mark when you have focus)
             tmux rename-window -t "$TARGET" "🤖$ORIGINAL"
         else
-            # Unfocused: show robot + green checkmark (completed)
             tmux rename-window -t "$TARGET" "🤖✅$ORIGINAL"
-            # Set focus-in hook to remove green mark when user refocuses
             tmux set-hook -t "$TARGET" -w pane-focus-in "rename-window '🤖$ORIGINAL'; set-hook -uw pane-focus-in"
         fi
     fi
     exit 0
 fi
 
-# Robot emoji base - always present to identify Claude sessions
 BASE="🤖"
 
-# Map tool to status emoji (double emoji system: 🤖 + status)
 case "$TOOL" in
-    PreToolUse)               SUFFIX="💭" ;;  # Thinking/ongoing (default for tools)
-    AskUserQuestion)          SUFFIX="🚨" ;;  # ACTION REQUIRED
-    PermissionRequest)        SUFFIX="🚨" ;;  # ACTION REQUIRED
+    PreToolUse)               SUFFIX="💭" ;;
+    AskUserQuestion)          SUFFIX="🚨" ;;
+    PermissionRequest)        SUFFIX="🚨" ;;
     Edit|Write|NotebookEdit)  SUFFIX="✏️" ;;
     Bash)                     SUFFIX="🧪" ;;
     Read|Grep|Glob)           SUFFIX="🔍" ;;
@@ -107,30 +115,22 @@ case "$TOOL" in
     Skill)                    SUFFIX="🎯" ;;
     SlashCommand)             SUFFIX="⚡" ;;
     TaskOutput)               SUFFIX="📤" ;;
-    *)                        SUFFIX="💭" ;;  # Thinking (default for ongoing tasks)
+    *)                        SUFFIX="💭" ;;
 esac
 
 EMOJI="${BASE}${SUFFIX}"
 
-# Track Task agent state (persists even if other tools fire)
 if [[ "$TOOL" == "Task" ]]; then
     tmux set-option -t "$TARGET" @agent_running "true"
 fi
 
-# Clear agent state when checking/retrieving output
 if [[ "$TOOL" == "TaskOutput" ]]; then
     tmux set-option -t "$TARGET" -u @agent_running
 fi
 
-# DO NOT set focus-in hook for PreToolUse - we want thinking emoji to persist
-# Focus-in hook is only set after task completion (in Stop event)
-
-# Always show thinking emoji, PreToolUse, AskUserQuestion, and PermissionRequest (alerts)
-# Skip other emojis when focused
 ACTIVE_PANE=$(tmux display-message -p '#{pane_id}')
 if [[ "$TARGET" == "$ACTIVE_PANE" ]] && [[ "$TOOL" != "AskUserQuestion" ]] && [[ "$TOOL" != "PermissionRequest" ]] && [[ "$TOOL" != "PreToolUse" ]] && [[ "$SUFFIX" != "💭" ]] && [[ "$SUFFIX" != "🚨" ]]; then
     exit 0
 fi
 
-# Update window name with new emoji
 tmux rename-window -t "$TARGET" "${EMOJI}${ORIGINAL}"
