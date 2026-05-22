@@ -17,9 +17,9 @@ Two-pass inline triage. Claude annotates inbox, human reviews in Obsidian, Claud
 
 Trigger: `/gtd:triage` when `### New` has lines WITHOUT `//`
 
-1. Read `/home/mat/dev/gtd-pcm/01-inbox.md`, extract `### New` items
+1. Read `/praxis/gtd/01-inbox.md`, extract `### New` items
 2. If empty: report "📭 Inbox empty" and stop
-3. Scan `03-projects/` for routing targets (Glob + Grep)
+3. Scan `/praxis/projects/` for routing targets (Glob + Grep)
 4. Append `// → target #tags` to each unannotated line
 5. Report: "✏️ Annotated X items. Review in Obsidian, append your `//` comments, then run `/gtd:triage` again."
 
@@ -46,14 +46,16 @@ On invocation, detect which pass to run:
 - If lines exist without `//` → **Pass 1**
 - If mixed: run Pass 2 first (process reviewed), then Pass 1 on remaining
 
+## Project Discovery
+
+Scan `/praxis/projects/` for routing targets:
+- Glob: `/praxis/projects/**/*.md`
+- Grep: search project content for keyword match
+- Use folder name as shorthand (e.g., `mind-body`, `slasheo`, `villa-nara`)
+
 ## Classification
 
 **Type**: task | reference | waiting-for | someday | trash | project-seed
-
-**Destination**: Scan `03-projects/` for best match
-- Glob: `03-projects/**/*.md`
-- Grep: search project content for keyword match
-- Use folder number prefix as shorthand (e.g., `38-mind-body`)
 
 **Tags**: ONLY allowed GTD tags
 - Priority: `#next` `#frog` `#waiting` `#recurring`
@@ -68,24 +70,27 @@ On invocation, detect which pass to run:
 
 ## Routing Rules
 
-Standard project template sections (see CLAUDE.md § Project Template):
+Project files use these standard sections:
 
-| Type | Destination | Section |
-|------|-------------|---------|
-| task + `#next`/`#frog` | project `01-{name}.md` | `### ⚡ Next` |
-| task (no priority tag) | project `01-{name}.md` | `### 📋 Backlog` |
-| waiting-for | project `01-{name}.md` | `### 👥 Waiting For` with `#waiting/Name` |
-| reference | project file | `## 📎 Reference` |
-| someday | 50-59 project | `### 📋 Backlog` |
+| Type | Destination section |
+|------|-------------------|
+| task + `#next`/`#frog` | `### 🔴 Just Do It` |
+| task + `#read-deep`/`#read-quick` or needs research | `### 🟡 Research & Reflect` |
+| task + `#waiting/Name` or `[scheduled::]`/`[due::]` | `### 🔵 Not Now But Will` |
+| task (no priority tag, someday) | `### 🟢 Maybe` |
+| task (default, no special signal) | `### 🔴 Just Do It` |
+| reference | `## 📎 Reference` |
 | trash | (delete) | Remove from inbox |
 | project-seed | (flag ❓) | Needs new project — ask human |
 
-**Fallback** (if section not found): `### 📋 Backlog` → `## ✅ Tasks` → before `## 📎 Reference` → end of file
+**Finding the right file**: Scan all `.md` files in the target project folder for matching sections. Pick the file that has the destination section. If multiple files match, prefer the one with existing tasks.
+
+**Fallback** (if section not found): `### 🔴 Just Do It` → `### 🟢 Maybe` → `## ✅ Tasks` → end of file
 
 ## Scope
 
 - Only process `### New` section
-- Other sections (Prio 1, Prio 2, Misc, Praxis, LQ) are left untouched
+- Other sections (Unprocessed, etc.) are left untouched
 - Completed items (`- [x]`) are skipped
 
 ## Error Handling
@@ -96,7 +101,6 @@ Standard project template sections (see CLAUDE.md § Project Template):
 
 ## Constraints
 
-- Tasks ONLY in `01-{name}.md` files (never in reference docs)
 - `[field:: value]` date format
 - Preserve existing file structure and markdown validity
 - No trailing whitespace

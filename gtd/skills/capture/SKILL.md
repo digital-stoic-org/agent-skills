@@ -38,12 +38,12 @@ Fast append to inbox. No priority, no routing — just capture.
 ```
 Before:
 ### New
-### Prio 1
+- [ ] existing item [created:: 2026-05-20]
 
 After capture "buy milk":
 ### New
-- buy milk [created:: 2026-02-23]
-### Prio 1
+- buy milk [created:: 2026-05-23]
+- [ ] existing item [created:: 2026-05-20]
 ```
 
 ## Triggers
