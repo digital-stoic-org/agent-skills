@@ -55,7 +55,7 @@ Scan `/praxis/projects/` for routing targets:
 
 ## Classification
 
-**Type**: task | reference | waiting-for | someday | trash | project-seed
+**Type**: task | reference | waiting-for | someday | trash | project-seed | article | video
 
 **Tags**: ONLY allowed GTD tags
 - Priority: `#next` `#frog` `#waiting` `#recurring`
@@ -80,12 +80,52 @@ Project files use these standard sections:
 | task (no priority tag, someday) | `### 🟢 Maybe` |
 | task (default, no special signal) | `### 🔴 Just Do It` |
 | reference | `## 📎 Reference` |
+| article | Create stub in `/praxis/library/articles/` |
+| video | Create stub in `/praxis/library/videos/` |
 | trash | (delete) | Remove from inbox |
 | project-seed | (flag ❓) | Needs new project — ask human |
 
 **Finding the right file**: Scan all `.md` files in the target project folder for matching sections. Pick the file that has the destination section. If multiple files match, prefer the one with existing tasks.
 
 **Fallback** (if section not found): `### 🔴 Just Do It` → `### 🟢 Maybe` → `## ✅ Tasks` → end of file
+
+## Library Routing
+
+### Articles (`// → library/articles`)
+- **Tags**: `#read-quick`, `#read-deep`, `#read-book`
+- **Stub**: `/praxis/library/articles/{slug}.md`
+- **Slug**: auto-generated kebab-case from URL domain + path fragment (e.g., `alexismontoro-multiplie-pr-par-20`)
+- **Format**:
+  ```yaml
+  ---
+  type: article
+  status: unread
+  url: https://example.com/the-article
+  created: YYYY-MM-DD
+  tags:
+    - read-quick
+  ---
+  # {Short description from inbox item}
+  ```
+
+### Videos (`// → library/videos`)
+- **Tags**: `#watch`, `#listen`
+- **Stub**: `/praxis/library/videos/{slug}.md`
+- **Slug**: auto-generated kebab-case from URL domain + video ID or title fragment (e.g., `youtube-qXod1JtGmis`)
+- **Format**:
+  ```yaml
+  ---
+  type: video
+  status: unwatched
+  url: https://www.youtube.com/watch?v=xxx
+  created: YYYY-MM-DD
+  tags:
+    - watch
+  ---
+  # {Short description from inbox item}
+  ```
+
+Post-consumption processing is out of scope — handled by a separate skill
 
 ## Scope
 
