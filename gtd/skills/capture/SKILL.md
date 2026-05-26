@@ -17,7 +17,7 @@ Fast append to inbox. No priority, no routing — just capture.
 1. Take `$ARGUMENTS` as item text
 2. Read `/praxis/gtd/01-inbox.md`
 3. Find `### New` section
-4. Insert `- <item> [created:: YYYY-MM-DD]` after section header (newest first), using today's actual date
+4. Insert `- [ ] <item> [created:: YYYY-MM-DD]` after section header (newest first), using today's actual date
 5. Report: "Captured: <item>"
 
 ## Implementation
@@ -30,7 +30,7 @@ Fast append to inbox. No priority, no routing — just capture.
 
 **Step 4**: Use Edit tool to insert new item:
 - old_string: `### New` (exactly as it appears in file)
-- new_string: `### New\n- <item text from $ARGUMENTS> [created:: YYYY-MM-DD]` (substitute real date)
+- new_string: `### New\n- [ ] <item text from $ARGUMENTS> [created:: YYYY-MM-DD]` (substitute real date)
 
 **Insert position**: After `### New` header, before any existing items (newest first).
 
@@ -42,7 +42,7 @@ Before:
 
 After capture "buy milk":
 ### New
-- buy milk [created:: 2026-05-23]
+- [ ] buy milk [created:: 2026-05-23]
 - [ ] existing item [created:: 2026-05-20]
 ```
 

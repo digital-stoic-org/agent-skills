@@ -56,7 +56,7 @@
       "name": "convert",
       "source": "./convert",
       "description": "Document format conversion: PDF, EPUB, DOCX, PPTX to markdown, and markdown to PDF",
-      "version": "0.37.0",
+      "version": "0.37.1",
       "author": {
         "name": "dstoic"
       },

@@ -1,58 +1,45 @@
 # convert-pdf Reference
 
-## Format Selection Guide
+## Backend Comparison
 
-| Format | Best For | Token Efficiency |
-|--------|----------|------------------|
-| **doctags** | RAG, structured extraction | Highest (30-50% less than MD) |
-| **markdown** | Human review, general LLM context | High (balanced) |
-| **json** | Lossless structure preservation | Medium (verbose) |
-| **html** | Web rendering | Low |
+| | pdftotext | docling |
+|---|---|---|
+| Speed | ~1s | 10-60s |
+| Token output | 3-10x smaller | Verbose |
+| Text PDFs | ✅ | Overkill |
+| Scanned/OCR | ❌ | ✅ |
+| Complex tables | ⚠️ Alignment only | ✅ Structured |
+| Multi-column | ⚠️ Approximate | ✅ Layout-aware |
+| Install | `poppler-utils` (pre-installed) | `pip install docling` |
 
-## Batch Processing
+## Auto-Detect Decision Tree
 
-```bash
-source .venv/bin/activate
-docling --to markdown --image-export-mode placeholder --num-threads 8 *.pdf -o converted/
+```
+Input PDF
+  ├─ --docling / --ocr / --complex → docling
+  ├─ pdftotext 3-page probe < 100 chars → docling (scanned)
+  └─ default → pdftotext + post-process
 ```
 
-For batch jobs >10 files, use `--num-threads` to parallelize.
-
-## VLM Pipeline (Complex Layouts)
-
-Better quality for complex PDFs (slower):
+## Docling Advanced Options
 
 ```bash
-docling --pipeline vlm --vlm-model granite_docling --to markdown input.pdf -o converted/
+# Force OCR (replace existing text)
+docling --to md --force-ocr --output DIR input.pdf
+
+# VLM pipeline (best quality, slowest)
+docling --pipeline vlm --vlm-model granite_docling --to md --output DIR input.pdf
+
+# Skip table extraction (faster)
+docling --to md --no-tables --output DIR input.pdf
 ```
 
-## DocTags Format (Most Token-Efficient)
+## Troubleshooting
 
-```bash
-docling --to doctags --image-export-mode placeholder input.pdf -o converted/
-```
-
-## OCR Options
-
-**Standard OCR** (scanned images):
-```bash
-docling --ocr --ocr-engine easyocr --to markdown input.pdf -o converted/
-```
-
-**Force OCR** (replace existing text):
-```bash
-docling --force-ocr --to markdown input.pdf -o converted/
-```
-
-## Performance
-
-**No table extraction** (faster):
-```bash
-docling --no-tables --to markdown input.pdf -o converted/
-```
-
-## Notes
-
-- Default to markdown + placeholder images unless user specifies otherwise
-- VLM pipeline is slower but more accurate for complex layouts
-- DocTags is optimal for RAG pipelines and structured LLM workflows
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| 0-byte output | stdout redirect on docling | Use `--output DIR`, no `>` |
+| Empty markdown | Scanned PDF + pdftotext | Retry with `--ocr` |
+| Files in project root | Missing `--output` | Always pass `--output ./converted/` |
+| `command not found` | docling not in PATH | `toolsmith:install-dependency docling` |
+| Wrong format | `--to markdown` | Use `--to md` |
