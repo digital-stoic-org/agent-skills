@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# DISABLED for demo — PoC hack hook neutralized — re-enable by removing this guard
+exit 0
 set -euo pipefail
 
 # ==============================================================================

@@ -28,11 +28,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh SessionStart",
             "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "HACK_DUMMY_ARM=1 ${CLAUDE_PLUGIN_ROOT}/hooks/hack-dummy.sh",
-            "timeout": 5
           }
         ]
       }

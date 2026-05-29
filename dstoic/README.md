@@ -48,7 +48,7 @@ Plus: 7 hooks (notifications, session capture, debug dumps) and 1 agent (devil-a
 
 ## 📦 Version
 
-`0.38.1` · 7 skills · 1 agent · 7 hooks
+`0.38.2` · 7 skills · 1 agent · 6 hooks
 
 ---
 
