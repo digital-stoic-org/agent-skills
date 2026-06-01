@@ -31,17 +31,22 @@ if [[ "$TOOL" == "PreToolUse" ]]; then
     [[ -n "$ACTUAL_TOOL" ]] && TOOL="$ACTUAL_TOOL"
 fi
 
-# --- Source of truth: @cc_base_name tmux user-option ---
-ORIGINAL=$(tmux show-option -t "$TARGET" -qv @cc_base_name 2>/dev/null)
+# --- Derive ORIGINAL from the CURRENT window name on every call ---
+# Strip our own prefix (🤖 + any run of status emoji / variation selectors)
+# so manual renames always survive — no frozen snapshot, no early-capture bug.
+# (Status emoji and U+FE0F are all non-alphanumeric, so dropping leading
+#  non-[alnum/_/-/space] after the robot reliably recovers the real name.)
+strip_prefix() {
+    echo "$1" | sed 's/^🤖//; s/^[^[:alnum:]]*//'
+}
 
-# SessionStart: capture true name, pin automatic-rename off, show idle
+CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
+ORIGINAL=$(strip_prefix "$CURRENT")
+[[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
+
+# SessionStart: pin automatic-rename off so tmux won't fight our renames,
+# remembering the prior value to restore on SessionEnd.
 if [[ "$TOOL" == "SessionStart" ]]; then
-    CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
-    [[ -z "$CURRENT" ]] && CURRENT="bash"
-
-    tmux set-option -t "$TARGET" @cc_base_name "$CURRENT"
-
-    # Save current automatic-rename value and disable it for this window
     OLD_AUTO=$(tmux show-option -t "$TARGET" -wqv automatic-rename 2>/dev/null)
     if [[ -n "$OLD_AUTO" ]]; then
         tmux set-option -t "$TARGET" @cc_saved_auto_rename "$OLD_AUTO"
@@ -50,13 +55,12 @@ if [[ "$TOOL" == "SessionStart" ]]; then
     fi
     tmux set-option -t "$TARGET" -w automatic-rename off
 
-    tmux rename-window -t "$TARGET" "🤖$CURRENT"
+    tmux rename-window -t "$TARGET" "🤖$ORIGINAL"
     exit 0
 fi
 
 # SessionEnd: restore original name + automatic-rename, clean up
 if [[ "$TOOL" == "SessionEnd" ]]; then
-    [[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
     tmux rename-window -t "$TARGET" "$ORIGINAL"
 
     SAVED_AUTO=$(tmux show-option -t "$TARGET" -qv @cc_saved_auto_rename 2>/dev/null)
@@ -74,12 +78,9 @@ if [[ "$TOOL" == "SessionEnd" ]]; then
     exit 0
 fi
 
-# Late init: hook fired before SessionStart — capture now
-if [[ -z "$ORIGINAL" ]]; then
-    CURRENT=$(tmux display-message -t "$TARGET" -p '#{window_name}')
-    ORIGINAL=$(echo "$CURRENT" | sed 's/^🤖[^[:alnum:]_-]*//')
-    [[ -z "$ORIGINAL" ]] && ORIGINAL="bash"
-    tmux set-option -t "$TARGET" @cc_base_name "$ORIGINAL"
+# Safety: if automatic-rename hasn't been pinned yet (hook fired before
+# SessionStart), pin it now so tmux doesn't revert our emoji rename.
+if [[ "$(tmux show-option -t "$TARGET" -wqv automatic-rename 2>/dev/null)" != "off" ]]; then
     tmux set-option -t "$TARGET" -w automatic-rename off
 fi
 
