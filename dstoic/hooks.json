@@ -117,6 +117,11 @@
           },
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/recent-notes.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh Stop"
           }
         ]

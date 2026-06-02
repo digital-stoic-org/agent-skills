@@ -34,7 +34,7 @@ flowchart LR
 | `/kaizen` | ⚡ Capture friction with any Praxis artifact |
 | `/dump-output` | 📤 Toggle auto-dump of output to `.dump/` |
 
-Plus: 7 hooks (notifications, session capture, debug dumps) and 1 agent (devil-advocate).
+Plus: 8 hooks (notifications, session capture, debug dumps, recent-notes index) and 1 agent (devil-advocate).
 
 > ℹ️ Skills like `/frame-problem`, `/brainstorm`, `/troubleshoot`, `/openspec-*`, `/retrospect-*` etc. were split into dedicated plugins (cognitive, openspec, retrospect, toolsmith, content, convert). See [README.md](../README.md) for the full plugin table.
 
@@ -48,7 +48,7 @@ Plus: 7 hooks (notifications, session capture, debug dumps) and 1 agent (devil-a
 
 ## 📦 Version
 
-`0.38.3` · 7 skills · 1 agent · 6 hooks
+`0.38.4` · 7 skills · 1 agent · 7 hooks
 
 ---
 
