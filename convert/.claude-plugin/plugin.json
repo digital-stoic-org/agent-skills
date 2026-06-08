@@ -1,7 +1,7 @@
 {
   "name": "convert",
   "description": "Document and audio conversion: PDF, EPUB, DOCX, PPTX, and audio recordings to markdown, plus markdown to PDF. Uses Docling for document extraction and whisper.cpp for local transcription.",
-  "version": "0.38.0",
+  "version": "0.39.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

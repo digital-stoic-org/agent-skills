@@ -56,7 +56,7 @@
       "name": "convert",
       "source": "./convert",
       "description": "Document and audio conversion: PDF, EPUB, DOCX, PPTX, and audio to markdown, plus markdown to PDF",
-      "version": "0.38.0",
+      "version": "0.39.0",
       "author": {
         "name": "dstoic"
       },

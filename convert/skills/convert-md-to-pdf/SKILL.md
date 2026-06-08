@@ -12,14 +12,14 @@ Convert markdown files to professionally styled PDFs with Mermaid diagram suppor
 ## Usage
 
 ```bash
-python <skill_dir>/scripts/converter.py <input.md> [output.pdf] [--style=STYLE]
+python ${CLAUDE_PLUGIN_ROOT}/skills/convert-md-to-pdf/scripts/converter.py <input.md> [output.pdf] [--style=STYLE]
 ```
 
 **Note**: The converter.py script automatically handles TMPDIR overrides to avoid `/tmp/claude` permission issues.
 
 ## Available Styles
 
-Check `<skill_dir>/styles/` for options:
+Check `${CLAUDE_PLUGIN_ROOT}/skills/convert-md-to-pdf/styles/` for options:
 - `default` - Clean sans-serif, professional
 - `modern` - Bold headers, accent colors
 - `minimal` - Serif font, whitespace
@@ -29,7 +29,7 @@ Check `<skill_dir>/styles/` for options:
 
 **Install dependencies** via `install-dependency` skill:
 
-1. **Python packages**: Use `install-dependency` to install from `<skill_dir>/requirements.txt`
+1. **Python packages**: Use `install-dependency` to install from `${CLAUDE_PLUGIN_ROOT}/skills/convert-md-to-pdf/requirements.txt`
 2. **Mermaid CLI**: Use `install-dependency` for `@mermaid-js/mermaid-cli`
 
 **Note**: The `install-dependency` skill automatically sets up local TMPDIR to avoid permission conflicts.
@@ -46,4 +46,4 @@ This allows Puppeteer (used by Mermaid) to launch Chrome for diagram rendering.
 
 ## Adding Styles
 
-Create `.css` file in `<skill_dir>/styles/` directory.
+Create `.css` file in `${CLAUDE_PLUGIN_ROOT}/skills/convert-md-to-pdf/styles/` directory.
