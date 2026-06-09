@@ -67,7 +67,7 @@
       "name": "toolsmith",
       "source": "./toolsmith",
       "description": "Plugin and skill authoring: create/edit skills, agents, plugins, CLAUDE.md files, search skills, manage dependencies",
-      "version": "0.37.0",
+      "version": "0.37.1",
       "author": {
         "name": "dstoic"
       },

@@ -74,18 +74,7 @@ graph TD
 | **Plugin** | `edit-plugin` skill | `plugin.json` + `marketplace.json` |
 | **Bash** | Direct guidance (scripts/, chmod +x) | Project scripts dir |
 
-**Skill frontmatter** (quick ref — see `references/skill-guide.md` for full spec):
-- `name` — lowercase-hyphens
-- `description` — triggers + use cases (max 1024 chars)
-- `context` — `main` (default) | `fork` (inherits parent, async) | `subagent` (isolated)
-- `model` — `opus` | `sonnet` | `haiku`
-- `allowed-tools`, `argument-hint`, `hooks` — optional
-
-**Agent frontmatter** (quick ref — see `references/agent-guide.md` for full spec):
-- `name`, `description` — required
-- `tools` / `disallowedTools` — allowlist or denylist
-- `model` — `opus` | `sonnet` | `haiku` | `inherit` (default)
-- `permissionMode`, `maxTurns`, `skills`, `mcpServers`, `memory`, `hooks`, `background`, `isolation` — optional
+**Frontmatter:** Skill core = `name` (lowercase-hyphens) + `description` (triggers, max 1024) + `context` (`main`|`fork`|`subagent`) + `model`. Agent core = `name` + `description` + `tools`/`model`. Full field tables in the type guides above.
 
 ## MANDATORY Validation (CREATE only)
 
@@ -109,32 +98,10 @@ graph TD
 - **Token-efficient**: Tables, bullets, Mermaid over prose
 - **Context-aware**: Main for quick tasks, fork for research, agent for deep exploration
 
-## Fork vs Subagent (v2.1.117+)
+## Fork vs Subagent & Proactive Audit
 
-| | `fork` | `subagent` |
-|---|---|---|
-| Parent context | Inherited (CLAUDE.md + MEMORY + transcript) | None |
-| Invocation | `Agent({prompt,...})` — **OMIT** `subagent_type` | `Agent({subagent_type, prompt,...})` |
-| Prompt style | Directive — restate current-turn facts | Self-contained briefing |
-| Per-agent config | ❌ none | ✅ tools/model/memory/maxTurns |
-| Team Protocol | ❌ no stable name | ✅ SendMessage addressable |
-
-**Fork rules** (skill body MUST enforce): omit `subagent_type` · restate target/constraint/decision · batch parallel in one tool-use block · NEVER Read output_file.
-
-**Keep `subagent` when ANY**: (1) per-agent model · (2) scoped memory · (3) narrower tool allowlist · (4) SendMessage/Team Protocol · (5) named persona (`subagent_type: plugin:persona`).
-
-Cases: `philosopher/council` (model+memory), `philosopher/encounter`+`dialogue` (Team Protocol).
-
-## Proactive Audit (run on every create/edit)
-
-**Check 1 — frontmatter compliance**
-- `context:` ∈ {`main`, `fork`, `subagent`} — else reject
-- Legacy `context: fork` (pre-2026-04-23): flag for rename. Body uses `subagent_type` → rename to `subagent`. Body omits `subagent_type` + fan-out w/ parent ctx → keep `fork` (rare).
-
-**Check 2 — fit check** (recommend change, ask confirm)
-- `fork` declared, needs per-agent config/persona/Team Protocol → `subagent`
-- `subagent` declared, generic parallel fan-out (no persona, no cross-talk, no per-agent config) → `fork`
-- `main` declared, body spawns Agent >2×/invocation → declare `fork` or `subagent`
+- **Choosing `fork` vs `subagent`**, fork invocation rules, "keep subagent when ANY" criteria → `references/frameworks.md § Fork vs Subagent`.
+- **On every create/edit, run the Proactive Audit** (frontmatter compliance + fit check, incl. legacy `context: fork` rename) → `references/frameworks.md § Proactive Audit`.
 
 ## Parallelization
 

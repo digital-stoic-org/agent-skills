@@ -26,6 +26,8 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 
 Single source of truth for all skill frontmatter fields.
 
+> Upstream: the portable cross-agent core (`name` + `description` + folder layout) is the open Agent Skills standard at [agentskills.io/specification](https://agentskills.io/specification). The fields below extend it with Claude-Code-specific conventions (`context`, `model`, `hooks`, token budgets) — author to the table here; consult the spec for the portable baseline or fields not covered.
+
 | Field | Required | Values | Description |
 |-------|----------|--------|-------------|
 | `name` | ✅ | lowercase-hyphens | Skill identifier |

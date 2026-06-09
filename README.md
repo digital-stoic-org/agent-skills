@@ -106,7 +106,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [dstoic](dstoic/) | 7 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, 7 hooks | ✅ v0.38.0 |
 | [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark | ✅ v0.37.0 |
 | [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync | ✅ v0.37.0 |
-| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency | ✅ v0.37.0 |
+| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency | ✅ v0.37.1 |
 | [content](content/) | 5 | Content transformation: anonymize, infographize, literatize, bridge, RISEN prompts | ✅ v0.37.0 |
 | [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import | ✅ v0.37.0 |
 | [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports | ✅ v0.38.0 |
