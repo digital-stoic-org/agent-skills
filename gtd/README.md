@@ -42,7 +42,7 @@ flowchart LR
 
 ## 📦 Version
 
-`0.3.5`
+`0.3.6`
 
 ## 🎯 Skills
 
