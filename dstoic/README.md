@@ -48,7 +48,7 @@ Plus: 8 hooks (notifications, session capture, debug dumps, recent-notes index) 
 
 ## 📦 Version
 
-`0.38.4` · 7 skills · 1 agent · 7 hooks
+`0.39.0` · 8 skills · 1 agent · 7 hooks
 
 ---
 
