@@ -23,19 +23,15 @@ Recognize-then-route: hit the right tier directly; reserve top-tier (Opus `high`
 ### 1. Read live state
 
 ```bash
-jq -r '
-  .context_window.current_usage as $u |
-  (($u.input_tokens//0)+($u.output_tokens//0)+($u.cache_creation_input_tokens//0)+($u.cache_read_input_tokens//0)) as $ctx |
-  (.context_window.context_window_size//200000) as $size |
-  (($u.cache_read_input_tokens//0)+($u.cache_creation_input_tokens//0)) as $cache |
-  "model="+(.model.display_name//"?")+" ctx_tokens="+($ctx|tostring)+
-  " ctx_pct="+(($ctx*100/$size)|floor|tostring)+
-  " cache_hit_pct="+(if $cache>0 then (($u.cache_read_input_tokens//0)*100/$cache)|floor|tostring else "0" end)+
-  " cost_usd="+((.cost.total_cost_usd//0)|tostring)+" duration_min="+(((.cost.total_duration_ms//0)/60000)|floor|tostring)
-' "${PRAXIS_DIR:-/praxis}/.tmp/pick-model/session-state.json"
+pick-model-state
 ```
 
-Don't compute these by hand — jq does it. **Fallback** (file missing/stale): read model + ctx% from the statusline bar or ask user; note `⚠️ estimated state`, never guess silently.
+Emits `model= ctx_tokens= ctx_pct= cache_hit_pct= cost_usd= duration_min=`
+(jq + path resolution live in `dstoic/scripts/pick-model-state`, on PATH). Bare
+call — no shell expansion, so it's allowlistable and won't trigger a permission
+prompt. Don't compute these by hand. **Fallback** (prints `state=missing`, or
+command not found pre-sync): read model + ctx% from the statusline bar or ask
+user; note `⚠️ estimated state`, never guess silently.
 
 ### 2. Classify + pick ideal model + effort
 

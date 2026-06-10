@@ -1,0 +1,26 @@
+#!/bin/bash
+# pick-model-state — emit current session model/context/cache/cost for the
+# /pick-model skill. Reads the state file the statusline tees (opt-in via
+# DSTOIC_HOOKS_ENABLED=1). No args. Self-contained so the skill can call it
+# by bare name — no shell expansion in the invocation, so it's allowlistable
+# and never triggers the "contains expansion" permission prompt.
+
+set -euo pipefail
+
+STATE="${PRAXIS_DIR:-/praxis}/.tmp/pick-model/session-state.json"
+
+if [ ! -f "$STATE" ]; then
+  echo "state=missing (statusline tee not written — set DSTOIC_HOOKS_ENABLED=1, or read the statusline bar / ask user)"
+  exit 0
+fi
+
+jq -r '
+  .context_window.current_usage as $u |
+  (($u.input_tokens//0)+($u.output_tokens//0)+($u.cache_creation_input_tokens//0)+($u.cache_read_input_tokens//0)) as $ctx |
+  (.context_window.context_window_size//200000) as $size |
+  (($u.cache_read_input_tokens//0)+($u.cache_creation_input_tokens//0)) as $cache |
+  "model="+(.model.display_name//"?")+" ctx_tokens="+($ctx|tostring)+
+  " ctx_pct="+(($ctx*100/$size)|floor|tostring)+
+  " cache_hit_pct="+(if $cache>0 then (($u.cache_read_input_tokens//0)*100/$cache)|floor|tostring else "0" end)+
+  " cost_usd="+((.cost.total_cost_usd//0)|tostring)+" duration_min="+(((.cost.total_duration_ms//0)/60000)|floor|tostring)
+' "$STATE"
