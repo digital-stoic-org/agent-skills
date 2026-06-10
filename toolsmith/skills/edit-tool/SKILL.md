@@ -25,7 +25,9 @@ graph TD
     D -->|>500| SKILL_REF[✅ Skill + reference.md]
 
     B -->|No| E{Pollution<br/>cost?}
-    E -->|High >2000 tokens<br/>OR deep exploration| AGENT[✅ Sub-Agent]
+    E -->|High >2000 tokens<br/>OR deep exploration| W{Multi-agent<br/>control flow?}
+    W -->|Single reasoning pass| AGENT[✅ Sub-Agent]
+    W -->|Loops/fan-out/<br/>verify-stages| WORKFLOW[✅ Workflow script<br/>+ optional skill wrapper]
     E -->|Medium 500-2000| F{Context<br/>mode?}
     F -->|Needs parent ctx + fan-out| FORK[✅ Skill context:fork<br/>NEW v2.1.117+]
     F -->|Needs isolation no bias| SUBAGENT[✅ Skill context:subagent]
@@ -44,8 +46,11 @@ graph TD
     style FORK fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
     style SUBAGENT fill:#CE93D8,stroke:#000,stroke-width:2px,color:#000
     style AGENT fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
+    style WORKFLOW fill:#9FA8DA,stroke:#000,stroke-width:2px,color:#000
     style DIRECT fill:#FFB6C1,stroke:#000,stroke-width:2px,color:#000
 ```
+
+**Workflow leaf**: when the task needs deterministic multi-agent orchestration — pipeline/parallel/fan-out with loops, judge panels, verify-stages, loop-until-dry — author a `Workflow` script (optionally a thin skill wrapper that invokes it), not a single sub-agent. A sub-agent is *one* spawn; a Workflow choreographs many under control flow.
 
 **Default**: All skills are dual-invocable (both `/name` and model auto-invoke). `disable-model-invocation: true` is opt-out for rare edge cases.
 
@@ -64,7 +69,7 @@ graph TD
 
 1. Ask for details if missing: purpose, triggers, tools needed
 2. Determine type via triage decision tree above
-3. Use `pick-model` skill for model selection
+3. Use `pick-model` skill for model **and effort** selection
 4. Branch to appropriate guide:
 
 | Type | Guide | Location |

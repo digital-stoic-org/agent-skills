@@ -39,7 +39,8 @@ Single source of truth for all skill frontmatter fields.
 | `hooks` | No | `[hook-spec, ...]` | Skill-scoped hooks |
 | `allowed-tools` | No | `[Tool1, Tool2, ...]` | Tool restrictions |
 | `argument-hint` | No | pattern string | Argument pattern hint |
-| `model` | No | `opus`/`sonnet`/`haiku` | Model override (use short names) |
+| `model` | No | `opus`/`sonnet`/`haiku` | Model override (use short names). Almost always set explicitly — 90%+ of skills do |
+| `effort` | No | `low`/`medium`/`high`/`xhigh`/`max` (model-dependent) | Reasoning effort while this skill runs; overrides session effort. Precedence: env var > frontmatter > session > model default. **Defer the value choice to `/pick-model`** |
 
 ### Frontmatter Patterns
 
@@ -174,70 +175,25 @@ See [Token Efficiency Techniques](#token-efficiency-techniques) below for detail
 
 ---
 
-## Model Selection Guide
+## Model & Effort Selection
 
-Choose the right model based on task complexity and cost/latency requirements.
+**Single source of truth: the `/pick-model` skill.** It owns the model+effort doctrine — tiers (Haiku/Sonnet/Opus/Fable), the effort axis (`low`–`max`), the switch-vs-cache cost model, escalators, and the verified roster. Run it for any non-trivial model or effort decision instead of re-deriving here.
 
-### Model Comparison Matrix
+### Authoring quick-pick (defaults only — defer to `/pick-model` for the call)
 
-| Model | Best For | Token Cost | Latency | When to Use |
-|-------|----------|------------|---------|-------------|
-| **haiku** | Simple deterministic tasks | Lowest | Fastest | Token counting, format conversion, template filling, regex operations |
-| **sonnet** | Most reasoning tasks | Medium | Medium | Code analysis, refactoring, bug fixes, general problem-solving (DEFAULT) |
-| **opus** | Complex architectural work | Highest | Slowest | Multi-file refactoring, architectural decisions, complex debugging |
+| Set `model:` to… | When |
+|---|---|
+| `haiku` | You can write exact, deterministic instructions (convert, format, extract, regex, lookup) |
+| `sonnet` (default) | Claude must reason — analysis, single-file code, review, content, plumbing |
+| `opus` | Strategy, multi-file refactor, architecture, audit — sonnet isn't enough |
+| `fable` | Long-running / >200K context / sustained ambiguity (boulder tier) |
 
-### Decision Tree
+- **`effort:`** is a separate lever from `model:` — it tunes reasoning depth and survives prompt cache (cheap to change). Set it when a skill is reliably deeper or shallower than the session default; otherwise omit and inherit. Values are model-dependent — **`/pick-model` picks the value.**
+- For agents, prefer `model: inherit` unless the agent needs a fixed tier (e.g. a haiku qualifier inside a council).
 
-```mermaid
-flowchart TD
-    A[Skill Task] --> B{Requires reasoning?}
-    B -->|No| C[haiku]
-    B -->|Yes| D{Multi-file context?}
-    D -->|No| E[sonnet]
-    D -->|Yes| F{Architectural decisions?}
-    F -->|No| E
-    F -->|Yes| G[opus]
+### Effort-aware skill bodies — `${CLAUDE_EFFORT}`
 
-    classDef haiku fill:#90EE90,stroke:#006400,color:#000
-    classDef sonnet fill:#87CEEB,stroke:#00008B,color:#000
-    classDef opus fill:#DDA0DD,stroke:#4B0082,color:#000
-
-    class C haiku
-    class E sonnet
-    class G opus
-```
-
-### Examples by Model
-
-**haiku examples:**
-- Count tokens in file
-- Convert JSON to YAML
-- Extract URLs from text
-- Validate file structure
-- Simple regex find/replace
-
-**sonnet examples (DEFAULT):**
-- Analyze code quality
-- Refactor single file
-- Debug test failures
-- Generate API client
-- Review pull request
-
-**opus examples:**
-- Design system architecture
-- Refactor across 10+ files
-- Migrate framework versions
-- Complex distributed systems debugging
-
-### Cost/Latency Trade-offs
-
-| Priority | Recommended Model | Rationale |
-|----------|-------------------|-----------|
-| Speed over quality | haiku | 5x faster than sonnet |
-| Balanced (most skills) | sonnet | Best quality/speed/cost ratio |
-| Quality over cost | opus | Most capable, use sparingly |
-
-**Rule of thumb:** Use haiku when you can write exact instructions. Use sonnet when Claude needs to reason. Use opus when sonnet isn't enough.
+Skills can read the dynamic context var **`${CLAUDE_EFFORT}`** (current level: `low`/`medium`/`high`/`xhigh`/`max`) to adapt their instructions to the active effort — e.g. a fuller checklist at `high`, a fast path at `low`. Use it when a single skill should scale its own thoroughness rather than ship two variants.
 
 ---
 
