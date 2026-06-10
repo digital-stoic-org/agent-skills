@@ -1,215 +1,133 @@
-# Pick Model - Extended Reference
+# Pick Model — Extended Reference
+
+Verified June 2026. Companion to SKILL.md.
 
 ## Model Characteristics
 
 ### Haiku 4.5
-- **Speed**: Fastest (~2-3x faster than Sonnet)
-- **Cost**: Lowest (~10x cheaper than Opus)
-- **Context**: 200K tokens
-- **Best for**: Deterministic, pattern-based, low-reasoning tasks
-- **Limitations**: Struggles with ambiguity, multi-step reasoning, creative tasks
+- **$/M**: $1 in · $5 out — cheapest
+- **Speed**: fastest (~2-3× Sonnet)
+- **Context**: 200K
+- **Effort**: none (param not supported)
+- **Best for**: deterministic, pattern-based, low-reasoning — convert, transcribe, format, extract, regex, typo, status query
+- **Limits**: ambiguity, multi-step reasoning, creative nuance
 
-### Sonnet 4.5
-- **Speed**: Medium (baseline)
-- **Cost**: Medium (~5x cheaper than Opus)
-- **Context**: 200K tokens
-- **Best for**: Balanced reasoning, creative work, most coding tasks
-- **Limitations**: Multi-file refactoring, highly nuanced reasoning
+### Sonnet 4.6
+- **$/M**: $3 in · $15 out
+- **Speed**: baseline
+- **Context**: 200K
+- **Effort**: `low | medium | high` (no `xhigh`/`max`)
+- **Best for**: plumbing (GTD, context, commit, library), single-file coding, bug fix, review, content, research summaries
+- **Limits**: deep multi-file refactor, highly nuanced strategy
 
-### Opus 4.6
-- **Speed**: Slowest (~1.5-2x slower than Sonnet)
-- **Cost**: Highest (premium tier)
-- **Context**: 200K tokens
-- **Best for**: Complex reasoning, architectural decisions, high-stakes work
-- **Limitations**: Overkill for simple tasks, slower iteration
+### Opus 4.8
+- **$/M**: $5 in · $25 out · Fast Mode $10 · $50
+- **Speed**: ~1.5-2× slower than Sonnet
+- **Context**: 200K
+- **Effort**: `low | high | xhigh | max` — ⚠️ **defaults to `high`** (raised from `medium`); set explicitly to lower spend
+- **Best for**: strategy, fiscal, architecture, multi-file refactor, security audit, cognitive skills, framing ambiguous tasks
+- **Limits**: overkill + costly for chores/plumbing; 200K ceiling
 
----
+### Fable 5 (released 2026-06-09)
+- **$/M**: $10 in · $50 out — most expensive
+- **Context**: **1M tokens** (max output 128K)
+- **Thinking**: **adaptive only** — no discrete effort levels, `thinking: disabled` unsupported
+- **Best for**: ambitious, long-running, asynchronous, highly multi-step or sustained-ambiguity work; anything needing >200K context
+- **Positioning**: Anthropic's most capable GA model — the boulder tier ABOVE Opus
+- **Limits**: cost; do not use as an effort dial — pick it for task *shape*
 
-## Extended Decision Matrix
+## The Two-Lever Cost Model
 
-### By File Type
-
-| File Type | Task | Model |
+| Lever | Cache effect | Bar to recommend |
 |---|---|---|
-| `.md`, `.txt` | Typo fix, formatting | Haiku |
-| `.md`, `.txt` | Blog post, documentation | Sonnet |
-| `.md`, `.txt` | Long-form report (>5K words) | Opus |
-| `.json`, `.yaml`, `.toml` | Parse, extract, validate | Haiku |
-| `.json`, `.yaml`, `.toml` | Schema design | Sonnet |
-| `.py`, `.js`, `.ts` (single) | Bug fix, feature add | Sonnet |
-| `.py`, `.js`, `.ts` (3+ files) | Refactor, architecture | Opus |
-| `.sh`, `.bash` | Script debug/fix | Sonnet |
-| `.sh`, `.bash` | Complex orchestration | Opus |
+| 🎚️ Effort change (same model) | survives | **low** — judge on quality delta only |
+| 🔀 Model switch | breaks (re-read context uncached) | **high** — must beat switch penalty |
 
-### By Domain
+### Switch penalty formula
 
-| Domain | Task Type | Model |
+```
+switch_penalty_$ ≈ context_tokens × new_model_input_rate × (1 − 0.9 × cache_hit_rate)
+```
+
+- Prompt caching = 90% input discount → switching forfeits warm cache.
+- Penalty rises with context% (more to re-read) and cache hit rate (more warmth lost).
+- Late-session + high-context + marginal gain → DON'T switch; tweak effort or stay.
+
+### Worked examples
+
+**A. 30% context, 60% cache hit, switch Sonnet→Opus**
+- context_tokens ≈ 60K · Opus in-rate $5/M
+- penalty ≈ 60K × $5/M × (1 − 0.54) ≈ **$0.14** → cheap, switch freely if task is Opus-shaped.
+
+**B. 75% context, 95% cache hit, switch Sonnet→Opus**
+- context_tokens ≈ 150K · Opus in-rate $5/M
+- penalty ≈ 150K × $5/M × (1 − 0.855) ≈ **$0.11** + loses a deep warm cache + slows next turns.
+- If gain is marginal → **stay, bump effort instead** (cache survives).
+
+**C. Recognized chore on Opus 4.8 high**
+- Don't reflexively switch to Haiku if context is large — first consider 🎚️ dropping Opus to `low`: zero re-cache, immediate output-spend cut.
+
+## Routing Table (full)
+
+| Task recognition | Model | Effort | Notes |
+|---|---|---|---|
+| **Chores** — convert, transcribe, format, extract, regex, typo, lookup, template fill | 🟢 Haiku 4.5 | n/a | Deterministic |
+| **Plumbing** — GTD, context save/load, commit, library wiring, serialization | 🟡 Sonnet 4.6 | `low`–`medium` | Standard workflows |
+| **Standard coding/content** — single-file fix, code review, blog/email, research summary, known-pattern API | 🟡 Sonnet 4.6 | `medium`–`high` | Moderate reasoning |
+| **Thinking** — strategy, fiscal, multi-file refactor (3+), architecture, security audit, cognitive skills, long-form (>2K words) | 🔴 Opus 4.8 | `high`, sweep `xhigh` | Trade-offs, nuance |
+| **Ambiguous / big / can't-classify** | 🔴 Opus 4.8 | `high` to frame & route | Drop tier once scope clears |
+| **Boulder** — multi-day, highly multi-step, sustained ambiguity, or >200K context | 🟣 Fable 5 | adaptive | Above-Opus; 1M window |
+
+### Escalators (apply, cap +1 tier)
+
+- **Ambiguity** (underspecified, multiple interpretations) · **Scope** (3+ files/systems) · **Stakes** (prod, security, data-loss, regulatory) · **Novelty** (no established pattern) → +1
+- **Multi-stakeholder / strategic / political / cross-functional** (business) → +1
+- **Pattern detection / bias ID / ethical reasoning / multi-framework** (cognitive) → +1
+- **Context > 200K needed** → jump to Fable 5
+- Tie Haiku↔Sonnet: needs *any* judgment? → Sonnet. Sonnet↔Opus: trade-offs to balance? → Opus.
+
+## Verdict Examples
+
+| Intended prompt | Current | Verdict |
 |---|---|---|
-| **Data Processing** | ETL, parsing, cleaning | Haiku |
-| **Data Processing** | Pipeline design | Sonnet |
-| **Data Processing** | Distributed system design | Opus |
-| **Content Creation** | Social post, email | Sonnet |
-| **Content Creation** | Whitepaper, thesis | Opus |
-| **DevOps** | Config fix, logs analysis | Haiku/Sonnet |
-| **DevOps** | Infrastructure design | Opus |
-| **Security** | Code scan, vuln check | Sonnet |
-| **Security** | Threat modeling, audit | Opus |
-| **Testing** | Unit test write | Sonnet |
-| **Testing** | Test strategy, framework | Opus |
+| "fix typo in README" | Opus 4.8 high | ⬇️ Haiku (or if 70% ctx: 🎚️ drop to `low`, switch not worth re-cache) |
+| "refactor auth across 15 files" | Sonnet 4.6 high | ⬆️ Opus `high` (scope+stakes; worth it early-session) |
+| "save session context" | Opus 4.8 high | ⬇️ Sonnet `low` (plumbing) |
+| "design market-entry strategy" | Sonnet 4.6 high | 🔀 Opus `xhigh` (strategic, multi-framework) |
+| "deep reasoning step, one-off" | Opus 4.8 high | 🎚️ `xhigh` for this step — cache survives, no switch |
+| "audit + rewrite entire 400K-line repo" | Opus 4.8 | 🔀 Fable 5 (>200K context + long-horizon) |
+| "summarize this transcript" | Haiku 4.5 | ✅ Stay (chore, optimal) |
 
-### By Interaction Pattern
+## Interaction Patterns
 
-| Pattern | Model |
+| Pattern | Strategy |
 |---|---|
-| **One-shot** (single request/response) | Match task complexity |
-| **Iterative** (back-and-forth refinement) | Start lower, escalate if needed |
-| **Exploratory** (user learning) | Start Sonnet (patient explanations) |
-| **Production** (high stakes) | Escalate +1 tier for safety |
+| **One-shot** | Match task complexity; lower effort cheaper |
+| **Iterative** | Start lower tier/effort, escalate only if it fails |
+| **Agentic loop** | Higher effort can REDUCE total cost (better planning, fewer correction turns) |
+| **Exploratory/learning** | Sonnet medium — patient, cheap enough to iterate |
+| **Production/high-stakes** | +1 tier for safety |
+| **Long-horizon / >200K context** | Fable 5 — only 1M-window tier |
 
----
+## Signal Words
 
-## Cost/Latency Tradeoffs
-
-### When to optimize for speed (choose lower tier):
-- ✅ Rapid prototyping, quick iteration
-- ✅ Low-stakes exploratory work
-- ✅ User waiting synchronously
-- ✅ Batch processing many simple tasks
-
-### When to optimize for quality (choose higher tier):
-- ✅ Production deployments
-- ✅ Security-critical code
-- ✅ User-facing content (brand reputation)
-- ✅ Complex architectural decisions
-- ✅ Tasks where rework is expensive
-
-### Cost Examples (Approximate)
-- **100K input tokens + 10K output**:
-  - Haiku: ~$0.10
-  - Sonnet: ~$0.30
-  - Opus: ~$1.50
-
----
-
-## Edge Cases & Hybrid Tasks
-
-### Escalation Scenarios
-
-**Start Haiku → Upgrade Sonnet if:**
-- Output lacks coherence
-- Task requires reasoning not obvious from pattern
-- User requests "explain why" or "consider alternatives"
-
-**Start Sonnet → Upgrade Opus if:**
-- Multi-system dependencies emerge
-- Ambiguity requires nuanced judgment
-- Initial approach fails, root cause unclear
-- Architectural implications surface
-
-### Hybrid Approaches
-
-**Sequential (pipeline):**
-1. Haiku: Extract data from logs
-2. Sonnet: Analyze patterns, generate report
-
-**Parallel (fan-out):**
-1. Haiku: Format 10 files in parallel
-2. Sonnet: Review aggregated changes
-
-**Iterative (feedback loop):**
-1. Sonnet: Draft implementation plan
-2. User: Feedback
-3. Opus: Refine with architectural considerations
-
----
-
-## Domain-Specific Guidelines
-
-### Web Development
-- Component styling, prop changes → Sonnet
-- Component library design → Opus
-- API endpoint (single) → Sonnet
-- API architecture (REST vs GraphQL) → Opus
-
-### Data Science
-- Data cleaning, feature engineering → Haiku/Sonnet
-- Model selection, experiment design → Opus
-- Jupyter notebook fixes → Sonnet
-- Pipeline architecture → Opus
-
-### Infrastructure
-- Terraform syntax fix → Haiku
-- Resource provisioning → Sonnet
-- Multi-region HA design → Opus
-
-### Documentation
-- API reference generation → Haiku
-- Tutorial writing → Sonnet
-- Architecture Decision Records → Opus
-
----
+- **Haiku**: quick, simple, just, only, extract, format, rename, fix typo, convert, transcribe
+- **Sonnet**: write, create, explain, review, analyze, debug, single file, summarize
+- **Opus**: design, architect, complex, multiple files, refactor, migration, strategy, audit, nuanced, trade-offs
+- **Fable**: end-to-end, autonomous, multi-day, whole repo, entire codebase, long-running, huge context
+- **Effort-up cues**: "think hard", "be thorough", "deep", "carefully" → bump effort before switching model
+- **Effort-down cues**: "quick", "rough", "draft", "just need" → drop effort
 
 ## Common Mistakes
 
-### ❌ Over-escalation
-- Using Opus for typo fixes, simple formatting
-- **Cost**: 10-15x more expensive
-- **Fix**: Trust Haiku for deterministic tasks
+- ❌ **Opus default**: using Opus `high` for typos/plumbing — 5-25× cost, often a downgrade or effort-drop is right.
+- ❌ **Forgotten Opus default**: Opus 4.8 now defaults to `high` — silent cost creep; override for routine work.
+- ❌ **Late switch**: switching model at 80% context for the last task — re-cache costs more than saved.
+- ❌ **Effort-as-input confusion**: effort is output spend; on loops higher can be cheaper overall.
+- ❌ **Fable as effort dial**: Fable is a task-shape choice (long/ambiguous/huge-context), not "Opus but more".
+- ❌ **Guessing current model**: always read the state file or ask.
 
-### ❌ Under-estimation
-- Using Haiku for "simple" refactors that touch 5+ files
-- **Risk**: Poor code quality, missed edge cases
-- **Fix**: Apply complexity escalators
+## Override
 
-### ❌ Ignoring context
-- Choosing model without considering stakes, ambiguity, scope
-- **Fix**: Use decision matrix + escalators
-
-### ❌ False economy
-- Choosing Haiku for production-critical work to save $1
-- **Risk**: Outages, security issues, rework costs >> savings
-- **Fix**: Escalate +1 tier for high stakes
-
----
-
-## When to Override Recommendation
-
-**User knows best when:**
-- Specific model preferences based on past experience
-- Budget constraints require cost optimization
-- Time constraints require speed optimization
-- Iterative work (start lower, escalate if needed)
-
-**Always respect explicit user model selection.**
-
----
-
-## Quick Reference: Signal Words
-
-### Haiku signals
-- "quick", "simple", "just", "only", "extract", "format", "rename", "fix typo"
-
-### Sonnet signals
-- "write", "create", "explain", "review", "analyze", "debug", "single file"
-
-### Opus signals
-- "design", "architect", "complex", "multiple files", "refactor", "migration", "strategy", "nuanced"
-
----
-
-## Model Selection Confidence
-
-Output confidence level based on task clarity:
-
-```
-🔴 **Opus** — [reason]
-💰 Cost: highest | ⚡ Speed: slowest
-🎯 Confidence: High (clear architectural scope)
-
-💡 Consider Sonnet if scope reduces to 2-3 files after exploration
-```
-
-**Confidence indicators:**
-- **High**: Task signals clearly match one tier
-- **Medium**: Borderline between two tiers
-- **Low**: Insufficient information, recommend exploration
+Always respect explicit user model/effort selection. User knows best on budget,
+speed, past-experience preferences. This skill advises; it never executes the prompt.
