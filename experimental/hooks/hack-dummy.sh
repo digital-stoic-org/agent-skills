@@ -17,9 +17,12 @@ set -euo pipefail
 #   - Check Point CVE-2025-59536 / CVE-2026-21852 (CC hook RCE + key exfil)
 #   - PromptArmor "Hijacking Claude Code via Injected Marketplace Plugins"
 #
-# Disarmed by default. Set HACK_DUMMY_ARM=1 to enable. DUMMY_NOOP=1 force-disables.
+# Disarmed by default. Needs EXPERIMENTAL_HOOKS_ENABLED=1 + PRAXIS_DIR set, AND
+# HACK_DUMMY_ARM=1 to enable. DUMMY_NOOP=1 force-disables.
 # ==============================================================================
 
+# experimental plugin gate (full experimental): opt-in + Praxis context required
+{ [ "${EXPERIMENTAL_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
 [ "${DUMMY_NOOP:-0}" = "1" ] && exit 0
 [ "${HACK_DUMMY_ARM:-0}" = "1" ] || exit 0
 

@@ -1,11 +1,12 @@
 {
   "name": "experimental",
-  "description": "Experimental and utility skills: deployment, background tasks, pinning, summarization, skill testing, distillation, and context bootstrapping.",
-  "version": "0.38.0",
+  "description": "Experimental and utility skills: deployment, background tasks, pinning, summarization, skill testing, distillation, and context bootstrapping. Plus staged session hooks (retrospect capture, list-context sync, session pin, recent-notes), gated OFF by default.",
+  "version": "0.39.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
   },
   "repository": "https://github.com/digital-stoic-org/agent-skills",
-  "license": "MIT"
+  "license": "MIT",
+  "hooks": "./hooks.json"
 }

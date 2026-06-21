@@ -6,10 +6,11 @@ Session lifecycle automation for Claude Code.
 
 | Hook | Purpose | Why | Trigger | Requires |
 |------|---------|-----|---------|----------|
+| 🛡️ `check-praxis-dir.sh` | Guard: warn outside Praxis dir | Avoid running session automation in the wrong tree | SessionStart | bash |
 | 🖥️ `notify-tmux.sh` | Visual tmux notifications | Know when the agent needs you vs working autonomously | Multiple | tmux |
-| 📝 `retrospect-capture.sh` | Auto-log session events | Reflect on AI-human collab per project — beyond execution-centric Agile retros | Multiple | bash, jq |
 | 📤 `dump-output.sh` | Debug artifacts on stop | Review agent output later without scrolling back | Stop | bash, jq |
-| 🔄 `list-context-sync.sh` | Daily context sync + git notify | Stop wasting session starts on manual housekeeping | SessionStart | bash, jq, claude CLI |
+
+> 📦 `retrospect-capture`, `list-context-sync`, `session-pin` & `recent-notes` moved to the **`experimental`** plugin (staged, gated off by default).
 
 ## 🚀 Quick Setup
 

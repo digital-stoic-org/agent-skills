@@ -6,35 +6,33 @@
 
 | Hook | Purpose | Why | Trigger | Requires |
 |------|---------|-----|---------|----------|
+| 🛡️ `check-praxis-dir.sh` | Guard: warn when outside the Praxis dir | Avoid running session automation in the wrong tree | SessionStart | bash |
 | 🖥️ `notify-tmux.sh` | Visual tmux window notifications | Know when the agent needs you vs working autonomously | Multiple | tmux |
-| 📝 `retrospect-capture.sh` | Auto-log session events | Reflect on AI-human collab per project — beyond execution-centric Agile retros | Multiple | bash, jq |
 | 📤 `dump-output.sh` | Debug artifacts on stop | Review agent output later without scrolling back | Stop | bash, jq |
-| 🔄 `list-context-sync.sh` | Daily context sync + git notify | Stop wasting session starts on manual housekeeping | SessionStart | bash, jq, claude CLI |
+
+> 📦 **Moved to the `experimental` plugin** (staged, gated off by default): `retrospect-capture.sh`, `list-context-sync.sh`, `session-pin.sh`, `recent-notes.sh`. See `experimental/hooks/`.
 
 ```mermaid
 flowchart LR
     subgraph S1["SessionStart"]
+        A0["🛡️ check-praxis-dir"]
         A1["🖥️ notify-tmux"]
-        A2["📝 retrospect-capture"]
-        A3["🔄 list-context-sync"]
     end
 
     subgraph S2["During Session"]
         B1["🖥️ notify-tmux"]
-        B2["📝 retrospect-capture"]
     end
 
     subgraph S3["Stop / End"]
         C1["📤 dump-output"]
         C2["🖥️ notify-tmux"]
-        C3["📝 retrospect-capture"]
     end
 
     S1 --> S2 --> S3
 
     classDef hook fill:#E8F4FD,stroke:#4A90D9,color:#000
     classDef phase fill:#F0F0F0,stroke:#999,color:#000
-    class A1,A2,A3,B1,B2,C1,C2,C3 hook
+    class A0,A1,B1,C1,C2 hook
 ```
 
 ---
@@ -83,60 +81,11 @@ Focus-aware: tool emoji hidden when pane is focused (you're already watching).
 
 ---
 
-## 📝 retrospect-capture.sh
-
-Captures all 10 Claude Code lifecycle events to `.retro/sessions/.staging/{session-id}.jsonl` for later analysis with `/retrospect-*` skills.
-
-| Event | When |
-|-------|------|
-| `SessionStart` | 🎬 Session begins |
-| `SessionEnd` | 🏁 Session ends (finalizes to YAML) |
-| `UserPromptSubmit` | 💬 User sends message |
-| `PreToolUse` / `PostToolUse` | 🔧 Tool execution |
-| `PermissionRequest` | 🔐 Permission asked |
-| `Stop` / `SubagentStop` | 🛑 Execution stops |
-| `PreCompact` | 📦 Before compaction |
-| `Notification` | 🔔 System notification |
-
----
-
 ## 📤 dump-output.sh
 
 Dumps Claude's last output to `$CLAUDE_PROJECT_DIR/.dump/{timestamp}.md` on Stop event. Toggle-controlled — only active when `.dump/.enabled` exists. Use `/dump-output` skill to toggle.
 
 **Safety**: Checks `stop_hook_active` to prevent infinite loops, sleeps 0.5s for transcript flush.
-
----
-
-## 🔄 list-context-sync.sh
-
-Opportunistic daily maintenance on session start. Praxis-only (exits immediately for other projects).
-
-```mermaid
-flowchart TD
-    A["SessionStart"] --> B{"CWD contains<br/>'praxis'?"}
-    B -->|No| X["exit 0"]
-    B -->|Yes| C{"Synced<br/>today?"}
-    C -->|Yes| D["Skip"]
-    C -->|No| E["🔄 claude -p '/list-contexts --sync'<br/>(async background)"]
-    E --> F["Touch date marker"]
-    D --> G{"Unpushed<br/>commits?"}
-    F --> G
-    G -->|No| H["✅ Done"]
-    G -->|Yes| I["⚠️ Warn on stderr<br/>(never auto-push)"]
-    I --> H
-
-    classDef action fill:#90EE90,stroke:#333,color:#000
-    classDef check fill:#FFE4B5,stroke:#333,color:#000
-    classDef skip fill:#F0F0F0,stroke:#999,color:#000
-    class E,I action
-    class B,C,G check
-    class X,D skip
-```
-
-**State**: `{git_root}/.tmp/list-context-sync/{YYYYMMDD}-context-sync` marker prevents re-runs. Auto-cleaned after 2 days.
-
-**Log**: `{git_root}/.tmp/list-context-sync.log`
 
 ---
 

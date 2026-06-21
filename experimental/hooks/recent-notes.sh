@@ -14,7 +14,7 @@ set -e
 # ==============================================================================
 
 # Portability gate: silently no-op unless dstoic hooks opted-in AND PRAXIS_DIR set.
-{ [ "${DSTOIC_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+{ [ "${EXPERIMENTAL_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
 
 # Read hook input; bail on Stop-loop continuation to avoid re-triggering.
 input=$(cat)

@@ -1,5 +1,5 @@
 {
-  "description": "dstoic plugin hooks for session capture and notifications",
+  "description": "dstoic plugin hooks: praxis-dir guard, tmux notifications, output dumps",
   "hooks": {
     "SessionStart": [
       {
@@ -14,31 +14,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh SessionStart",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SessionStart"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/list-context-sync.sh",
-            "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh SessionStart",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh UserPromptSubmit"
           }
         ]
       }
@@ -51,15 +26,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreToolUse"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreToolUse",
-            "timeout": 5
           }
         ]
       }
@@ -72,32 +38,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh PermissionRequest",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PermissionRequest"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PostToolUse"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh Notification"
           }
         ]
       }
@@ -114,42 +54,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/recent-notes.sh",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh Stop"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SubagentStop"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreCompact"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreCompact",
-            "timeout": 5
           }
         ]
       }
@@ -162,10 +66,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh SessionEnd",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SessionEnd"
           }
         ]
       }
