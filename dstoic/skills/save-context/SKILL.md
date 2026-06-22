@@ -60,7 +60,7 @@ From conversation (last 15-20 messages):
 
 ### Phase 3: Write & Report
 
-Write CONTEXT file using template, then upsert INDEX.md via `scripts/upsert-index.sh`.
+Write CONTEXT file using template.
 
 **Stream naming**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
 
@@ -72,4 +72,4 @@ Bash: mkdir -p done && mv CONTEXT-{stream}-llm.md done/
 ```
 Report: `"📦 Archived to done/ (status: {status})"`
 
-See `reference.md` for CONTEXT file template, quality self-check, status mapping, done/ archival rules, and INDEX.md upsert logic.
+See `reference.md` for CONTEXT file template, quality self-check, and done/ archival rules.

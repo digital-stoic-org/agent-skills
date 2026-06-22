@@ -12,7 +12,7 @@
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, and meta-prompt (RELIANCE recursive ledger)",
-      "version": "0.39.0",
+      "version": "0.40.1",
       "author": {
         "name": "dstoic"
       },
