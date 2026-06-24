@@ -166,6 +166,10 @@ handle_SessionStart() {
   # Start new session capture (orphan recovery handled by daily batch script)
   local permission_mode=$(echo "$input" | jq -r '.permission_mode // "default"')
   local transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
+  # Model identity is carried in the SessionStart payload (per Claude Code hook
+  # docs); it is NOT available in Stop/PostToolUse. Capture it once here so
+  # finalize can populate the per-session model axis (previously always "unknown").
+  local model=$(echo "$input" | jq -r '.model // "unknown"')
 
   # Create event JSON
   local event_json=$(jq -c -n \
@@ -176,6 +180,7 @@ handle_SessionStart() {
     --arg perm "$permission_mode" \
     --arg transcript "$transcript_path" \
     --arg project "$PROJECT_NAME" \
+    --arg model "$model" \
     '{
       event: $event,
       timestamp: $ts,
@@ -184,7 +189,8 @@ handle_SessionStart() {
         cwd: $cwd,
         permission_mode: $perm,
         transcript_path: $transcript,
-        project: $project
+        project: $project,
+        model: $model
       }
     }')
 
@@ -531,17 +537,37 @@ finalize_session() {
     local final_file="$SESSIONS_DIR/${session_id}.yaml"
   fi
 
-  # --- Generate YAML header and combine with JSONL body ---
-  {
-    generate_yaml_header "$session_id" "$branch" "$files_changed" "$commits" "$status" "$recovery_note"
-    cat "$staging_file"
-  } > "$final_file"
+  # --- Generate YAML header + JSONL body ATOMICALLY ---
+  # Write to a temp file first; only promote (and delete staging) once the write
+  # is verified non-empty. NEVER rm staging on failure — a finalize error must
+  # leave staging intact for re-promotion by the daily orphan batch, and log to
+  # recovery.log, instead of silently dropping the session (historical bug).
+  local tmp_file="${final_file}.tmp.$$"
+  if ! {
+        generate_yaml_header "$session_id" "$branch" "$files_changed" "$commits" "$status" "$recovery_note"
+        cat "$staging_file"
+      } > "$tmp_file" 2>>"$LOGS_DIR/recovery.log"; then
+    rm -f "$tmp_file"
+    echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] FINALIZE-FAIL (write): $session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+    return 1
+  fi
 
-  # --- Delete staging file ---
+  # Guard: a valid finalized file must carry the YAML header AND the event body.
+  if [ ! -s "$tmp_file" ] || ! head -n1 "$tmp_file" | grep -q '^---$'; then
+    rm -f "$tmp_file"
+    echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] FINALIZE-FAIL (empty/invalid): $session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+    return 1
+  fi
+
+  # Promote atomically, then (and only then) drop staging.
+  if ! mv -f "$tmp_file" "$final_file"; then
+    rm -f "$tmp_file"
+    echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] FINALIZE-FAIL (promote): $session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+    return 1
+  fi
+
+  # --- Delete staging file (write verified, promotion succeeded) ---
   rm -f "$staging_file"
-
-  # --- Log finalization (commented out - use recovery.log for critical issues only) ---
-  # echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] Finalized: $session_id (status: $status, events: $total_events)" >> "$LOGS_DIR/capture.log"
 }
 
 # ==============================================================================

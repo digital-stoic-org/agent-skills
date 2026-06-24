@@ -72,13 +72,33 @@ for project_staging_dir in "$RETRO_ROOT"/*/sessions/.staging; do
             final_file="$project_sessions_dir/${orphan_session_id}.yaml"
         fi
 
-        # Generate YAML header and combine with JSONL body
-        {
-            generate_yaml_header "$orphan_session_id" "$branch" "$files_changed" "$commits" "incomplete" "Auto-recovered by daily batch on $(date -u +"%Y-%m-%d %H:%M:%S")"
-            cat "$staging_file"
-        } > "$final_file"
+        # Generate YAML header + JSONL body ATOMICALLY.
+        # Write to a temp file, verify it is non-empty and carries the YAML
+        # header, then promote and delete staging. NEVER rm staging on failure —
+        # leave it for the next run and log to recovery.log (no silent drops).
+        tmp_file="${final_file}.tmp.$$"
+        if ! {
+                generate_yaml_header "$orphan_session_id" "$branch" "$files_changed" "$commits" "incomplete" "Auto-recovered by daily batch on $(date -u +"%Y-%m-%d %H:%M:%S")"
+                cat "$staging_file"
+              } > "$tmp_file" 2>>"$LOGS_DIR/recovery.log"; then
+            rm -f "$tmp_file"
+            echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] RECOVERY-FAIL (write): $orphan_session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+            continue
+        fi
 
-        # Delete staging file
+        if [ ! -s "$tmp_file" ] || ! head -n1 "$tmp_file" | grep -q '^---$'; then
+            rm -f "$tmp_file"
+            echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] RECOVERY-FAIL (empty/invalid): $orphan_session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+            continue
+        fi
+
+        if ! mv -f "$tmp_file" "$final_file"; then
+            rm -f "$tmp_file"
+            echo "[$(date -u +"%Y-%m-%d %H:%M:%S")] RECOVERY-FAIL (promote): $orphan_session_id — staging kept at $staging_file" >> "$LOGS_DIR/recovery.log"
+            continue
+        fi
+
+        # Delete staging file (write verified, promotion succeeded)
         rm -f "$staging_file"
 
         orphan_count=$((orphan_count + 1))

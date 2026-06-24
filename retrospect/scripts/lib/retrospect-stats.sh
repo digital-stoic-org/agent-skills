@@ -53,8 +53,14 @@ compute_session_stats() {
     STATS_DURATION_SECONDS=$((end_epoch - start_epoch))
   fi
 
-  # Detect model from first Stop event (if available)
-  STATS_MODEL=$(grep '"event":"Stop"' "$staging_file" | head -n1 | jq -r '.data.model // "unknown"' || echo "unknown")
+  # Detect model from the SessionStart event (model identity is carried in the
+  # SessionStart hook payload, not Stop/PostToolUse). Fall back to a legacy Stop
+  # lookup for archives captured before this fix, then "unknown".
+  STATS_MODEL=$(grep '"event":"SessionStart"' "$staging_file" | head -n1 | jq -r '.data.model // empty' 2>/dev/null)
+  if [ -z "$STATS_MODEL" ]; then
+    STATS_MODEL=$(grep '"event":"Stop"' "$staging_file" | head -n1 | jq -r '.data.model // empty' 2>/dev/null)
+  fi
+  [ -z "$STATS_MODEL" ] && STATS_MODEL="unknown"
 
   return 0
 }

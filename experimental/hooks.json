@@ -1,14 +1,10 @@
 {
-  "description": "experimental plugin hooks (staged, gated OFF by default): retrospect capture, list-context sync, session pin, recent-notes index",
+  "description": "experimental plugin hooks (staged, gated OFF by default): list-context sync, session pin, recent-notes index. (retrospect capture moved to the dstoic plugin.)",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "",
         "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SessionStart"
-          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/list-context-sync.sh",
@@ -22,62 +18,14 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh UserPromptSubmit"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreToolUse"
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreToolUse",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PermissionRequest"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PostToolUse"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh Notification"
           }
         ]
       }
@@ -89,21 +37,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/recent-notes.sh",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh Stop"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SubagentStop"
           }
         ]
       }
@@ -114,23 +47,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh PreCompact"
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-pin.sh PreCompact",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/retrospect-capture.sh SessionEnd"
           }
         ]
       }
