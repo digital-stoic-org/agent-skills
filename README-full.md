@@ -433,7 +433,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 93 skills across 14 plugins, 2 agents.** See [README.md](README.md) for the plugin table with per-plugin skill counts and versions.
+> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 105 skills across 14 plugins, 2 agents** — but only ~12 run daily; the rest are parachutes or an archive of exploration. See [README.md](README.md) for the plugin table with per-plugin skill counts.
 
 ---
 
@@ -447,15 +447,18 @@ flowchart LR
 
 ---
 
-## 🪝 Hooks (5)
+## 🪝 Hooks (4 live + experimental staging)
+
+**Live** (dstoic, wired in `hooks.json`):
 
 | Hook | Purpose |
 |------|---------|
 | `notify-tmux.sh` | 🖥️ Visual feedback in tmux status bar |
-| `retrospect-capture.sh` | 📝 Auto-log session events for retrospective analysis |
 | `dump-output.sh` | 📤 Debug artifacts to `.dump/` directory |
-| `list-context-sync.sh` | 🔄 Context file sync on session start |
-| `session-pin.sh` | 📌 Session pin persistence across compaction |
+| `retrospect-capture.sh` | 📝 Auto-log session events (capture live; consume under review) |
+| `check-praxis-dir.sh` | 📂 Verify `$PRAXIS_DIR` is set on session start |
+
+**Experimental** (staging in `experimental/hooks/`, not wired by default): `list-context-sync.sh`, `recent-notes.sh`, `session-pin.sh`, and `hack-dummy.sh` — a **disarmed educational PoC** (triple-gated, `exit 0` by default) that demonstrates how a SessionStart hook could run arbitrary code, to motivate hook hardening. It reads no secrets and never enables itself.
 
 Configure in `hooks.json`. See [hooks/README.md](dstoic/hooks/README.md) for details.
 

@@ -19,6 +19,50 @@ It's not about making AI do more. It's about **thinking better together**.
 
 ---
 
+## 🍂 What months of praxis taught us to drop
+
+The honest story of this toolkit isn't a feature list — it's a subtraction.
+
+A year ago, getting structured, drift-free, well-sequenced work out of an AI took
+heavy scaffolding: a 5-phase workflow, 105 skills, a 9-skill gate system to force
+structure and stop the model running off. Then **the models got dramatically
+better at decision-making and self-planning.** Most of that scaffold was
+compensating for limits that no longer exist — so months of real practice wore it
+down to its handle. What survived isn't a smaller version of the same thing. It's
+what stays **irreducibly human** once the model can plan for itself: **persisting
+intent, guiding at the right moments, and challenging the model when it's too
+confident.**
+
+```mermaid
+flowchart LR
+  A["🏗️ BUILT (early praxis)<br/>5 phases · 105 skills<br/>heavy scaffold to force structure"]
+  M["🚀 MODELS IMPROVED<br/>decision-making + self-planning<br/>scaffold → dead weight"]
+  C["🍂 SHED (now)<br/>persist · guide · challenge<br/>what stays irreducibly human"]
+  A --> M --> C
+  C -.->|"the arc IS the praxis"| A
+  classDef built fill:#FFD700,stroke:#333,color:#000
+  classDef mod fill:#B3D9FF,stroke:#333,color:#000
+  classDef shed fill:#90EE90,stroke:#333,color:#000
+  class A built
+  class M mod
+  class C shed
+```
+
+This is the [toothbrush principle](#-the-toothbrush-principle) turned on its owner:
+even *my* toolkit wasn't precious. Practice — and a better model — told me which
+parts were real. The **beliefs** below are window-independent and unchanged. The
+**principles** survive as stances. What changed is the *scaffolding around them* —
+and that's the part worth being honest about, not hiding.
+
+> The 5-phase model (Frame → Think → Build → Debug → Learn) is no longer a
+> lifecycle you march through — it's a set of moves you reach for. A model that
+> self-plans doesn't need the phases enforced. The structured-build layer
+> (formerly a 9-skill gate suite) is openly **under revamp**: the gate *instinct*
+> survives as light human checkpoints at the big boundaries, not section-by-section
+> ceremony.
+
+---
+
 ## 🏛️ Taxonomy: Beliefs → Principles → Practices → Observables
 
 Four layers connect conviction to measurement. Beliefs justify principles; principles drive practices; practices produce observable properties you can benchmark.
@@ -44,11 +88,11 @@ graph TD
 
     subgraph Pr["🔧 Practices (How)"]
         Pr1["Cynefin routing,<br/>brainstorm, investigate"]
-        Pr2["Gate pattern,<br/>micro-commits, OpenSpec"]
-        Pr3["Challenge, devil's advocate,<br/>retrospect-collab"]
+        Pr2["Light checkpoints at<br/>big boundaries, micro-commits"]
+        Pr3["Challenge, devil's<br/>advocate agent"]
         Pr4["Boulder→Pebbles,<br/>Garage/Scale/Maintenance"]
         Pr5["save/load-context,<br/>thinking/, memory"]
-        Pr6["retrospect-domain,<br/>learnings DB"]
+        Pr6["save/load-context,<br/>troubleshoot learnings"]
         Pr7["3-layer docs, RTK,<br/>scratch, cowork:switch"]
     end
 
@@ -127,12 +171,14 @@ The pattern: `AI builds section → human reviews at gate → git commit → nex
 
 | Scale | Approach | Example |
 |-------|----------|---------|
-| 🪨 **Boulder** | Full OpenSpec workflow (plan → develop → gate → test → sync) | New auth system, database migration |
-| 🪶 **Pebble** | Just code it | Fix a typo, add a log line |
+| 🪨 **Boulder** | Let the model plan, then gate at a few big boundaries (not every section) | New auth system, database migration |
+| 🪶 **Pebble** | Just let the model do it | Fix a typo, add a log line |
 
 This isn't a binary — it's **iterative zoom**. Like Epics → User Stories in agile roadmapping: boulders break into pebbles over time. You start at the boulder level to see the whole landscape, then zoom into pebbles for execution. And you can zoom back out when you need to reassess direction.
 
-`/frame-problem` helps you gauge the scale. `/openspec-plan` breaks boulders into gated sections (the pebbles).
+`/frame-problem` helps you gauge the scale. For a boulder, you don't enforce a
+section-by-section workflow anymore — the model sequences the work and you place
+human checkpoints where the cost of being wrong is highest.
 
 ### 💾 P5. Persist across sessions
 
@@ -140,9 +186,16 @@ This isn't a binary — it's **iterative zoom**. Like Epics → User Stories in 
 
 ### 🪞 P6. Compound learnings
 
-*(from B4 — re-examine, don't fossilize)* — Every session generates signal. `/retrospect-domain` extracts what you learned (WHAT/WHY). `/retrospect-collab` analyzes how you worked (HOW). `/troubleshoot` saves debugging patterns to a learnings database that gets checked first next time.
+*(from B4 — re-examine, don't fossilize)* — Every session generates signal. The
+practiced compounding is **human-in-the-loop, not autonomous**: `/save-context`
+and `/load-context` carry intent forward, and `/troubleshoot` saves debugging
+patterns to a learnings file that gets checked first next time. Session events are
+auto-captured (the `retrospect-capture` hook), but the *consume* loop that would
+feed them back automatically is still under review — so the honest version is
+**capture live, consume by hand**, not a self-closing learnings DB.
 
-The goal: **compound learning across sessions**, not just within them.
+The goal: **compound learning across sessions**, not just within them — kept by a
+human who decides what's worth carrying, not a background process that claims to.
 
 ### 🎚️ P7. Fit to cognitive capacity
 
@@ -182,6 +235,37 @@ This toolkit uses three layers of documentation, each optimized for its reader:
 | 🤖 `SKILL.md` | LLM | Token-optimized — minimal prose, maximum directive density | Internal to each skill |
 
 **Rule:** Respect the reader's attention. Don't make them scroll through 500 lines to find the one thing they need.
+
+### 🧠 …and a legible substrate, not just legible docs (emerging)
+
+The same logic is starting to extend past the docs to the **knowledge layer
+underneath** them. The bet — still being worked out, framed honestly as a
+*second brain in progress* — is that a single repo of plain `.md` (notes,
+project state, thinking artifacts), hand-curated with deliberately **no
+vector/semantic-DB machinery**, beats an indexed store. You can read it, diff it,
+grep it, and restructure it by hand, and it never rots behind an index.
+
+It's the same shedding thesis applied to memory. The workflow scaffold shed
+because the model can self-plan; the **storage scaffold** sheds because models got
+good enough to **navigate flat files directly** — you don't index what the model
+can just read. The emerging lesson: **better models reward simpler, more legible
+substrates — not more machinery.**
+
+```mermaid
+flowchart LR
+  subgraph SHED["one shedding thesis, two domains"]
+    W["⚙️ Workflow scaffold<br/>5 phases · gate suite<br/>→ shed: model self-plans"]
+    M["🧠 Storage scaffold<br/>vector DB · semantic search<br/>→ shed: model reads flat .md"]
+  end
+  W & M --> T["💡 Better models reward<br/>simpler, legible substrates<br/>— not more machinery"]
+  classDef shed fill:#FFD700,stroke:#333,color:#000
+  classDef thesis fill:#90EE90,stroke:#333,color:#000
+  class W,M shed
+  class T thesis
+```
+
+*Status: a live experiment, not a settled principle — surfaced here because it's
+the same lesson the rest of this page is about.*
 
 ---
 

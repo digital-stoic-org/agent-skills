@@ -4,6 +4,16 @@
 
 ⚠️ Live experiment. My cognitive toolkit — fork it, adapt it to *your* brain.
 
+> **This is v2, and it's smaller than v1.** I built 105 skills, a 5-phase
+> workflow, and a 9-skill gate system to force structure out of an AI that
+> couldn't yet plan its own work. Then the models got dramatically better at
+> deciding and self-planning — and most of that scaffold became dead weight.
+> Months of real practice wore it down to its handle. What survived isn't a
+> lighter version of the same thing; it's what stays **irreducibly human** once
+> the model can plan for itself: **persist** intent, **guide** at the big
+> boundaries, **challenge** the confident answer. The arc — build it, practice
+> it, shed it — *is* the praxis.
+
 ---
 
 ## 🎯 In One Sentence
@@ -24,34 +34,38 @@ Deeper why → [PHILOSOPHY.md](PHILOSOPHY.md)
 
 ## 🧭 The Flow
 
+The practice no longer fans out into phases. As the model got better at planning
+its own work, what's left for the human collapsed to **three things the model
+doesn't do for itself**:
+
 ```mermaid
-flowchart LR
-    F["🧭 Frame"] --> T["🧠 Think"]
-    T --> B["⚙️ Build"]
-    B --> D["🔧 Debug"]
-    D --> L["🪞 Learn"]
-    L -.->|"compounding loop"| F
-
-    classDef frame fill:#E8EAF6,stroke:#3F51B5,color:#000
-    classDef think fill:#E1BEE7,stroke:#7B1FA2,color:#000
-    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
-    classDef debug fill:#FFE0B2,stroke:#F57C00,color:#000
-    classDef learn fill:#BBDEFB,stroke:#1976D2,color:#000
-
-    class F frame
-    class T think
-    class B build
-    class D debug
-    class L learn
+flowchart TD
+  M["🚀 Model self-plans<br/>(handles what scaffold used to force)"]
+  subgraph CORE["what stays the human's job"]
+    P1["💾 PERSIST<br/>carry intent across sessions"]
+    P2["🧭 GUIDE<br/>propose, don't act ·<br/>gate at the big boundaries"]
+    P3["😈 CHALLENGE<br/>hold the tension ·<br/>counter the confident model"]
+  end
+  M --> CORE
+  CORE -->|"daily spine still runs underneath"| S["save/load-context · capture · commit · edit-toolkit"]
+  classDef mod fill:#B3D9FF,stroke:#333,color:#000
+  classDef pillar fill:#90EE90,stroke:#333,color:#000
+  classDef spine fill:#E0E0E0,stroke:#333,color:#000
+  class M mod
+  class P1,P2,P3 pillar
+  class S spine
 ```
 
-| Mode | What | Hero Skills |
+| Pillar | What the human does | Live skills |
 |------|------|-------------|
-| 🧭 **Frame** | Triangulate the problem (3 tests) → route to the right skill chain | `/frame-problem` (Cynefin triangulation), `/pick-model` |
-| 🧠 **Think** | Divergent ideation, deep analysis, adversarial review, cross-project bridging | `/brainstorm` (SCAMPER), `/investigate`, `/probe`, `/challenge`, `/bridge` |
-| ⚙️ **Build** | Plan → develop → gate → test → sync | `/openspec-*` suite (9 skills, human-gated sections) |
-| 🔧 **Debug** | Search-first troubleshooting with learnings DB | `/troubleshoot` (Wolf Fence, 5 Whys, OODA), `/experiment` |
-| 🪞 **Learn** | Extract patterns, persist sessions | `/retrospect-*`, `/save-context`, `/load-context` |
+| 💾 **Persist** | Carry the single source of *what we're doing and why* across resets; the model re-derives its plan from it | `/save-context`, `/load-context` |
+| 🧭 **Guide** | Propose-don't-act + fewer, better-placed checkpoints at the big boundaries — not every section | `/commit-repo` gates, `/pick-model` |
+| 😈 **Challenge** | Hold the tension against a confident, agreeable model — proportional, cheap-first | devil's-advocate agent (auto-triggered), `/challenge` |
+
+> You still **frame, think, build, debug** as needed — but they're *moves you
+> reach for*, not a lifecycle you march through. A model that self-plans doesn't
+> need the phases enforced. (`/brainstorm`, `/troubleshoot`, `/frame-problem`
+> are still here when a problem is genuinely hard — see the [full catalog](README-full.md).)
 
 Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs), and domain plugins (GTD, coaching, business analysis, philosopher personas).
 
@@ -89,10 +103,10 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **94 skills** across 14 plugins and 5 workflow phases + utilities
+- **~105 skills** across 14 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
 - **14 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy
 - **2 agents**: devil's advocate, context summarizer
-- **7 hooks**: notifications, session capture, debug dumps, context sync, session pins
+- **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
 - **3 execution modes**: garage (default), scale, maintenance
 - **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
 - **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](PRACTICE.md#-benchmark-results-april-2026) · `/benchmark-praxis` skill
@@ -101,22 +115,22 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 🏪 Plugins
 
-| Plugin | Skills | Description | Status |
-|--------|--------|-------------|--------|
-| [dstoic](dstoic/) | 7 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, 7 hooks | ✅ v0.38.0 |
-| [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark | ✅ v0.37.0 |
-| [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync | ✅ v0.37.0 |
-| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency | ✅ v0.37.1 |
-| [content](content/) | 5 | Content transformation: anonymize, infographize, literatize, bridge, RISEN prompts | ✅ v0.37.0 |
-| [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import | ✅ v0.37.0 |
-| [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports | ✅ v0.38.0 |
-| [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization | ✅ v0.38.0 |
-| [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create | ✅ v0.10.0 |
-| [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas | ✅ v0.8.0 |
-| [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols | ✅ v0.3.0 |
-| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults | ✅ v0.3.3 |
-| [cowork](cowork/) | 4 | Multi-project context management: switch projects, save/load sessions, ref/wip sync | ✅ v0.4.0 |
-| [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building | ✅ v0.1.1 |
+| Plugin | Skills | Description |
+|--------|--------|-------------|
+| [dstoic](dstoic/) | 7 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, hooks |
+| [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark |
+| [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync |
+| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |
+| [content](content/) | 5 | Content transformation: anonymize, infographize, literatize, bridge, RISEN prompts |
+| [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import |
+| [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports |
+| [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization |
+| [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create |
+| [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas |
+| [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols |
+| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults |
+| [cowork](cowork/) | 4 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
+| [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
 
 ## 📦 Install
 
