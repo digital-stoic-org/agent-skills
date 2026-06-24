@@ -47,16 +47,38 @@ if [ -z "$last_output" ] || [ "$last_output" = "null" ]; then
   exit 0
 fi
 
-# Determine output directory: centralized thinking/dumps/ or fallback to .dump/
-if [ -n "$PRAXIS_DIR" ] && [ -d "$PRAXIS_DIR/thinking" ]; then
-  project_name=$(basename "$CLAUDE_PROJECT_DIR")
-  output_dir="$PRAXIS_DIR/thinking/dumps/$project_name"
+# Strip fenced ```mermaid ... ``` blocks — diagram source is noise in dumps.
+last_output=$(printf '%s' "$last_output" | awk '
+  /^[[:space:]]*```mermaid[[:space:]]*$/ { skip=1; next }
+  skip && /^[[:space:]]*```[[:space:]]*$/ { skip=0; next }
+  !skip')
+
+# Skip empty/null AND trivial outputs (e.g. "Done.", short confirmations),
+# measured AFTER mermaid stripping. Floor avoids flooding dumps/ with
+# near-empty files; tune via DUMP_MIN_BYTES.
+min_bytes="${DUMP_MIN_BYTES:-500}"
+out_len=$(printf '%s' "$last_output" | wc -c)
+if [ -z "$last_output" ] || [ "$out_len" -lt "$min_bytes" ]; then
+  exit 0
+fi
+
+# Flat single-stream dump dir at $PRAXIS_DIR/.dumps/ (fallback: .dump/).
+# Flat (no per-project subdirs) so parallel sessions interleave by time in
+# ONE place — project + topic live in the filename, no folder hopping.
+project_name=$(basename "$CLAUDE_PROJECT_DIR")
+if [ -n "$PRAXIS_DIR" ]; then
+  output_dir="$PRAXIS_DIR/.dumps"
 else
   output_dir="$CLAUDE_PROJECT_DIR/.dump"
 fi
 mkdir -p "$output_dir"
+
+# Topic slug from first heading: scannable filename, sorts by time.
+# Format: TIMESTAMP-project-slug.md
+slug=$(printf '%s' "$last_output" | grep -m1 '^#' | sed -E 's/^#+[[:space:]]*//; s/[^a-zA-Z0-9]+/-/g; s/^-+|-+$//g' | tr '[:upper:]' '[:lower:]' | cut -c1-40)
+[ -z "$slug" ] && slug="untitled"
 timestamp=$(date +%Y%m%d_%H%M%S)
-output_file="$output_dir/${timestamp}.md"
+output_file="$output_dir/${timestamp}-${project_name}-${slug}.md"
 
 echo "$last_output" > "$output_file"
 
