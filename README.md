@@ -2,8 +2,6 @@
 
 > **Praxis** (πρᾶξις) = practice. Knowledge enacted, not just known.
 
-⚠️ Live experiment. My cognitive toolkit — fork it, adapt it to *your* brain.
-
 > **This is v2, and it's smaller than v1.** I built 105 skills, a 5-phase
 > workflow, and a 9-skill gate system to force structure out of an AI that
 > couldn't yet plan its own work. Then the models got dramatically better at
@@ -19,6 +17,8 @@
 ## 🎯 In One Sentence
 
 A cognitive discipline for human-AI collaboration built on **mutual sharpening** — the human sets intent and directs, the AI challenges and reveals blind spots, and both learn from the loop.
+
+⚠️ Live experiment. My cognitive toolkit — fork it, adapt it to *your* brain.
 
 ---
 
