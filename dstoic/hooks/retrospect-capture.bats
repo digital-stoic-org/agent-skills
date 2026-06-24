@@ -20,10 +20,9 @@ setup() {
   git -C "$PROJECT_DIR" init -q
   export CLAUDE_PROJECT_DIR="$PROJECT_DIR"
 
-  # Point the archive at a throwaway root; opt the portability gate in.
+  # Point the archive at a throwaway root; satisfy the PRAXIS_DIR gate.
   export RETRO_ROOT="$PROJECT_DIR/.retro"
   export PRAXIS_DIR="$PROJECT_DIR"
-  export EXPERIMENTAL_HOOKS_ENABLED=1
 
   SID="bats-$$-${RANDOM}"
   PROJ_NAME="$(basename "$PROJECT_DIR")"

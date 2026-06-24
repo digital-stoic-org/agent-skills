@@ -11,9 +11,9 @@ set -euo pipefail
 # Output: Appends to .retro/sessions/.staging/{session-id}.jsonl
 # ==============================================================================
 
-# Portability gate: silently no-op unless dstoic telemetry is opted-in.
-# Requires BOTH: EXPERIMENTAL_HOOKS_ENABLED=1 AND PRAXIS_DIR set.
-{ [ "${EXPERIMENTAL_HOOKS_ENABLED:-0}" = "1" ] && [ -n "${PRAXIS_DIR:-}" ]; } || exit 0
+# Portability gate: silently no-op outside a praxis environment, so the dstoic
+# plugin stays inert for anyone who installs it without PRAXIS_DIR set.
+[ -n "${PRAXIS_DIR:-}" ] || exit 0
 
 # Hard deps — skip silently if missing (jq is required for JSON parsing)
 command -v jq >/dev/null 2>&1 || exit 0

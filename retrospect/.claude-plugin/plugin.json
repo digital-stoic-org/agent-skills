@@ -1,7 +1,7 @@
 {
   "name": "retrospect",
   "description": "Retrospective analysis: session reports, collaborative retrospectives, and domain retrospectives.",
-  "version": "0.38.0",
+  "version": "0.39.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

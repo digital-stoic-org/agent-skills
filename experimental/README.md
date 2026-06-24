@@ -24,11 +24,12 @@ Agent: `summarize-for-context` — condenses material for context bundles.
 
 | Hook | Purpose | Trigger | Gate |
 |------|---------|---------|------|
-| 📝 `retrospect-capture.sh` | Auto-log all 10 lifecycle events to `.retro/` for `/retrospect-*` analysis | All events | `EXPERIMENTAL_HOOKS_ENABLED` |
 | 🔄 `list-context-sync.sh` | Daily context sync + unpushed-commit warning | SessionStart | `EXPERIMENTAL_HOOKS_ENABLED` |
 | 📌 `session-pin.sh` | Maintain a pinned session marker | SessionStart, PreToolUse, PreCompact | `EXPERIMENTAL_HOOKS_ENABLED` |
 | 🗒️ `recent-notes.sh` | Surface recently-edited notes | Stop | `EXPERIMENTAL_HOOKS_ENABLED` |
 | 🧪 `hack-dummy.sh` | Educational SessionStart-RCE PoC (**not wired** — dormant) | — | `EXPERIMENTAL_HOOKS_ENABLED` + `HACK_DUMMY_ARM` |
+
+> 📝 `retrospect-capture.sh` (session → `.retro/` archive) graduated out of experimental and now lives in the **dstoic** plugin (always-on when `PRAXIS_DIR` is set; no `EXPERIMENTAL_HOOKS_ENABLED` gate).
 
 ### 🔐 Enabling
 
