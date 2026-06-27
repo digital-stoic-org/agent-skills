@@ -28,6 +28,7 @@ flowchart LR
 |-------|---------|
 | `/commit-repo` | 🗂️ Streamlined git commit with single human gate |
 | `/pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
+| `/pick-workflow` | 🧩 Design a skill/agent's execution topology (linear/sub-agents/Workflow); calls `/pick-model` per step |
 | `/save-context` | 💾 Save session state to CONTEXT-llm.md |
 | `/load-context` | 📥 Resume session from CONTEXT-llm.md |
 | `/scratch` | 🗒️ Session scratch pad for parking side-thoughts |

@@ -16,6 +16,9 @@ current model right, and if not, is switching worth the cache cost.
 - 🎚️ **Effort change, same model** → cache SURVIVES (cheap). Recommend freely.
 - 🔀 **Model switch** → cache BREAKS, context re-read uncached (costly). Must beat the switch penalty.
 
+> A **third lever — parallelism** (linear vs fan-out, sub-agents vs Workflow) — is out of scope here.
+> To design a *skill/agent's* per-step execution topology (and have it call this skill per step), use `/pick-workflow`.
+
 Recognize-then-route: hit the right tier directly; reserve top-tier (Opus `high` / Fable) for ambiguous/big/can't-classify. Effort = output-spend, not input. See `reference.md` for principles, routing detail, escalators, examples.
 
 ## Workflow
