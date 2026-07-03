@@ -54,9 +54,12 @@ If `$PRAXIS_DIR` is unset or empty: skip silently — no error, no warning.
 From conversation (last 15-20 messages):
 1. **Next** — infer 3 tasks from OpenSpec/conversation (IMPORTANT: use heading "Next" — Claude Code compaction grep-matches `next`/`todo`/`pending`/`remaining` keywords for survival priority)
 2. **Session** — progression, decisions, thinking, unexpected (780 tokens max)
-3. **Hot Files** — max 10 discussed/edited
-4. **Focus & Goal** — 1-2 sentence focus + goal
-5. **Thinking Artifacts** (if Phase 1b found any) — list paths only, no content
+3. **Learnings** — non-obvious facts/gotchas discovered this session (bugs, constraints, surprises worth NOT rediscovering). Skip if none. Highest-value survival content.
+4. **Hot Files** — max 10 discussed/edited. Tag survival priority: `[P1]` load-bearing (goal-critical), `[P2]` supporting. `--full` load keeps all; lean load keeps P1.
+5. **Decisions** — within Session, tag key ones `[P1]`/`[P2]` for the same lean/full cut line.
+6. **Focus & Goal** — 1-2 sentence focus + goal
+7. **Drop** — 1-line note of noise NOT to re-chase on reload (resolved detours, dead ends, verbose output). Skip if none.
+8. **Thinking Artifacts** (if Phase 1b found any) — list paths only, no content
 
 ### Phase 3: Write & Report
 

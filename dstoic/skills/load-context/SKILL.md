@@ -47,7 +47,8 @@ If multiple streams and no selection → AskUserQuestion with options (mark done
 
 ### Phase 2: Expand Resources (if --full)
 
-Parallel Read: OpenSpec project/proposal/tasks.md, top 3 hot files, manifest.yaml.
+Parallel Read: OpenSpec project/proposal/tasks.md, hot files, manifest.yaml.
+**Hot file selection**: `--full` reads all hot files; default (lean) reads `[P1]`-tagged only (untagged = P2 = lean-skip). Fallback if no tags present: top 3.
 **DO NOT restore tasks** — informational only.
 
 **Thinking Artifacts** (if `## Thinking Artifacts` section exists in CONTEXT file):

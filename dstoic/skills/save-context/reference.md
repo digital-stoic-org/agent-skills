@@ -29,15 +29,27 @@ type: {project type}
 progression:
   - {aggregated timeline steps}
 decisions:
-  - {key choice}: {rationale}
+  - {[P1|P2]} {key choice}: {rationale}
 thinking:
   - {reasoning, trade-offs, insights}
 unexpected:
   - {pivots, corrections, surprises}
 
+## Learnings
+
+{Optional — omit if none. Non-obvious facts/gotchas found this session, costly to rediscover.}
+
+- {bug / constraint / surprise}: {what to remember}
+
 ## Hot Files
 
-- {path}: {brief role}
+- {[P1|P2]} {path}: {brief role}
+
+## Drop
+
+{Optional — omit if none. Noise NOT to re-chase on reload.}
+
+- {resolved detour | dead end | verbose output to ignore}
 
 ## Thinking Artifacts
 
@@ -80,7 +92,15 @@ When status is `done` or `parked`:
 - Session section: 780 tokens max
 - Total: 1200-1500 tokens MAX
 - Hot Files: max 10 with brief roles
+- Learnings + Drop: ≤4 bullets each, omit when empty (don't pad)
 - Use YAML inline objects: `{done: 5, active: 2, pending: 3}`
+
+## Priority Tags (P1/P2)
+
+- `[P1]` = load-bearing (goal-critical); `[P2]` = supporting context
+- Applies to **Hot Files** and key **decisions**
+- `/load-context --full` keeps all; lean load keeps P1 only
+- Untagged = treated as P2
 
 ## Related
 

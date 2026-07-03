@@ -6,8 +6,10 @@
 |----------------|-------------|----------------|
 | Header fields (saved/stream/status/focus/goal) | Stream/Saved/Focus/Goal | — |
 | `## Session` | 💬 Session Context | `## Session Progression` |
+| `## Learnings` | 💡 Learnings | — |
 | `## Next Tasks` | ✅ NextTasks | `## NextTasks` |
 | `## Hot Files` | 📁 Hot Files | `## Files` |
+| `## Drop` | ⛔ Ignore (don't re-chase) | — |
 | `## Tasks` | 📋 Task Snapshot | — |
 | `## Project` | 🎯 Project Context | — |
 | `## Refs` | 📎 References | `## References` |
@@ -26,7 +28,9 @@ Stream/Saved/Focus/Goal (always show)
 📋 Task Snapshot (if tasks saved)
 ✅ NextTasks (always show top 3)
 💬 Session Context (always show)
-📁 Hot Files (always show)
+💡 Learnings (if section present)
+📁 Hot Files (always show; P1 first, dim P2 in lean)
+⛔ Ignore (if Drop section present — one line)
 🧪 Tests (if script found)
 🎯 Next Step (always show)
 ```
