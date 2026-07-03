@@ -5,13 +5,13 @@ description: Creates, modifies, and orchestrates Claude Code tools (skills, agen
 
 # Edit Tool — Unified Skill/Agent/Script Editor
 
-## Triage
+## Triage first — because the type decides everything downstream
 
-**CRITICAL**: Always triage first, then act.
+Pick the tool type *before* writing anything. The wrong type is expensive to unwind later (a skill that should have been a 0-token bash script pollutes every session; an agent that should have been a skill loses main-context access). Triaging first is what makes this skill worth more than "just write the file".
 
-1. **Analyze request** against decision tree
-2. **Explain decision** to user: `✅ [TYPE] because: pollution cost (~X tokens × Yfreq), context mode (main|fork), key factor`
-3. **Branch to guide** or provide direct guidance
+1. **Analyze request** against the decision tree
+2. **Explain the call** to the user so they can catch a bad fit early: `✅ [TYPE] because: pollution cost (~X tokens × Yfreq), context mode (main|fork), key factor`
+3. **Branch to the matching guide** or give direct guidance
 
 ```mermaid
 graph TD
@@ -54,6 +54,8 @@ graph TD
 
 **Default**: All skills are dual-invocable (both `/name` and model auto-invoke). `disable-model-invocation: true` is opt-out for rare edge cases.
 
+**When the verdict is "skill" and correctness matters more than speed** → this skill gets you a well-architected *draft*. To know whether that draft actually beats baseline, hand off to Anthropic's official **`skill-creator`** skill, which owns the empirical loop `edit-tool` deliberately does not: draft → test on real prompts → eval with/without the skill → improve → repeat, plus a script that auto-optimizes the description for triggering. Reach for it when the skill is non-trivial, will run many times, or you can't eyeball whether it works. `edit-tool` decides *what to build and how to structure it*; `skill-creator` proves *that it works*.
+
 ## Modifying Existing Tools
 
 1. Locate and read existing file (SKILL.md or agent .md)
@@ -81,27 +83,26 @@ graph TD
 
 **Frontmatter:** Skill core = `name` (lowercase-hyphens) + `description` (triggers, max 1024) + `context` (`main`|`fork`|`subagent`) + `model`. Agent core = `name` + `description` + `tools`/`model`. Full field tables in the type guides above.
 
-## MANDATORY Validation (CREATE only)
+## Sanity check before creating
 
-**STOP** — answer YES/NO before proceeding:
+These aren't gates to satisfy — they're the failure modes that make a new tool a net negative. Each one, and what goes wrong if you ignore it:
 
-| Question | Skill | Agent |
-|----------|-------|-------|
-| Q1: Pollution cost acceptable? (<500 tokens × freq for skill) | Required | N/A (isolated) |
-| Q2: SKILL.md <500 tokens (with reference.md for overflow)? | Required | N/A |
-| Q3: Specific capability, not a workflow bundle? | Required | Required |
-| Q3a: Requires multi-step AI reasoning with isolation? | N/A | Required (any YES → agent) |
+| Check | Why it matters — the failure it prevents |
+|-------|------------------------------------------|
+| **Pollution acceptable?** (skill: ~tokens × freq) | A skill's body loads on every trigger. Heavy + frequent = it crowds out the actual work every session, forever. |
+| **SKILL.md fits ~500 tokens?** (overflow → reference.md) | Past that, the always-loaded cost outweighs the value; progressive disclosure keeps the hot path lean. |
+| **One capability, not a workflow bundle?** (skill & agent) | Bundles violate single-responsibility — they under-trigger (description can't cover everything) and are impossible to eval. |
+| **Needs multi-step reasoning with isolation?** (→ agent) | If yes, a skill in main context will either pollute or bias the reasoning; that's the signal to make it an agent. |
 
-**Skill: ANY NO → STOP.** Recommend alternative (fork, agent, direct request).
-**Agent: ALL NO on Q3a → STOP.** Recommend skill or bash script instead.
+If a skill trips the first three, it usually wants a different shape — `context:fork`/`subagent`, an agent, or just a direct request. Say which, and why, rather than forcing the skill.
 
 ## Key Principles
 
-- **Preserve function**: MODIFY must not remove capabilities unless explicitly requested
-- **<500 tokens** ideal for SKILL.md; use progressive disclosure for overflow
-- **Single responsibility**: One focused purpose per tool
-- **Token-efficient**: Tables, bullets, Mermaid over prose
-- **Context-aware**: Main for quick tasks, fork for research, agent for deep exploration
+- **Preserve function**: an edit that silently drops a capability is a regression, not an improvement — enumerate outputs first, keep them unless the user asked to remove one
+- **~500 tokens** ideal for SKILL.md; past that the always-loaded cost starts to outweigh the value — push detail into a reference file
+- **Single responsibility**: one focused purpose per tool, so its description can actually describe it and it can be evaluated
+- **Token-efficient**: tables, bullets, Mermaid over prose — the context window is a shared budget
+- **Context-aware**: main when the tool needs conversation state, fork for parallel fan-out on a shared base, subagent/agent when isolation avoids pollution or bias
 
 ## Fork vs Subagent & Proactive Audit
 
@@ -112,8 +113,8 @@ graph TD
 
 | Operation | Guidance |
 |-----------|----------|
-| ✅ Read-only | Parallelize freely |
-| ⚠️ Writes (independent files) | Sequential OR Plan Mode first |
-| ❌ Destructive / >3 files | Plan Mode MANDATORY |
+| ✅ Read-only | Parallelize freely — no conflict possible |
+| ⚠️ Writes (independent files) | Sequential, or Plan Mode first — concurrent writes race |
+| ❌ Destructive / >3 files | Plan Mode first — the cost of a wrong parallel destructive op is unrecoverable |
 
 See `references/frameworks.md` for edge cases, conversion guide, and extended examples.

@@ -169,6 +169,20 @@ description: What it does and when to use it
 - Mention file types/keywords
 - Specific, not generic
 
+### The description is written for the model, not for a human
+
+The description is the *only* thing Claude sees when deciding whether to consult the skill — it is the entire triggering mechanism. Write it to be matched, not to read nicely.
+
+**Counteract undertriggering.** Claude's default failure mode is to *not* reach for a skill when it would help — it undertriggers far more than it overtriggers. So descriptions should lean slightly **pushy**: spell out the situations, including ones where the user won't name the skill or file type but clearly needs it.
+
+| Timid (undertriggers) | Pushy (triggers reliably) |
+|---|---|
+| "Builds a dashboard to display internal data." | "Builds a dashboard to display internal data. Use whenever the user mentions dashboards, data visualization, internal metrics, or wants to display any kind of company data — even if they don't say 'dashboard'." |
+
+**Know what won't trigger, no matter how good the description.** Claude only consults a skill for tasks it *can't* already handle in one step. A one-shot request like "read this PDF" won't trigger a skill even on a perfect keyword match, because Claude just does it. So aim the triggers at the *substantive, multi-step* cases where consulting the skill actually changes the outcome — don't burn description budget trying to catch trivial queries.
+
+*(Sources: Anthropic, ["how we use skills"](https://claude.com/blog/lessons-from-building-claude-code-how-we-use-skills); the official `skill-creator` skill, which also ships a script that auto-optimizes a description against ~20 should/shouldn't-trigger queries — reach for it when triggering accuracy really matters.)*
+
 ---
 
 See [Token Efficiency Techniques](#token-efficiency-techniques) below for detailed patterns (tables vs prose, inline examples, bullets, Mermaid).
@@ -208,6 +222,20 @@ Skills can read the dynamic context var **`${CLAUDE_EFFORT}`** (current level: `
 | Generic description | Specify what + when + file types |
 | Wrong tool type | Use triage decision framework |
 | Context overload (>1000 tokens) | Refactor to reference.md or change tool type |
+
+---
+
+## Gotchas — the highest-signal section of any skill
+
+Anthropic's own finding from shipping skills: *"The highest-signal content in any skill is the Gotchas section."* The reason is leverage — Claude already knows how to code and can read the codebase, so restating the obvious adds context without adding value. What moves the needle is the specific, non-obvious thing that trips Claude up: a field named `qty` not `quantity`, an API that 200s on failure, a step that must run twice. Those can't be guessed; they're *learned* from watching the skill fail.
+
+**When authoring a skill, budget for a Gotchas section and treat it as the payload, not an afterthought:**
+
+- **Seed it from real failures, not imagination.** Most good skills start as a few lines and *one* gotcha, then grow as Claude hits new edge cases. Don't try to write it all upfront — capture each surprise as it happens.
+- **Prefer the surprising over the sensible.** If a reader would guess it, cut it. Keep what would make them say "oh, I wouldn't have known that."
+- **Explain the mechanism, not just the rule.** "Batch size must be ≤100 — the API silently drops the rest past that, it doesn't error" beats "use batch size 100". The *why* lets Claude generalize to sibling cases.
+
+This is the counterpart to "don't state the obvious": a skill's value is concentrated in what Claude *wouldn't* do by default. (Source: Anthropic, ["how we use skills"](https://claude.com/blog/lessons-from-building-claude-code-how-we-use-skills).)
 
 ---
 
