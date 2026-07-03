@@ -12,13 +12,18 @@ Verified June 2026. Companion to SKILL.md.
 - **Best for**: deterministic, pattern-based, low-reasoning — convert, transcribe, format, extract, regex, typo, status query
 - **Limits**: ambiguity, multi-step reasoning, creative nuance
 
-### Sonnet 4.6
-- **$/M**: $3 in · $15 out
-- **Speed**: baseline
-- **Context**: 200K
-- **Effort**: `low | medium | high` (no `xhigh`/`max`)
-- **Best for**: plumbing (GTD, context, commit, library), single-file coding, bug fix, review, content, research summaries
-- **Limits**: deep multi-file refactor, highly nuanced strategy
+### Sonnet 5 (released 2026-06-30)
+- **$/M**: $3 in · $15 out ($2/$10 intro thru 2026-08-31)
+- **Speed**: baseline; Anthropic's "most agentic Sonnet yet"; Free/Pro default
+- **Context**: 1M
+- **Effort**: `low | medium | high | xhigh | max` — first Sonnet with `xhigh`/`max`. **Default `medium`** (`≈ Sonnet 5 @ high`)
+- **Best for**: plumbing (GTD, context, commit, library), single-file coding, bug fix, code review, content, research summaries, agentic tool use, **light multi-file** work
+- **Positioning**: "big Sonnet that occasionally reaches Opus range," NOT a mini-Opus. Ties/edges Opus on tool-augmented & knowledge work (HLE-w/tools 57.4 vs 57.9; GDPval 1618 vs 1615; Terminal-Bench 80.4 vs 74.6); Opus lead WIDENS as tasks deepen (SWE-bench Verified 85.2 vs 88.6 → Pro 63.2 vs 69.2) and on UNAIDED reasoning (HLE no-tools 43.2 vs 49.8)
+- **Limits / carve-outs**:
+  - **Judgment/strategy**: below Opus on trade-off-heavy, unaided reasoning → escalate.
+  - **Hard multi-file refactor** (deep repo): Opus edge grows → escalate.
+  - 🔒 **Security/audit**: deliberately crippled cyber capability (CyberGym 65%→53%, 0% working Firefox exploits) + MORE false refusals on legit security work (legitimacy 97.33%→91.55%). Anthropic itself recommends Opus for cybersecurity. **Never route security/audit to Sonnet 5.**
+  - 💸 **Cost inversion**: at `xhigh`/`max`, new tokenizer ≈ +30% tokens → can cost MORE than Opus. Don't crank Sonnet effort; switch to Opus instead.
 
 ### Opus 4.8
 - **$/M**: $5 in · $25 out · Fast Mode $10 · $50
@@ -72,9 +77,9 @@ switch_penalty_$ ≈ context_tokens × new_model_input_rate × (1 − 0.9 × cac
 | Task recognition | Model | Effort | Notes |
 |---|---|---|---|
 | **Chores** — convert, transcribe, format, extract, regex, typo, lookup, template fill | 🟢 Haiku 4.5 | n/a | Deterministic |
-| **Plumbing** — GTD, context save/load, commit, library wiring, serialization | 🟡 Sonnet 4.6 | `low`–`medium` | Standard workflows |
-| **Standard coding/content** — single-file fix, code review, blog/email, research summary, known-pattern API | 🟡 Sonnet 4.6 | `medium`–`high` | Moderate reasoning |
-| **Thinking** — strategy, fiscal, multi-file refactor (3+), architecture, security audit, cognitive skills, long-form (>2K words) | 🔴 Opus 4.8 | `high`, sweep `xhigh` | Trade-offs, nuance |
+| **Plumbing** — GTD, context save/load, commit, library wiring, serialization | 🟡 Sonnet 5 | `low`–`medium` | Standard workflows |
+| **Standard coding/content** — single-file fix, code review, blog/email, research summary, known-pattern API, agentic tool use, light multi-file | 🟡 Sonnet 5 | `medium`–`high` | Moderate reasoning; can absorb some ex-Opus work |
+| **Thinking** — strategy, fiscal, hard multi-file refactor (3+), architecture, **security/audit**, cognitive skills, long-form (>2K words), unaided reasoning | 🔴 Opus 4.8 | `high`, sweep `xhigh` | Trade-offs, nuance; security is a hard carve-out |
 | **Ambiguous / big / can't-classify** | 🔴 Opus 4.8 | `high` to frame & route | Drop tier once scope clears |
 | **Boulder** — multi-day, highly multi-step, sustained ambiguity, or >200K context | 🟣 Fable 5 | adaptive | Above-Opus; 1M window |
 
@@ -91,9 +96,9 @@ switch_penalty_$ ≈ context_tokens × new_model_input_rate × (1 − 0.9 × cac
 | Intended prompt | Current | Verdict |
 |---|---|---|
 | "fix typo in README" | Opus 4.8 high | ⬇️ Haiku (or if 70% ctx: 🎚️ drop to `low`, switch not worth re-cache) |
-| "refactor auth across 15 files" | Sonnet 4.6 high | ⬆️ Opus `high` (scope+stakes; worth it early-session) |
+| "refactor auth across 15 files" | Sonnet 5 high | ⬆️ Opus `high` (scope+stakes; worth it early-session) |
 | "save session context" | Opus 4.8 high | ⬇️ Sonnet `low` (plumbing) |
-| "design market-entry strategy" | Sonnet 4.6 high | 🔀 Opus `xhigh` (strategic, multi-framework) |
+| "design market-entry strategy" | Sonnet 5 high | 🔀 Opus `xhigh` (strategic, multi-framework) |
 | "deep reasoning step, one-off" | Opus 4.8 high | 🎚️ `xhigh` for this step — cache survives, no switch |
 | "audit + rewrite entire 400K-line repo" | Opus 4.8 | 🔀 Fable 5 (>200K context + long-horizon) |
 | "summarize this transcript" | Haiku 4.5 | ✅ Stay (chore, optimal) |
