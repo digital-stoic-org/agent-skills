@@ -117,7 +117,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 | Plugin | Skills | Description |
 |--------|--------|-------------|
-| [dstoic](dstoic/) | 7 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, hooks |
+| [dstoic](dstoic/) | 11 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, post-mortem, hooks |
 | [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark |
 | [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync |
 | [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |

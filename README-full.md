@@ -352,6 +352,7 @@ flowchart LR
 | `create-context` | 🎬 Create baseline from `.in/` folder (run once per project) | sonnet |
 | `save-context` | 💾 Serialize session → CONTEXT-llm.md (before leaving) | sonnet |
 | `load-context` | 📥 Resume session from CONTEXT-llm.md (optional `--full`) | sonnet |
+| `post-mortem` | 🪞 Introspective end-of-session retrospective → `post-mortem-*.md` (tokens, dead-ends, playbook) | opus |
 | `list-contexts` | 📋 List all contexts across code/ and projects/ with status | haiku |
 
 > 🤖 **Agent: `summarize-for-context`** (Haiku)

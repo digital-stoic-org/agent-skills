@@ -31,6 +31,9 @@ flowchart LR
 | `/pick-workflow` | 🧩 Design a skill/agent's execution topology (linear/sub-agents/Workflow); calls `/pick-model` per step |
 | `/save-context` | 💾 Save session state to CONTEXT-llm.md |
 | `/load-context` | 📥 Resume session from CONTEXT-llm.md |
+| `/instruct-compact` | 🧭 Steer `/compact` to keep signal, drop noise |
+| `/meta-prompt` | 🔁 RELIANCE recursive ledger for multi-session guided tasks |
+| `/post-mortem` | 🪞 Introspective end-of-session retrospective (tokens, dead-ends, playbook) |
 | `/scratch` | 🗒️ Session scratch pad for parking side-thoughts |
 | `/kaizen` | ⚡ Capture friction with any Praxis artifact |
 | `/dump-output` | 📤 Toggle auto-dump of output to `.dump/` |
@@ -49,7 +52,7 @@ Plus: 3 hooks (praxis-dir guard, tmux notifications, debug dumps) and 1 agent (d
 
 ## 📦 Version
 
-`0.39.0` · 8 skills · 1 agent · 7 hooks
+`0.44.0` · 11 skills · 1 agent · 3 hooks
 
 ---
 
