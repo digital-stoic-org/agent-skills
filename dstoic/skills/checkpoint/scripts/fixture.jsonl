@@ -1,0 +1,5 @@
+{"type":"user","message":{"content":"priorité stricte: qualité > coût > durée"},"version":"2.1.204"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Compris. On part sur cette contrainte."},{"type":"tool_use","name":"Read"}]}}
+{"type":"user","message":{"content":[{"type":"tool_result"}]}}
+{"type":"user","message":{"content":"non, pas ça — la differnce de mecansime abstractif vs extractif"}}
+{"type":"assistant","message":{"content":"Décision: skill séparé, tri Sonnet, verbatim par code."}}

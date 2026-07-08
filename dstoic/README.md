@@ -30,6 +30,7 @@ flowchart LR
 | `/pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
 | `/pick-workflow` | 🧩 Design a skill/agent's execution topology (linear/sub-agents/Workflow); calls `/pick-model` per step |
 | `/save-context` | 💾 Save session state to CONTEXT-llm.md |
+| `/checkpoint` | 🥩 Capture verbatim "meat" (exact wording, rejected paths, live reasoning) → CHECKPOINT-llm.md |
 | `/load-context` | 📥 Resume session from CONTEXT-llm.md |
 | `/instruct-compact` | 🧭 Steer `/compact` to keep signal, drop noise |
 | `/meta-prompt` | 🔁 RELIANCE recursive ledger for multi-session guided tasks |
@@ -52,7 +53,7 @@ Plus: 3 hooks (praxis-dir guard, tmux notifications, debug dumps) and 1 agent (d
 
 ## 📦 Version
 
-`0.45.0` · 11 skills · 1 agent · 3 hooks
+`0.46.0` · 12 skills · 1 agent · 3 hooks
 
 ---
 
