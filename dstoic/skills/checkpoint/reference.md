@@ -61,6 +61,43 @@ Schema:
 {"bearers":[{"id":61,"types":["decision","pivot"],"weight":3}],"notes":"..."}
 ```
 
+## Trailer harvest (primary path for ASSISTANT meat) — and required setup
+
+The costly, lossy part of extraction is reconstructing the **assistant's** own signal after the fact (whole-turn copies bloat the file — measured at ~73% of output — and a triage model only *guesses* which sentence was load-bearing). The fix: have the model emit its own distilled signal at generation time, and here just **harvest** it.
+
+**Required setup (tell the user if trailers are absent):** the user's global `~/.claude/CLAUDE.md` must instruct every turn to end — only when it settles a decision / discovers a learning / rejects a path / pivots / opens a fork — with an HTML-comment trailer:
+
+```
+<!-- ckpt
+decision: <choice> — <why>
+reasoning: <non-trivial consequence derived this turn, even with no decision>
+learning: <non-obvious fact discovered this turn>
+pivot: <frame/scope change>
+rejected: <path> — <why>
+constraint: <hard rule in force>
+assumption: <unverified premise the work rests on>
+open: <unresolved fork>
+definition: <term> = <meaning>
+refs: <path → anchor, or URL/ticket/dataset>
+-->
+```
+
+The 10 trailer fields cover 10 of the 12 taxonomy signals. The two omitted — **correction** and **preference** — are *user-authored* (a redirect, a stable taste); self-tagging can only reach the assistant's own turns, so those two stay with the extractive pass. This is the division, not a gap.
+
+**Harvest (0 LLM, deterministic):** grep the last `<!-- ckpt … -->` block per assistant turn from the transcript and concat into the summary's `decisions/learnings/open-questions/hot-files`. Because the trailer is authored live, it needs no triage and no verbatim copy — it IS the distilled bone, already reworded by the author who knew.
+
+```bash
+# extract trailers straight from the raw .jsonl (each is self-contained, greppable)
+grep -o '<!-- ckpt.*-->' "$TRANSCRIPT" 2>/dev/null   # or a small python pass over assistant turns
+```
+
+**Division of labor once trailers exist:**
+- ASSISTANT meat → trailers (harvest, ~free, high fidelity — no whole-turn copies).
+- USER meat → still the extractive Sonnet-triage + code-copy path below (a user's exact words can't be self-tagged).
+- Sessions predating the rule (no trailers) → fall back to full extractive triage over both roles.
+
+This is why the triage prompt can, when trailers are present, be scoped to **user turns only** — halving the read and eliminating the assistant-essay bloat at the source rather than trimming it afterward.
+
 ## Contiguous-window rule (Phase 3, capture 2)
 
 The live thread = turns AFTER the most-recent id with weight ≥ 2 that is a `decision` or `pivot`. Everything before it has already crystallized into the summary. Guards:

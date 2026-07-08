@@ -15,7 +15,11 @@ Write `CHECKPOINT-{stream}-llm.md`: a self-contained session snapshot with two l
 - **Summary** — a synthesized, reworded view of state (goal, next steps, decisions, hot files). Cheap to regenerate; good enough for orientation.
 - **Meat** — the **verbatim** signal that reconstruction would lose: the exact phrasing of constraints, rejected paths + why, subtle corrections, live reasoning threads, learnings, pivots, open questions. Copied byte-for-byte from the transcript, never reworded.
 
-**Core contract**: the LLM DESIGNATES which turns matter (returns ids); a **script COPIES** their text. Meat text NEVER passes through a model — no hallucination, no output cost. See `reference.md` § Why.
+**Core contract** (two paths, both keep model text out of the meat):
+1. **Author trailers (primary)** — each turn self-tags its own signal in an `<!-- ckpt … -->` comment as it's written; the skill just *harvests* them (0 LLM, 0 cost, highest fidelity — the author distilled live). Requires the global CLAUDE.md rule; see `reference.md` § Trailer harvest.
+2. **Extractive triage (fallback / user-side)** — the LLM DESIGNATES which turns matter (returns ids); a **script COPIES** their text verbatim. Covers the user's exact words (untaggable) and any session predating the rule. See `reference.md` § Why.
+
+Meat text NEVER passes through a model in either path — no hallucination, no output cost.
 
 ## Setup — temp dir (never /tmp)
 
@@ -38,9 +42,22 @@ Bash: "$PY" scripts/extract_turns.py index "$TRANSCRIPT" > "$TMP/turns.json"
 
 **If the script exits non-zero → PARSE FAILED → go to Phase 4 fallback (summary-only).** Never crash.
 
-### Phase 2 — Triage the meat (delegate to sub-agent, isolated)
+### Phase 2 — Harvest author trailers (primary), then triage the rest
 
-Spawn ONE sub-agent (`Task`, subagent Sonnet) with `$TMP/turns.json`. It returns **ids + type(s) + weight only, never text**. Full prompt + the signal taxonomy + schema in `reference.md` § Triage prompt. Signal types: `constraint · rejection · correction · decision · reasoning · learning · pivot · assumption · open-question · preference · definition · resource`, weight 1–3.
+First **harvest** the author-distilled trailers (0 LLM, 0 hallucination — the model tagged its own meat live):
+
+```
+Bash: "$PY" scripts/extract_turns.py harvest "$TRANSCRIPT" > "$TMP/trailers.json"
+```
+
+Each entry is `{id, fields:{decision|reasoning|learning|pivot|rejected|constraint|assumption|open|definition|refs}}` — these feed the summary directly (already reworded by the author). See `reference.md` § Trailer harvest.
+
+Then **triage** for what trailers can't cover. Spawn ONE sub-agent (`Task`, subagent Sonnet) with `$TMP/turns.json`. It returns **ids + type(s) + weight only, never text**. Full prompt + taxonomy + schema in `reference.md` § Triage prompt.
+
+- **If trailers were harvested** (`$TMP/trailers.json` non-empty): scope the triage to **user turns + the two user-authored types** — `correction · preference` — plus any assistant turn that bears meat but emitted no trailer (older turns / missed). This halves the read and avoids re-capturing the assistant essays the trailers already distilled.
+- **If no trailers** (session predates the CLAUDE.md rule): triage **all** turns across the full 12-type taxonomy, as before.
+
+Signal types (full): `constraint · rejection · correction · decision · reasoning · learning · pivot · assumption · open-question · preference · definition · resource`, weight 1–3.
 
 **Validate**: keep only integer ids that exist in the index. Drop the rest.
 
@@ -54,7 +71,7 @@ Two meat captures (both verbatim, 0 model text):
 1. **Punctual** — the collected turns (Phase 2 ids), anywhere in history, grouped by signal type.
 2. **Contiguous** — turns AFTER the most-recent high-weight `decision`/`pivot` → the still-live, un-crystallized thread. Floor: last 3 turns. Hard cap: 25 turns / configured max (see `reference.md`).
 
-Then synthesize the **summary** (from the conversation in context) and write `CHECKPOINT-{stream}-llm.md` using the template in `reference.md`. Lean vs full = weight cut (≥2 = lean).
+Then synthesize the **summary** (from the conversation in context **+ the harvested trailers** — fold their `decision/reasoning/learning/pivot/…` fields into the matching summary lists; they're author-distilled, no rework needed) and write `CHECKPOINT-{stream}-llm.md` using the template in `reference.md`. Lean vs full = weight cut (≥2 = lean).
 
 ### Phase 4 — Report + offer /clear
 
