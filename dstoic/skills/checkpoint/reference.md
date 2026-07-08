@@ -16,10 +16,17 @@ Use `${CLAUDE_PROJECT_DIR:-$(pwd)}/.tmp/checkpoint/` for all intermediates. `/tm
 
 ## Transcript path resolution
 
-Claude Code logs the live session to `~/.claude/projects/<slug>/<session>.jsonl`, where `<slug>` = current working dir with every `/` replaced by `-`. Pick the **newest** `.jsonl` (exclude `subagents/`):
+Claude Code logs the live session to `~/.claude/projects/<slug>/<session>.jsonl`, where `<slug>` = the **resolved** working dir (symlinks followed) with every `/` replaced by `-`.
+
+⚠️ **Do NOT slug bare `$(pwd)`** — under a symlink/alias (e.g. `/praxis` → `/home/mat/dev/praxis`), `pwd` is the alias but the slug is built from the real path, so the naive transform points at a directory that doesn't exist → false PARSE_FAILED. Resolve the real path first, then fall back to a basename scan:
 
 ```bash
-DIR="$HOME/.claude/projects/$(pwd | sed 's#/#-#g')"
+REAL=$(cd "$(pwd)" && pwd -P)                          # follow symlinks (realpath . also works)
+DIR="$HOME/.claude/projects/$(printf '%s' "$REAL" | sed 's#/#-#g')"
+if [ ! -d "$DIR" ]; then                                # slug mismatch — scan by basename
+  BASE=$(basename "$REAL")
+  DIR=$(ls -dt "$HOME/.claude/projects/"*"-$BASE" 2>/dev/null | head -1)
+fi
 TRANSCRIPT=$(ls -t "$DIR"/*.jsonl 2>/dev/null | grep -v subagents | head -1)
 [ -z "$TRANSCRIPT" ] && echo "PARSE_FAILED: no transcript" >&2   # -> summary-only fallback
 ```

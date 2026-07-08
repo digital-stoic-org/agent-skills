@@ -30,7 +30,7 @@ All intermediate files go in `$TMP`. Clean up at the end. If `$PY` is empty (or 
 
 ### Phase 1 — Index the transcript (script, 0 tokens)
 
-Resolve the newest project `.jsonl` (see `reference.md` § Transcript path), then:
+Resolve the newest project `.jsonl` — **use the resolved real path, not bare `pwd`** (symlink/alias breaks the slug); see `reference.md` § Transcript path for the exact snippet. Then:
 
 ```
 Bash: "$PY" scripts/extract_turns.py index "$TRANSCRIPT" > "$TMP/turns.json"

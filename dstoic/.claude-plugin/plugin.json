@@ -1,7 +1,7 @@
 {
   "name": "dstoic",
   "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, verbatim checkpoint, meta-prompt (RELIANCE recursive ledger), and session post-mortem.",
-  "version": "0.46.0",
+  "version": "0.46.1",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
