@@ -5,10 +5,19 @@
 > your project (or `~/.claude/`) root, throw out what doesn't fit *your* mouth,
 > and fill in the `<placeholders>` with your own habits.
 >
+> **First line must be `# <Project Name>`** — Claude Code and many skills read it
+> to identify the project. (This file uses `# CLAUDE.md.example` as its own title;
+> replace it.)
+>
 > Sections marked **[core]** are near-universal — keep them. Sections marked
-> **[pattern]** showcase a specific technique; adopt if it fits your workflow.
-> `<!-- example: ... -->` blocks show the *shape* of a personal rule so you can
-> write your own version — they are not defaults.
+> **[pattern]** showcase a technique; adopt if it fits. `<!-- example: ... -->`
+> blocks show the *shape* of a personal rule so you can write your own — they are
+> not defaults.
+>
+> **Design principle — keep this file lean.** It loads on *every* turn (hard limit
+> ~4k chars/file). So it holds only *triggers + standing biases*; bulky lookup
+> detail lives in on-demand files under `.claude/rules/` that a one-line pointer
+> tells Claude to read *when* it's needed. Each section below follows that split.
 
 ## Security 🔒 [core]
 
@@ -22,23 +31,25 @@ warn + require explicit confirmation.
 
 ## Execution defaults [core]
 
-Always-on biases for how work gets routed. Classify the task first, then go
-straight to the right tier/tool — don't start big and walk back, or start blind
-and escalate through failure.
+Classify the task first, then match the tool — don't start big and walk back, or
+start blind and escalate through failure. Genuinely ambiguous/big/novel → top tier
+to frame it. When a call is non-trivial, route it deliberately instead of guessing:
 
-- **Model** — don't default to your most expensive model. Route by task shape:
-  chores → cheapest/fastest · single-file plumbing → mid-tier · strategy,
-  hard refactors, security audits → top tier · very large context or multi-day
-  work → your long-context model. Changing *effort* keeps the prompt cache
-  (cheap); switching *model* breaks it (costly) — so switch models deliberately.
-- **Sub-agents** — delegate to isolate context. Sweeping many files where only
-  the conclusion matters → fan out to a cheaper model. Independent per-item work
-  (2–6 items) → parallel sub-agents. Never shard cross-item reasoning or final
-  synthesis — those stay on the main thread.
+- **model / effort** — don't default to your most expensive model. Route by task
+  shape (chores → cheapest · single-file plumbing → mid-tier · strategy / hard
+  refactor / security audit → top tier · very large context → long-context model).
+  Changing *effort* keeps the prompt cache (cheap); switching *model* breaks it
+  (costly). If you have a model-selection skill, invoke it here.
+- **sub-agents / fan-out** — delegate to isolate context. Sweeping many files where
+  only the conclusion matters → fan out to a cheaper model. Independent per-item
+  work → parallel sub-agents. Never shard cross-item reasoning or final synthesis
+  — those stay on the main thread. If you have an execution-topology skill, invoke
+  it here.
 
-<!-- example: encode your own model-routing table here, e.g.
-  chores → Haiku · plumbing → Sonnet · strategy/audit → Opus · >200K → <long-ctx model>
--->
+<!-- The two bullets above name *capabilities*, not skill slugs, so this file
+     stays portable. If your routing detail is bulky, move the table into a skill
+     (its description auto-fires) or a .claude/rules/ file, and keep only the
+     trigger here. -->
 
 ## Planning [core]
 
@@ -53,11 +64,6 @@ and escalate through failure.
 - **LLM-facing artifacts** (context files, specs, agent prompts): token-optimized.
   Strip prose, keep directives/facts/structure. No decoration.
 
-<!-- example (Mermaid rules, if you use it):
-  quote labels ["Label"] · multi-target A -->|label| B & C
-  colored fills MUST include color:#000 for contrast
--->
-
 ## Temp files [core]
 
 - Write throwaway files under a single dedicated scratch dir (e.g. `.tmp/{task}/`),
@@ -65,14 +71,34 @@ and escalate through failure.
 
 ## Git [pattern]
 
-> This is a *boundary example*, not a default. Pick the posture that matches how
-> you work and delete the rest.
+> Pick the posture that matches how you work; delete the other example.
 
 <!-- example: hand git to the human
   User runs all git themselves — never invoke git, never add co-author/attribution
   tags. Write commit messages only when asked.
 -->
-<!-- example: let Claude commit
-  Commit with Conventional Commits (type(scope): description). Branch off the
-  default branch before committing. Never force-push shared branches.
+<!-- example: gated commits
+  Committing requires human validation unless told otherwise. Follow Conventional
+  Commits. Never add AI attribution or co-author tags.
+-->
+
+## Lazy detail — the `.claude/rules/` pattern [pattern]
+
+> The lever that keeps this file small. Any bulky, rarely-needed reference —
+> path/alias maps, a checkpoint-clause menu, language-specific rules — lives in a
+> file under `.claude/rules/`, and CLAUDE.md carries only a one-line *trigger* that
+> tells Claude when to read it. Two ways `.claude/rules/` files load:
+>
+> - **Auto-loaded** — a file with `paths:` frontmatter (e.g. `**/*.py`) loads only
+>   when you touch a matching file. Good for language/domain rules.
+> - **Read-on-demand** — a file with no frontmatter loads only when a trigger in
+>   CLAUDE.md tells Claude to read it. Good for lookup tables. Example trigger:
+
+<!-- example: a read-on-demand pointer
+
+## Paths
+
+Before writing to any aliased repo/project location — or when a path isn't
+obvious — read `.claude/rules/paths.md` first (it holds the alias→location map).
+
 -->
