@@ -1,98 +1,78 @@
-# Praxis
+# CLAUDE.md.example
 
-## Security 🔒
+> A `CLAUDE.md` is like a toothbrush: useful daily, but don't use someone
+> else's. This is a starting point, not a config to copy wholesale. Take it to
+> your project (or `~/.claude/`) root, throw out what doesn't fit *your* mouth,
+> and fill in the `<placeholders>` with your own habits.
+>
+> Sections marked **[core]** are near-universal — keep them. Sections marked
+> **[pattern]** showcase a specific technique; adopt if it fits your workflow.
+> `<!-- example: ... -->` blocks show the *shape* of a personal rule so you can
+> write your own version — they are not defaults.
 
-**NEVER read/parse:** `.env*`, `*credentials*`, `*secrets*`, `*token*`, `*.key`, `*.pem`, `*.crt`, `*.p12`, `*.pfx`, `.npmrc`, `pypirc`, `*.keystore`, `.aws/*`, `.azure/*`, `gcloud-service-key.json`. Warn user if requested, get confirmation. See `@reference/standards/security-patterns.md` for full list.
+## Security 🔒 [core]
 
-## Communication Principles
+Never read/parse files holding secrets (keys, tokens, credentials, `.env`, certs).
+Non-obvious ones too: `.npmrc`, `.pypirc`, cloud service-key JSON. If asked →
+warn + require explicit confirmation.
 
-- **Ask clarification questions** when needed or before starting big tasks
-- **Never hallucinate or assume information** without supporting facts
-- **When you don't know, say so** — honesty over speculation
+## Communication [core]
 
-## Git Commits
+- Clarify before big tasks; never hallucinate; say "I don't know" over speculation.
 
-**Conventional Commits:** `type(scope): description`
-- Scope: project folder name
-- Types: feat|fix|docs|refactor|test|chore|perf|build|ci
-- Deliverables (analysis/specs/research) = `feat`, not `docs`
-- NEVER add Claude/Anthropic attribution or co-author tags
+## Execution defaults [core]
 
-**Pre-commit (OVERRIDE: NEVER auto-commit):**
-1. Show `git status` + `git diff --staged`
-2. List files + proposed message
-3. **WAIT for user confirmation**
+Always-on biases for how work gets routed. Classify the task first, then go
+straight to the right tier/tool — don't start big and walk back, or start blind
+and escalate through failure.
 
-## Rules
+- **Model** — don't default to your most expensive model. Route by task shape:
+  chores → cheapest/fastest · single-file plumbing → mid-tier · strategy,
+  hard refactors, security audits → top tier · very large context or multi-day
+  work → your long-context model. Changing *effort* keeps the prompt cache
+  (cheap); switching *model* breaks it (costly) — so switch models deliberately.
+- **Sub-agents** — delegate to isolate context. Sweeping many files where only
+  the conclusion matters → fan out to a cheaper model. Independent per-item work
+  (2–6 items) → parallel sub-agents. Never shard cross-item reasoning or final
+  synthesis — those stay on the main thread.
 
-- `**/.in/`: initial context for project bootstrap
+<!-- example: encode your own model-routing table here, e.g.
+  chores → Haiku · plumbing → Sonnet · strategy/audit → Opus · >200K → <long-ctx model>
+-->
 
-## Alias Paths
+## Planning [core]
 
-Shortcuts: gtd=gtd-pcm, agt=agent-skills
+- **Boulder → Pebbles**: boulders (multi-step, architectural, or ambiguous) get
+  planned into trackable stories before work starts; pebbles (single file,
+  obvious) just get done.
 
-- **gtd-pcm** (gtd): control `/praxis/repos/gtd-pcm` | data `/repos/gtd-pcm`
-- **agent-skills** (agt): control `/praxis` | data `/repos/agent-skills`
+## Output style [core]
 
-(Control: instructions, OpenSpec, context. Data: project files in separate git repo. Used by `/commit-repo` to resolve repo aliases.)
+- **Human-facing output** (responses, docs, reports): visual-first. Prefer
+  diagrams for flows/decisions/comparisons; structured data as clean YAML/JSON.
+- **LLM-facing artifacts** (context files, specs, agent prompts): token-optimized.
+  Strip prose, keep directives/facts/structure. No decoration.
 
-## Planning
+<!-- example (Mermaid rules, if you use it):
+  quote labels ["Label"] · multi-target A -->|label| B & C
+  colored fills MUST include color:#000 for contrast
+-->
 
-- **Boulder → Pebbles**: Break complex features into trackable stories
-- Ask user upfront if OpenSpec should be used for the task
-- Use OpenSpec for boulders (multi-step, architectural, ambiguous scope)
-- Skip OpenSpec for pebbles (single file, obvious implementation)
+## Temp files [core]
 
-## Style
+- Write throwaway files under a single dedicated scratch dir (e.g. `.tmp/{task}/`),
+  never the system `/tmp`. Clean up when done.
 
-**Human output (responses, docs, explanations):**
-- **Visual-first:** Mermaid diagrams by default for technical (e.g., architecture/flows/data) AND non-technical (e.g., decisions/processes/comparisons). Colorize with classDef/fill/stroke. **ALWAYS use black text** (`color:#000`) for nodes with colored backgrounds.
-- **Structured data:** YAML/JSON with emoji (✅❌🎯⚠️🚀)
-- **OVERRIDE: Use emojis liberally** ✅❌🎯🚀🔍💾🧪📦⚠️✨🎨🔧
+## Git [pattern]
 
-**LLM context (`*-llm.md`, specs, agent prompts):**
-- **Token-optimized:** All `-llm.md` files must be optimized for tokens. Strip prose, keep directives/facts/structure only.
-- **Visual structure:** Mermaid diagrams for complex flows/hierarchies/relationships. More efficient than prose explanations.
-- **Structured data:** Clean YAML/JSON without emoji. Optimized for parsing.
-- **Markdown:** Semantic headings, bullets, code blocks. No decorative formatting.
+> This is a *boundary example*, not a default. Pick the posture that matches how
+> you work and delete the rest.
 
-## Mermaid
-
-- Wrap labels in quotes: `["Label"]`
-- Multi-target connections: use `&` operator: `A -->|label| B & C & D`
-- Define nodes inside subgraphs before referencing them
-- **Black text mandatory:** ALL classDef with colored fills MUST include `color:#000` for readability
-  - Example: `classDef success fill:#90EE90,stroke:#333,color:#000`
-
-# Instructions: ALWAYS use `rtk` instead of standard Unix commands
-
-`rtk` compresses command output to save 70-90% tokens. **MANDATORY** for all Bash tool calls.
-
-**Chaining:** Always prefix each command: `rtk git add && rtk git commit -m "msg" && rtk git push`
-
-## Substitution table — ALWAYS use right column
-
-| Instead of | Use |
-|---|---|
-| `ls`, `tree` | `rtk ls <path>` |
-| `cat`, `head`, `tail` | `rtk read <file>` |
-| `cat` (code understanding) | `rtk read <file> -l aggressive` |
-| `find`, `fd` | `rtk find <pattern>` |
-| `git status` | `rtk git status` |
-| `git log` | `rtk git log` |
-| `git diff` | `rtk git diff` |
-| `git add` | `rtk git add` |
-| `git commit -m "msg"` | `rtk git commit -m "msg"` |
-| `git push` | `rtk git push` |
-| `git pull` | `rtk git pull` |
-| `grep -rn`, `rg` | `rtk grep <pattern>` |
-| `pytest`, `npm test`, etc. | `rtk test <cmd>` |
-| `<cmd> 2>&1 \| grep error` | `rtk err <cmd>` |
-| `cat file.log` | `rtk log <file>` |
-| `cat *.json` | `rtk json <file>` |
-| `env`, `printenv` | `rtk env` |
-| `docker ps/images/logs` | `rtk docker ps/images/logs <c>` |
-| `kubectl get pods/logs` | `rtk kubectl pods/logs <pod>` |
-| any long command | `rtk summary <cmd>` |
-
-**Additional commands:** `rtk smart <file>` (2-line summary), `rtk deps` (dependency summary), `rtk kubectl services`
+<!-- example: hand git to the human
+  User runs all git themselves — never invoke git, never add co-author/attribution
+  tags. Write commit messages only when asked.
+-->
+<!-- example: let Claude commit
+  Commit with Conventional Commits (type(scope): description). Branch off the
+  default branch before committing. Never force-push shared branches.
+-->
