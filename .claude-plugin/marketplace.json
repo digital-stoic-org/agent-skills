@@ -12,7 +12,7 @@
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, verbatim checkpoint, meta-prompt (RELIANCE recursive ledger), and session post-mortem",
-      "version": "0.46.6",
+      "version": "0.46.7",
       "author": {
         "name": "dstoic"
       },
@@ -34,7 +34,7 @@
       "name": "retrospect",
       "source": "./retrospect",
       "description": "Retrospective analysis: session reports, collaborative retrospectives, and domain retrospectives",
-      "version": "0.39.0",
+      "version": "0.39.1",
       "author": {
         "name": "dstoic"
       },

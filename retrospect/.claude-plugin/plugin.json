@@ -1,11 +1,12 @@
 {
   "name": "retrospect",
   "description": "Retrospective analysis: session reports, collaborative retrospectives, and domain retrospectives.",
-  "version": "0.39.0",
+  "version": "0.39.1",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
   },
   "repository": "https://github.com/digital-stoic-org/agent-skills",
-  "license": "MIT"
+  "license": "MIT",
+  "hooks": "./hooks.json"
 }
