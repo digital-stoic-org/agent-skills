@@ -1,7 +1,7 @@
 {
   "name": "content",
-  "description": "Content transformation and writing: anonymization, infographics, literary rewriting, bridge captures, voice extraction & enforcement, and expense tracking.",
-  "version": "0.38.0",
+  "description": "Content transformation and writing: anonymization, infographics, literary rewriting, bridge captures, voice extraction & enforcement, deck storyline building, and expense tracking.",
+  "version": "0.39.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

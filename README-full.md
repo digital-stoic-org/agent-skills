@@ -401,7 +401,7 @@ flowchart LR
 
 ---
 
-## 🔧 Utilities (9 skills)
+## 🔧 Utilities (10 skills)
 
 | Skill | Purpose |
 |-------|---------|
@@ -410,6 +410,7 @@ flowchart LR
 | `install-dependency` | 📦 Monorepo-aware package installation (pip/bun/apt) |
 | `convert-md-to-pdf` | 📄 Convert markdown with Mermaid to styled PDF |
 | `infographize` | 🎨 Convert markdown to AntV infographic SVG (visual storytelling) |
+| `build-storyline` | 🎞️ McKinsey-style deck storyline — SCQA spine, action titles, ghost-deck + critic gates (pitch/problem/roadmap) |
 | `dump-output` | 📤 Toggle auto-dump to `.dump/` |
 | `literatize` | 📝 Add section-level comments to code capturing intent, rationale, and gotchas for LLM re-entry |
 | `scratch` | 🗒️ Zero-friction session scratch pad — park side-thoughts during deep work without losing flow |
@@ -435,7 +436,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 105 skills across 14 plugins, 2 agents** — but only ~12 run daily; the rest are parachutes or an archive of exploration. See [README.md](README.md) for the plugin table with per-plugin skill counts.
+> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 106 skills across 14 plugins, 2 agents** — but only ~12 run daily; the rest are parachutes or an archive of exploration. See [README.md](README.md) for the plugin table with per-plugin skill counts.
 
 ---
 

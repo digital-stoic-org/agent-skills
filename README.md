@@ -103,7 +103,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **~105 skills** across 14 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
+- **~106 skills** across 14 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
 - **14 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy
 - **2 agents**: devil's advocate, context summarizer
 - **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
@@ -121,7 +121,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark |
 | [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync |
 | [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |
-| [content](content/) | 5 | Content transformation: anonymize, infographize, literatize, bridge, RISEN prompts |
+| [content](content/) | 6 | Content transformation: anonymize, infographize, literatize, bridge, tune-voice, build-storyline |
 | [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import |
 | [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports |
 | [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization |
