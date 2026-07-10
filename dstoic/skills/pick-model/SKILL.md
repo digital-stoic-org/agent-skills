@@ -1,6 +1,6 @@
 ---
 name: pick-model
-description: Evaluate whether the CURRENT model+effort fits a task, and recommend a switch only when worth the cache cost. Use when user asks "which model", "pick model", "model for", "is haiku enough", or before starting costly/complex tasks. Does NOT execute the prompt — only judges fit. Covers tech and non-tech tasks.
+description: Evaluate whether the CURRENT model+effort fits a task, and recommend a switch only when worth the cache cost. Use when user asks "which model", "pick model", "model for", "what effort", "is haiku enough", "Opus or Sonnet", "should I downgrade/upgrade", or when routing a non-trivial task to a tier before starting costly/complex work. Judges model AND effort level. Does NOT execute the prompt — only judges fit. Covers tech and non-tech tasks.
 model: sonnet
 effort: low
 context: main
@@ -11,6 +11,11 @@ context: main
 Take the user's intended prompt as input. **Do NOT execute it.** Read the live
 session state, classify the prompt, emit **verdict + delta + strategy**: is the
 current model right, and if not, is switching worth the cache cost.
+
+> **CLAUDE.md contract**: this skill is the single source of truth for the model/effort
+> routing call. CLAUDE.md "Execution defaults" carries no model table — it defers here by
+> capability (auto-discovery on the description). Don't re-derive or duplicate the tier table
+> elsewhere; if routing changes, it changes here.
 
 **Two levers, different cost** (the core call):
 - 🎚️ **Effort change, same model** → cache SURVIVES (cheap). Recommend freely.

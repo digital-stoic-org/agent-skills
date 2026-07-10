@@ -1,6 +1,6 @@
 ---
 name: pick-workflow
-description: "Decide HOW a skill/agent should EXECUTE — linear vs parallel fan-out, sub-agents vs dynamic Workflow, and the per-step seam — instead of defaulting to linear+single-model. Authoring-time judge: produces an execution design, does NOT run the task. Delegates the per-step model+effort call to /pick-model. Use when authoring/challenging a skill or agent, or when asked 'should this fan out', 'parallel or linear', 'sub-agents or workflow', 'execution architecture'."
+description: "Decide HOW work should EXECUTE — linear vs parallel fan-out, sub-agents vs dynamic Workflow, and the per-step seam — instead of defaulting to linear+single-model. Produces an execution design, does NOT run the task. Delegates the per-step model+effort call to /pick-model. Use when authoring/challenging a skill or agent, AND mid-task when deciding how to run real work — 'should I fan this out', 'should this fan out', 'parallel or linear', 'sub-agents or workflow', 'per-step seam', 'execution topology', 'execution architecture'. For a trivial few-item call, early-exit to linear cheaply rather than a full analysis."
 argument-hint: "<skill|agent to design>"
 allowed-tools: [Read, Glob, Grep, AskUserQuestion, Skill]
 model: opus
@@ -14,6 +14,11 @@ user-invocable: true
 Authoring-time judge for a skill/agent's **execution topology**. Sibling to `/pick-model`: it picks the
 model+effort for *one step*; this picks **how steps run** (linear vs fan-out, sub-agents vs Workflow, the
 seam) and **calls `/pick-model` per step** for the model. Emits a design — never runs the task.
+
+> **CLAUDE.md contract**: this skill is the single source of truth for the execution-topology call
+> (linear vs fan-out, fresh sub-agent vs fork vs Workflow, the seam). CLAUDE.md "Execution defaults"
+> carries no sub-agent rules — it defers here by capability (auto-discovery on the description). Don't
+> re-derive the mechanism table or sharding rules elsewhere; if topology guidance changes, it changes here.
 
 **When**: authoring or challenging a skill/agent · deciding parallel-vs-linear · sub-agents-vs-Workflow.
 
@@ -43,8 +48,11 @@ Front-door first (Anthropic catalog in `reference.md`): **routing** (distinct in
 | Choose | When | Gate |
 |---|---|---|
 | 🟢 **Linear** | Below threshold; few units — the default | simplest |
-| 🔵 **Sub-agents** (`parallel`) | *fixed small* set (2–6) independent tasks, no loop | no resume/budget |
+| 🔵 **Sub-agents** (`parallel`, fresh ctx) | *fixed small* set (2–6) independent tasks, no loop; worker needs only a **scoped brief**, not your history | no resume/budget |
+| 🍴 **Fork** (`subagent_type: "fork"`) | one heavy sub-task that needs your **full accumulated context/reasoning** but should run **isolated** so its tool-output noise stays out of main | inherits parent reasoning → **never for verify/challenge/adversarial steps** (bias); use fresh sub-agent there |
 | 🟣 **Workflow** | fan-out over a (variable-size) list; need loop-until-dry, threshold switch, budget cap, schema extraction, verify/voting, resume | **opt-in only → never a skill's default; ship a linear fallback** |
+
+**Fresh vs fork — the context seam:** fresh sub-agent = cheaper, unbiased, but you must brief it (duplication risk if the brief is thin); fork = zero re-briefing, carries every prior decision, but inherits bias and is heavier. Default fresh; fork only when the brief would have to reproduce most of the conversation.
 
 Every worker needs a **delegation contract**: objective · output format (schema) · tool/source guidance · boundaries — else duplication/gaps.
 
@@ -70,4 +78,6 @@ design. (Typical: synthesis→Opus, schema extraction→Haiku, careful transform
 - ❌ Workers that judge — they extract facts; dispositions stay on the orchestrator.
 - ❌ A skill that *requires* Workflow — it's opt-in-gated; always ship a linear fallback.
 - ❌ Re-deriving a model table — `/pick-model`'s job. ❌ Always-on fan-out — only above threshold.
+- ❌ Fork for a verify/challenge/adversarial step — it inherits parent reasoning, so it can't independently refute it; use a fresh sub-agent for a clean-context check.
+- ❌ Fresh sub-agent when the brief would have to restate most of the conversation — that's the fork's job; thin briefs cause gaps.
 - ❌ Auto-running this on every SKILL.md edit — it's Opus-shaped; keep it prompt-invoked.
