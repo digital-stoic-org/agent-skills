@@ -1,7 +1,7 @@
 {
   "name": "cognitive",
   "description": "Cynefin-routed problem-solving: frame problems, troubleshoot, investigate, brainstorm, probe, experiment, challenge assumptions, and benchmark methodology.",
-  "version": "0.37.0",
+  "version": "0.38.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

@@ -24,10 +24,10 @@ Distinct from `/save-context` (durable `CONTEXT-*-llm.md` for resuming later). T
 ## Instructions
 
 1. **Read the conversation** (last 15-20 messages) — no shell needed unless confirming a file path.
-2. **Synthesize the 7 sections** (below). Write **directives to the summarizer**, not the content itself — e.g. "Preserve exact path `x/y.md`", not a copy of the file. Embed a literal only when losing it is expensive (exact paths, the one key decision).
+2. **Synthesize the 8 sections** (below). Write **directives to the summarizer**, not the content itself — e.g. "Preserve exact path `x/y.md`", not a copy of the file. Embed a literal only when losing it is expensive (exact paths, the one key decision).
 3. **Print the block** using the template. Nothing else after it except one line: `Copy the block above into /compact.`
 
-## The 7 Sections
+## The 8 Sections
 
 | Section | Directive to summarizer | Tier |
 |---|---|---|
@@ -35,9 +35,10 @@ Distinct from `/save-context` (durable `CONTEXT-*-llm.md` for resuming later). T
 | **Hot Files** | List exact paths + 3-word role; preserve paths character-for-character | PRESERVE |
 | **Decisions** | Each decision + its *rationale*; the why is unrecoverable, keep it | PRESERVE |
 | **Learnings** | Non-obvious facts found mid-session (bugs, constraints, gotchas); keep — costly to rediscover | PRESERVE |
+| **Dead ends** | Approaches TRIED and abandoned + why; PRESERVE so they aren't re-attempted. Distinct from Drop (noise): dead ends = negative knowledge worth keeping | PRESERVE |
 | **Next** | 2-4 next actions. IMPORTANT: use heading "Next" — compaction grep-favors `next`/`todo`/`pending` for survival | PRESERVE |
 | **Open threads** | Unresolved questions / mid-flight work so it isn't dropped | COMPRESS-OK |
-| **Drop** | Name what to discard: verbose tool output, dead-end explorations, resolved detours, raw logs | DROP |
+| **Drop** | Name what to discard: verbose tool output, resolved detours, raw logs | DROP |
 
 The **Drop** section is the unique lever vs. `/save-context` — it actively frees budget for the PRESERVE tiers.
 
@@ -56,13 +57,15 @@ PRESERVE VERBATIM:
 - Decisions + rationale: {decision — why}; {decision — why}
 - Learnings/gotchas: {non-obvious fact}; {constraint}
 
+DEAD ENDS (keep — don't retry): {approach tried & abandoned — why}
+
 NEXT:
 - {action}
 - {action}
 
 OPEN THREADS (may compress): {unresolved}; {mid-flight}
 
-DROP (discard freely): {verbose tool output}; {dead ends}; {resolved detours}
+DROP (discard freely): {verbose tool output}; {resolved detours}; {raw logs}
 ```
 Copy the block above into /compact.
 ````
@@ -72,4 +75,5 @@ Copy the block above into /compact.
 - **Directive, not dump**: instruct the summarizer; don't re-paste content. Exception: exact paths + the single most-load-bearing decision go in verbatim.
 - **Rationale beats restatement**: "chose X because Y" survives; "chose X" gets re-litigated.
 - **Be explicit about DROP**: silence = the summarizer guesses. Name the noise.
+- **Preserve dead ends**: name approaches already tried and abandoned so the summarizer keeps them and the next session doesn't re-attempt them. Negative knowledge is cheap to keep, costly to rediscover.
 - **Skip the ritual for trivial sessions**: if the session is a greeting or a one-file fix, say "Session is light — compaction instructions add little" and stop.

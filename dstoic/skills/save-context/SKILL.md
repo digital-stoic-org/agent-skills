@@ -58,10 +58,16 @@ From conversation (last 15-20 messages):
 4. **Hot Files** — max 10 discussed/edited. Tag survival priority: `[P1]` load-bearing (goal-critical), `[P2]` supporting. `--full` load keeps all; lean load keeps P1.
 5. **Decisions** — within Session, tag key ones `[P1]`/`[P2]` for the same lean/full cut line.
 6. **Focus & Goal** — 1-2 sentence focus + goal
-7. **Drop** — 1-line note of noise NOT to re-chase on reload (resolved detours, dead ends, verbose output). Skip if none.
+7. **Drop** — 1-line note of noise NOT to re-chase on reload (resolved detours, verbose output). Skip if none.
 8. **Thinking Artifacts** (if Phase 1b found any) — list paths only, no content
+9. **Dead Ends** — approaches TRIED this session and abandoned + why, so the next session doesn't re-attempt them. Distinct from Drop: Drop = noise to ignore; Dead Ends = decisions-not-to-repeat. Skip if none.
+10. **Predecessor** — if this session resumed a prior CONTEXT (via `/load-context`) or overwrites an existing stream file, record that file's path so streams chain into a walkable history. Else `none`.
 
 ### Phase 3: Write & Report
+
+Before writing, apply two pre-write passes:
+- **Reference-don't-copy** (named contract): never inline content that already lives in a spec/plan/diff/OpenSpec/thinking-artifact — reference it by path. The CONTEXT file points at sources; it does not duplicate them.
+- **Scrub secrets**: strip anything key/token/credential/PII-shaped from the synthesized text (API keys, bearer tokens, `KEY=`/`PASSWORD=` values, private-key blocks) → replace with `[REDACTED]`. The resume file must never persist a secret.
 
 Write CONTEXT file using template.
 

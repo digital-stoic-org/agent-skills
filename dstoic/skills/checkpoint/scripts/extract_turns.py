@@ -19,6 +19,7 @@ Robustness: the .jsonl schema is UNDOCUMENTED and Anthropic may change it.
   - --max-chars caps per-turn text to avoid an obese checkpoint (default 4000).
 """
 import json
+import os
 import re
 import sys
 
@@ -31,6 +32,35 @@ _CKPT_RE = re.compile(r"<!--\s*ckpt\b(.*?)-->", re.DOTALL)
 # are user-authored (self-tagging can't reach them) → left to extraction by design.
 _CKPT_FIELDS = ("decision", "reasoning", "learning", "pivot", "rejected",
                 "constraint", "assumption", "open", "definition", "refs")
+
+
+# ── Secret scrub (collect only) ──────────────────────────────────────────
+# The meat is copied verbatim BY DESIGN, but a transcript can quote a live
+# secret (a key pasted mid-session). We mask a NARROW, high-precision set of
+# unambiguous secret SHAPES before the text lands on disk — precision over
+# recall, so prose is never clobbered. Applied in `collect` only (the copy that
+# reaches the file); `index`/`harvest` are unaffected. Disable: CHECKPOINT_NO_REDACT=1.
+_REDACT_PATTERNS = [
+    (re.compile(r"-----BEGIN[^-]*PRIVATE KEY-----.*?-----END[^-]*PRIVATE KEY-----", re.DOTALL), "PRIVATE-KEY"),
+    (re.compile(r"\bsk-ant-[A-Za-z0-9_-]{20,}"), "ANTHROPIC-KEY"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}"), "API-KEY"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AWS-ACCESS-KEY"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}"), "GITHUB-TOKEN"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}"), "SLACK-TOKEN"),
+    (re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"), "JWT"),
+]
+# key=value / key: value assignments — mask only the value, keep the key visible.
+_REDACT_ASSIGN = re.compile(r"(?i)\b(password|passwd|secret|token|api[_-]?key)(\s*[:=]\s*)(\S{6,})")
+
+
+def _redact(text):
+    """Mask unambiguous secret shapes. No-op on ordinary prose (precision-first)."""
+    if os.environ.get("CHECKPOINT_NO_REDACT"):
+        return text
+    for rx, label in _REDACT_PATTERNS:
+        text = rx.sub(f"[REDACTED:{label}]", text)
+    text = _REDACT_ASSIGN.sub(lambda m: f"{m.group(1)}{m.group(2)}[REDACTED]", text)
+    return text
 
 
 def _parse_trailer(block):
@@ -160,7 +190,7 @@ def main(argv):
             print("collect: ids must be integers", file=sys.stderr)
             return 2
         by_id = {t["id"]: t["text"] for t in turns}
-        out = {str(i): by_id[i] for i in sorted(ids) if i in by_id}
+        out = {str(i): _redact(by_id[i]) for i in sorted(ids) if i in by_id}
         json.dump(out, sys.stdout, ensure_ascii=False, indent=1)
         return 0
 

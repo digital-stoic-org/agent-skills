@@ -8,9 +8,15 @@ Challenge whether the right problem is being solved.
 
 ## Execution
 
-Apply BOTH patterns in sequence.
+Apply BOTH patterns in sequence. Each finding becomes a queue item per `reference.md` §Queue
+Schema — not a report section directly. `generated_by: protocol:framing`, `id` prefix `F`.
 
 ### Pattern 1: Socratic
+
+`type: decision` · `recommendation_allowed: true` — EXCEPT Stage 3 (Dialectic):
+`recommendation_allowed: false`. Dialectic asks the human to generate the opposing position
+themselves; a divergent question — supplying a recommended answer would neutralize the exercise
+it exists to produce (spec §4).
 
 *6-stage questioning sequence to surface hidden assumptions.*
 
@@ -43,6 +49,9 @@ Record: key answers from each stage, assumptions surfaced.
 
 ### Pattern 2: Steelman
 
+`type: decision` · `recommendation_allowed: false` — divergent by construction: Steelman exists to
+produce the human's strongest counter-position; a recommended answer would neutralize it.
+
 *Build the strongest possible counter-argument to current framing.*
 
 (Opposite of strawman — give the opposition its best case)
@@ -62,6 +71,9 @@ Record: steelmanned counter, stress test results, framing verdict.
 ---
 
 ## Output
+
+Format of the Challenge Report emitted at the END of the walk, once all queue items from this
+protocol are resolved — NOT emitted immediately after pattern execution. See ## Delivery.
 
 ```markdown
 ## Challenge Report: framing (Socratic · Steelman)
@@ -108,3 +120,9 @@ Record: steelmanned counter, stress test results, framing verdict.
 
 [Proceed as-is | Reframe as: [alternative framing] | Stop and reframe before implementing]
 ```
+
+## Delivery
+
+Findings from this protocol are delivered as queue items, walked interactively — see
+`reference.md` §Interactive Delivery for the full protocol (fact-first resolution, rank-ordered
+decisions, cap N=5, one question per turn, plain text, hard gate). This file does not repeat it.

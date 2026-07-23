@@ -8,6 +8,7 @@
 saved: YYYY-MM-DDTHH:MM:SSZ
 stream: {name}
 status: {exploring|building|decided|parked|done}
+predecessor: {path to prior CONTEXT-*-llm.md this session continues | none}
 focus: {1-2 sentences}
 goal: {1 sentence}
 
@@ -49,7 +50,13 @@ unexpected:
 
 {Optional — omit if none. Noise NOT to re-chase on reload.}
 
-- {resolved detour | dead end | verbose output to ignore}
+- {resolved detour | verbose output to ignore}
+
+## Dead Ends
+
+{Optional — omit if none. Approaches TRIED and abandoned — don't re-attempt (distinct from Drop: this is negative knowledge to keep, not noise to discard).}
+
+- {approach}: {why it failed / was rejected}
 
 ## Thinking Artifacts
 
@@ -92,7 +99,7 @@ When status is `done` or `parked`:
 - Session section: 780 tokens max
 - Total: 1200-1500 tokens MAX
 - Hot Files: max 10 with brief roles
-- Learnings + Drop: ≤4 bullets each, omit when empty (don't pad)
+- Learnings + Drop + Dead Ends: ≤4 bullets each, omit when empty (don't pad)
 - Use YAML inline objects: `{done: 5, active: 2, pending: 3}`
 
 ## Priority Tags (P1/P2)

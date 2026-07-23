@@ -94,7 +94,7 @@ Two meat captures (both verbatim, 0 model text):
 1. **Punctual** — the collected turns (Phase 2 ids), anywhere in history, grouped by signal type.
 2. **Contiguous** — turns AFTER the most-recent high-weight `decision`/`pivot` → the still-live, un-crystallized thread. Floor: last 3 turns. Hard cap: 25 turns / configured max (see `reference.md`).
 
-Then synthesize the **summary** (from the conversation in context **+ the harvested trailers** — fold their `decision/reasoning/learning/pivot/…` fields into the matching summary lists; they're author-distilled, no rework needed) and write `CHECKPOINT-{stream}-llm.md` using the template in `reference.md`. Lean vs full = weight cut (≥2 = lean).
+Then synthesize the **summary** (from the conversation in context **+ the harvested trailers** — fold their `decision/reasoning/learning/pivot/…` fields into the matching summary lists; they're author-distilled, no rework needed). Two extra folds: route the `rejected` trailer field + the `rejection` triage type into the summary's **`dead-ends`** list (the anti-library, surfaced up-front so a cold resume sees "don't retry X"); and stamp **`predecessor`** with the prior CHECKPOINT path for this stream if one exists (else `none`) so the thread chains into a lineage. The verbatim meat is secret-scrubbed by the `collect` script (narrow, high-precision — see `reference.md` § golden test / meat note), so no manual redaction is needed. Write `CHECKPOINT-{stream}-llm.md` using the template in `reference.md`. Lean vs full = weight cut (≥2 = lean).
 
 Clean up `$TMP`. **Then return to main ONE compact report string and nothing else** (no meat, no tool output, no narration):
 

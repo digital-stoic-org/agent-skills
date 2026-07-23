@@ -113,6 +113,7 @@ The live thread = turns AFTER the most-recent id with weight ≥ 2 that is a `de
 saved: YYYY-MM-DDTHH:MM:SSZ
 stream: {name}
 status: {exploring|building|decided|parked|done}
+predecessor: {path to prior CHECKPOINT this session continues | none}
 goal: {1 sentence}
 
 ---
@@ -126,6 +127,8 @@ decisions:
   - {[P1|P2]} {choice}: {rationale}
 learnings:
   - {non-obvious fact / gotcha}
+dead-ends:
+  - {approach tried & abandoned}: {why — so it isn't re-attempted}
 open-questions:
   - {unresolved fork}
 hot-files:
@@ -144,6 +147,12 @@ hot-files:
 ```
 
 The Meat section is verbatim — **do not edit, summarize, or fix typos in it**. That fidelity is the deliverable. The Summary section may be freely worded.
+
+**Sole exception to verbatim — secret scrub:** the `collect` script masks a *narrow, high-precision* set of unambiguous secret shapes (private-key blocks, `sk-`/`sk-ant-` keys, AWS `AKIA…`, GitHub/Slack tokens, JWTs, `password=`/`token=` assignments) with `[REDACTED:type]` before the text lands on disk. Precision over recall — prose is never clobbered, so a checkpoint never persists a live credential a transcript happened to quote. Set `CHECKPOINT_NO_REDACT=1` to disable (e.g. when checkpointing a session that legitimately discusses key *shapes*).
+
+**`dead-ends` (summary layer):** fold the `rejected` trailer field and the `rejection` triage type into this list — the session's anti-library, surfaced up-front so a cold resume sees "don't retry X" without scanning the verbatim meat. Omit if none.
+
+**`predecessor` (header):** if this checkpoint continues an earlier one for the same stream, stamp its path so a multi-day reasoning thread chains into a walkable lineage. Else `none`.
 
 ## Empty-answer guard (Phase 4)
 
@@ -168,4 +177,4 @@ If a project pins a venv (`.venv/bin/python`), prefer it — never run the scrip
 
 ## Golden test
 
-Fixture: `test/fixtures/golden/checkpoint-smoke.md`. Asserts: (1) `extract_turns.py index` on a sample `.jsonl` returns N numbered turns; (2) `collect` returns byte-exact text for given ids (incl. preserved typos); (3) a malformed `.jsonl` exits 2 (fallback path). Re-run on every Claude Code version bump — a red test = schema drift, fix the parser before trusting the skill.
+Fixture: `test/fixtures/golden/checkpoint-smoke.md`. Asserts: (1) `extract_turns.py index` on a sample `.jsonl` returns N numbered turns; (2) `collect` returns byte-exact text for given ids (incl. preserved typos) — the fixture must contain **no** secret-shaped strings so redaction is a no-op here; (3) a malformed `.jsonl` exits 2 (fallback path); (4) `collect` on a turn containing a planted secret (`sk-ant-…`, a private-key block) masks it with `[REDACTED:…]`, and `CHECKPOINT_NO_REDACT=1` restores byte-exact copy. Re-run on every Claude Code version bump — a red test = schema drift, fix the parser before trusting the skill.

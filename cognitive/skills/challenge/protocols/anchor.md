@@ -8,9 +8,12 @@ Challenge premature commitment and anchoring bias.
 
 ## Execution
 
-Apply ALL 4 patterns in sequence. For each finding, populate the Challenge Report section.
+Apply ALL 4 patterns in sequence. Each finding becomes a queue item per `reference.md` §Queue
+Schema — not a report section directly. `generated_by: protocol:anchor`, `id` prefix `A`.
 
 ### Pattern 1: Gatekeeper
+
+`type: decision` · `recommendation_allowed: true`
 
 *Force justification before accepting the current decision.*
 
@@ -23,6 +26,9 @@ Record: unverified criteria, conditions for failure.
 
 ### Pattern 2: Reset
 
+`type: decision` · `recommendation_allowed: false` — divergent by construction: Reset exists to
+surface the human's own fresh answer; handing back a recommended one would just re-anchor it.
+
 *Wipe the slate — re-approach from scratch without prior framing.*
 
 1. Set aside the current solution entirely
@@ -33,6 +39,8 @@ Record: unverified criteria, conditions for failure.
 Record: divergence points, new options surfaced by reset.
 
 ### Pattern 3: Alternative Approaches
+
+`type: decision` · `recommendation_allowed: true`
 
 *Ensure at least 2 alternatives were considered before committing.*
 
@@ -45,6 +53,8 @@ Record: divergence points, new options surfaced by reset.
 Record: alternatives generated, reasons for/against each.
 
 ### Pattern 4: Pre-mortem
+
+`type: decision` · `recommendation_allowed: true`
 
 *Simulate failure before it happens.*
 
@@ -60,6 +70,9 @@ Record: failure scenarios, early warning signals, mitigation actions.
 ---
 
 ## Output
+
+Format of the Challenge Report emitted at the END of the walk, once all queue items from this
+protocol are resolved — NOT emitted immediately after pattern execution. See ## Delivery.
 
 ```markdown
 ## Challenge Report: anchor (Gatekeeper · Reset · Alt Approaches · Pre-mortem)
@@ -116,3 +129,9 @@ Record: failure scenarios, early warning signals, mitigation actions.
 
 [Proceed as-is | Proceed with modifications: X | Reconsider: Y]
 ```
+
+## Delivery
+
+Findings from this protocol are delivered as queue items, walked interactively — see
+`reference.md` §Interactive Delivery for the full protocol (fact-first resolution, rank-ordered
+decisions, cap N=5, one question per turn, plain text, hard gate). This file does not repeat it.

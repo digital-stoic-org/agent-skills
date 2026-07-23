@@ -8,9 +8,17 @@ Challenge factual claims, hallucinations, and unverified assertions.
 
 ## Execution
 
-Apply ALL 3 patterns in sequence.
+Apply ALL 3 patterns in sequence. Each finding becomes a queue item per `reference.md` §Queue
+Schema — not a report section directly. `generated_by: protocol:verify`, `id` prefix `V`.
+
+All 3 patterns default `type: fact`. Consequence (see `reference.md` §Interactive Delivery): fact
+items are NEVER posed to the human — the interviewer resolves them alone via Read/Glob/Grep
+(`resolution_action`). A fact that cannot be resolved from the environment converts to
+`type: decision` with `recommendation_allowed: true` ("can't verify X — assume or cut?").
 
 ### Pattern 1: Proof Demand
+
+`type: fact`
 
 *Require citations or verifiable evidence for each factual claim.*
 
@@ -25,6 +33,8 @@ Apply ALL 3 patterns in sequence.
 Record: claim inventory with source status.
 
 ### Pattern 2: CoVe (Chain-of-Verification)
+
+`type: fact`
 
 *Generate verification questions, answer independently, then revise.*
 
@@ -45,6 +55,8 @@ Record: verification questions, independent answers, discrepancies found.
 
 ### Pattern 3: Fact Check List
 
+`type: fact`
+
 *Extract atomic claims and verify each independently.*
 
 1. Decompose the target response into atomic, checkable assertions (one claim per line)
@@ -57,6 +69,10 @@ Record: atomic claim list with confidence ratings and verification actions.
 ---
 
 ## Output
+
+Format of the Challenge Report emitted at the END of the walk, once all fact items from this
+protocol are resolved (or converted to decisions) — NOT emitted immediately after pattern
+execution. See ## Delivery.
 
 ```markdown
 ## Challenge Report: verify (Proof Demand · CoVe · Fact Check List)
@@ -74,14 +90,14 @@ Record: atomic claim list with confidence ratings and verification actions.
 ### Findings
 
 **Proof Demand** *(verify family — classifies claims by evidence status)*
-| Claim | Source Status | Reasoning | Notes |
-|-------|--------------|-----------|-------|
-| [claim] | ✅/⚠️/❌ | [why this classification — what evidence was checked or missing] | [source or gap] |
+| Claim | Source Status | Reasoning | Notes | Confidence |
+|-------|--------------|-----------|-------|------------|
+| [claim] | ✅/⚠️/❌ | [why this classification — what evidence was checked or missing] | [source or gap] | [High/Medium/Low] |
 
 **CoVe Verification** *(verify family — independent re-derivation exposes confirmation bias)*
-| Verification Question | Independent Answer | Discrepancy? | Reasoning |
-|-----------------------|-------------------|--------------|-----------|
-| [question] | [answer] | [yes/no — detail] | [what the discrepancy reveals about the original claim] |
+| Verification Question | Independent Answer | Discrepancy? | Reasoning | Confidence |
+|-----------------------|-------------------|--------------|-----------|------------|
+| [question] | [answer] | [yes/no — detail] | [what the discrepancy reveals about the original claim] | [High/Medium/Low] |
 
 **Fact Check List** *(verify family — priority-ranks claims by impact × uncertainty)*
 | Assertion | Confidence | Reasoning | Verification Action |
@@ -99,3 +115,10 @@ Record: atomic claim list with confidence ratings and verification actions.
 
 [Proceed as-is | Verify before proceeding: [list] | Do not use without verification]
 ```
+
+## Delivery
+
+Fact items from this protocol are resolved by the interviewer alone, before any question reaches
+the human — see `reference.md` §Interactive Delivery for the full protocol (fact-first
+resolution, unresolvable-fact-to-decision conversion, cap N=5, one question per turn, plain text,
+hard gate). This file does not repeat it.
