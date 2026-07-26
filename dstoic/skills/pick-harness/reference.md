@@ -23,7 +23,7 @@ Latency   ⚡ immediate ──────────  🐌 deferred
 | 2 | ⏩⚡ **feedforward guide** | cheap — steers before acting | a rule the agent reads first |
 | 3 | 🧱 **containment (sandbox/deny)** | zero damage — action blocked | `--safe-mode` + `--allowedTools`; PreToolUse deny |
 | 4 | 🚨⚙️⚡ **computational sensor, early** | one wasted attempt | pre-commit lint/test, link-check |
-| 5 | 🚨🧠 **inferential sensor** | tokens + a judge pass | LLM-judge vs a reference |
+| 5 | 🚨🧠 **inferential sensor** | tokens + a judge pass | native `/goal` (judged every turn, auto-retries) · else LLM-judge vs a reference |
 | 6 | 🧑 **human review** | your attention | PR review |
 | 7 | 🚨🐌 **pipeline / E2E, late** | full run wasted | `agent-browser` on the render, post-integration judge |
 

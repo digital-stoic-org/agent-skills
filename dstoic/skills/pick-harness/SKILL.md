@@ -40,7 +40,7 @@ Friction-driven judge for **which guardrail to add next** — then scaffolds it.
 |---|---|
 | 🪧 feedforward guide | **rule text block** (`.claude/rules/*.md` / CLAUDE.md stanza / SKILL directive) |
 | 🚨⚙️ computational sensor | **hook script** / check command (exit-code = verdict) |
-| 🚨🧠 inferential sensor | **LLM-judge prompt** graded vs a reference (e.g. `ref/tone-guide.md`) |
+| 🚨🧠 inferential sensor | **`/goal <condition>`** (built-in, v2.1.139+) when the condition is **verifiable from the transcript** — judge AND retry loop, zero scaffolding. Hand-rolled **LLM-judge prompt** graded vs a reference (e.g. `ref/tone-guide.md`) only when the verdict must be **cited/graded** or fired **outside a turn boundary**. |
 | 🧱 containment (unrepresentable) | **newtype / schema** — bad state won't compile / won't validate |
 | 🧱 containment (sandbox) | **`claude -p --safe-mode` wrapper** + explicit `--allowedTools` (rule below) |
 | 🚨🐌 E2E sensor *(on the render)* | **`agent-browser` drive-script** — headless-Chrome CLI freezing what the app *shows*, not what it computes; asserts on the live render *(Vercel `agent-browser`; fallback `claude-in-chrome` or Playwright)* |
