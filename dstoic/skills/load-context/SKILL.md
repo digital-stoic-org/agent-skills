@@ -1,7 +1,7 @@
 ---
 name: load-context
 description: Resume session from CONTEXT-llm.md. Use when resuming work, loading saved context, continuing a previous session. Triggers include "load context", "resume session", "continue where I left off".
-argument-hint: "[stream-name] [--full]"
+argument-hint: "[stream-name] [--as <role>] [--full]"
 allowed-tools: [Bash, Read, AskUserQuestion]
 model: haiku
 context: main
@@ -45,10 +45,12 @@ If multiple streams and no selection → AskUserQuestion with options (mark done
 
 **Filename**: `"default" → CONTEXT-llm.md`, `"{name}" → CONTEXT-{name}-llm.md`
 
+**Role**: if `--as <role>` is passed, record it as this session's active role. A later `/save-context` call in the same session reuses it without needing `--as` again.
+
 ### Phase 2: Expand Resources (if --full)
 
 Parallel Read: OpenSpec project/proposal/tasks.md, hot files, manifest.yaml.
-**Hot file selection**: `--full` reads all hot files; default (lean) reads `[P1]`-tagged only (untagged = P2 = lean-skip). Fallback if no tags present: top 3.
+**Hot file selection**: `--full` reads all hot files (all roles); default (lean) reads `[P1]`-tagged only, across ALL roles, not just mine (untagged = P2 = lean-skip). Fallback if no tags present: top 3.
 **DO NOT restore tasks** — informational only.
 
 **Thinking Artifacts** (if `## Thinking Artifacts` section exists in CONTEXT file):
@@ -56,8 +58,24 @@ Parallel Read: OpenSpec project/proposal/tasks.md, hot files, manifest.yaml.
 - `--full` mode: Read referenced `$PRAXIS_DIR/thinking` artifacts and include brief summaries in report
 - If `$PRAXIS_DIR` is unset: display paths as-is, note `⚠️ $PRAXIS_DIR not set`
 
-### Phase 3: Format Resume Report
+### Phase 3: Resume Report
 
-Parse key-value header + markdown sections → human-friendly report.
+Phase 1's Read already put the whole file in context — re-rendering it would pay those tokens twice and risk a paraphrase drifting from the source. The report **orients, never re-explains**.
 
-See `reference.md` for section mapping, report structure, error messages, and formatting rules.
+Output exactly 4 lines — no section blocks, no re-synthesis:
+
+```
+🔄 {stream} · {status} · sauvé {relative time} par [{role}]
+🎯 {goal, one line}
+▶️  {Next[0]}
+⚠️  {N} lignes nouvelles de [{other role}] depuis mon dernier save   ← omit if none
+```
+
+Solo session (no role recorded) → drop ` par [{role}]` from line 1; line 4 never applies.
+
+**`## Standing` lines**: render as rules in force for THIS resumed session, not informational bullets.
+- `[constraint]` → active rule the model must honour now
+- `[assumption]` → premise to re-verify before relying on it
+- `[definition]` → term binding for this session
+
+See `reference.md` for section mapping, delta-line computation, error messages, and role resolution.

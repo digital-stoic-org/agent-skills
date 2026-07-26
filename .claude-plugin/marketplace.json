@@ -5,14 +5,14 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.41.0"
+    "version": "0.42.0"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, verbatim checkpoint, meta-prompt (RELIANCE recursive ledger), and session post-mortem",
-      "version": "0.48.0",
+      "version": "0.50.0",
       "author": {
         "name": "dstoic"
       },
