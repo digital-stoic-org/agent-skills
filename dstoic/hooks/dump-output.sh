@@ -47,18 +47,18 @@ if [ -z "$last_output" ] || [ "$last_output" = "null" ]; then
   exit 0
 fi
 
-# Strip fenced ```mermaid ... ``` blocks — diagram source is noise in dumps.
-last_output=$(printf '%s' "$last_output" | awk '
+# Skip trivial outputs (e.g. "Done.", short confirmations). Fenced ```mermaid
+# blocks are excluded from the MEASUREMENT only — diagram source inflates a
+# thin turn past the floor — but the dump itself keeps them verbatim, so the
+# file stays a faithful record of what was shown. Tune via DUMP_MIN_BYTES.
+prose_only=$(printf '%s' "$last_output" | awk '
   /^[[:space:]]*```mermaid[[:space:]]*$/ { skip=1; next }
   skip && /^[[:space:]]*```[[:space:]]*$/ { skip=0; next }
   !skip')
 
-# Skip empty/null AND trivial outputs (e.g. "Done.", short confirmations),
-# measured AFTER mermaid stripping. Floor avoids flooding dumps/ with
-# near-empty files; tune via DUMP_MIN_BYTES.
 min_bytes="${DUMP_MIN_BYTES:-500}"
-out_len=$(printf '%s' "$last_output" | wc -c)
-if [ -z "$last_output" ] || [ "$out_len" -lt "$min_bytes" ]; then
+out_len=$(printf '%s' "$prose_only" | wc -c)
+if [ "$out_len" -lt "$min_bytes" ]; then
   exit 0
 fi
 
