@@ -21,7 +21,7 @@ Latency   ⚡ immediate ──────────  🐌 deferred
 |---|---|---|---|
 | 1 | 🧱 **unrepresentable** (type/schema) | zero — it can't be written | `newtype Seconds ≠ Millis` |
 | 2 | ⏩⚡ **feedforward guide** | cheap — steers before acting | a rule the agent reads first |
-| 3 | 🧱 **containment (sandbox/deny)** | zero damage — action blocked | `--safe-mode` + `--allowedTools`; PreToolUse deny |
+| 3 | 🧱 **containment (sandbox/deny)** | zero damage — action blocked | `--safe-mode` (or `--bare` carve-out) + `--allowedTools`; PreToolUse deny |
 | 4 | 🚨⚙️⚡ **computational sensor, early** | one wasted attempt | pre-commit lint/test, link-check |
 | 5 | 🚨🧠 **inferential sensor** | tokens + a judge pass | native `/goal` (judged every turn, auto-retries) · else LLM-judge vs a reference |
 | 6 | 🧑 **human review** | your attention | PR review |
@@ -89,7 +89,7 @@ struct Millis(i64);
 
 ### 4. "Agent runs a destructive/irreversible op" → 🧱 containment via sandbox or deny
 Two routes; both rank 3.
-- **Sandbox the whole run** — `claude -p --safe-mode` + an explicit allow-list (below). The op simply isn't reachable.
+- **Sandbox the whole run** — `claude -p --safe-mode` + an explicit allow-list (below). The op simply isn't reachable. *(If the run must keep a plugin loaded or authenticates via a 3P provider, use the `--bare` carve-out instead — same containment, different auth path.)*
 - **Deny the specific op** — a `PreToolUse` hook that blocks the tool call before it fires.
 
 ```json
@@ -120,17 +120,139 @@ agent-browser run \
 Availability check first: `command -v agent-browser`. If absent, scaffold the `claude-in-chrome` drive or a
 minimal Playwright `expect(page.getByText(...)).toBeVisible()` equivalent — same sensor, different engine.
 
-## 🚨 Sandbox — `--safe-mode`, never `--bare` (full detail)
+### 6. "Starting a multi-stage agentic pipeline" → 🔗 pipeline harness tier *(gated)*
 
-*Verified 2026-07-20, Claude Code v2.1.215 (headless.md · authentication.md · costs.md).*
+> **Gate first.** All three or it's not this tier: ① ≥2 **ordered** stages · ② each stage an **isolated agent
+> invocation** (own process/context) · ③ a **machine-readable verdict** crosses each seam. One long session
+> with phases is NOT a pipeline — that's the one-guardrail default. `/pick-workflow` decides *that* it's N
+> stages; this decides *what guards each seam*.
+>
+> *Sourced from a described cold run (5 sequential `claude -p` stages on Bedrock); patterns transcribed from
+> the report, not re-derived from the raw artifacts.*
 
-| Flag | Auth | Isolation | Billing | Use |
+Three grid points, laid along the pipeline. Not a new axis — a **bundle**.
+
+| # | Component | Grid point | Guards |
+|---|---|---|---|
+| A | persisted stream-json logs + jq viewer | 🚨 sensor · ⚙️ computational · 🐌 deferred | *every* other verdict, after the fact |
+| B | clean-room isolation + auth re-inject | 🧱 containment (+ mandatory auth rider) | ambient-context leakage into the run |
+| C | injected protocol + `STAGE_FAIL` exit verdict | 🪧 guide ⏩ + 🚨⚙️ sensor | each seam between stages |
+
+**Layout** — one job per script, ordered by prefix; utilities carry **no** prefix (the number means "a
+sequenced rung"). Scripts are executables, so they live in the tracked control plane, **not** under
+`.claude/` (that dir is Claude Code config, not a bin). Definition tracked; all generated output + `.env` in
+a **non-git run dir**, bridged by one env var — `SK_RUN_DIR`, not symlinks. `SK_RUN_DIR` must be set
+*outside* `.env` (the `.env` lives inside the run dir — otherwise it's circular).
+
+```
+bin/  10-drive-pipeline.sh   # run the stages in order, collect verdicts
+      20-verify-deploy.sh    # assert the result / static-validate
+      30-simulate-deploy.sh  # dry-run the deploy; real writes behind --live
+      watch-logs.sh          # utility, no prefix — read the logs
+sk-test-protocol.md          # the pass/fail contract, injected (below)
+$SK_RUN_DIR/{logs/,out/,.env}   # untracked, gitignored, disposable
+```
+
+**A — persisted logs + viewer.** Each stage tees to `$SK_RUN_DIR/logs/<stage>.stream-json.log` (persisted,
+**never** `mktemp`+`rm` — a post-mortem you can't read is not a post-mortem):
+
+```bash
+claude -p ... --output-format stream-json --verbose 2>&1 | tee "$LOGS/$stage.stream-json.log"
+```
+
+One jq filter folds the jsonl firehose into a timeline — `init`→🟦, text→💬 (`STAGE_FAIL:`→🛑),
+`tool_use`→🔧, `tool_result`→↳✅/❌, `result`→🏁. Bare invocation = per-stage ledger; `-f` = live tail:
+
+```bash
+jq -r '
+if .type=="system" and .subtype=="init" then
+  "🟦 init   model=\(.model // "?")  tools=\(.tools|length)  sid=\((.session_id // "········")[0:8])"
+elif .type=="assistant" then
+  (.message.content[]? |
+    if .type=="text" then
+      (.text | split("\n")[] | select(length>0) |
+        if startswith("STAGE_FAIL:") then "🛑 \(.)" else "💬 \(.[0:160])" end)
+    elif .type=="tool_use" then "🔧 \(.name)  \(.input|tostring|.[0:110])"
+    else empty end)
+elif .type=="user" then
+  (.message.content[]? | select(.type=="tool_result") |
+    (if .is_error == true then "   ↳❌ " else "   ↳✅ " end)
+    + (.content|tostring|gsub("\n";" ⏎ ")|.[0:110]))
+elif .type=="result" then
+  "🏁 \(.subtype)  turns=\(.num_turns)  in=\(.usage.input_tokens)  out=\(.usage.output_tokens)  $\(.total_cost_usd)"
+else empty end' "$LOGS/$stage.stream-json.log"
+```
+
+> ⚠️ **jq gotcha, found by dry-running this filter:** `.is_error // true` is **wrong** — jq's `//` treats
+> `false` as empty, so every *clean* stage reads as a crash. Compare explicitly: `.is_error == true`.
+>
+> ⚠️ **Token accounting.** Per-event `output_tokens` in stream-json is **unreliable** — most events report
+> ~5. On the fixture below the per-event sum was **20** against a real **2947**. The **authoritative** figure
+> is **`total_cost_usd` on the `result` line**; sum `.message.usage` only for cache-vs-noncache ratios, never
+> for billable output. Run-wide cost:
+> `jq -s 'map(select(.type=="result").total_cost_usd)|add' logs/*.log`. Mine the logs with jq **aggregates** —
+> never load raw log content into a context window.
+
+**B — clean-room + auth re-inject.** The containment combo and its mandatory auth rider are in the sandbox
+section below (`--bare --strict-mcp-config --mcp-config "$MCP_NONE" --setting-sources ""` + sourced `.env`).
+This is the one place `--bare` is not optional: `--safe-mode` would disable the plugin under test.
+
+**C — protocol injection + `STAGE_FAIL`.** The pass/fail contract lives in **one plain text file** injected
+via `--append-system-prompt` — **not** a CWD-auto-loaded `.claude/rules/*.md`, which silently does nothing
+once CWD is the run dir. Single source of truth; each stage prompt just points at its row. The protocol must
+carry a **token-ceiling stop** ("if a stage heads past ~N tok, STOP and report") and the rule **"PARTIAL is
+never reported as SUCCESS."**
+
+A stage signals a *deliberate* stop by emitting a line starting `STAGE_FAIL:`; the driver greps for it and
+converts it to an exit code. **Three outcomes, never two** — conflating the first two misreads a working
+guardrail as a bug:
+
+| Log signature | Verdict | Meaning |
+|---|---|---|
+| `subtype:"success"` + no `STAGE_FAIL:` | ✅ **OK** | stage did the job |
+| `subtype:"success"` + `STAGE_FAIL:` | 🛑 **STOPPED** | the agent **chose** to stop — the guardrail worked |
+| `is_error:true` / `api_error` | 💥 **CRASH** | a real failure |
+
+```bash
+run_stage() {                      # in 10-drive-pipeline.sh
+  local stage="$1" prompt="$2" log="$SK_RUN_DIR/logs/$stage.stream-json.log"
+  claude -p --output-format stream-json --verbose \
+    --append-system-prompt "$(cat "$PROTOCOL")" "$prompt" 2>&1 | tee "$log"
+  jq -es 'any(.[]; .type=="result" and .is_error == true)' "$log" >/dev/null && return 2   # 💥 crash
+  grep -q 'STAGE_FAIL:' "$log" && return 1                                                 # 🛑 deliberate
+  return 0                                                                                 # ✅ ok
+}
+```
+
+## 🚨 Sandbox — `--safe-mode` default, `--bare` carve-out (full detail)
+
+*Verified 2026-07-20, v2.1.215 (headless.md · authentication.md · costs.md). Carve-out verified 2026-07-29,
+v2.1.220 — `claude --help` states `--bare` skips keychain reads and CLAUDE.md auto-discovery, but that
+"3P providers (Bedrock/Vertex/Foundry) use their own credentials", "Skills still resolve via /skill-name",
+and context is re-suppliable via `--add-dir`/`--mcp-config`/`--settings`/`--agents`/`--plugin-dir`.*
+
+| Flag | Auth | Isolation | Plugins/skills | Use |
 |---|---|---|---|---|
-| `--bare` | ❌ ignores OAuth/keychain — **needs `ANTHROPIC_API_KEY`** | max | **Console workspace** (not Max sub) | ⛔ avoid — auth/billing trap |
-| `--safe-mode` | ✅ keeps OAuth/keychain (Max login) | cuts custom CLAUDE.md/skills/plugins/hooks/MCP/auto-memory | Max sub, zero setup | ✅ **default sandbox** |
-| neither | ✅ | none | Max sub | only if the run must **discover hooks** |
+| `--safe-mode` | ✅ keeps OAuth/keychain (Max login) | cuts custom CLAUDE.md/skills/plugins/hooks/MCP/auto-memory | ⛔ **disabled** | ✅ **default sandbox** |
+| `--bare` + OAuth | ❌ keychain never read — **needs `ANTHROPIC_API_KEY`** → **bills a Console workspace, not the Max sub** | max | ✅ `--plugin-dir` kept | ⛔ auth/billing trap |
+| `--bare` + **3P** (Bedrock/Vertex/Foundry) | ✅ provider's own creds — **unaffected by `--bare`** | max | ✅ `--plugin-dir` kept | ✅ **carve-out** |
+| `--bare` + **plugin under test** | per the row above | max | ✅ the only mode that keeps it | ✅ **carve-out — mandatory** |
+| neither | ✅ | none | ✅ | only if the run must **discover hooks** |
 
-- `--bare`'s only edge over `--safe-mode` is startup speed — not worth losing auth + correct billing.
+**The two carve-outs, stated as a decision:**
+
+1. **Plugin/skill under test.** `--safe-mode` disables plugins — it disables *the thing you're testing*, so the
+   run proves nothing. `--bare --plugin-dir <path>` keeps it loaded. There is no third option.
+2. **Auth is 3P, not OAuth.** The "needs `ANTHROPIC_API_KEY`" hazard is **Anthropic-direct-specific**. A
+   Bedrock run under `--bare` authenticates normally. Don't generalise the OAuth warning past its case.
+
+> 🔑 **Isolation and auth are coupled — the trap that eats an afternoon.** `--setting-sources ""` strips
+> `~/.claude/settings.json`, which is frequently *where the 3P auth env lives*. The clean room then kills its
+> own oxygen: `apiKeySource:"none"` → "Not logged in", with nothing in the error pointing at the flag that
+> caused it. **Fix: source a `.env` inside the run** that re-supplies exactly the auth vars. Sourcing ≠
+> exposing — put a **profile name** (SSO) in the file, never a raw key. *Isolate, then hand back exactly what
+> you need — no more.*
+
 - `--safe-mode` **does NOT cut `settings.json` permissions**: the personal allow/deny list **merges** across
   scopes. So `--safe-mode` alone ≠ default prompts. For a deterministic drive, pass **`--allowedTools`** (or
   override with `--settings '{"permissions":{...}}'`).
@@ -139,12 +261,24 @@ minimal Playwright `expect(page.getByText(...)).toBeVisible()` equivalent — sa
 ### Drive templates
 
 ```bash
-# Dry-run a scaffolded artifact in isolation, deterministic tool set, on the Max sub:
+# DEFAULT — dry-run a scaffolded artifact in isolation, deterministic tool set, on the Max sub:
 claude -p --safe-mode --allowedTools "Read,Bash(./link-check.sh:*)" \
   "Run ./link-check.sh on draft.md and report the exit code and any DEAD lines."
 
-# Prescribe as a containment layer around a risky task (no destructive tools reachable):
+# DEFAULT — prescribe as a containment layer around a risky task (no destructive tools reachable):
 claude -p --safe-mode --allowedTools "Read,Grep,Glob" "<the task>"
+
+# CARVE-OUT — cold-test a plugin/skill in a clean room, with auth restored.
+# `set -a` exports everything the .env defines; the .env carries a PROFILE NAME, not a key.
+set -a; . "$SK_RUN_DIR/.env"; set +a      # CLAUDE_CODE_USE_BEDROCK=1 AWS_REGION=… AWS_PROFILE=…
+MCP_NONE='{"mcpServers":{}}'              # assign first — an inline literal reads as injection-shaped
+claude -p --bare \
+  --plugin-dir "$PLUGIN_SRC" \
+  --strict-mcp-config --mcp-config "$MCP_NONE" \
+  --setting-sources "" \
+  --append-system-prompt "$(cat "$PROTOCOL")" \
+  --allowedTools "Read,Grep,Glob,Bash(./20-verify-deploy.sh:*)" \
+  "<the stage prompt — point at the protocol row that governs it>"
 ```
 
 ## Runtime topology (fixed — do not re-derive)
@@ -164,5 +298,11 @@ with a linear fallback, never this skill's default.
 | `/pick-workflow` | execution topology | *how steps run* (linear / fan-out / Workflow) |
 | **`/pick-harness`** | **guardrail** | *what catches the failure* — and scaffolds it |
 
+**Boundary with `/pick-workflow`** (the pipeline tier sits right on it): `/pick-workflow` decides **that** the
+work is N ordered stages and where the seams fall. `/pick-harness` takes that shape as given and decides
+**what guards each seam**. An input phrased "should this be a pipeline / fan out?" belongs to the sibling —
+hand it over rather than answering it here.
+
 All three: recommend, don't execute the task. `/pick-harness` additionally **scaffolds** the artifact and
-**dry-runs** it in `--safe-mode`.
+**dry-runs** it — in the sandbox mode the rule above selects, or against a synthetic fixture when the
+artifact is deterministic (no model call, no auth).
