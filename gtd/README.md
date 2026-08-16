@@ -20,6 +20,7 @@ flowchart LR
 | 2 | 🔄 **triage** | Classify & route inbox items |
 | 3 | 🚀 **route** | Direct-to-project when target is known |
 | 4 | 🎯 **focus** | Daily top 3-5 ranked tasks |
+| 5 | 📎 **clip** | Archive a web article into the anti-library |
 
 ## 🚀 Quick Start
 
@@ -38,11 +39,14 @@ flowchart LR
 
 # Daily focus list
 /gtd:focus
+
+# Archive an article (TLDR + verbatim backup)
+/gtd:clip https://example.com/post
 ```
 
 ## 📦 Version
 
-`0.3.6`
+`0.5.1`
 
 ## 🎯 Skills
 
@@ -95,6 +99,36 @@ Workflow:
 3. Score: project_priority × section_weight × tag_weight
 4. Optional: energy filter from coaching pulse
 5. Output ranked top 3-5 with scores and staleness flags
+
+### clip
+
+One URL → one note in the anti-library: frontmatter, a TLDR under `# Notes`, and a verbatim
+copy of the page under `# Dump` so the note survives the article going offline.
+
+- **Model**: sonnet (writes the TLDR) · **Context**: subagent (the article body never hits main context)
+- **Tools**: Read, Write, Edit, Bash, Glob, Grep
+- **Invocation**: `/gtd:clip <url> [angle]` or "save this article"
+
+Workflow:
+1. `scripts/fetch-article.py` — curl + Substack JSON preloads → JSON-LD → `<article>` → densest container
+2. pandoc `gfm-raw_html`, strip inline-SVG icons and lightbox duplicates, demote headings under `# Dump`
+3. Read the body, harvest existing tags, write the note (flat folder, no `status:`)
+4. Count the article's images — **zero bytes downloaded, ever** — and say so in one line
+
+Assets are opt-in by URL — images, but pdf, svg or csv just as well. `clip` never downloads;
+`scripts/attach.py` is the only code that fetches bytes, and its argument is the address the human
+copied from the article — the selection *is* the URL, so there is no inventory to arbitrate and no
+index to mistype:
+
+```bash
+/gtd:clip --attach "<note.md>" https://…/diagram.png https://…/report.pdf
+```
+
+It unwraps CDN wrappers (full resolution, never downscaled), names files `<slug>-NN.ext`, and
+re-points the reference in `# Dump` — an image line becomes `![[…]]` with the source URL in a
+comment, an inline link becomes `[[nom|label]]`. Cap: 25 MB per file, as a runaway guard.
+
+Deps: `pandoc`, `python3-bs4`, `curl`.
 
 ## 🏗️ Requirements
 
