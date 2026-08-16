@@ -116,6 +116,35 @@ def from_dom(soup):
     return str(min(keep, key=lambda s: s[1])[2]), "dom-density"
 
 
+def unlazy(body_html):
+    """Promote lazy-loaded sources to `src`.
+
+    WordPress and friends ship `<img data-src=…>` with no `src` at all; pandoc and
+    the inventory then both see zero images and the Dump silently loses every
+    figure the argument rests on. Failure mode that reads as success.
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(body_html, "html.parser")
+    touched = False
+    for img in soup.find_all("img"):
+        src = img.get("src") or ""
+        if src and not src.startswith("data:"):
+            continue
+        for attr in ("data-src", "data-lazy-src", "data-original", "data-lazy"):
+            if img.get(attr):
+                img["src"] = img[attr]
+                touched = True
+                break
+        else:  # only a srcset — take its first candidate
+            for attr in ("data-srcset", "srcset"):
+                if img.get(attr):
+                    img["src"] = img[attr].split(",")[0].strip().split(" ")[0]
+                    touched = True
+                    break
+    return str(soup) if touched else body_html
+
+
 # --- markdown post-processing ---------------------------------------------
 
 def to_markdown(body_html):
@@ -125,6 +154,8 @@ def to_markdown(body_html):
         die(f"pandoc failed: {r.stderr.strip()[:200]}")
     md = r.stdout
     # inline SVG icons and lightbox duplicates are pure noise, never content
+    # (a share bar is a row of base64 icons wrapped in links — kilobytes of it)
+    md = re.sub(r'\[!\[[^\]]*\]\(data:[^)]*\)\]\([^)]*\)', '', md)
     md = re.sub(r'^!\[[^\]]*\]\(data:[^)]*\)\n?', '', md, flags=re.M)
     md = re.sub(r'^\[\]\(https?://[^)]*\)\n?', '', md, flags=re.M)
     md = re.sub(r'\n{3,}', '\n\n', md)
@@ -291,6 +322,7 @@ def main():
         info.setdefault("date", (meta(soup, "article:published_time", "date") or "")[:10] or None)
         info.setdefault("description", meta(soup, "og:description", "description"))
 
+    body_html = unlazy(body_html)
     md = demote(to_markdown(body_html))
     path = os.path.join(args.out, "body.md")
     with open(path, "w", encoding="utf-8") as f:
