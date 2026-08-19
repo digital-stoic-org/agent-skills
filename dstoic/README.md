@@ -29,6 +29,8 @@ flowchart LR
 | `/commit-repo` | 🗂️ Streamlined git commit with single human gate |
 | `/pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
 | `/pick-workflow` | 🧩 Design a skill/agent's execution topology (linear/sub-agents/Workflow); calls `/pick-model` per step |
+| `/pick-harness` | 🛡️ Diagnose an agent failure and scaffold the cheapest guardrail to add next |
+| `/plan-context` | 📐 Turn an in-session analysis into a resumable, traceable `plan-<chantier>.md` (dashboard + journal + lots closing on a command), then design its execution |
 | `/save-context` | 💾 Save session state to CONTEXT-llm.md |
 | `/checkpoint` | 🥩 Capture verbatim "meat" (exact wording, rejected paths, live reasoning) → CHECKPOINT-llm.md |
 | `/load-context` | 📥 Resume session from CONTEXT-llm.md |
@@ -53,7 +55,7 @@ Plus: 3 hooks (praxis-dir guard, tmux notifications, debug dumps) and 1 agent (d
 
 ## 📦 Version
 
-`0.51.4` · 13 skills · 1 agent · 3 hooks
+`0.52.0` · 14 skills · 1 agent · 3 hooks
 
 ---
 
