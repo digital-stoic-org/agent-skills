@@ -33,15 +33,25 @@ The plan derives from an analysis **already in context**. If the session holds n
 so: run the analysis first (`/investigate`, `/probe`, plain exploration), then come back. Never invent a
 plan out of a prompt.
 
+**Scale guard**: under one lot there is no chantier — do the gesture, do not write a plan. A plan earns its
+cost when the *analysis* would be expensive to rebuild, not when the work is long.
+
 With `--exec-only`, skip to step 6 against the existing plan file.
 
 ### 2. Frame — before writing anything
+
+Take the date once, from the system (`date +%d/%m/%Y`), and reuse it for `cree`/`revise`, the journal line
+and the `## Mesures` header. Never infer it from the conversation — a long session drifts.
 
 - **Chantier** — one slug (`biodiversite`, `permaplus`). Series prefix derived from it (`BD-`, `PP-`).
 - **Question posée** — restate it as the user framed it, including their sub-question. It is the contract.
 - **Périmètre / hors périmètre** — both explicit, as lists, in the frontmatter. Everything the analysis
   surfaced but that falls outside goes to `## Hors périmètre — reporté`, never silently dropped.
 - **Précédent** — if a sibling plan exists in the repo (`plan-*.md`), name it in the header line.
+
+**Gate before writing** — show the frame (périmètre · hors périmètre · the lot list, titles only) and
+**wait**. Ask in plain text, never `AskUserQuestion`. **One round**, then write: the analysis is already
+done, this is a validation, not a questionnaire. An ambiguous answer ⇒ choose, and state the assumption.
 
 ### 3. Lock the measurements — the traceability floor
 
@@ -62,6 +72,11 @@ One lot = one gesture = **one output file**, never shared with another lot. Anat
 | **Clôture** | a **shell command with its expected value** (`grep -c … = 0`, `≥ 1`, a `comm` that returns empty). Verifiable on disk, not by reading the worker's answer |
 | **Dépend de** | lot IDs, or `rien` |
 
+**Run every closure command now**, before any lot is executed. Two returns for a near-zero cost: a
+malformed command is caught here instead of in the execution session, and the value it returns *today* is
+the baseline — write it in `Constaté disque` as `<valeur> (avant), attendu <valeur>`. A closure command
+that cannot run is not a closure criterion; rewrite it until it does.
+
 IDs are `XX-nn`, allocated once and **never recycled**. A lot dropped mid-way keeps its ID in
 `### Lots abandonnés` with its motive — that table is what stops the next pass from re-proposing it.
 
@@ -81,10 +96,29 @@ Optional, and only when the analysis produced them: `## Étalon`, `## Inventaire
 
 First journal line is written now: date, `—`, `Cadrage : …`, constat `plan écrit, dépôt non modifié`.
 
+**Plan already there ⇒ merge, never `Write`.** Re-running on an existing chantier reads the file first,
+then: existing IDs and their statuses are kept as they are · new lots continue the series after the highest
+ID ever allocated (abandoned ones included) · the journal gains lines, loses none · `revise:` and the
+frontmatter lot lists are updated · a lot that no longer makes sense moves to `### Lots abandonnés` with its
+motive. Overwriting a plan destroys the only trace of what was already constaté — that is the one
+irreversible mistake this skill can make.
+
+### 5bis. Validate the file mechanically
+
+Six checks, one short script, before handing off. Any failure is fixed now, not left to the resume:
+
+1. IDs unique across open + closed + abandoned.
+2. Every `Dépend de` resolves to an existing ID.
+3. No dependency cycle.
+4. Every lot appears in **both** the frontmatter lists and `## État — tableau de bord`.
+5. No two lots declare the same `Sortie` file.
+6. Every lot has its five fields, and its `Clôture` holds at least one command.
+
 ### 6. Execution pass — always, never optional
 
-Invoke `/pick-workflow` on the lot list, then `/pick-model` on each retained step, and write their verdicts
-into `## Exécution — découpage et modèles`: decomposition table · **la couture** (where it falls and why) ·
+Invoke `/pick-workflow` on the lot list — **once**. It already delegates model+effort per step to the
+model-picker skill, so do not call `/pick-model` in the same breath; call it only for a lot whose verdict
+came back without a model, and say so. Write the verdicts into `## Exécution — découpage et modèles`: decomposition table · **la couture** (where it falls and why) ·
 **cast** (mechanism + model + effort + motive, per lot) · worker contract · resume protocol · linear fallback.
 
 **Linear does not mean inline.** Even with zero parallelism, a read-heavy lot goes to its own **named**

@@ -30,11 +30,13 @@ lots_abandonnes: []
 
 | Lot | Titre | Statut | Constaté disque |
 |---|---|---|---|
-| `XX-01` | <titre> | ⬜ ouvert | — |
+| `XX-01` | <titre> | ⬜ ouvert | <valeur mesurée avant exécution>, attendu <valeur> |
 
 Légende : ⬜ ouvert · 🟡 en cours · ✅ clos (avec constaté) · ❌ abandonné (ID conservé).
 **Règle de reprise** : un lot n'est ✅ que si sa commande de clôture a été rejouée et son résultat écrit
 dans la colonne `Constaté disque`. Un rapport de sub-agent ne vaut pas constat.
+À l'écriture du plan, cette colonne porte déjà la **valeur d'avant** : elle prouve que la commande tourne
+et donne le point de comparaison.
 
 ## Journal d'exécution
 
@@ -145,6 +147,17 @@ Un second plan dans le même dépôt cite son précédent dans l'en-tête (conti
 | `comm` des ancres contre `grep "^### "` = vide | « les 43 wikilinks résolvent » |
 | 43 lignes de données, 4 cellules `Profondeur` | « la table est complète » |
 | un fichier existe à `<chemin>` avec N sections | « le worker dit que c'est fait » |
+| la commande **tourne déjà** à l'écriture du plan et rend la valeur d'avant | une commande jamais exécutée, découverte cassée à la reprise |
+
+**Reprise sur un plan existant — merge, jamais réécriture.** Relancer le skill sur un chantier déjà ouvert
+lit le fichier d'abord. Les IDs et leurs statuts sont conservés tels quels ; les nouveaux lots continuent la
+série après le plus haut ID jamais alloué, abandonnés compris ; le journal ne perd aucune ligne ; `revise:`
+et les trois listes du frontmatter sont mises à jour ; un lot devenu caduc part en `### Lots abandonnés`
+avec son motif. Écraser un plan détruit la seule trace de ce qui était déjà constaté.
+
+**Validation mécanique avant handoff.** Six contrôles : IDs uniques sur les trois listes · chaque
+`Dépend de` résout · aucun cycle · chaque lot présent au frontmatter **et** au tableau de bord · deux lots
+ne déclarent jamais la même `Sortie` · chaque lot a ses cinq champs et au moins une commande en `Clôture`.
 
 **Statut vs constat.** Le statut est déclaratif, le constat est mesuré. Le tableau de bord porte les deux
 côte à côte précisément pour rendre visible un statut sans constat — c'est le mode d'échec le plus fréquent
