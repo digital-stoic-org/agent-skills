@@ -1,176 +1,183 @@
-# Plan Context — template et conventions
+# Plan Context — template and conventions
 
-Le gabarit ci-dessous reproduit la structure éprouvée de `plan-permaplus.md` / `plan-biodiversite.md`
-(dépôt villa-nara). Il se recopie tel quel : les sections optionnelles se suppriment, les obligatoires non.
-La langue du plan est celle de l'utilisateur ; les clés de frontmatter sont fixes.
+The template below reproduces the structure proven by `plan-permaplus.md` / `plan-biodiversite.md`
+(villa-nara repo). It is copied as is: optional sections can be deleted, mandatory ones cannot.
+The plan's prose follows the user's language; the headings and the frontmatter keys are fixed.
 
-## Gabarit
+## Template
 
 ````markdown
 ---
-chantier: <slug>
-serie_id: <XX>-xx
-statut: cadre            # cadre | en-cours | clos
-cree: JJ/MM/AAAA
-revise: JJ/MM/AAAA
-perimetre: [<dossier>, <dossier>]
-hors_perimetre: [<dossier>, <dossier>]
-lots_ouverts: [XX-01, XX-02]
-lots_clos: []
-lots_abandonnes: []
+workstream: <slug>
+series_id: <XX>-xx
+status: framed           # framed | in-progress | closed
+created: DD/MM/YYYY
+revised: DD/MM/YYYY
+scope: [<folder>, <folder>]
+out_of_scope: [<folder>, <folder>]
+lots_open: [XX-01, XX-02]
+lots_closed: []
+lots_dropped: []
 ---
 
-# Plan — <titre du chantier>
+# Plan — <workstream title>
 
-> Artefact de pilotage du chantier <slug>. **Reprenable à froid** : chaque lot porte son critère de
-> clôture vérifiable sur disque et son statut. Ne pas le reconstruire ailleurs.
-> Précédent du même dépôt : `<plan-precedent.md>` (série `<YY-xx>`, clos le JJ/MM/AAAA).
+> Steering artifact for workstream <slug>. **Resumable cold**: every lot carries its own closure
+> criterion, verifiable on disk, and its status. Do not rebuild it anywhere else.
+> Predecessor in the same repo: `<previous-plan.md>` (series `<YY-xx>`, closed on DD/MM/YYYY).
 
-## État — tableau de bord
+## Status — dashboard
 
-| Lot | Titre | Statut | Constaté disque |
+| Lot | Title | Status | Disk evidence |
 |---|---|---|---|
-| `XX-01` | <titre> | ⬜ ouvert | <valeur mesurée avant exécution>, attendu <valeur> |
+| `XX-01` | <title> | ⬜ open | <value measured before execution>, expected <value> |
 
-Légende : ⬜ ouvert · 🟡 en cours · ✅ clos (avec constaté) · ❌ abandonné (ID conservé).
-**Règle de reprise** : un lot n'est ✅ que si sa commande de clôture a été rejouée et son résultat écrit
-dans la colonne `Constaté disque`. Un rapport de sub-agent ne vaut pas constat.
-À l'écriture du plan, cette colonne porte déjà la **valeur d'avant** : elle prouve que la commande tourne
-et donne le point de comparaison.
+Legend: ⬜ open · 🟡 in progress · ✅ closed (with evidence) · ❌ dropped (ID kept).
+**Resume rule**: a lot is ✅ only once its closure command has been replayed and its result written into
+the `Disk evidence` column. A sub-agent's report is never evidence.
+When the plan is written, that column already holds the **before value**: it proves the command runs and
+it gives the point of comparison.
 
-## Journal d'exécution
+## Execution log
 
-| Date | Lot | Geste | Constaté |
+| Date | Lot | Action | Evidence |
 |---|---|---|---|
-| JJ/MM/AAAA | — | Cadrage : <ce qui a été fait> | plan écrit, dépôt non modifié |
+| DD/MM/YYYY | — | Framing: <what was done> | plan written, repo untouched |
 
-## Question posée
+## The question asked
 
-<La question telle que l'utilisateur l'a posée, sa sous-question, et la cible.>
+<The question as the user framed it, their sub-question, and the target.>
 
-## <Sections d'analyse — optionnelles>
+## <Analysis sections — optional>
 
-<Étalon · Inventaire · Gap · tout ce que l'analyse a produit. Prose pleine, tables pour les faits.>
+<Benchmark · Inventory · Gap · whatever the analysis produced. Full prose, tables for facts.>
 
 ## Plan
 
-<Ordre en une ligne : prérequis bon marché → production lourde → lot bloqué en dernier, isolé.>
+<Ordering in one line: cheap prerequisites → heavy production → blocked lot last, isolated.>
 
-### XX-01 — <titre>
+### XX-01 — <title>
 
-- **Geste** : <ce qui est fait, assez précis pour qu'un worker briefé n'ait besoin de rien d'autre>
-- **Entrée** : <chemins + sections exactes>
-- **Sortie** : <fichier(s) écrit(s) — un seul propriétaire par fichier>
-- **Clôture** : `<commande>` = <valeur attendue> · `<commande>` ≥ <valeur>
-- **Dépend de** : <IDs | rien>
+- **Action**: <what is done, precise enough that a briefed worker needs nothing else>
+- **Input**: <paths + exact sections>
+- **Output**: <the file(s) written — one owner per file>
+- **Closure**: `<command>` = <expected value> · `<command>` ≥ <value>
+- **Depends on**: <IDs | nothing>
 
-### Lots abandonnés — ID conservé, jamais recyclé
+### Dropped lots — ID kept, never recycled
 
-| ID | Titre du 1er passage | statut | Motif |
+| ID | Title on first pass | Status | Motive |
 |---|---|---|---|
 
-## Conclusions renversées
+## Reversed conclusions
 
-**<Constat initial>. Renversé le JJ/MM/AAAA par <qui>.**
-<Motif, puis les vérifications indépendantes qui le corroborent. L'ID de l'ancien lot est conservé ❌.>
+**<Initial finding>. Reversed on DD/MM/YYYY by <who>.**
+<Motive, then the independent checks that corroborate it. The old lot keeps its ID, marked ❌.>
 
-## Hors périmètre — reporté
+## Out of scope — deferred
 
-- <trouvaille hors périmètre, avec sa localisation, datée>
+- <out-of-scope finding, with its location, dated>
 
-## Mesures
+## Measurements
 
-Toutes datées du **JJ/MM/AAAA**, exécutées depuis `<chemin absolu>`.
+All dated **DD/MM/YYYY**, run from `<absolute path>`.
 
-| Mesure | Valeur | Commande |
+| Measurement | Value | Command |
 |---|---|---|
-| <quoi> | <valeur> | `<commande rejouable>` |
+| <what> | <value> | `<replayable command>` |
 
 ---
 
-## Exécution — découpage et modèles
+## Execution — decomposition and models
 
-Décidé le JJ/MM/AAAA via `/pick-workflow` puis `/pick-model`. Session d'orchestration : <modèle> (ctx <n> %).
+Decided on DD/MM/YYYY via `/pick-workflow` then `/pick-model`. Orchestrating session: <model> (ctx <n> %).
 
-### Décomposition
+### Decomposition
 
-| Lot | Forme du travail | Parallélisable ? | Charge de jugement | Poids en tokens | Dépendance croisée ? |
+| Lot | Work shape | Parallelizable? | Judgment load | Token weight | Cross-item dep? |
 |---|---|---|---|---|---|
 
-### La couture
+### The seam
 
-<Où tombe la couture et pourquoi. Un lot cross-item ne se sharde pas : dire lequel, et le dire en toutes
-lettres. Si rien ne se parallélise, l'écrire — « séquence de sub-agents nommés » est une décision, pas un
-défaut.>
+<Where the seam falls and why. A cross-item lot is never sharded: name it, and say so in full. If nothing
+parallelizes, write that down — "a sequence of named sub-agents" is a decision, not a default.>
 
 ### Cast
 
-| Lot | Mécanisme | Modèle | Effort | Motif du routage |
-|---|---|---|---|---|
-| `XX-01` | sub-agent nommé `xx01-<slug>` | <modèle> | <effort> | <motif> |
-| `XX-02` | **inline**, orchestrateur | — | — | geste plus petit que son brief |
+| Lot | Mechanism | Model | Effort | `owned_paths` | `hands_off` | Routing motive |
+|---|---|---|---|---|---|---|
+| `XX-01` | named sub-agent `xx01-<slug>` | <model> | <effort> | — | — | <motive> |
+| `XX-02` | **inline**, orchestrator | — | — | — | — | the gesture is smaller than its brief |
+| `XX-03` | **fleet**, named agent `<name>` | <model> | <effort> | `<exclusive subtree>` | `<nearest traps>` | several workers live in parallel on one repo |
+| `XX-04` | **workflow**, script `<name>.js` | <model> | <effort> | — | — | variable-size list, or loop until dry |
 
-La vérification ne se délègue pas : dispositions et constats restent sur l'orchestrateur. Un worker rend
-des **faits**, jamais un verdict de clôture.
+The two ownership columns stay empty as long as the workers never overlap in time. They are filled for a
+fleet, and only for a fleet.
 
-### Contrat imposé à chaque worker
+Verification is never delegated: dispositions and findings stay with the orchestrator. A worker returns
+**facts**, never a closure verdict.
 
-- Objectif, format de sortie, sources autorisées, bornes — écrits dans le brief.
-- Chemins **absolus**, `/usr/bin/grep` et `/usr/bin/find` (les commandes nues sont shimées).
-- **Aucune commande `git`, jamais.**
-- Transformation de masse ⇒ **script Python + invariant de non-perte + assertion de forme**.
-- Un worker écrit **un seul fichier**, jamais partagé avec un autre worker.
+### What the chosen mechanism adds to the plan
 
-### Protocole de reprise
+The `Cast` table is enough as long as each lot goes to an isolated worker that returns its file and then
+disappears. As soon as the mechanism keeps several workers alive at the same time, or delegates the loop
+itself, the plan has to carry more.
 
-1. Lancer le lot, attendre la fin.
-2. **Rejouer la commande de clôture** depuis l'orchestrateur.
-3. Écrire le résultat dans `Constaté disque` + une ligne au `Journal d'exécution`.
-4. Un lot sans constaté rejoué reste ⬜, quoi qu'ait dit le worker.
+- **Fleet of named agents** — fill `owned_paths` and `hands_off` for every lot concerned. `owned_paths` is
+  the worker's exclusive subtree: everything else is denied by default, and `hands_off` merely enumerates
+  the nearest traps without claiming to be exhaustive. Name the relay point as well, meaning the state that
+  passes to the successor when a worker reaches its context limit. If the environment has a fleet planner
+  (`/plan-fleet` from the `team` plugin), that skill writes the ownership map — call it instead of copying
+  the map out by hand.
+- **Workflow** — record the script path, then the `runId` of the first run, because that identifier alone
+  makes resumption possible. Write the linear fallback out in full. A workflow requires explicit human
+  opt-in at every launch, so a plan that depends on one without a fallback is a plan that stalls.
+- **In both cases** — the `Resume protocol` below holds as written, but closure is replayed lot by lot,
+  never in one batch at the end. Two concurrent workers can both be finished while half the closure
+  commands have not run.
 
-### Repli linéaire
+### Contract imposed on every worker
 
-Si les sub-agents échouent ou ne rendent rien d'exploitable, les <n> lots sont exécutables en linéaire
-dans la session d'orchestration, même ordre, mêmes critères de clôture.
+- Objective, output format, allowed sources, boundaries — all written into the brief.
+- **Absolute** paths, `/usr/bin/grep` and `/usr/bin/find` (the bare names are shimmed).
+- **No `git` command, ever.**
+- Mass transformation ⇒ **Python script + no-loss invariant + shape assertion**.
+- A worker writes **one single file**, never shared with another worker.
+
+### Resume protocol
+
+1. Launch the lot, wait for it to finish.
+2. **Replay the closure command** from the orchestrator.
+3. Write the result into `Disk evidence` + one line in the `Execution log`.
+4. A lot with no replayed evidence stays ⬜, whatever the worker claimed.
+
+### Linear fallback
+
+If the sub-agents fail or return nothing usable, the <n> lots can be run linearly in the orchestrating
+session, same order, same closure criteria.
 ````
 
-## Décisions de cadrage
+## Framing decisions
 
-**Nommage.** `plan-<chantier>.md` à la racine du projet courant. Un chantier = un plan = une série d'IDs.
-Un second plan dans le même dépôt cite son précédent dans l'en-tête (continuité des séries).
+**Naming.** `plan-<workstream>.md` at the root of the current project. One workstream = one plan = one
+series of IDs. A second plan in the same repo cites its predecessor in the header line (series continuity).
 
-**Clôture vérifiable — ce qui compte et ce qui ne compte pas.**
+**Verifiable closure — what counts and what does not.**
 
-| ✅ Clôture | ❌ Pseudo-clôture |
+| ✅ Closure | ❌ Pseudo-closure |
 |---|---|
-| `/usr/bin/grep -c "converted/" README.md` = 0 | « le README est à jour » |
-| `comm` des ancres contre `grep "^### "` = vide | « les 43 wikilinks résolvent » |
-| 43 lignes de données, 4 cellules `Profondeur` | « la table est complète » |
-| un fichier existe à `<chemin>` avec N sections | « le worker dit que c'est fait » |
-| la commande **tourne déjà** à l'écriture du plan et rend la valeur d'avant | une commande jamais exécutée, découverte cassée à la reprise |
+| `/usr/bin/grep -c "converted/" README.md` = 0 | "the README is up to date" |
+| `comm` of the anchors against `grep "^### "` = empty | "the 43 wikilinks resolve" |
+| 43 data rows, 4 `Depth` cells | "the table is complete" |
+| a file exists at `<path>` with N sections | "the worker says it is done" |
+| the command **already runs** when the plan is written and returns the before value | a command never executed, found broken at resume time |
 
-**Reprise sur un plan existant — merge, jamais réécriture.** Relancer le skill sur un chantier déjà ouvert
-lit le fichier d'abord. Les IDs et leurs statuts sont conservés tels quels ; les nouveaux lots continuent la
-série après le plus haut ID jamais alloué, abandonnés compris ; le journal ne perd aucune ligne ; `revise:`
-et les trois listes du frontmatter sont mises à jour ; un lot devenu caduc part en `### Lots abandonnés`
-avec son motif. Écraser un plan détruit la seule trace de ce qui était déjà constaté.
+**Resuming an existing plan — merge, never rewrite.** Re-running the skill on an already open workstream
+reads the file first. IDs and their statuses are kept as they are; new lots continue the series after the
+highest ID ever allocated, dropped ones included; the log loses no line; `revised:` and the three
+frontmatter lists are updated; a lot that no longer makes sense moves to `### Dropped lots` with its
+motive. Overwriting a plan destroys the only trace of what had already been established.
 
-**Validation mécanique avant handoff.** Six contrôles : IDs uniques sur les trois listes · chaque
-`Dépend de` résout · aucun cycle · chaque lot présent au frontmatter **et** au tableau de bord · deux lots
-ne déclarent jamais la même `Sortie` · chaque lot a ses cinq champs et au moins une commande en `Clôture`.
-
-**Statut vs constat.** Le statut est déclaratif, le constat est mesuré. Le tableau de bord porte les deux
-côte à côte précisément pour rendre visible un statut sans constat — c'est le mode d'échec le plus fréquent
-à la reprise.
-
-**Journal append-only.** On n'édite jamais une ligne passée. Une valeur renversée s'écrit en nouvelle ligne,
-et si elle change une conclusion, elle ouvre une entrée dans `## Conclusions renversées` avec sa date et son
-auteur. C'est ce qui rend le plan lisible comme une histoire plutôt que comme un état.
-
-**Lots gelés.** Un lot bloqué (binaire à extraire, décision que l'utilisateur doit rendre, dépendance
-externe) reste dans le plan, en dernier, marqué **gelé**, avec la phrase `Ne pas lancer avant <condition>`.
-Le sortir du plan le fait oublier ; le laisser ouvert sans marque le fait lancer trop tôt.
-
-**Quand le plan n'a qu'un lot.** Le format tient quand même : frontmatter, un lot, sa clôture, `## Mesures`.
-Ce qui coûte cher n'est pas le gabarit, c'est de reconstruire l'analyse. En dessous d'un lot, il n'y a pas
-de chantier — faire le geste, pas un plan.
+**Mechanical validation before handoff.** Six checks: IDs unique across the three lists · every
+`Depends on` resolves · no cycle · every lot present in the frontmatter **and** in the dashboard · no two
+lots declare the same `Output` · every lot has its five fields and at least one command under `Closure`.

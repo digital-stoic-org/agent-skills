@@ -55,7 +55,7 @@ Plus: 3 hooks (praxis-dir guard, tmux notifications, debug dumps) and 1 agent (d
 
 ## 📦 Version
 
-`0.52.0` · 14 skills · 1 agent · 3 hooks
+`0.53.0` · 14 skills · 1 agent · 3 hooks
 
 ---
 

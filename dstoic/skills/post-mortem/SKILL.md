@@ -38,7 +38,7 @@ Non-obvious, and they counter your defaults; violating either makes the report w
    **Tag every number `[measured]` or `[estimate]`.** An honest "~300-500k [estimate], not measurable from inside" beats a fabricated exact — and `[measured]` must come from a sum you actually ran.
 2. **You will under-report your own mistakes** (self-serving bias — you're grading your own homework). Counter it structurally: §Échecs must be at least as substantial as §Wins, and every dead-end gets `cause → lesson`. No "I erred" without "because X, therefore next time Y".
 
-Other guards (in `reference.md`): walk oldest→newest so recency bias doesn't erase the early hour; prefer "I don't recall exactly" over a tidy fabrication; force ONE idée maîtresse + a generalizable playbook, not a bullet dump.
+Other guards (in `reference.md`): walk oldest→newest so recency bias doesn't erase the early hour; prefer "I don't recall exactly" over a tidy fabrication; force ONE core idea + a generalizable playbook, not a bullet dump.
 
 ## Instructions
 
@@ -55,17 +55,17 @@ Other guards (in `reference.md`): walk oldest→newest so recency bias doesn't e
 ```
 🎯 Exec Summary        (½ page, no jargon, in front)
  1. Mission            (right after)
- 2. Bilan chiffré + 💵 Coût API estimé   (the number surfaces early)
- 3. Idée maîtresse 🎯
- 4. Chronologie
- 5. Ce qui a marché ✅   6. Échecs ❌   7. Où économiser 💰
- 8. Playbook 📘         9. Rôle de l'humain
-10. Revue de délégation (conditional — only if sub-agents were spawned)
-📎 Annexe              (pricing grid · provenance & fidelity · session map) — AT THE END
+ 2. Numbers + 💵 Estimated API cost      (the number surfaces early)
+ 3. Core idea 🎯
+ 4. Timeline
+ 5. What worked ✅      6. Failures ❌     7. Where to save 💰
+ 8. Playbook 📘         9. The human's role
+10. Delegation review  (conditional — only if sub-agents were spawned)
+📎 Appendix            (pricing grid · provenance & fidelity · session map) — AT THE END
 ```
 
 - **Progressive disclosure in every section**, not just the cost one: synthesis first, detail after.
-- **Audience labels guide the writing, never the deliverable.** "Synthesis for the executive reader, detail for the technical reader" is how you calibrate — printing `Vue CIO`, `Vue Tech Lead`, `pour décideurs`, `lecture 30 s` in the report is **forbidden**. One document, one voice, layered by depth.
+- **Audience labels guide the writing, never the deliverable.** "Synthesis for the executive reader, detail for the technical reader" is how you calibrate — printing `CIO view`, `Tech Lead view`, `for decision-makers`, `30-second read` in the report is **forbidden**. One document, one voice, layered by depth.
 - **Annexe is audit material, not decision material.** It goes last; it never opens the report.
 
 `reference.md` holds the rest and is authoritative: per-section directives, number-tagging matrix, cost recipe + formulas, compaction notice, optional-sections menu, pricing grid, exact template. Follow it exactly.

@@ -31,7 +31,7 @@ Distinct from `/save-context` (durable `CONTEXT-*-llm.md` for resuming later). T
 
 | Section | Directive to summarizer | Tier |
 |---|---|---|
-| **Goal** | State the finalité in 1 sentence; keep verbatim, anchor the summary to it | PRESERVE |
+| **Goal** | State the purpose in 1 sentence; keep verbatim, anchor the summary to it | PRESERVE |
 | **Hot Files** | List exact paths + 3-word role; preserve paths character-for-character | PRESERVE |
 | **Decisions** | Each decision + its *rationale*; the why is unrecoverable, keep it | PRESERVE |
 | **Learnings** | Non-obvious facts found mid-session (bugs, constraints, gotchas); keep — costly to rediscover | PRESERVE |

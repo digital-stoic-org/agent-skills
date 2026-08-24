@@ -86,7 +86,7 @@ flowchart TD
 
 ```
 // e.g. free-text: rethink S5 timing, feels too tight
-[ ] e.g. todo: add Faycal as DevOps témoin in S5
+[ ] e.g. todo: add Faycal as DevOps witness in S5
 ```
 
 ---

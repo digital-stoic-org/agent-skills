@@ -65,10 +65,10 @@ Phase 1's Read already put the whole file in context — re-rendering it would p
 Output exactly 4 lines — no section blocks, no re-synthesis:
 
 ```
-🔄 {stream} · {status} · sauvé {relative time} par [{role}]
+🔄 {stream} · {status} · saved {relative time} by [{role}]
 🎯 {goal, one line}
 ▶️  {Next[0]}
-⚠️  {N} lignes nouvelles de [{other role}] depuis mon dernier save   ← omit if none
+⚠️  {N} new lines from [{other role}] since my last save   ← omit if none
 ```
 
 Solo session (no role recorded) → drop ` par [{role}]` from line 1; line 4 never applies.

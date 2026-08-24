@@ -35,9 +35,9 @@ If no text provided, respond: `⚠️ Usage: /scratch <your thought here>` — n
 
 ```
 📋 Scratch pad (3)
-1. revoir le naming des endpoints
-3. exposer les ADRs en read-only
-5. doc OpenSpec manque le flow 422
+1. revisit the endpoint naming
+3. expose the ADRs read-only
+5. OpenSpec doc is missing the 422 flow
 ```
 
 If empty: `📋 Scratch pad is empty.`
