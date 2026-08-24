@@ -35,7 +35,7 @@ The template lives in `../../references/protocol.md`. Read it there and fill eve
 
 ## 5. Append the four role lines verbatim, and send
 
-They are in `../../references/protocol.md`, in a fenced block written to be copied. Every mandate carries them. The target should already have adopted the protocol through `team:ready` at pre-warm; these lines are the guarantee for when it has not. Send the filled template and those lines as one message to that one agent — one mandate is one message, never two. Where the harness has no `SendMessage`, that one message goes through `team:send-tmux-message` instead, which needs Bash; the packet and the role lines are identical either way, since only the tube changes.
+They are in `../../references/protocol.md`, in a fenced block written to be copied. Every mandate carries them. The target should already have adopted the protocol through `team:ready` at pre-warm; these lines are the guarantee for when it has not. Send the filled template and those lines as one message to that one agent — one mandate is one message, never two. Where the harness has no `SendMessage`, that one message goes through `team:send-tmux-message` instead, which needs Bash and a sandbox-free call; the packet and the role lines are identical either way, since only the tube changes.
 
 ## If the target does not exist, or does not answer
 

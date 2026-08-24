@@ -7,7 +7,9 @@
 # Claude Code TUI reads as Enter — a 9-line RELAY PACKET would submit as 9 turns.
 # load-buffer reads a file, paste-buffer -p delivers one bracketed-paste block.
 #
-# It pastes. It does not submit, unless --submit is passed.
+# It pastes, then submits: the payload becomes a turn in the target without a
+# keystroke. There is no option not to — a delivery that sits unsubmitted in
+# someone's input box is a delivery that silently did not happen.
 
 set -uo pipefail
 
@@ -19,8 +21,12 @@ die() { printf 'send-tmux-message: %s\n' "$2" >&2; exit "$1"; }
 usage() {
   cat >&2 <<'USAGE'
 Usage:
-  send-tmux-message.sh <agent-name> [--from NAME] [--submit] [--archive PATH] [--no-spool]
-      Payload is read from stdin. Nothing is submitted in the target unless --submit.
+  send-tmux-message.sh <agent-name> [--from NAME] [--archive PATH] [--no-spool]
+      Payload is read from stdin, pasted into the target's pane and submitted.
+
+  Run it with the sandbox disabled. The tmux server socket and the session
+  registry both sit outside a sandboxed Bash call, and the failure surfaces as
+  exit 6 on a fleet that is perfectly healthy.
 
   send-tmux-message.sh --list
       Live named interactive sessions and their panes.
@@ -28,9 +34,6 @@ Usage:
 Options:
   --from NAME     Prepend one attribution line, so the target can tell a fleet
                   message from something the human typed.
-  --submit        Send Enter as a separate call ~1s after the paste. Off by
-                  default: the human reviewing the pasted text before it is
-                  submitted is the READBACK gate, enforced by the transport.
   --archive PATH  Durable copy of the payload. Use it for a RELAY PACKET, which
                   the sender cannot reproduce once it has left.
   --no-spool      Skip the replay copy at $FLEET_SPOOL/<name>.last.msg.
@@ -125,12 +128,11 @@ if [ "$1" = "--list" ]; then
 fi
 
 TARGET="$1"; shift
-FROM=""; SUBMIT=0; ARCHIVE=""; SPOOL_ON=1
+FROM=""; ARCHIVE=""; SPOOL_ON=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --from)    [ $# -ge 2 ] || usage; FROM="$2"; shift 2 ;;
     --archive) [ $# -ge 2 ] || usage; ARCHIVE="$2"; shift 2 ;;
-    --submit)  SUBMIT=1; shift ;;
     --no-spool) SPOOL_ON=0; shift ;;
     *) usage ;;
   esac
@@ -216,13 +218,10 @@ CLEAN_BUF=1                                  # the trap reclaims it if we die he
 tmux paste-buffer -d -p -b "$BUF" -t "$PANE" || die 6 "paste-buffer failed to $PANE"
 CLEAN_BUF=0                                  # -d already consumed the buffer
 
-if [ "$SUBMIT" = 1 ]; then
-  sleep 1                                    # the line must be composed before Enter lands
-  tmux send-keys -t "$PANE" Enter || die 6 "send-keys Enter failed to $PANE"
-  VERDICT="submitted"
-else
-  VERDICT="not submitted - press Enter in the pane"
-fi
+# Enter must be a separate call: a keystroke sent alongside the text arrives
+# before the line is composed.
+sleep 1
+tmux send-keys -t "$PANE" Enter || die 6 "send-keys Enter failed to $PANE"
 
-printf 'delivered -> %s (pane %s, status %s, %s bytes): %s\n' \
-  "$TARGET" "$PANE" "$STATUS" "$SZ" "$VERDICT"
+printf 'delivered -> %s (pane %s, status %s, %s bytes): submitted\n' \
+  "$TARGET" "$PANE" "$STATUS" "$SZ"
