@@ -172,6 +172,17 @@
       },
       "license": "MIT",
       "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "team-tmux",
+      "source": "./team-tmux",
+      "description": "The team coordination protocol carried entirely over tmux, for fleets where SendMessage does not exist (Bedrock, third-party providers): pre-warm (ready), partition (plan-fleet), delegate (brief), report back (report), hand off at context limits (relay), and the transport itself (send-tmux-message). Enable this or `team`, never both.",
+      "version": "0.1.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
     }
   ]
 }

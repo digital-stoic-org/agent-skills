@@ -436,7 +436,7 @@ flowchart LR
 
 ---
 
-> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 106 skills across 14 plugins, 2 agents** — but only ~12 run daily; the rest are parachutes or an archive of exploration. See [README.md](README.md) for the plugin table with per-plugin skill counts.
+> 📦 **Cross-plugin skills**: This catalog covers skills across all plugins. **Total: 125 skills across 16 plugins, 2 agents** — but only ~12 run daily; the rest are parachutes or an archive of exploration. See [README.md](README.md) for the plugin table with per-plugin skill counts.
 
 ---
 

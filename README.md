@@ -103,8 +103,8 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **~106 skills** across 14 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
-- **14 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy
+- **125 skills** across 16 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
+- **16 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team, team-tmux
 - **2 agents**: devil's advocate, context summarizer
 - **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
 - **3 execution modes**: garage (default), scale, maintenance
@@ -121,16 +121,18 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark |
 | [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync |
 | [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |
-| [content](content/) | 6 | Content transformation: anonymize, infographize, literatize, bridge, tune-voice, build-storyline |
-| [convert](convert/) | 6 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import |
+| [content](content/) | 7 | Content transformation: anonymize, infographize, literatize, bridge, tune-voice, build-storyline |
+| [convert](convert/) | 7 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import |
 | [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports |
 | [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization |
 | [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create |
 | [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas |
 | [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols |
-| [gtd](gtd/) | 4 | GTD workflow automation for Obsidian vaults |
-| [cowork](cowork/) | 4 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
+| [gtd](gtd/) | 5 | GTD workflow automation for Obsidian vaults |
+| [cowork](cowork/) | 5 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
 | [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
+| [team](team/) | 5 | Fleet coordination under one human: ready, plan-fleet, brief, relay, send-tmux-message (Agent Teams transport) |
+| [team-tmux](team-tmux/) | 6 | Same protocol over tmux, for Bedrock and third-party providers: + report, transport hard-wired. Enable this **or** `team` |
 
 ## 📦 Install
 
