@@ -1,6 +1,6 @@
 ---
 name: send-tmux-message
-description: 'Deliver one mandate or relay packet into another named agent''s tmux pane, for fleets running where SendMessage does not exist (Bedrock, third-party providers). It pastes into the target''s pane and submits, so the packet becomes a turn there without a keystroke. Use when: send-tmux-message, send to an agent, deliver a mandate, deliver a relay packet, fleet transport, no SendMessage, Bedrock, third-party provider, paste into another pane, tmux transport.'
+description: 'Deliver one mandate or relay packet into another named agent''s tmux pane, when the session wants the packet to land visibly in that window or to be archived to disk. It pastes into the target''s pane and submits, so the packet becomes a turn there without a keystroke, and lists the live named panes. Use when: send-tmux-message, send to an agent, deliver a mandate, deliver a relay packet, tmux transport, manual send into a window, paste into another pane, visible delivery, archive the packet, list agents, list the fleet, who is live.'
 allowed-tools: [Read, Bash]
 argument-hint: "[agent-name] [--archive PATH]"
 context: main
@@ -9,7 +9,7 @@ user-invocable: true
 
 # Send tmux message
 
-This is the transport `team:brief` and `team:relay` use when the harness has no `SendMessage` — a fleet on Bedrock or another third-party provider. It carries the packet; it does not decide what goes in it. The MANDATE and RELAY PACKET templates, and every rule about who may emit what, stay in `../../references/protocol.md` and are unchanged by the transport.
+This is the alternative transport `team:brief` and `team:relay` use when the session has declared tmux delivery in its fleet plan, and the one you invoke by hand for a single send. `SendMessage` is the default; you come here when the packet is worth watching land in the target's window, or worth keeping on disk through `--archive`. It carries the packet; it does not decide what goes in it. The MANDATE, REPORT and RELAY PACKET templates, and every rule about who may emit what, stay in `../../references/protocol.md` and are unchanged by the transport.
 
 ## Call it
 

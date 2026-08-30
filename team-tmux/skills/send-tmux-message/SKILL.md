@@ -1,6 +1,6 @@
 ---
 name: send-tmux-message
-description: 'The transport every machine arrow in this plugin travels down: deliver one mandate, report or relay packet into another named agent''s tmux pane and submit it, so it becomes a turn there without a keystroke. Also lists the live named panes. Use when: send-tmux-message, send to an agent, deliver a mandate, deliver a report, deliver a relay packet, fleet transport, list agents, list the fleet, who is live, no SendMessage, Bedrock, third-party provider, paste into another pane, tmux transport.'
+description: 'The transport every machine arrow in this plugin travels down: deliver one mandate, report or relay packet into another named agent''s tmux pane and submit it, so it becomes a turn there without a keystroke. Also lists the live named panes. Use when: send-tmux-message, send to an agent, deliver a mandate, deliver a report, deliver a relay packet, fleet transport, manual send into a window, visible delivery, archive the packet, list agents, list the fleet, who is live, paste into another pane, tmux transport.'
 allowed-tools: [Read, Bash]
 argument-hint: "[agent-name] [--archive PATH] | --list"
 context: main

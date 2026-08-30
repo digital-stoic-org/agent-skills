@@ -1,7 +1,7 @@
 {
   "name": "team-tmux",
-  "description": "The team coordination protocol carried entirely over tmux, for fleets running where SendMessage does not exist (Bedrock, third-party providers). Same contract and the same skill names as `team` — pre-warm (ready), partition (plan-fleet), delegate (brief), report back (report), hand off at context limits (relay), plus the transport itself (send-tmux-message) — with every machine arrow hard-wired to the tmux transport. Enable this plugin or `team`, never both.",
-  "version": "0.1.0",
+  "description": "The team coordination protocol carried entirely over tmux, for fleets run in visible panes: every machine arrow lands as a turn in a window the human is watching, and can be archived to disk on the way. Same contract and the same skill names as `team` — pre-warm (ready), partition (plan-fleet), delegate (brief), report back (report), hand off at context limits (relay), plus the transport itself (send-tmux-message). Enable this plugin or `team`, never both: they share skill names on purpose.",
+  "version": "0.2.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

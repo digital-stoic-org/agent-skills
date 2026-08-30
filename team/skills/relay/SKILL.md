@@ -22,9 +22,9 @@ The RELAY PACKET template lives in `../../references/protocol.md`. Read it there
 - **`discarded`** — what you tried and rejected, *with the reason*. This field justifies the relay on its own: without it the fresh agent walks straight back into your dead ends. It is also the first thing a saturated model drops, so write it before the fields that feel more urgent.
 - **`what_i_do_not_know`** — mandatory, never left empty. Omit that line and the successor fills gaps by plausibility, and `established` quietly starts holding guesses.
 
-## Send it with `--archive` when the transport is tmux
+## Send it with `--archive` if the session's transport is tmux
 
-If you are delivering through `team:send-tmux-message`, pass `--archive` and a path on that send. A mandate that goes missing can be refilled from the fleet plan; this packet cannot be refilled by anyone — it is your state at ~70% context, and you leave right after sending it.
+`SendMessage` carries the packet by default. If the fleet plan declares tmux as this session's transport, deliver through `team:send-tmux-message` and pass `--archive` and a path on that send. A mandate that goes missing can be refilled from the fleet plan; this packet cannot be refilled by anyone — it is your state at ~70% context, and you leave right after sending it. That archive is the one thing tmux gives a relay that the native tube does not.
 
 ## The successor takes over your name
 

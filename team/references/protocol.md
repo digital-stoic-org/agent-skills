@@ -41,7 +41,7 @@ An agent emits only on a state transition; the rest of the time it is silent. Th
 
 **A question is always addressed to the human.** An agent is not given a roster of its peers, so it cannot address one: during discovery the cast changes, so a roster frozen into a mandate goes stale in silence. A single possible recipient is also what keeps ping-pong closed.
 
-**Which transport carries which arrow.** Where the harness has `SendMessage`, it carries everything. Where it does not — Bedrock, other third-party providers — `team:send-tmux-message` deposits a packet in a named agent's pane, and three arrows travel that way: BRIEF→READY, RELAY to the successor, and REPORT→WATCH. That last one is why the diagram annotates both QUESTION arrows "via the human" and leaves `REPORT --> WATCH` bare: a report is addressed to the orchestrator, so it may go by machine, whereas a question and a readback are addressed to the human, are printed in the agent's own window, and have no machine path at all. Do not open one. The absence of a peer roster is a safety property, not an oversight, and it is what closes ping-pong and forces every arbitration through the human — the orchestrator is reachable only because it is the one recipient the agent already had, never because it is a peer. Nothing about the emissions themselves changes: the table above fixes what may be sent, and the tube it travels down does not alter it. A delivery does submit, so a report becomes a turn in the orchestrator's window on its own. What bounds the traffic is this list of three arrows and the missing roster behind it, not a keystroke.
+**Which transport carries which arrow.** `SendMessage` is the default and carries everything. `team:send-tmux-message` is the deliberate alternative: it deposits a packet in a named agent's pane, where it lands as a visible turn in a window the human is already watching and can be archived to disk on the way past. Reach for it when you want the packet **visible in the target's window** or **on disk**; `SendMessage` everywhere else. That choice is declared once for the session in the fleet plan, never detected at runtime and never taken as a fallback after a failed send — a transport picked by error recovery is a transport nobody chose. Either way three arrows travel by machine and no others: BRIEF→READY, RELAY to the successor, and REPORT→WATCH. That last one is why the diagram annotates both QUESTION arrows "via the human" and leaves `REPORT --> WATCH` bare: a report is addressed to the orchestrator, so it may go by machine, whereas a question and a readback are addressed to the human, are printed in the agent's own window, and have no machine path at all. Do not open one. The absence of a peer roster is a safety property, not an oversight, and it is what closes ping-pong and forces every arbitration through the human — the orchestrator is reachable only because it is the one recipient the agent already had, never because it is a peer. Nothing about the emissions themselves changes: the table above fixes what may be sent, and the tube it travels down does not alter it. A delivery does submit, so a report becomes a turn in the orchestrator's window on its own. What bounds the traffic is this list of three arrows and the missing roster behind it, not a keystroke.
 
 ## The four role lines
 
@@ -70,7 +70,7 @@ what_i_do_not_know:  ...
 ```
 
 - `scope` — states the negative half explicitly, because an unstated boundary is one an agent will cross.
-- `orchestrator` — the single name a mandate carries, and the address a REPORT goes back to where `team:send-tmux-message` is the transport. Without it the delegate has no address for the one arrow permitted to travel by machine, and reporting silently becomes a thing only the human can relay by hand. It is not a roster and does not become one: one name, already that agent's sole authorised recipient, and questions and readbacks still go to the human in the agent's own window.
+- `orchestrator` — the single name a mandate carries, and the address a REPORT goes back to, whichever transport carries it. Without it the delegate has no address for the one arrow permitted to travel by machine, and reporting silently becomes a thing only the human can relay by hand. It is not a roster and does not become one: one name, already that agent's sole authorised recipient, and questions and readbacks still go to the human in the agent's own window.
 - `owned_paths` — absolute, so no agent resolves a path against its own working directory. An entry is either a precise file, when that file already exists, or a directory with a trailing `/` standing for the whole subtree, inside which the agent creates whatever it needs. One field carries both granularities because a single fleet plan mixes both situations: agents each editing an existing file in a shared directory, where a prefix would partition nothing, and an agent producing a tree it discovers as it goes, where only a prefix works. A subtree is owned exclusively, never shared — the rule is stated under Ownership.
 - `hands_off` — a short list of shared, high-blast-radius files the agent is statistically likely to reach for: a manifest, a lockfile, a shared config, the fleet plan itself. It is a reminder and not the boundary, and it is explicitly not exhaustive; the boundary is the default-deny rule under Ownership. Never read it as "everything absent from this list is fair game".
 - `knowledge_state` — separates proven from believed from open, so the agent neither re-derives the first nor trusts the second.
@@ -106,7 +106,29 @@ what_i_do_not_know:  ...
 - `gates` — decisions the human already made; reopening one spends the resource this protocol exists to protect.
 - `what_i_do_not_know` — mandatory; see below.
 
-**`what_i_do_not_know` is mandatory in both templates.** Without that line a model fills empty fields by plausibility, and `established` quietly starts holding guesses.
+**`what_i_do_not_know` is mandatory in every template.** Without that line a model fills empty fields by plausibility, and `established` quietly starts holding guesses.
+
+## Template: REPORT
+
+Emitted in REPORT, addressed to the orchestrator named in the mandate. It is what turns a stop condition into the orchestrator's next turn.
+
+```
+from:                your own name
+state:               REPORT
+stop_condition:      which one of them fired
+established:         each fact with the command that proves it
+in_progress:         what is half-done, and where it stands
+next:                what you would do if sent back in — a proposal, not a decision
+what_i_do_not_know:  ...
+```
+
+- `from` — your own name, stated in the packet rather than left to the transport. It is redundant only where the tube attributes the sender for you, and the packet outlives the tube: quoted into a plan, carried into a relay, or read back later, an unattributed report belongs to nobody.
+- `stop_condition` — which one fired, quoted from the mandate. "The scope is wrong" is not one of them: that is a QUESTION, it goes to the human, and it does not travel down this tube.
+- `established` — same rule as the relay packet: every fact paired with the command that proves it. A fact without one is a claim, and the orchestrator will act on it.
+- `next` — a proposal. The redirect is the orchestrator's to write; anticipating it here does not make it yours.
+- `what_i_do_not_know` — mandatory, for the same reason it is mandatory everywhere else.
+
+**A report does not end you.** You are back in WORK's waiting room: stay alive, stay silent, and take the redirect when it comes.
 
 ## Relay
 

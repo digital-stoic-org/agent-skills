@@ -19,11 +19,12 @@ If `/plan-fleet` was invoked with an argument that is a path, read that file wit
 
 Ask the human, once, in plain text in the conversation, where the fleet plan should live — and, if the previous section left the material unsourced, fold that question into the same message. Do not guess a path, invent a convention, or derive one from the working directory. One message, one answer, then write there.
 
-## Three things go in it, and nothing else
+## Four things go in it, and nothing else
 
-The partition, one row per agent that exists or is about to: its name, its `owned_paths`, its `hands_off`. Then the open questions the session has not decided yet. Then the gates — what the human has already decided, which no agent may reopen.
+The transport, on one line: `sendmessage` — the default — or `tmux`, which every skill then reads rather than guessing. Then the partition, one row per agent that exists or is about to: its name, its `owned_paths`, its `hands_off`. Then the open questions the session has not decided yet. Then the gates — what the human has already decided, which no agent may reopen.
 
 ```
+transport: sendmessage
 partition
   scout    owned_paths: /abs/path/survey/        hands_off: <this plan>, <shared manifest>
   writer   owned_paths: /abs/path/doc/intro.md   hands_off: <this plan>
@@ -32,6 +33,8 @@ open
 gates
   - English throughout — settled, do not reopen
 ```
+
+Write `transport: sendmessage` unless the human has asked otherwise. Write `tmux` when this session wants its packets to land visibly in the target's window, or wants them archived to disk — the two reasons `../../references/protocol.md` gives for choosing that tube. Ask the human rather than deciding it yourself, and fold the question into the message of the previous section. The line is a declaration, not a detection: no skill probes for a transport, and none falls back to the other one after a failed send.
 
 That shape is a shape, not a form to fill. In particular the plan does **not** decompose the work into lots or deliverables. This is discovery: the lots are not knowable in advance, and a plan that pretends otherwise goes stale the moment the scope moves — which it will.
 

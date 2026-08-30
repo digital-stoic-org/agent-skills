@@ -131,8 +131,8 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [gtd](gtd/) | 5 | GTD workflow automation for Obsidian vaults |
 | [cowork](cowork/) | 5 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
 | [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
-| [team](team/) | 5 | Fleet coordination under one human: ready, plan-fleet, brief, relay, send-tmux-message (Agent Teams transport) |
-| [team-tmux](team-tmux/) | 6 | Same protocol over tmux, for Bedrock and third-party providers: + report, transport hard-wired. Enable this **or** `team` |
+| [team](team/) | 5 | Fleet coordination under one human: ready, plan-fleet, brief, relay, send-tmux-message. SendMessage by default, tmux when declared |
+| [team-tmux](team-tmux/) | 6 | Same protocol, every arrow over tmux: packets land visibly in panes and can be archived. + report, transport hard-wired. Enable this **or** `team` |
 
 ## 📦 Install
 

@@ -2,11 +2,11 @@
 
 Canonical source of the coordination contract used by the `team-tmux` plugin. The skills cite this file rather than restate it: a contract restated in six places drifts silently, and here the contract *is* the product.
 
-This is the `team` protocol with one variable removed. Everything about states, emissions, templates and ownership is identical, word for word, and is meant to stay that way — the only section that differs is **Transport**, which here has no alternative and no conditional. If you are comparing the two files, that section and the addressability rules under it are the entire diff.
+This is the `team` protocol with one variable removed. Everything about states, emissions, templates and ownership is identical, word for word, and is meant to stay that way — the only section that differs is **Transport**, which here has one tube and no conditional where `team` offers a declared choice between two. If you are comparing the two files, that section and the addressability rules under it are the entire diff.
 
 ## The setting
 
-A human runs a fleet of Claude Code agents — one tmux pane per agent, one orchestrator, several fleet agents that each spawn their own sub-agents, all reachable by name. There is **no `SendMessage`**: this plugin exists for harnesses that do not have it, Bedrock and other third-party providers among them. Every machine arrow travels through `team-tmux:send-tmux-message`, which resolves a name against the harness's own session registry and pastes into that agent's pane. Nothing here checks whether a native transport exists, and nothing falls back to one.
+A human runs a fleet of Claude Code agents — one tmux pane per agent, one orchestrator, several fleet agents that each spawn their own sub-agents, all reachable by name. **Every machine arrow travels through `team-tmux:send-tmux-message`**, which resolves a name against the harness's own session registry and pastes into that agent's pane. That is the point of this plugin rather than a limitation of it: a packet delivered into a pane is a packet the human sees land, in a window they can already type into, and one `--archive` can put on disk. Nothing here reads a conditional and nothing takes a second path — a fleet that wants `SendMessage` runs `team` instead.
 
 Two properties drive every rule below. First, the work is almost always **discovery**: the scope moves by construction, which is exactly why a fleet exists rather than one deep call — a fleet agent is interruptible and redirectable in flight, a sub-agent is not. Second, the human's scarce resource is their **attention**, not a context window. Every rule here exists to spend that attention only where it decides something.
 
