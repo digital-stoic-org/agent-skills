@@ -1,41 +1,49 @@
 ---
 name: relay
 description: 'Hand your state to a fresh agent at ~70% context instead of compacting. Emits one relay packet; the successor takes over your name. Use when: relay, RELAY state, relay packet, handoff, hand over, take over, successor, context full, out of context, running out of context, 70% context.'
-allowed-tools: [Read, Bash, SendMessage]
+allowed-tools: [SendMessage]
 context: main
 user-invocable: true
 ---
 
 # Relay
 
-RELAY is the state entered at roughly 70% context: you write one packet for the fresh agent taking over, then leave. That packet is the whole permitted emission — no preamble to the human, no announcement to peers, nothing after it.
+RELAY is entered at roughly 70% context: one packet to the fresh agent taking over, then you leave. That packet is the whole permitted emission — no preamble to the human, no announcement to peers, nothing after it.
 
-## First — are you allowed to relay right now?
+**Read nothing, re-run nothing.** The skeleton below is complete. You are the agent with the least context left in this fleet, and every token spent re-reading the contract or re-proving a fact you already established is a token missing from the packet itself. `../../references/protocol.md` holds the reasoning, for whoever amends the contract. The packet below is what your successor actually inherits — assume it will read nothing else.
 
-If you are in the middle of a **cross-item step** — a synthesis, a deduplication, a global arbitration, anything that reasons across all the units at once — do not relay. Splitting such a step makes the result wrong silently, and nothing downstream will catch it. Finish the step, or stop and REPORT, and relay after that. A saturated agent is exactly the one most tempted to hand off mid-thought, so treat that temptation as the cue to run this check rather than to skip it.
+## 1. Gate — are you allowed to relay right now?
 
-## Fill the packet
+In the middle of a **cross-item step** — a synthesis, a deduplication, a global arbitration, anything reasoning across all the units at once — do not relay. Splitting one makes the result wrong silently and nothing downstream catches it. Finish it, or stop and REPORT, then relay. A saturated agent is exactly the one most tempted to hand off mid-thought: treat that temptation as the cue to run this check, not to skip it.
 
-The RELAY PACKET template lives in `../../references/protocol.md`. Read it there and fill every field. Three of them a model gets wrong under context pressure:
+## 2. Fill
 
-- **`established`** — pair every fact with the command that proves it. A fact without its command is a claim, and your successor cannot tell the two apart. Re-run it with Bash if you no longer hold its output.
-- **`discarded`** — what you tried and rejected, *with the reason*. This field justifies the relay on its own: without it the fresh agent walks straight back into your dead ends. It is also the first thing a saturated model drops, so write it before the fields that feel more urgent.
-- **`what_i_do_not_know`** — mandatory, never left empty. Omit that line and the successor fills gaps by plausibility, and `established` quietly starts holding guesses.
+```
+role:                the scope this name designates
+orchestrator:        carried over — the successor's only machine recipient
+owned_paths:         [ABSOLUTE paths; trailing / = whole subtree — outside them you read, you do not write]
+hands_off:           [shared, high-blast-radius files — a reminder on top of that rule, never the boundary]
+established:         each fact with the command that proves it
+discarded:           what I tried and rejected, WITH the reason
+in_progress:         what is half-done, and where it stands
+open:                what has not been touched
+gates:               what the human has already decided — do not reopen
+what_i_do_not_know:  ...
+```
 
-## Send it with `--archive` if the session's transport is tmux
+- `role` — the scope the inherited name designates. **The successor takes over your name**: a name designates a scope, not a memory, so the fleet's address book stays valid and the relay is invisible to everyone else.
+- `orchestrator` — carried over from your mandate. The successor inherits nothing but this packet: a name left out here is a name gone for good, and its reports lose their machine path while every duty that produces them survives.
+- `owned_paths` / `hands_off` — the partition, carried over intact. A subtree belongs to one agent only.
+- `established` — every fact paired with **the command that proves it**. Write the command; do not run it. A fact without one is a claim your successor cannot tell apart from a fact — and the successor re-runs it, on a clean prefix, only if it needs the output.
+- `discarded` — what you tried and rejected, *with the reason*. **This field justifies the relay on its own**: without it the fresh agent walks straight back into your dead ends. It is also the first thing a saturated model drops, so write it before the fields that feel more urgent.
+- `in_progress` / `open` — half-done and where it stands, versus never touched. Together they are the difference between resuming and restarting.
+- `gates` — what the human already decided. Reopening one spends the resource this protocol exists to protect.
+- `what_i_do_not_know` — mandatory, never empty. Omit it and the successor fills gaps by plausibility, and `established` quietly starts holding guesses.
 
-`SendMessage` carries the packet by default. If the fleet plan declares tmux as this session's transport, deliver through `team:send-tmux-message` and pass `--archive` and a path on that send. A mandate that goes missing can be refilled from the fleet plan; this packet cannot be refilled by anyone — it is your state at ~70% context, and you leave right after sending it. That archive is the one thing tmux gives a relay that the native tube does not.
+## 3. Send, then stay alive through the overlap
 
-## The successor takes over your name
-
-A name designates a scope, not a memory. The fresh agent adopts your name so the rest of the fleet's address book stays valid and the relay stays invisible to everyone else. State that in `role`.
-
-## You do not vanish on send
-
-Sending the packet does not end you. Stay alive through the overlap — the successor can come back and ask, and that is what makes a relay repairable where a compaction is not. Leave once it confirms it is working.
+One `SendMessage` to the successor. Sending does not end you: it can come back and ask, and that is what makes a relay repairable where a compaction is not. Leave once it confirms it is working.
 
 ---
 
-Relay rather than compact because the packet is written by the agent that knows what mattered, the successor starts on a clean prefix, and the overlap is a repair channel.
-
-Any window relays this way. An orchestrator in FRAME is a peer here, not an exception.
+Relay rather than compact: the packet is written by the agent that knows what mattered rather than by a summariser working a transcript, the successor starts on a clean prefix with no cache break, and the overlap is a repair channel. Any window relays this way — an orchestrator in FRAME is a peer here, not an exception.

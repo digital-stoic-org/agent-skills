@@ -1,7 +1,7 @@
 {
   "name": "team",
-  "description": "Coordination protocol for running a fleet of named Claude Code agents in parallel under one human: pre-warm an agent (ready), plan who owns what (plan-fleet), delegate one mandate at a time (brief), hand off state at context limits (relay). SendMessage is the default transport; send-tmux-message is the deliberate alternative for a packet you want visible in the target's window or archived to disk.",
-  "version": "0.5.0",
+  "description": "Coordination protocol for running a fleet of named Claude Code agents in parallel under one human: delegate one mandate at a time (brief), report back on a stop condition (report), hand off state at context limits (relay) — one skill per machine arrow, SendMessage the only transport. No skill reads the protocol at runtime: the mandate carries its own contract, so all three run in windows with no context to spare without reading anything at all, and a window that has never seen the plugin still behaves correctly.",
+  "version": "0.8.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

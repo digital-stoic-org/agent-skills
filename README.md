@@ -104,7 +104,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 ## 📊 By the Numbers
 
 - **125 skills** across 16 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
-- **16 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team, team-tmux
+- **15 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team
 - **2 agents**: devil's advocate, context summarizer
 - **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
 - **3 execution modes**: garage (default), scale, maintenance
@@ -131,8 +131,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [gtd](gtd/) | 5 | GTD workflow automation for Obsidian vaults |
 | [cowork](cowork/) | 5 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
 | [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
-| [team](team/) | 5 | Fleet coordination under one human: ready, plan-fleet, brief, relay, send-tmux-message. SendMessage by default, tmux when declared |
-| [team-tmux](team-tmux/) | 6 | Same protocol, every arrow over tmux: packets land visibly in panes and can be archived. + report, transport hard-wired. Enable this **or** `team` |
+| [team](team/) | 3 | Fleet coordination under one human: brief, report, relay — one skill per machine arrow, SendMessage only. The mandate carries its own contract, so no skill reads anything at runtime |
 
 ## 📦 Install
 
