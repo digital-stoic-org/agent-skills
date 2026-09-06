@@ -12,19 +12,25 @@ Agent Teams is assumed enabled and `SendMessage` is the only transport. Three ar
 |---|---|---|
 | `/brief` | Delegating one unit of work to one named agent | Fills a single mandate and sends it. One mandate, one target, then silence until a question or a report comes back. |
 | `/report` | A stop condition or a cadence checkpoint fires | Sends one structured report to the orchestrator named in the mandate — every fact paired with the command that proves it — then goes back to waiting. |
-| `/relay` | An agent nears roughly 70% context | Hands that agent's state to a fresh one under the same name, in place of compaction, so the successor starts on a clean prefix without losing what was already learned. |
+| `/relay` | An agent nears roughly 70% context | Hands that agent's state to a fresh one under the same name, in place of compaction, so the successor starts on a clean prefix without losing what was already learned. The packet carries the role lines alongside the state, which is what lands the successor in READY rather than straight back into the work. |
 
 Three skills, one per machine arrow. There is nothing to run before the work arrives: a window that has never seen this plugin can receive a mandate and behave correctly, because the mandate carries its own contract.
 
 ## Where the reading happens
 
-Nowhere, at runtime. No skill loads `references/protocol.md` while a fleet is working. Whatever a delegate must know travels inside the packet it receives — the five role lines ride verbatim in every mandate, and the `owned_paths` and `hands_off` lines carry the default-deny rule with them rather than pointing at it. The protocol file is there for whoever amends the contract.
+Nowhere, at runtime. No skill loads `references/protocol.md` while a fleet is working. Whatever a delegate must know travels inside the packet it receives — the five role lines ride verbatim in every mandate, a relay packet carries its own equivalent block, and the `owned_paths` and `hands_off` lines carry the default-deny rule with them rather than pointing at it. The protocol file is there for whoever amends the contract.
 
 That is why the MANDATE, RELAY PACKET and REPORT skeletons are mirrored verbatim inside the three skills. Each one runs in a window with no context to spare — an orchestrator halfway through a session, an agent that just hit 70%, an agent that has been working for hours — so each reads nothing, runs no sub-skill, and consults no file. One `SendMessage`, and that is the whole call.
 
 `/brief` in particular chooses no model. The delegate is a live agent in a window that already exists, and its model was fixed when that window was opened — a mandate cannot change it.
 
 The cost of that arrangement is one duplication, guarded by a note in `references/protocol.md`: change a field name there and change it in the mirroring skill in the same edit.
+
+## Reading, and where knowledge lands
+
+Two fields carry the half of the problem that ownership does not. `read_first` is a closed, ordered list of what the delegate opens before starting, and everything beyond it costs one question to the human — because an agent left to choose its own reading opens the plan, the audit and the journal, plus a few neighbours to be safe, and saturates before its first useful move. `deliverable` is an absolute path it owns, where its findings accumulate as it works, so a report can be ten lines and a pointer. Without it every fact lives only inside messages: transcribed into the report, transcribed again into the relay packet, and gone when the fleet ends.
+
+Neither field contradicts "nowhere, at runtime" above. That rule is about the contract — `references/protocol.md` is not opened while a fleet is working. It never governed the project's own documents.
 
 ## Why a fleet rather than sub-agents
 

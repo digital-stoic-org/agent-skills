@@ -16,11 +16,13 @@ An agent emits only on a state transition; the rest of the time it is silent. Th
 
 ## States
 
-**Fleet agent** — READY (booted, no mandate yet) · READBACK (a mandate arrived; the agent reads it back to the human and waits) · WORK (confirmed, working) · QUESTION (a blocking gap, or the discovery that the given scope is wrong) · REPORT (a stop condition was met). Plus RELAY, entered at roughly 70% context, from which the agent emits one relay packet and leaves.
+**Fleet agent** — READY (booted, no mandate yet — or freshly arrived by relay, holding a packet and waiting) · READBACK (a mandate arrived; the agent reads it back to the human and waits) · WORK (confirmed, working) · QUESTION (a blocking gap, or the discovery that the given scope is wrong) · REPORT (a stop condition was met). Plus RELAY, entered at roughly 70% context, from which the agent emits one relay packet and leaves.
 
 **Orchestrator** — FRAME · BRIEF (delegating) · WATCH · ARBITRATE. It also enters RELAY at ~70% context: the orchestrator is a peer, not a special case.
 
-**Transitions.** Fleet agent: READY→READBACK (mandate received) · READBACK→READBACK (human corrects) · READBACK→WORK (human confirms) · WORK→QUESTION (blocking gap OR wrong scope) · QUESTION→WORK (answer received) · WORK→REPORT (stop condition) · REPORT→WORK (redirect) · WORK→RELAY (~70% context). Orchestrator: FRAME→BRIEF (decides what to delegate) · BRIEF→WATCH (packet sent) · WATCH→ARBITRATE (a question arrives) · ARBITRATE→WATCH (adjudicated) · WATCH→FRAME (a report arrives) · FRAME→RELAY (~70% context). Across: BRIEF→READY (handoff) · REPORT→WATCH · QUESTION→ARBITRATE · ARBITRATE→QUESTION. RELAY→[*]: the origin leaves.
+**Transitions.** Fleet agent: READY→READBACK (mandate received) · READBACK→READBACK (human corrects) · READBACK→WORK (human confirms) · WORK→QUESTION (blocking gap OR wrong scope) · QUESTION→WORK (answer received) · WORK→REPORT (stop condition) · REPORT→WORK (redirect) · WORK→RELAY (~70% context). Orchestrator: FRAME→BRIEF (decides what to delegate) · BRIEF→WATCH (packet sent) · WATCH→ARBITRATE (a question arrives) · ARBITRATE→WATCH (adjudicated) · WATCH→FRAME (a report arrives) · FRAME→RELAY (~70% context). Across: BRIEF→READY (handoff) · RELAY→READY (handoff to the successor, which takes over the name) · REPORT→WATCH · QUESTION→ARBITRATE · ARBITRATE→QUESTION. RELAY→[*]: the origin leaves.
+
+**RELAY→READY.** A packet arrives in a fresh window and lands that agent in READY, exactly where a mandate would have: it announces the state, acknowledges in one line, and waits. There are therefore two ways into READY and no way to skip it — a successor that starts working on its inherited `in_progress` has taken a transition the diagram does not have.
 
 | State | Emission |
 |---|---|
@@ -66,6 +68,8 @@ scope:               what is yours / what is explicitly not yours
 orchestrator:        the name of the agent sending this mandate — your only machine recipient
 owned_paths:         [ABSOLUTE paths; trailing / = whole subtree — outside them you read, you do not write]
 hands_off:           [shared, high-blast-radius files — a reminder on top of that rule, never the boundary]
+read_first:          [ABSOLUTE paths, in order — a closed list. Anything else, ask me before opening it]
+deliverable:         ABSOLUTE path you own — your findings land there, not in your report
 knowledge_state:     established / hypothesis / to_discover
 stop_conditions:     ... (must include "you discover the scope is wrong")
 cadence:             when you are expected to report
@@ -76,7 +80,9 @@ what_i_do_not_know:  ...
 - `orchestrator` — the single name a mandate carries, and the address a REPORT goes back to. Without it the delegate has no address for the one arrow permitted to travel by machine, and reporting silently becomes a thing only the human can relay by hand. It is not a roster and does not become one: one name, already that agent's sole authorised recipient, and questions and readbacks still go to the human in the agent's own window.
 - `owned_paths` — absolute, so no agent resolves a path against its own working directory. An entry is either a precise file, when that file already exists, or a directory with a trailing `/` standing for the whole subtree, inside which the agent creates whatever it needs. One field carries both granularities because a single partition mixes both situations: agents each editing an existing file in a shared directory, where a prefix would partition nothing, and an agent producing a tree it discovers as it goes, where only a prefix works. A subtree is owned exclusively, never shared — the rule is stated under Ownership.
 - `hands_off` — a short list of shared, high-blast-radius files the agent is statistically likely to reach for: a manifest, a lockfile, a shared config, a session's steering document. It is a reminder and not the boundary, and it is explicitly not exhaustive; the boundary is the default-deny rule under Ownership. Never read it as "everything absent from this list is fair game".
-- `knowledge_state` — separates proven from believed from open, so the agent neither re-derives the first nor trusts the second.
+- `read_first` — the reading partition, and the symmetric half of `owned_paths`. Ownership governs writing in exhaustive detail and says nothing at all about reading, which leaves the delegate's incoming context to its own judgement — and a model handed a plan, an audit and a journal opens all three plus a few neighbours "to be sure", saturating before its first useful move. The list is closed and ordered, and it ends on *anything else, ask me before opening it*, which turns an unbounded read into one question the human can answer in a word. It does not contradict "no skill reads this file at runtime": that rule governs the contract, never the project's own documents.
+- `deliverable` — one absolute path, inside `owned_paths`, where the agent's findings accumulate while it works. It is what lets a REPORT be ten lines and a pointer instead of its own content, and it is the only field that makes knowledge outlive the window that produced it. Without it every fact exists solely inside messages: transcribed into the report, transcribed again into the relay packet, and gone when the fleet ends. Prose in a tube is not a journal, it is N copies of one.
+- `knowledge_state` — separates proven from believed from open, so the agent neither re-derives the first nor trusts the second. It names the state; it does not restate the content, which lives in the documents `read_first` points at.
 - `stop_conditions` — the list that ends WORK; always includes "you discover the scope is wrong".
 - `cadence` — how often a report is expected, which is what keeps silence readable as work.
 - `what_i_do_not_know` — mandatory; see below.
@@ -90,24 +96,33 @@ role:                the scope this name designates
 orchestrator:        carried over — the successor's only machine recipient
 owned_paths:         [ABSOLUTE paths; trailing / = whole subtree — outside them you read, you do not write]
 hands_off:           [shared, high-blast-radius files — a reminder on top of that rule, never the boundary]
-established:         each fact with the command that proves it
+read_first:          [carried over — the closed list. Anything else, the successor asks the human]
+deliverable:         ABSOLUTE path carried over — where the work already written lives
+established:         each fact with the command that proves it, or the path where it is written
 discarded:           what I tried and rejected, WITH the reason
 in_progress:         what is half-done, and where it stands
 open:                what has not been touched
 gates:               what the human has already decided — do not reopen
 what_i_do_not_know:  ...
+next_action:         none — wait for the human
 ```
 
 - `role` — the scope the inherited name designates.
 - `orchestrator` — carried over from the mandate. The successor inherits nothing but this packet, so a name left out here is a name gone for good, and the agent that replaces you loses the machine path for its reports while keeping every duty that produces them.
 - `owned_paths` — the partition, carried over intact: absolute, each entry either a precise existing file or a directory with a trailing `/` standing for the whole subtree, and a subtree belongs to one agent only.
 - `hands_off` — carried over as well: shared, high-blast-radius files the successor is likely to reach for. It is a reminder and not the boundary, and it is not exhaustive; the boundary remains default deny.
-- `established` — every fact paired with its proving command, since a fact without one is a claim.
+- `read_first` / `deliverable` — carried over from the mandate. The read list stays closed, or the successor reopens the whole project to rebuild what its predecessor already knew, which is the cost the relay exists to avoid; the `deliverable` path is where the work already written lives, and a successor that loses it starts that file over.
+- `established` — every fact paired with its proving command, or with the path where it is already written; the path is preferred, since a relay that transcribes the journal rather than pointing at it is doing compaction's work at compaction's price. A fact with neither is a claim.
 - `discarded` — **justifies the relay on its own**: without it the fresh agent walks straight back into its predecessor's dead ends.
 - `in_progress` — what is half-done and where it stands; with `open`, the difference between resuming and restarting.
 - `open` — what has not been touched at all.
 - `gates` — decisions the human already made; reopening one spends the resource this protocol exists to protect.
 - `what_i_do_not_know` — mandatory; see below.
+- `next_action` — the literal line `none — wait for the human`. The fields above hand the successor a rich state and no instruction to stay put, and a model reading `in_progress` without this one resumes the work by itself.
+
+**Every field above is one line, and none of them argues.** A pointer — a path, a `path:line`, a command — stands in for the sentence that would explain it. `discarded` is the single exception, because there the reason *is* the content. Prose in the other fields is reasoning already done, retyped into the context the relay exists to free.
+
+**A relay packet carries the role lines too.** A mandate installs the state machine through the five lines appended in BRIEF; a packet that carries only the scope leaves its successor with a role and no regime, which is an agent that takes the initiative on arrival. `skills/relay/SKILL.md` holds the block, adapted: announce READY and stop, nothing without the human's explicit go, one line of acknowledgement rather than a readback, silence outside a transition, one machine recipient. Its purpose is to put the arriving agent in READY, the state a mandate would have given it.
 
 **`what_i_do_not_know` is mandatory in every template.** Without that line a model fills empty fields by plausibility, and `established` quietly starts holding guesses.
 
@@ -119,6 +134,7 @@ Emitted in REPORT, addressed to the orchestrator named in the mandate. It is wha
 from:                your own name
 state:               REPORT
 stop_condition:      which one of them fired
+deliverable:         the path from the mandate — written and up to date before this is sent
 established:         each fact with the command that proves it
 in_progress:         what is half-done, and where it stands
 next:                what you would do if sent back in — a proposal, not a decision
@@ -127,7 +143,8 @@ what_i_do_not_know:  ...
 
 - `from` — your own name, stated in the packet rather than left to the transport, because the packet outlives it: quoted into a plan, carried into a relay, or read back later, an unattributed report belongs to nobody.
 - `stop_condition` — which one fired, quoted from the mandate. "The scope is wrong" is not one of them: that is a QUESTION, it goes to the human, and it does not travel down this tube.
-- `established` — same rule as the relay packet: every fact paired with the command that proves it. A fact without one is a claim, and the orchestrator will act on it.
+- `deliverable` — written before the report is sent, and pointed at rather than quoted. This is what keeps a report ten lines: the orchestrator's window is the scarcest in the fleet, since every report in flight lands in it, and a report that carries its own content spends that window once per delegate.
+- `established` — same rule as the relay packet: every fact paired with the command that proves it, one line each. A fact without one is a claim, and the orchestrator will act on it. The detail belongs in the `deliverable`; what travels here is the change in knowledge state.
 - `next` — a proposal. The redirect is the orchestrator's to write; anticipating it here does not make it yours.
 - `what_i_do_not_know` — mandatory, for the same reason it is mandatory everywhere else.
 
@@ -142,6 +159,8 @@ An agent at roughly 70% context hands its state to a fresh one rather than being
 > **Never relay, and never shard, in the middle of a cross-item step** — a synthesis, a deduplication, a global arbitration. Split one and the result becomes wrong silently.
 
 ## Ownership
+
+**Writing is partitioned; reading is budgeted.** The two rules below govern who may write where, and they deliberately leave reading unrestricted — a fleet agent must be able to look anywhere to discover anything. What is bounded instead is what it opens *by default*: `read_first` is a closed, ordered list, and everything outside it costs one question to the human. That question is the control point, since an agent that quietly opens six documents has spent a context nobody decided to spend, and nothing in the fleet records that it happened.
 
 **Default deny.** Outside its `owned_paths`, an agent reads and does not write. That one rule already covers every path there is, which is why no exhaustive list of forbidden paths is needed — or possible.
 
@@ -180,6 +199,7 @@ stateDiagram-v2
         WORK --> RELAY_F : ~70% context
     }
     BRIEF --> READY : handoff
+    RELAY_F --> READY : handoff, the successor takes the name
     REPORT --> WATCH : report
     QUESTION --> ARBITRATE : via the human
     ARBITRATE --> QUESTION : via the human

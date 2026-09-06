@@ -32,6 +32,8 @@ scope:               what is yours / what is explicitly not yours
 orchestrator:        the name of the agent sending this mandate — your only machine recipient
 owned_paths:         [ABSOLUTE paths; trailing / = whole subtree — outside them you read, you do not write]
 hands_off:           [shared, high-blast-radius files — a reminder on top of that rule, never the boundary]
+read_first:          [ABSOLUTE paths, in order — a closed list. Anything else, ask me before opening it]
+deliverable:         ABSOLUTE path you own — your findings land there, not in your report
 knowledge_state:     established / hypothesis / to_discover
 stop_conditions:     ... (must include "you discover the scope is wrong")
 cadence:             when you are expected to report
@@ -42,6 +44,8 @@ what_i_do_not_know:  ...
 - `orchestrator` — **your own name**: the delegate's only machine address, where its REPORT lands. Omitted → reporting becomes something only the human can relay by hand. One name is not a roster; questions and readbacks still print in the delegate's own window, for the human.
 - `owned_paths` — absolute, so nothing resolves against the delegate's cwd. Precise file when it exists, trailing `/` for a subtree it will populate. A subtree is owned **exclusively**: "you both write in `X/`, just use different filenames" partitions nothing — two agents asked to write up their notes both create `notes.md`.
 - `hands_off` — a few shared, high-blast-radius files it is likely to reach for. A reminder, never the boundary; the boundary is default deny.
+- `read_first` — **closed, ordered, and yours to decide.** `owned_paths` partitions writing; this partitions the delegate's incoming context, which is otherwise the one thing it spends entirely on its own judgement. Left empty, an agent handed a plan, an audit and a journal opens all three and a few neighbours "to be sure", and saturates before its first useful move. Name only what the work needs, and close the list: *anything else, ask me before opening it*. This does not contradict "read nothing at runtime" — that rule is about the contract, never about the project's own documents.
+- `deliverable` — one absolute path, inside `owned_paths`, where its findings accumulate as it works. The REPORT then carries ten lines and this pointer instead of the content. Without it every fact lives only in a message: it inflates your window on arrival, and dies with the delegate's.
 - `stop_conditions` — always includes "you discover the scope is wrong".
 - `cadence` — criterion is **reversibility**, not milestones, not elapsed time. Name the points of no return where it stops and waits; everywhere else it reports and keeps going while you redirect asynchronously. Halting at every milestone makes the human the bottleneck.
 - `what_i_do_not_know` — mandatory, never empty. Hidden gaps get filled by plausibility at the other end.

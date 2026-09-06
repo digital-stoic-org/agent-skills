@@ -165,8 +165,8 @@
     {
       "name": "team",
       "source": "./team",
-      "description": "Coordination protocol for running a fleet of named Claude Code agents in parallel under one human: delegate one mandate at a time (brief), report back on a stop condition (report), hand off state at context limits (relay) — one skill per machine arrow, SendMessage the only transport. No skill reads the protocol at runtime: the mandate carries its own contract, so all three run in windows with no context to spare without reading anything at all, and a window that has never seen the plugin still behaves correctly.",
-      "version": "0.8.0",
+      "description": "Coordination protocol for running a fleet of named Claude Code agents in parallel under one human: delegate one mandate at a time (brief), report back on a stop condition (report), hand off state at context limits (relay) — one skill per machine arrow, SendMessage the only transport. No skill reads the protocol at runtime: the mandate carries its own contract, so all three run in windows with no context to spare without reading anything at all, and a window that has never seen the plugin still behaves correctly. Context is under the human's control on both sides: read_first closes what a delegate opens before it starts, deliverable puts its findings on disk so reports and relay packets carry pointers rather than content, and a relay hands its successor the role lines that land it in READY instead of straight back into the work.",
+      "version": "0.9.0",
       "author": {
         "name": "dstoic"
       },

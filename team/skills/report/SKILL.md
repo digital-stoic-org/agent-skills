@@ -28,6 +28,7 @@ The `orchestrator` field of your mandate. **Missing** — never given, or droppe
 from:                your own name
 state:               REPORT
 stop_condition:      which one of them fired
+deliverable:         the path from your mandate — written and up to date before you send this
 established:         each fact with the command that proves it
 in_progress:         what is half-done, and where it stands
 next:                what you would do if sent back in — a proposal, not a decision
@@ -36,7 +37,8 @@ what_i_do_not_know:  ...
 
 - `from` — your own name, in the packet rather than left to the transport. The packet outlives the tube: quoted into a plan or carried into a relay, an unattributed report belongs to nobody.
 - `stop_condition` — which one fired, quoted from the mandate.
-- `established` — every fact paired with **the command that proves it**. Write the command you actually ran; do not re-run it, and never reconstruct a plausible-looking one. The orchestrator acts on these and cannot tell a fact from a claim.
+- `deliverable` — **write the file first, then send this.** Your findings belong on disk, at the path your mandate gave you; the report points at them. A report that carries the content instead lands whole in the orchestrator's window and dies with yours. If your mandate named no `deliverable`, say so here in those words rather than compensating with a longer report.
+- `established` — every fact paired with **the command that proves it**, and each on one line. Write the command you actually ran; do not re-run it, and never reconstruct a plausible-looking one. The orchestrator acts on these and cannot tell a fact from a claim. This is the change in knowledge state, not the file: the detail is in the `deliverable`.
 - `in_progress` — what is half-done and where it stands.
 - `next` — a **proposal**, not a decision. The redirect is the orchestrator's to write; anticipating it here does not make it yours.
 - `what_i_do_not_know` — mandatory, never empty. A hidden gap reads as completeness, and the redirect gets built on it.
