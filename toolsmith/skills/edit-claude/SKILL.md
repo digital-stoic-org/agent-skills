@@ -108,7 +108,7 @@ CLAUDE.md is loaded into every session, so it only holds content that is persist
    **Key principle:** Cohesion and semantic grouping matter more than a short file. A main CLAUDE.md whose universal sections (Git, Security, Planning, Style) sit together is better than the same content fragmented across files, provided it stays near the 200-line target.
 
 7. **H1 = Project Name** (required):
-   - First line MUST be `# Project Name` — used by `/switch`, `/save-context`, `/load-context` for project identification
+   - First line must be `# Project Name` — used by `/switch`, `/save-context`, `/load-context` for project identification
    - Examples: `# Praxis`, `# NanoVC — Control Repo`, `# GTD-PCM Control Plane`
 
 8. **Structure content**:

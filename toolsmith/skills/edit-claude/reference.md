@@ -479,7 +479,7 @@ API_KEY=sk_live_abc123xyz789
 DATABASE_URL=postgresql://user:password@localhost:5432/db
 ```
 
-**Why**: Credentials should NEVER be in CLAUDE.md. Use environment variables.
+**Why**: Credentials should never be in CLAUDE.md. Use environment variables.
 
 ### ❌ Verbose Documentation
 
