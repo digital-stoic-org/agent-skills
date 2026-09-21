@@ -2,27 +2,19 @@
 
 ## Official Documentation Sources
 
-This guide is based on official Anthropic Claude Code documentation:
-- **Memory documentation**: Primary resource for CLAUDE.md purpose and best practices
-- **GitHub Actions documentation**: CI/CD integration patterns
-- **GitLab CI/CD documentation**: Security considerations and workflow standards
+This guide is based on the Claude Code memory documentation, the primary resource for CLAUDE.md purpose and best practices.
+
+Source: https://code.claude.com/docs/en/memory (consulted 2026-09-21).
 
 ## What is CLAUDE.md?
 
-> "CLAUDE.md files persist information across sessions, allowing the AI to remember preferences, guidelines, and workflows without repeating context."
+> "CLAUDE.md files are markdown files that give Claude persistent instructions for a project, your personal workflow, or your entire organization."
 
 CLAUDE.md is Claude Code's **memory system**—persistent text files that provide context across sessions without requiring repetition.
 
 ### Organizational Hierarchy
 
-CLAUDE.md operates at multiple levels (highest to lowest priority):
-
-1. **Enterprise policy**: Organization-wide standards (managed by IT/DevOps)
-2. **Project memory**: Team-shared instructions (via source control)
-3. **User memory**: Personal preferences (`~/.claude/CLAUDE.md`)
-4. **Project-local memory**: Individual project preferences (deprecated)
-
-Files are automatically loaded into Claude Code's context when launched.
+CLAUDE.md exists at several scopes: managed policy (organization-wide), user (`~/.claude/CLAUDE.md`), project (`CLAUDE.md`, shared via source control) and project-local (`CLAUDE.local.md`, personal). For load order, on-demand loading and how files combine, see § Memory Hierarchy and Loading.
 
 ## Templates
 
@@ -30,8 +22,6 @@ Files are automatically loaded into Claude Code's context when launched.
 
 ```markdown
 # Project: [Project Name]
-
-sanity check: 42
 
 ## Build Commands
 
@@ -65,8 +55,6 @@ sanity check: 42
 **CLAUDE.md (root)**
 ```markdown
 # Project Standards
-
-sanity check: 123
 
 ## Build Commands
 - Build: `npm run build`
@@ -106,8 +94,6 @@ sanity check: 123
 
 ```markdown
 # Python Project Standards
-
-sanity check: 789
 
 ## Environment
 
@@ -163,7 +149,7 @@ For creative/business projects where users work with reference docs + working do
 4. Persona data lives in ref/ — never duplicate in wip/
 ```
 
-### Minimal Template (Token-Efficient)
+### Minimal Template
 
 ```markdown
 # Quick Reference
@@ -179,7 +165,7 @@ Deploy: `make deploy`
 
 ## Conventions
 - Files: kebab-case
-- Vars: camelCase
+- Variables: camelCase
 - Types: PascalCase
 ```
 
@@ -191,8 +177,8 @@ Use `.claude/rules/` directory to distribute content across focused files. All `
 
 ```
 .claude/
-├── CLAUDE.md              # Main universal rules (<200 tokens)
-├── CLAUDE.local.md        # Personal preferences (auto-gitignored)
+├── CLAUDE.md              # Main universal rules (target under 200 lines)
+├── CLAUDE.local.md        # Personal preferences; add to .gitignore
 └── rules/
     ├── code-style.md      # Language/formatting
     ├── security.md        # Security standards
@@ -236,18 +222,18 @@ paths:
 - **Path/language-specific content** (Python rules for `*.py`, JS rules for `*.js/*.ts`)
 - **Domain-specific patterns** (frontend/, backend/, infra/ subdirectories)
 - **Path-specific constraints** (validation, patterns for certain file paths)
-- **Single topic >300 tokens** (when topic is separable and not universal)
+- **Large single topic** (when the topic is separable and not universal)
 
 ### When NOT to Use Modular Rules
 
 - **Universal cohesive sections** (Git workflow, Security policies, Planning methodology, Style guides)
 - **Conceptually related content** (Don't fragment: keep pre-commit workflow with commit conventions)
 - **Cross-cutting concerns** (Content that applies to ALL files/operations regardless of path)
-- **<200 token sections** (If it fits the token budget, prefer keeping universal content together)
+- **Short universal sections** (if the main file stays near the 200-line target, keep universal content together)
 
 ### CLAUDE.local.md Pattern
 
-**Auto-gitignored personal preferences:**
+**Personal preferences (personal; add to .gitignore so the file isn't committed):**
 
 ```markdown
 # Personal Development Setup
@@ -326,6 +312,8 @@ Supports up to **5 hops** maximum depth:
 
 ## Optimization Strategies
 
+Compress the wording, never the reasons. Cut filler, politeness and narration, but keep the "because" attached to each behavioral rule: a rule cut from its reason gets applied rigidly or in the wrong place. Use full words rather than abbreviations or sentence fragments.
+
 ### Before: Verbose Prose
 
 ```markdown
@@ -334,29 +322,24 @@ Supports up to **5 hops** maximum depth:
 When writing tests for this project, please ensure that you always write unit tests for any new functionality. The tests should be comprehensive and cover edge cases. We use Jest as our testing framework, so please make sure you're familiar with Jest syntax. All tests should be placed in the __tests__ directory next to the source files. Please run the test suite before committing to ensure everything passes.
 ```
 
-**Token count**: ~80 tokens
-
-### After: Optimized Bullets
+### After: Filler Removed, Content Kept
 
 ```markdown
 ## Testing
 
 - Framework: Jest
 - Location: `__tests__/` next to source
-- Run: `npm test` before commit
-- Cover edge cases
+- Run `npm test` before committing, so broken tests never reach the shared branch
+- Cover edge cases in unit tests for every new function
 ```
-
-**Token count**: ~20 tokens (75% reduction)
 
 ### Optimization Techniques
 
 | Technique | Before | After |
 |-----------|--------|-------|
 | **Remove filler** | "please make sure that you..." | "Use..." |
-| **Use bullets** | Paragraphs | • Bullet points |
-| **Use tables** | Multiple bullets | Compact table |
-| **Abbreviate** | "directory" | "dir" (if clear) |
+| **Bullets for reference data** | Paragraph listing commands and paths | • One bullet per command or path |
+| **Use tables** | Multiple bullets with the same shape | Compact table |
 | **Commands inline** | "Run the test command which is npm test" | "Test: `npm test`" |
 | **Group related** | Scattered items | Organized sections |
 
@@ -478,12 +461,11 @@ When writing tests for this project, please ensure that you always write unit te
 | Sensitive credentials | Security risk | Environment variables, secrets manager |
 | Frequently changing data | Becomes stale | Direct request, issue tracker |
 | Temporary instructions | One-time use | Direct request in conversation |
-| Verbose documentation | Token waste | @import README or separate docs |
-| Code in code blocks* | Not processed by Claude | Use prose or bullets |
+| Verbose documentation | Loaded every session, consumes context and may reduce adherence | Separate docs referenced by path (an @import still loads at launch) |
 | One-off tasks | Session-specific | Direct instruction |
 | Code style rules handled by linters | Redundant | Let linter enforce |
 
-*Content inside markdown code blocks (` ``` `) or inline code spans (`` ` ``) is NOT processed by Claude.
+Note: `@imports` inside code blocks or code spans are not resolved; the text itself is read normally.
 
 ---
 
@@ -535,21 +517,6 @@ Next release: v2.3.1 (planned for next Tuesday)
 
 **Why**: Too vague. Be specific: "Use 2-space indentation" not "Format properly".
 
-### ❌ Code Within Code Blocks
-
-```markdown
-# This works fine
-Build: `npm run build`
-
-# This does NOT work - content not processed by Claude
-\`\`\`
-Build: npm run build
-Test: npm test
-\`\`\`
-```
-
-**Why**: Content inside code blocks or inline code spans is not processed by Claude.
-
 ## Decision Tree: CLAUDE.md vs Alternatives
 
 ```
@@ -565,8 +532,8 @@ Is this information persistent?
         ├─ NO → Use README.md or documentation
         └─ YES
             │
-            Can this be concise (<500 tokens)?
-            ├─ NO → Use separate documentation file
+            Does the file stay near the 200-line target with it?
+            ├─ NO → Use .claude/rules/ with `paths`, or a separate doc referenced by path
             └─ YES → ✓ Use CLAUDE.md
 ```
 
@@ -576,33 +543,27 @@ Is this information persistent?
 
 - Use specific commands: `npm run build` not "build the project"
 - Organize with markdown headings
-- Use bullets and tables for efficiency
+- Use bullets and tables for reference data (commands, paths, conventions)
+- Keep the reason next to each behavioral rule
 - Include build/test/deploy commands
 - Document naming conventions
 - Specify architectural patterns
-- Include sanity marker for verification
 - Use imports for modular organization
 - Review and update periodically
 
 ### ✗ DON'T
 
 - Include credentials or API keys
-- Write verbose prose
+- Pad rules with filler or README-style narration
 - Add temporary information
 - Use generic advice
-- Place guidelines in code blocks
 - Duplicate README content
 - Include frequently changing data
 - Add one-off instructions
 
-## Token Efficiency Metrics
+## Size Budget
 
-| Content Type | Approximate Tokens | Recommendation |
-|--------------|-------------------|----------------|
-| Project CLAUDE.md | 200-500 | Optimal range |
-| User CLAUDE.md | 100-300 | Personal preferences |
-| Enterprise policy | 300-700 | Shared standards |
-| Over 1000 | ⚠️ Too large | Split into modules |
+Measure size in lines (`wc -l`) and check what actually loads with `/context`, not with token estimates. The documented target is under 200 lines per CLAUDE.md file, and it is guidance, not a cap to enforce; the facts and their sources are in SKILL.md § Size Limits. Within that target, keep content only if it is universal and earns its place.
 
 ## Examples from Real Projects
 
@@ -610,8 +571,6 @@ Is this information persistent?
 
 ```markdown
 # Web App Standards
-
-sanity check: 456
 
 ## Stack
 - Frontend: React 18 + TypeScript
@@ -647,8 +606,6 @@ sanity check: 456
 ```markdown
 # ML Project Standards
 
-sanity check: 999
-
 ## Environment
 - Python 3.11
 - Conda env: `conda activate ml-project`
@@ -681,36 +638,36 @@ sanity check: 999
 **Project Structure:**
 ```
 my-project/
-├── CLAUDE.md                    # 430 tokens - Universal conventions
+├── CLAUDE.md                    # Universal conventions
 └── .claude/rules/
-    ├── python.md                # 35 tokens - Path-scoped (*.py)
-    ├── javascript.md            # 30 tokens - Path-scoped (*.js/*.ts)
-    └── bash-scripting.md        # 100 tokens - Path-scoped (*.sh)
+    ├── python.md                # Path-scoped (*.py)
+    ├── javascript.md            # Path-scoped (*.js/*.ts)
+    └── bash-scripting.md        # Path-scoped (*.sh)
 ```
 
-**CLAUDE.md Breakdown (430 tokens total):**
-- Rules: 5 tokens (`.in/` directory convention)
-- Communication: 40 tokens (clarification, no hallucinations)
-- Git Commits: 90 tokens (conventional commits, pre-commit workflow)
-- Security: 50 tokens (file exclusion patterns)
-- Planning: 45 tokens (OpenSpec triggers, boulder→pebbles)
-- Style: 200 tokens (Mermaid-first, emoji usage, human vs LLM output)
+**CLAUDE.md Sections:**
+- Rules (`.in/` directory convention)
+- Communication (clarification, no hallucinations)
+- Git Commits (conventional commits, pre-commit workflow)
+- Security (file exclusion patterns)
+- Planning (OpenSpec triggers, boulder→pebbles)
+- Style (Mermaid-first, emoji usage, human vs LLM output)
 
 **Why This Works:**
 - ✅ All sections are **universal** (apply to all files/operations regardless of type)
 - ✅ Sections are **cohesive** (Git workflow belongs with commit conventions)
-- ✅ 430 tokens is acceptable for project-wide conventions
+- ✅ The main file stays near the 200-line target while holding project-wide conventions
 - ✅ Language-specific rules properly extracted to `.claude/rules/` with path frontmatter
 
 **Anti-Pattern (DON'T DO THIS):**
 ```
 # This would be WRONG - fragmenting cohesive universal content
 
-CLAUDE.md (150 tokens)
-.claude/rules/git.md (90 tokens)
-.claude/rules/security.md (50 tokens)
-.claude/rules/planning.md (45 tokens)
-.claude/rules/style.md (200 tokens)
+CLAUDE.md
+.claude/rules/git.md
+.claude/rules/security.md
+.claude/rules/planning.md
+.claude/rules/style.md
 ```
 
 **Why This is Wrong:**
@@ -721,26 +678,25 @@ CLAUDE.md (150 tokens)
 
 ## Memory Hierarchy and Loading
 
-Claude Code loads memories in this order (later overrides earlier):
+Source: https://code.claude.com/docs/en/memory (consulted 2026-09-21). This section is the single description of load order in this skill; SKILL.md and the sections above and below point here.
 
-1. **Enterprise policy** (system-wide, managed by IT/DevOps)
-2. **Project memory** (`CLAUDE.md` or `.claude/CLAUDE.md`)
-3. **Project rules** (`.claude/rules/*.md` - all files auto-loaded)
-4. **User memory** (`~/.claude/CLAUDE.md` - cross-project personal)
-5. **Project local** (`CLAUDE.local.md` - personal, auto-gitignored)
+Claude Code loads instruction files from the broadest scope to the most specific:
 
-### Memory Lookup Behavior
+1. **Managed policy** (organization-wide, managed by IT/DevOps)
+2. **User memory** (`~/.claude/CLAUDE.md`, cross-project personal). User-level rules load before project rules.
+3. **Project memory**: `CLAUDE.md` files from the filesystem root down to the working directory. In each directory, `CLAUDE.local.md` (personal; add to .gitignore) is appended after `CLAUDE.md`. Files in `.claude/rules/*.md` without a `paths` frontmatter have the same priority as `.claude/CLAUDE.md`.
 
-Claude Code walks **UP** the directory tree from current working directory:
-- Loads `CLAUDE.md` and `CLAUDE.local.md` from each parent directory
-- Loads `.claude/rules/*.md` from each parent directory
-- Applies path-specific rules based on files being edited
+The files are concatenated: none replaces another, and the most specific one is simply read last. The docs give no conflict-resolution rule ("if two rules contradict each other, Claude may pick one arbitrarily"), so resolve contradictions in the files themselves instead of relying on load order.
 
-**Example:** Working in `foo/bar/`
-- Loads `foo/CLAUDE.md` (walking up)
-- Loads `foo/bar/CLAUDE.md` (walking up)
-- Loads `.claude/rules/*.md` from both directories
-- Applies path-specific rules when editing matching files
+### When Files Load
+
+- `CLAUDE.md` files in the working directory and its parent directories load at launch.
+- `CLAUDE.md` files in subdirectories load on demand, when Claude reads files in those directories.
+- Path-specific rules (`paths:` frontmatter) apply when Claude works on matching files.
+
+**Example:** launched in `foo/bar/`
+- `foo/CLAUDE.md` then `foo/bar/CLAUDE.md` load at launch
+- `foo/bar/baz/CLAUDE.md` loads only once Claude reads a file in `foo/bar/baz/`
 
 ---
 
@@ -751,27 +707,19 @@ Claude Code walks **UP** the directory tree from current working directory:
 1. Check file location: `CLAUDE.md` in project root or `~/.claude/CLAUDE.md`
 2. Verify markdown syntax is valid
 3. Use `/memory` command during session to view loaded memories
-4. Use `/dstoic:check-sanity` to verify loading with sanity marker
-5. Check for import path errors (typos, missing files)
+4. Check for import path errors (typos, missing files)
 
-### Too Many Tokens?
+### File Over 200 Lines?
 
-1. **Distribute to .claude/rules/**: Move topic-focused content (100-300 tokens each)
-2. **Use @imports**: Reference external docs instead of duplicating
-3. **Compress prose**: Convert paragraphs → bullets or tables
+1. **Distribute to .claude/rules/**: Move topic-focused, non-universal content
+2. **Reference docs by path**: Point to external docs instead of duplicating them. `@imports` do not help here, because imported files load at launch with the CLAUDE.md that references them
+3. **Cut filler, keep reasons**: Tighten wording, but keep the reason attached to each behavioral rule
 4. **Remove redundancy**: Eliminate duplicate information
 5. **Path-specific rules**: Apply rules only where needed with frontmatter
 
 ### Conflicting Guidelines?
 
-**Priority order** (later overrides earlier):
-1. Enterprise policy
-2. Project memory (CLAUDE.md)
-3. Project rules (.claude/rules/)
-4. User memory (~/.claude/)
-5. Project local (CLAUDE.local.md)
-
-Within same file: Later rules override earlier rules.
+Files are concatenated with no override rule (see § Memory Hierarchy and Loading), so when two instructions contradict each other, Claude may follow either one, whether they sit in different files or in the same file. Use `/memory` to find both instructions, then fix the contradiction in the files: delete one, or state the scope of each explicitly.
 
 ### Debugging Memory Loading
 
@@ -783,116 +731,5 @@ Use `/memory` command during session to:
 
 ## Related Tools
 
-- **Sanity check**: `/dstoic:check-sanity` - Verify CLAUDE.md loaded
 - **Edit skill**: Use `edit-claude` skill to modify CLAUDE.md
 - **Git workflow**: Include CLAUDE.md in version control for team sharing
-
----
-
-## Instruction Ordering: Attention Mechanism Optimization
-
-### Implementation in edit-claude/SKILL.md
-
-The edit-claude skill has been reordered following attention-mechanism optimization principles:
-
-**BEFORE (Problematic):**
-```
-1. MANDATORY Validation (lines 8-24, 17 lines = 8% of file)
-2. Determine Action Type (lines 27-31, 5 lines = 2% of file)
-3. Creating New CLAUDE.md Files (lines 33-111, 79 lines = 39% of file)
-4. Updating Existing CLAUDE.md (lines 113-119, 7 lines = 3% of file)
-5. Optimizing CLAUDE.md (lines 121-142, 22 lines = 11% of file)
-6. Key Principles (lines 173-180, 8 lines = 4% of file)
-7. Validation & constraints (remainder)
-```
-
-**Problem with BEFORE:**
-- ❌ UPDATE (most common action, 60% frequency) buried at line 113
-- ❌ Only 8% of first 30% is actionable
-- ❌ Users see validation gate before understanding what they can do
-- ❌ Time to UPDATE workflow: 113+ lines (55% into file)
-
-**AFTER (Optimized):**
-```
-1. Determine Action Type (lines 8-12, first - every user sees this)
-2. Updating Existing CLAUDE.md (lines 14-20, second - most frequent)
-3. Optimizing CLAUDE.md (lines 22-42, third - medium frequency)
-4. Creating New CLAUDE.md Files (lines 45-111, fourth - least frequent)
-5. Key Principles (lines 113-119, fifth - applies to all)
-6. MANDATORY Validation (lines 121-138, sixth - after action clarity)
-7. Progressive Disclosure (lines 140-172, reference)
-8. Constraints & Validation Checklist (remainder)
-```
-
-**Benefits of AFTER:**
-- ✅ UPDATE users reach workflow in 14 lines (vs 113 previously) = **90% faster**
-- ✅ OPTIMIZE users reach workflow in 22 lines (vs 121 previously) = **82% faster**
-- ✅ 85% of first 30% is now actionable
-- ✅ Validation gates still present, but after action clarity
-
-### Why This Pattern Works
-
-| Principle | Benefit | Edit-Claude Example |
-|-----------|---------|-------------------|
-| **Action Type First** | User understands immediately what's possible | Know if task is CREATE/UPDATE/OPTIMIZE |
-| **Frequency Ordering** | Most common path is shortest to reach | UPDATE (60% frequency) comes 2nd |
-| **Validation Late** | Gates remain present but don't block understanding | Validation moved to 6th section |
-| **Key Principles Early** | Shared mindset before detailed instructions | Principles before validation |
-| **Reference Last** | Advanced content doesn't interfere | Progressive Disclosure at end |
-
-### Attention Impact
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| First 30% actionable | ~8% | ~85% | +956% |
-| Time to UPDATE section | Line 113 | Line 14 | 90% faster |
-| Time to OPTIMIZE section | Line 121 | Line 22 | 82% faster |
-| Attention retention | ~40% | ~80% | +100% |
-
-### Reusable Pattern for All Skills
-
-This optimization applies universally to instruction sets:
-
-```
-1. Determine Action Type (100% frequency)
-2. Most Frequent Workflow (60-80% frequency)
-3. Medium Frequency Workflow (30-50% frequency)
-4. Least Frequent Workflow (10-25% frequency)
-5. Key Principles (applies to all)
-6. Validation/Guards (necessary but after clarity)
-7. Advanced Patterns (reference/optional)
-8. Checklists (final safety)
-```
-
-See "Instruction Ordering" in edit-tool/references/skill-guide.md for universal implementation guidance.
-
-### For Future Edit-Claude Modifications
-
-When updating edit-claude/SKILL.md:
-- ✅ Keep "Determine Action Type" first
-- ✅ Keep "Updating Existing CLAUDE.md" before "Creating New CLAUDE.md"
-- ✅ Keep "Key Principles" before "MANDATORY Validation"
-- ✅ Keep validation gates late but present
-- ✅ Preserve frequency-based ordering for optimal attention
-
----
-
-## Section Ordering Reference (Current)
-
-Quick reference for edit-claude/SKILL.md section order:
-
-| Position | Section | Frequency | Lines |
-|----------|---------|-----------|-------|
-| 1 | Determine Action Type | 100% | 8-12 |
-| 2 | Updating Existing CLAUDE.md | 60% | 14-20 |
-| 3 | Optimizing CLAUDE.md | 30% | 22-42 |
-| 4 | Creating New CLAUDE.md Files | 25% | 45-111 |
-| 5 | Key Principles | 100% | 113-119 |
-| 6 | MANDATORY Validation | 25% (CREATE only) | 121-138 |
-| 7 | Progressive Disclosure | Reference | 140-172 |
-| 8 | Constraints | Reference | 174-188 |
-| 9 | Validation Checklist | Final check | 190-201 |
-
-This ordering optimizes for Anthropic LLM attention mechanisms while preserving all safety gates and validation.
-
----

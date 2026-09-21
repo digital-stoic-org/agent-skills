@@ -9,38 +9,28 @@ description: Creates, updates, or optimizes CLAUDE.md files following Anthropic 
 
 **CREATE**: New CLAUDE.md file requested
 **UPDATE**: Modify existing CLAUDE.md (keywords: "update", "add", "modify", "change")
-**OPTIMIZE**: Improve token efficiency (keywords: "optimize", "reduce tokens", "improve")
+**OPTIMIZE**: Audit and clean an existing CLAUDE.md chain (keywords: "optimize", "audit", "clean up", "reduce tokens", "improve")
 
 ## Updating Existing CLAUDE.md Files
 
-1. **Read current file**: Always read before editing
-2. **Identify section**: Locate relevant section or create new heading
-3. **Make surgical edits**: Use Edit tool for precise changes
-4. **Preserve structure**: Maintain existing organization patterns
-5. **Validate**: Ensure markdown is valid and clear
+Make surgical edits in the relevant section (or a new heading), preserving the file's existing organization. After editing, check the file's line count against the size guidance below, because longer files consume more context and may reduce adherence.
 
 ## Optimizing CLAUDE.md Files
 
-1. **Audit current content**:
-   - Identify verbose prose that can become bullets
-   - Find repetitive information
-   - Locate outdated or irrelevant content
+The goal is that every line earns its place for the current model, not the shortest file. Rules lose value when cut from their reason, so compress wording, never reasons.
 
-2. **Apply compression techniques**:
-   - Convert paragraphs → bullets or tables
-   - Remove unnecessary words and filler
-   - Use abbreviations where context is clear
-   - Group similar items together
+1. **Dated-pattern pass**: invoke `/claude-api prompt-audit` scoped to the CLAUDE.md chain (and `.claude/rules/`), with the current session model as target. It returns a report and a diff covering pressure language, fossils and restated defaults. Call it by skill name only: its bundled file path is versioned per Claude Code release and breaks on upgrade, and a copy here would go stale, so do not copy it either.
+2. **CLAUDE.md-specific pass** (prompt-audit does not cover these):
+   - Move path/domain-specific content to `.claude/rules/` with `paths` frontmatter, so it loads only when needed; `@imports` can organize long material but still load at launch
+   - Remove secrets and frequently changing data
+   - Check each file's line count (`wc -l`) and what actually loads (`/context`) against the size guidance below
+3. Present both diffs and apply only what the user accepts.
 
-3. **Remove anti-patterns**:
-   - Delete sensitive information (credentials, tokens)
-   - Remove frequently changing data
-   - Extract verbose documentation to separate files
-   - Remove duplicate information
+See `reference.md § Optimization Strategies` for rewrite examples.
 
-4. **Validate token efficiency**: Aim for maximum signal, minimum tokens
+## Fit check (CREATE)
 
-See `reference.md` for optimization strategies and examples.
+CLAUDE.md is loaded into every session, so it only holds content that is persistent, used in most sessions, and non-sensitive. Route what fails that to its better home and say so: secrets to env vars, one-off asks to the conversation, long docs to a README referenced by path, detailed guidelines to `.claude/rules/`. For mixed requests, write the part that fits and route the rest.
 
 ## Creating New CLAUDE.md Files
 
@@ -57,31 +47,31 @@ See `reference.md` for optimization strategies and examples.
 
 3. **Determine organization strategy** (memory hierarchy):
 
-   **Main CLAUDE.md** (universal, <200 tokens ideal, <500 acceptable):
+   **Main CLAUDE.md** (universal content; aim for the 200-line target below):
    - Build/test/deploy commands
    - Universal code style applying to all files
    - Critical patterns used everywhere
    - Cohesive project-wide conventions (Git, Security, Planning, Style)
    - `CLAUDE.md` in project root (shared via git)
 
-   **.claude/rules/** (modular, 100-300 tokens each):
+   **.claude/rules/** (modular, one topic per file):
    - Path/language-specific files (auto-loaded): `python.md`, `javascript.md`
    - Domain-specific patterns: `frontend/`, `backend/`
    - Path-specific rules with frontmatter (see reference.md)
 
-   **CLAUDE.local.md** (personal, auto-gitignored):
+   **CLAUDE.local.md** (personal; add to .gitignore):
    - Personal preferences not shared with team
    - Local dev shortcuts, experimental rules
 
    **~/.claude/CLAUDE.md** (cross-project personal):
    - Universal personal preferences across all projects
 
-   **@imports** (lazy-loaded reference):
+   **@imports** (organization, not context reduction):
    - External docs: `@README`, `@docs/architecture.md`
    - Home directory: `@~/.claude/my-prefs.md`
+   - Imported files are expanded and loaded at launch alongside the CLAUDE.md that references them, so splitting into imports does not reduce context. To load content only when needed, use `.claude/rules/` with `paths` frontmatter or a subdirectory CLAUDE.md.
 
-   **Memory load order** (later overrides earlier):
-   1. Enterprise policy → 2. Project memory → 3. Project rules (.claude/rules/) → 4. User memory (~/.claude/) → 5. Project local (CLAUDE.local.md)
+   **Load order and how files combine**: see `reference.md § Memory Hierarchy and Loading`.
 
 4. **File Zones (if project uses ref/wip pattern)**:
    - Detect folder names: `ref/` or `reference/` (read-only), `wip/` or `work-in-progress/` (workspace). Use whichever name the project already has.
@@ -95,100 +85,77 @@ See `reference.md` for optimization strategies and examples.
    - Include this section in main CLAUDE.md for all projects using ref/wip (non-technical users especially benefit from visual clarity)
 
 5. **Organization decision tree**:
-   - Universal + cohesive (Git/Security/Planning/File Zones)? → Main CLAUDE.md (even if 200-500 tokens)
+   - Universal + cohesive (Git/Security/Planning/File Zones)? → Main CLAUDE.md; if the file grows past the 200-line target, move non-universal parts to path-scoped rules
    - Path/language-specific (Python/JS/Bash rules)? → .claude/rules/lang.md with frontmatter
    - Domain-specific (frontend/backend patterns)? → .claude/rules/domain/
-   - Topic >300 tokens standalone? → Consider .claude/rules/topic.md
+   - Large, separable, non-universal topic? → Consider .claude/rules/topic.md
    - Personal preferences? → CLAUDE.local.md or ~/.claude/
-   - Detailed reference docs? → @import external docs
+   - Detailed reference docs? → Separate doc referenced by path; `@import` it only if most sessions need it, because imports load at launch
 
-5. **Universal vs Path-Specific Decision**:
+6. **Universal vs Path-Specific Decision**:
 
    **Keep in main CLAUDE.md:**
    - Universal conventions applying to ALL files/operations
    - Cohesive conceptual units (Git workflow, Security policies, Style guides)
-   - Even if combined total is 200-500 tokens
    - Examples: commit format, pre-commit flow, security exclusions, output formatting
 
    **Extract to .claude/rules/:**
    - Path/language-specific rules (Python for `*.py`, React for `*.tsx`)
    - Domain-specific patterns (`frontend/`, `backend/`, `infra/`)
-   - When single topic exceeds ~300 tokens standalone
+   - A single separable topic that grows large enough to crowd the main file
    - Examples: `python.md` with `paths: "**/*.py"`, `bash-scripting.md` with `paths: "**/*.sh"`
 
-   **Key principle:** Cohesion and semantic grouping matter more than strict token limits. A well-organized 430-token CLAUDE.md with universal sections (Git 90 + Security 50 + Planning 45 + Style 200 = 385 tokens) is better than fragmenting conceptually related content across multiple files.
+   **Key principle:** Cohesion and semantic grouping matter more than a short file. A main CLAUDE.md whose universal sections (Git, Security, Planning, Style) sit together is better than the same content fragmented across files, provided it stays near the 200-line target.
 
-6. **H1 = Project Name** (required):
+7. **H1 = Project Name** (required):
    - First line MUST be `# Project Name` — used by `/switch`, `/save-context`, `/load-context` for project identification
    - Examples: `# Praxis`, `# NanoVC — Control Repo`, `# GTD-PCM Control Plane`
 
-7. **Structure content** (token-efficient):
+8. **Structure content**:
    - Use markdown headings for organization
-   - Use tables and bullets over prose
+   - Tables and bullets for reference data (commands, paths); a short sentence with its reason for behavioral rules
    - Be specific (e.g., "Use 2-space indentation" not "Format code properly")
    - Group related items logically
-
-8. **Include sanity marker** (optional but recommended):
-   ```
-   sanity check: [random-number]
-   ```
 
 9. **Write file** with appropriate sections based on user context
 
 See `reference.md § Templates` for starter examples and `§ Modular Rules` for .claude/rules/ patterns.
 
-## ⚠️ Hard Char Limits (from Claude Code source)
+## Size Limits
 
-Claude Code enforces **hard character limits** on instruction files. Content beyond these limits is **silently truncated** with `[truncated]` appended — no warning to the user.
+Each fact below carries its source, consulted 2026-09-21.
 
-| Limit | Value | Source |
-|---|---|---|
-| **Per file** | 4,000 chars | `MAX_INSTRUCTION_FILE_CHARS` |
-| **Total across all files** | 12,000 chars | `MAX_TOTAL_INSTRUCTION_CHARS` |
+- **Target**: keep each CLAUDE.md file under 200 lines, because files over 200 lines consume more context and may reduce adherence ([memory docs](https://code.claude.com/docs/en/memory)). The 200-line target is guidance, not a cap to enforce.
+- **Hard limit**: Claude Code loads a CLAUDE.md file of up to 4 MiB in full and skips a larger file ([memory docs](https://code.claude.com/docs/en/memory)).
+- **Warning**: the "CLAUDE.md is too long" warning threshold scales with the model's context window ([changelog, v2.1.169](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)).
 
-**Loading order**: Files are loaded walking from filesystem root to CWD. Once total budget is exhausted: `"Additional instruction content omitted after reaching the prompt budget."` — deeper files (closer to CWD) are the ones that get dropped.
+**Measure**: `wc -l` for each file's line count; `/context` to check which CLAUDE.md and rules files loaded into the current session; `/memory` to list memory file locations.
 
-**Implications**:
-- A CLAUDE.md chain of 4 files (e.g., `~/.claude/` → praxis root → repo → subfolder) shares the 12K budget
-- Files with **identical content** (after whitespace normalization) are auto-deduped
-- Run `claude --dump-system-prompt` to verify what actually loads
-- Run `wc -c` on each file in the chain to check headroom
-
-**When creating/updating**: Always check current chain total. Warn user if any file is >3,500 chars or chain total >10,000 chars.
+**When creating/updating**: If a file passes the 200-line target, tell the user and suggest path-scoped rules or trimming content that is not needed in every session. Imports do not help here, because imported files load at launch.
 
 ## Key Principles
 
 - **Specific over generic**: "Run `npm test`" not "Test the code"
 - **Persistent not temporary**: Coding standards yes, current bug no
-- **Concise not verbose**: Bullets and tables over paragraphs
+- **Concise, with reasons**: cut filler, keep the "because" next to each rule
 - **Modular organization**: Main CLAUDE.md + .claude/rules/ + @imports
 - **Path-specific when needed**: Frontmatter with `paths:` glob patterns
 - **Secure**: Never include credentials or sensitive data
 
-## MANDATORY Validation (CREATE only)
-
-**STOP**: Before creating new CLAUDE.md, answer YES/NO for each:
-
-- **Q1: Persistent** (not temporary)? [YES/NO]
-- **Q2: Frequently referenced** (coding standards, workflows)? [YES/NO]
-- **Q3: Concise** (avoid verbose docs)? [YES/NO]
-- **Q4: Non-sensitive** (no credentials/tokens)? [YES/NO]
-
-**If ANY answer is NO:**
-→ STOP. Explain why inappropriate.
-→ Recommend alternatives: README.md (docs), environment variables (secrets), direct request (one-time), .claude/rules/ (detailed guidelines)
-→ EXIT immediately.
-
-**If ALL answers are YES:**
-→ Proceed to "Creating New CLAUDE.md Files" section above.
+**Ordering and emphasis** (sources: code.claude.com/docs/en/memory, code.claude.com/docs/en/best-practices, platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices; consulted 2026-09-21):
+- Across the chain, the harness sets the order: files are concatenated from broadest to most specific, and the most specific is read last. You only control order inside a file; there, group related rules and order sections for the reader.
+- Anthropic documents no in-prompt position effect (U-shaped attention, primacy, recency) for current models, so do not reorder rules for attention. The documented lever is length and noise: "If your CLAUDE.md is too long, Claude ignores half of it because important rules get lost in the noise."
+- State each rule once: current models retain a once-stated instruction, so repeated reminders are cruft.
+- If Claude keeps skipping one specific instruction, emphasize that line alone; emphasizing many lines cancels out.
+- "Long documents at the top, query at the end" applies to prompts over 20k tokens, not to CLAUDE.md.
 
 ---
 
 ## Progressive Disclosure
 
-Keep main CLAUDE.md lean (<200 tokens). Distribute content:
+Keep main CLAUDE.md to universal content, near the 200-line target. Distribute the rest:
 
-**Modular rules** (.claude/rules/ - auto-loaded):
+**Modular rules** (.claude/rules/; files with `paths` frontmatter load only for matching files):
 ```
 .claude/rules/
   |- code-style.md
@@ -197,7 +164,7 @@ Keep main CLAUDE.md lean (<200 tokens). Distribute content:
   |- backend/api.md
 ```
 
-**Imports** (lazy-loaded when referenced):
+**Imports** (loaded at launch with the referencing CLAUDE.md; they organize content but do not reduce context):
 ```markdown
 @README
 @docs/architecture.md
@@ -215,12 +182,10 @@ Use `/memory` command during session to view/edit loaded memories.
 
 ## Constraints
 
-- **Hard char limits**: 4,000 chars/file, 12,000 chars total chain (see ⚠️ Hard Char Limits above)
-- **Instruction budget**: LLMs follow ~150-200 instructions reliably. Claude Code's system prompt uses ~50, leaving ~100 for CLAUDE.md
-- **Token target**: Main CLAUDE.md <200 tokens ideal, <500 acceptable for universal cohesive content
+- **Size**: under 200 lines per file as a target; files up to 4 MiB load in full (see Size Limits above)
 - **Universal relevance**: Every line should apply to most sessions, not task-specific work
 - **Modular distribution**: Use .claude/rules/ for path/language/domain-specific content, not to fragment universal cohesive sections
-- **Cohesion over tokens**: Keep conceptually related universal sections together (Git, Security, Planning, Style) even if combined total is 200-500 tokens
+- **Cohesion over tokens**: Keep conceptually related universal sections together (Git, Security, Planning, Style) even if that makes the main file longer, as long as it stays near the 200-line target
 
 See `reference.md § Content Guidelines` for inclusion/exclusion rules and anti-patterns.
 
@@ -228,11 +193,10 @@ See `reference.md § Content Guidelines` for inclusion/exclusion rules and anti-
 
 - [ ] Information is persistent and frequently referenced
 - [ ] No sensitive credentials or tokens included
-- [ ] Content is concise and token-efficient (<200 tokens for main CLAUDE.md)
+- [ ] Each file near or under the 200-line target (`wc -l`), and the expected files loaded (`/context`)
 - [ ] Markdown structure is clear with headings
 - [ ] Specific guidelines (not generic advice)
 - [ ] Appropriate organization: main vs .claude/rules/ vs @imports
 - [ ] Path-specific rules use frontmatter (if applicable)
-- [ ] Sanity marker included (optional)
 
 See `reference.md § Templates`, `§ Modular Rules`, and `§ Import Syntax` for detailed examples.
