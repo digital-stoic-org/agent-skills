@@ -103,8 +103,8 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 
 ## 📊 By the Numbers
 
-- **125 skills** across 16 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
-- **15 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team
+- **128 skills** across 16 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
+- **16 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team, ring
 - **2 agents**: devil's advocate, context summarizer
 - **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
 - **3 execution modes**: garage (default), scale, maintenance
@@ -132,6 +132,7 @@ Multiplied by **context efficiency** (don't waste tokens re-explaining) and **co
 | [cowork](cowork/) | 5 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
 | [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
 | [team](team/) | 3 | Fleet coordination under one human: brief, report, relay — one skill per machine arrow, SendMessage only. The mandate carries its own contract, so no skill reads anything at runtime |
+| [ring](ring/) | 3 | Context as a tree of problems to settle: open, close, rings. The ring file holds the steering state; a `team` agent, a sub-agent or the main session is only the vehicle that carries it |
 
 ## 📦 Install
 

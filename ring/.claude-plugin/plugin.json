@@ -1,0 +1,11 @@
+{
+  "name": "ring",
+  "description": "Control-plane plugin for tracking rings: recursive units of work, each a problem to settle rather than a session. A ring has a Brief frozen at open, a Trace of local working memory discarded at close, and a Delta typed by effect (ESTABLISHED, INVALIDATED, SURFACED, DELIVERABLE) that crosses exactly one turn to its parent. Ring state is orthogonal to what carries it: the four vehicles are inline, subagent, session and resumed. For vehicle session, ring layers on top of the team plugin as its vehicle — team keeps circulating mandates, reports and relay packets between named agents unchanged, while ring tracks which problem is open, who is carrying it, and what crosses back up. Ships three skills (open, close, rings) for descending into and ascending out of a ring and for listing/graphing the live tree, exclusive create:/writes: write-right tracking with prefix-inclusion collision detection and a lineage exception for parent-child delegation, and a closing sweep that scans disk for files born or touched outside declared claims.",
+  "version": "0.1.0",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  },
+  "repository": "https://github.com/digital-stoic-org/agent-skills",
+  "license": "MIT"
+}
