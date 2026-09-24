@@ -12,12 +12,12 @@ What carries a ring while it is open is independent of where it sits in the tree
 
 | Vehicle | Carries it | Trace | Has a ring file |
 |---|---|---|---|
-| `inline` | the parent's own conversation | not isolated | none, until the first Delta line is posted (then it promotes to `resumed`) |
+| `inline` | the parent's own conversation | not isolated | none, until `/ring:sync` promotes it to `resumed` (or `/open` does, when it opens a child under it) |
 | `resumed` | a session that survives a `/clear` | not isolated | yes |
 | `subagent` | a sub-agent of the parent | isolated | none — it can only produce Trace; the parent reads its final report and types the Delta itself |
 | `session` | a named `team` agent, in its own tmux window | isolated | yes, created by the parent at `/open` |
 
-`resumed` is never chosen at `/open`; it is only ever reached by promotion, the first time an `inline` ring posts a Delta line. A ring file, once it exists, has exactly one writer at a time — its current vehicle — and the writer token changes hands cleanly: the parent holds it while composing the Brief at `/open`, the vehicle holds it from the mandate onward, and the parent takes it back at `/close`, which refuses to run on a `session` ring whose last signal was not a REPORT.
+`resumed` is never chosen at `/open`; it is only ever reached by promotion, when `/ring:sync` first writes an `inline` ring's file. A ring file, once it exists, has exactly one writer at a time — its current vehicle — and the writer token changes hands cleanly: the parent holds it while composing the Brief at `/open`, the vehicle holds it from the mandate onward, and the parent takes it back at `/close`, which refuses to run on a `session` ring whose last signal was not a REPORT. Since 0.2.0 the token is on disk: the header field `carrier:` names its current holder, `/ring:sync` refuses to write for anyone else, and `/open --resume` (on a `parked` or an `active` ring) is the one gesture that takes it over.
 
 ## The human's position
 
@@ -35,9 +35,12 @@ For `session`, the default is `irreversible`: everywhere else the agent reports 
 
 | Skill | Runs when | Purpose |
 |---|---|---|
-| `/open` | descending: the parent hands a targeted Brief to a new or resumed ring | Composes a Brief from the direct parent only, names and validates the ring, writes its file if its vehicle needs one, and hands it to its vehicle (prints it for `inline`, launches it foreground for `subagent`, or briefs a named `team` agent for `session`). |
-| `/close` | ascending: the closure is reached, or a `session` ring's REPORT is in | Rereads the child's file from disk, validates and reads its Delta, folds what matters into the parent's own file in the parent's own terms, runs the closing sweep, and files the ring under `done/`. |
-| `/rings` | checking the state of the tree | Scans a rings folder, renders it as a Mermaid graph, lists `create:`/`writes:` claims and collisions, and flags anomalies — read-only, writes nothing. |
+| `/open` | descending: the parent hands a targeted Brief to a new or resumed ring | Composes a Brief from the direct parent only, infers what it safely can (asking only for the closure when the Brief leaves the conversation), names and validates the ring, promotes an unpromoted `inline` parent first, writes the child's file if its vehicle needs one, and hands it to its vehicle (keeps it in the conversation for `inline`, launches it foreground for `subagent`, or briefs a named `team` agent for `session`). `--resume` picks up a `parked` or an `active` ring and takes its writer token. |
+| `/close` | ascending: the closure is reached, or a `session` ring's REPORT is in | Rereads the child's file from disk, validates and reads its Delta, folds what matters into the parent's own file in the parent's own terms — or, for the arc, into its own file — runs the closing sweep, and files the ring under `done/`. Refuses, before anything destructive, when the parent has no file to fold into. |
+| `/rings` | checking the state of the tree | Scans a rings folder, renders it as a Mermaid graph, and flags collisions and anomalies — read-only, writes nothing. States its blind spot: rings without a file are invisible to it. |
+| `/ring:sync` | whenever the ring's state should survive the conversation | Writes the current ring's state to its file: the first call promotes an `inline` ring, later calls checkpoint it. Never touches the Brief or the claims; `status` and `vehicle` are constated, never passed. |
+
+All four skills print a short natural-language report by default and keep the mechanics (validations, commands, full tables) behind `--verbose`.
 
 ## Where things live
 
@@ -48,11 +51,15 @@ ring/
 ├── references/
 │   ├── ring-file.md   # the ring file format in full: header fields, body sections, skeleton, lifecycle
 │   └── carrier.md     # the rules a carrying vehicle follows, read first by every session vehicle
-└── scripts/
-    └── ring.py        # scan · collide · sweep · graph — the one place parsing and detection logic lives
+├── scripts/
+│   └── ring.py        # scan · collide · sweep · graph · resolve-opened — the one place parsing and detection logic lives
+└── skills/
+    ├── open/  close/  rings/  sync/
 ```
 
-`references/ring-file.md` is the only place in this plugin that describes the ring file format; the skills point at it by path rather than repeating it. `references/carrier.md` rides in `read_first` of every `team` mandate a `session` ring sends out, since `team` only carries its own mandate and role lines, never a ring's rules. `scripts/ring.py` is a standard-library-only Python 3 script that the three skills call for scanning, collision detection, the closing sweep, and the tree graph, so that parsing and detection logic exist in exactly one place.
+`references/ring-file.md` is the only place in this plugin that describes the ring file format; the skills point at it by path rather than repeating it. `references/carrier.md` rides in `read_first` of every `team` mandate a `session` ring sends out, since `team` only carries its own mandate and role lines, never a ring's rules. `scripts/ring.py` is a standard-library-only Python 3 script that the skills call for scanning, collision detection, the closing sweep, the tree graph, and recovering a fileless ring's `opened` instant from its parent's `children:` line, so that parsing and detection logic exist in exactly one place.
+
+**Project defaults.** An optional `.claude/ring.local.md` at the project root holds `dir:` (the rings folder) and `root:` lines (the closing sweep's roots). `/open` writes it once, the first time it falls back to the working directory; after that it is edited by hand. Format: `references/ring-file.md` §9.
 
 ## Execution rules (not tooled in v1)
 
@@ -71,3 +78,5 @@ These rules need no code in v1, but no skill may contradict them (spec §1.7).
 v1 ships the recursive ring/arc model, the four vehicles, the escalade-derived human position, exclusive `create:`/`writes:` claims with prefix-inclusion collision detection and the lineage exception between a ring and its ancestors, the reorientation rule (same ring if the closure is unchanged, close-then-open if it changed), and the closing sweep as the only leak detector — a `find`-based pass that runs after the fact, not a `PreToolUse` hook that would block a stray write before it lands.
 
 Left out of v1, documented but not built: the `PreToolUse` hook and its `.claude/active-ring` pointer; the authoritative-source index (`authoritative_on:`/`supersedes:` and a `## Deliverables` view); the `↑` marker inside `ckpt` trailers and the mechanical `/close` it would drive; GOAL mode (`/goal`, `Budget`, and its Met/Impossible/budget-exhausted outcomes); and agent-team depth beyond the two-level sub-agent ceiling. `save-context`, `load-context` and `plan-context` are untouched by this plugin.
+
+0.2.0 adds persistence that survives a `/clear`: `/ring:sync` (promotion and checkpoints), the on-disk writer token `carrier:`, `/open --resume` on `active` rings, the `opened` instant recorded on the parent's `children:` line, the arc folding its own Delta at `/close`, per-vehicle input defaults, project defaults, and the default/`--verbose` output split.

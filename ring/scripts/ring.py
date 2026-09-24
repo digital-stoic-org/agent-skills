@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""ring.py — scan / collide / sweep / graph for the `ring` plugin.
+"""ring.py — scan / collide / sweep / graph / resolve-opened for the `ring` plugin.
 
-Interface fixed by SPEC-ring.md §8.4. Standard library only.
+Interface fixed by SPEC-ring.md §8.4, correctifs v0.2.0 in §8.5.2. Standard
+library only.
 
 It copies and computes; it never judges (reference_llm-extractif-verbatim-par-code).
 
-Exit codes: 0 = nothing to report, 1 = collision or anomaly, 2 = usage error.
-JSON on stdout for scan / collide / sweep. `graph` prints raw Mermaid text.
+Exit codes: 0 = nothing to report (or found, for resolve-opened), 1 = collision
+or anomaly (or not found, for resolve-opened), 2 = usage error.
+JSON on stdout for scan / collide / sweep / resolve-opened. `graph` prints raw
+Mermaid text.
 """
 
 import argparse
@@ -22,6 +25,7 @@ RING_FILENAME_RE = re.compile(r'^ring-(.+)-llm\.md$')
 ISO_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
 # "—" / "-" in a multivalued field is the documented "none" sentinel, never a value.
 SENTINELS = {"—", "–", "-"}
+CHILD_OPENED_RE = re.compile(r'^opened=(.*)$')
 
 ESCALADE_RE = re.compile(r'^\*\*escalade\*\*\s*[—–-]\s*(.+)$', re.MULTILINE)
 VALID_STATUS = ("active", "parked", "done")
@@ -79,6 +83,34 @@ def parse_header(header_lines):
                 anomalies.append("owner: field present")
 
     return header, multi, anomalies
+
+
+def parse_children_entry(val):
+    """Split one `children:` value into (slug, opened, anomaly).
+
+    Detectors take the first whitespace-separated token as the slug
+    (SPEC-ring.md §8.5.2). A second token must be `opened=<ISO>`; anything
+    beyond that, or a second token not shaped like `opened=...`, is
+    `children: malformed`. A present `opened=` token that isn't ISO is
+    `children: opened not ISO`.
+    """
+    tokens = val.split()
+    slug = tokens[0]
+    opened = None
+    anomaly = None
+    if len(tokens) == 1:
+        pass
+    elif len(tokens) == 2:
+        m = CHILD_OPENED_RE.match(tokens[1])
+        if not m:
+            anomaly = f"children: malformed '{val}'"
+        elif ISO_RE.match(m.group(1)):
+            opened = m.group(1)
+        else:
+            anomaly = f"children: opened not ISO '{val}'"
+    else:
+        anomaly = f"children: malformed '{val}'"
+    return slug, opened, anomaly
 
 
 def slug_from_filename(fpath):
@@ -141,6 +173,30 @@ def parse_ring_file(fpath, location):
 
     ring_slug = ring_field if ring_field is not None else slug_file
 
+    # children: <slug> or children: <slug> opened=<ISO> (F7, SPEC-ring.md §8.5.1/8.5.2).
+    # children[] stays a flat list of slugs so existing consumers keep working;
+    # children_opened{} carries only the suffixed entries.
+    children_slugs = []
+    children_opened = {}
+    for raw_val in multi["children"]:
+        c_slug, c_opened, c_anomaly = parse_children_entry(raw_val)
+        children_slugs.append(c_slug)
+        if c_opened is not None:
+            children_opened[c_slug] = c_opened
+        if c_anomaly is not None:
+            anomalies.append(c_anomaly)
+
+    # carrier: mono-valued header field, the current holder of the write token
+    # (F8, SPEC-ring.md §8.5.1). Sentinels, absence, AND an empty value
+    # (`carrier:` with nothing after it) all read as null, so scan and graph
+    # never disagree on whether the field is held. Only a held token on a
+    # done ring is an anomaly (v0.1.0 files have no field at all and must
+    # not gain one).
+    carrier_raw = header.get("carrier")
+    carrier = None if not carrier_raw or carrier_raw in SENTINELS else carrier_raw
+    if status == "done" and carrier is not None:
+        anomalies.append("carrier held on done ring")
+
     return {
         "file": fpath,
         "location": location,
@@ -148,10 +204,12 @@ def parse_ring_file(fpath, location):
         "parent": header.get("parent"),
         "status": status,
         "vehicle": vehicle,
+        "carrier": carrier,
         "opened": opened,
         "saved": header.get("saved"),
         "closed": header.get("closed"),
-        "children": multi["children"],
+        "children": children_slugs,
+        "children_opened": children_opened,
         "create": multi["create"],
         "writes": multi["writes"],
         "escalade": escalade,
@@ -186,6 +244,34 @@ def scan_dir(dir_path):
         if parent and parent != "root" and parent not in known_slugs:
             r["anomalies"].append(f"parent not found (phantom): '{parent}'")
     return rings
+
+
+# ---------------------------------------------------------------------------
+# resolve-opened
+# ---------------------------------------------------------------------------
+
+def resolve_opened(dir_path, slug):
+    """Find the `opened` instant for `slug` (F7/F8, SPEC-ring.md §8.5.2).
+
+    `source` is `own-file` (the ring has its own file with a valid `opened:`),
+    `parent-children` (no own file, but a `children:` line somewhere carries
+    `<slug> opened=<ISO>`), or `null` (neither).
+    """
+    rings = scan_dir(dir_path)
+
+    for r in rings:
+        if r["ring"] == slug and r["opened"] and ISO_RE.match(r["opened"]):
+            return {"slug": slug, "opened": r["opened"], "source": "own-file"}
+
+    for r in rings:
+        if slug in r["children_opened"]:
+            return {
+                "slug": slug,
+                "opened": r["children_opened"][slug],
+                "source": "parent-children",
+            }
+
+    return {"slug": slug, "opened": None, "source": None}
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +370,18 @@ def run_find(args_list):
     return [l for l in proc.stdout.splitlines() if l.strip()]
 
 
+def normalize_exclude(e):
+    """Realpath a user-supplied `--exclude` value like `prefixes`/`roots`/
+    `ring_file` — an exclude reached through a symlinked path (e.g. a
+    `/praxis/...` alias) must resolve to the same path `find` walks, or it
+    silently fails to match and leaks into `review[]`. A trailing `/*` glob
+    is kept intact: only the literal directory in front of it is resolved.
+    """
+    if e.endswith("/*"):
+        return os.path.realpath(e[:-2]) + "/*"
+    return os.path.realpath(e)
+
+
 def sweep(opened, prefixes, roots, excludes, ring_file):
     if not ISO_RE.match(opened):
         raise UsageError(
@@ -295,6 +393,7 @@ def sweep(opened, prefixes, roots, excludes, ring_file):
     norm_prefixes = [os.path.realpath(p.rstrip("/")) for p in prefixes]
     norm_roots = [os.path.realpath(r) for r in roots]
     norm_ring_file = os.path.realpath(ring_file) if ring_file else None
+    norm_excludes = [normalize_exclude(e) for e in (excludes or [])]
 
     inventory = set()
     for p in norm_prefixes:
@@ -306,7 +405,7 @@ def sweep(opened, prefixes, roots, excludes, ring_file):
         for p in norm_prefixes:
             args += ["-not", "-path", f"{p}/*"]
         default_excl = ["*/.git/*", f"{root}/.tmp/*", "*/build/*"]
-        for e in default_excl + list(excludes or []):
+        for e in default_excl + norm_excludes:
             args += ["-not", "-path", e]
         if norm_ring_file:
             args += ["-not", "-path", norm_ring_file]
@@ -356,7 +455,8 @@ def build_graph(dir_path):
         slug = r["ring"]
         vehicle = r["vehicle"] or "?"
         status = r["status"] if r["status"] in VALID_STATUS else "active"
-        label = f'{slug}<br/>({vehicle})'
+        carrier = r["carrier"]
+        label = f'{slug}<br/>({vehicle} · {carrier})' if carrier else f'{slug}<br/>({vehicle})'
         nid = declare(slug, label, status)
 
         parent = r["parent"]
@@ -417,6 +517,10 @@ def main(argv):
     p_graph = sub.add_parser("graph")
     p_graph.add_argument("dir")
 
+    p_resolve = sub.add_parser("resolve-opened")
+    p_resolve.add_argument("dir")
+    p_resolve.add_argument("--slug", required=True)
+
     args = parser.parse_args(argv)
 
     try:
@@ -442,6 +546,11 @@ def main(argv):
         if args.command == "graph":
             print(build_graph(args.dir))
             return 0
+
+        if args.command == "resolve-opened":
+            result = resolve_opened(args.dir, args.slug)
+            print(json.dumps(result, indent=2))
+            return 0 if result["opened"] is not None else 1
 
     except UsageError as e:
         print(json.dumps({"error": str(e)}), file=sys.stderr)
