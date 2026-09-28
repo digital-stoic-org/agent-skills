@@ -1,104 +1,116 @@
 # CLAUDE.md.example
 
-> A `CLAUDE.md` is like a toothbrush: useful daily, but don't use someone
-> else's. This is a starting point, not a config to copy wholesale. Take it to
-> your project (or `~/.claude/`) root, throw out what doesn't fit *your* mouth,
-> and fill in the `<placeholders>` with your own habits.
+> A `CLAUDE.md` is like a toothbrush: useful daily, but don't use someone else's. This is a starting point, not a config to copy wholesale. Take it to your project (or `~/.claude/`) root, throw out what doesn't fit *your* mouth, and fill in the `<placeholders>` with your own habits.
 >
-> **First line must be `# <Project Name>`** — Claude Code and many skills read it
-> to identify the project. (This file uses `# CLAUDE.md.example` as its own title;
-> replace it.)
+> **First line must be `# <Project Name>`.** Not a Claude Code rule, but skills in this repo (`cowork:save-work`, `cowork:switch`) read it to identify the project. (This file uses `# CLAUDE.md.example` as its own title; replace it.)
 >
-> Sections marked **[core]** are near-universal — keep them. Sections marked
-> **[pattern]** showcase a technique; adopt if it fits. `<!-- example: ... -->`
-> blocks show the *shape* of a personal rule so you can write your own — they are
-> not defaults.
+> Sections marked **[core]** are near-universal — keep them. Sections marked **[pattern]** showcase a technique; adopt if it fits. `<!-- example: ... -->` blocks show the *shape* of a personal rule so you can write your own — they are not defaults.
 >
-> **Design principle — keep this file lean.** It loads on *every* turn (hard limit
-> ~4k chars/file). So it holds only *triggers + standing biases*; bulky lookup
-> detail lives in on-demand files under `.claude/rules/` that a one-line pointer
-> tells Claude to read *when* it's needed. Each section below follows that split.
+> **Design principle — keep this file lean.** It loads in full at every session start, reaches your sub-agents, and is re-injected after `/compact`. Target < 200 lines (the hard cap is 4 MiB, irrelevant in practice); measure with `/context`, not by character count. It holds only *triggers + standing biases*; bulky detail goes elsewhere — see the last section for where.
+>
+> Companion files live in [`examples/.claude/`](examples/.claude/): copy them to your own `.claude/` and drop the `.example` suffix.
 
 ## Security 🔒 [core]
 
-Never read/parse files holding secrets (keys, tokens, credentials, `.env`, certs).
-Non-obvious ones too: `.npmrc`, `.pypirc`, cloud service-key JSON. If asked →
-warn + require explicit confirmation.
+Never read/parse files holding secrets (keys, tokens, credentials, `.env`, certs). Non-obvious ones too: `.npmrc`, `.pypirc`, cloud service-key JSON. If asked → warn + require explicit confirmation.
 
 ## Communication [core]
 
-- Clarify before big tasks; never hallucinate; say "I don't know" over speculation.
+Clarify before big tasks; never hallucinate; say "I don't know" over speculation.
+
+**Concision**: verdict + the facts that change a decision; detail on request. Cut preamble, process narration, discarded options, repeats. Never cut: risk, uncertainty, failure/blocker. In doubt → keep.
+
+<!-- example: message-head shortcuts [pattern] — a keyword at the start of a message switches the reply mode. Name them whatever you like.
+
+**`eli5 <topic>`** (alone = re-explain the last turn): plain words for a senior practitioner, 8-12 lines of prose, no diagrams/jargon, one useful analogy or none.
+
+**`tldr`**: session status — done / in progress / blocked / decision — terse bullets, no table. Source = this session, not a disk scan. Nothing in progress → say so.
+-->
+
+## Checkpoint trailer [pattern]
+
+When a turn settles a decision, reveals a non-obvious learning, rejects a path, shifts frame, or leaves an open fork, END with one greppable HTML comment starting `<!-- ckpt`. Skip on clarifying/ack/pure-tool turns. Clauses → `.claude/refs/checkpoint.md`.
+
+<!-- Required by dstoic:checkpoint, dstoic:save-context and ring: they harvest these trailers for free instead of re-reading the transcript. Without this rule they fall back to a slower, lossier extractive pass. Keep the `<!-- ckpt` marker stable — the skills grep it. -->
 
 ## Execution defaults [core]
 
-Classify the task first, then match the tool — don't start big and walk back, or
-start blind and escalate through failure. Genuinely ambiguous/big/novel → top tier
-to frame it. When a call is non-trivial, route it deliberately instead of guessing:
+Classify the task first, then match the tool — don't start big and walk back, or start blind and escalate through failure. Genuinely ambiguous/big/novel → top tier to frame it. When a call is non-trivial, route it deliberately instead of guessing:
 
-- **model / effort** — don't default to your most expensive model. Route by task
-  shape (chores → cheapest · single-file plumbing → mid-tier · strategy / hard
-  refactor / security audit → top tier · very large context → long-context model).
-  Changing *effort* keeps the prompt cache (cheap); switching *model* breaks it
-  (costly). If you have a model-selection skill, invoke it here.
-- **sub-agents / fan-out** — delegate to isolate context. Sweeping many files where
-  only the conclusion matters → fan out to a cheaper model. Independent per-item
-  work → parallel sub-agents. Never shard cross-item reasoning or final synthesis
-  — those stay on the main thread. If you have an execution-topology skill, invoke
-  it here.
+- **model / effort** — don't default to your most expensive model. Route by task shape (chores → cheapest · single-file plumbing → mid-tier · strategy / hard refactor / security audit → top tier · very large context → long-context model). Changing *effort* keeps the prompt cache (cheap); switching *model* breaks it (costly). If you have a model-selection skill, invoke it here.
+- **sub-agents / fan-out** — delegate to isolate context. Sweeping many files where only the conclusion matters → fan out to a cheaper model. Independent per-item work → parallel sub-agents. Never shard cross-item reasoning or final synthesis — those stay on the main thread. If you have an execution-topology skill, invoke it here.
+- **costly fan-outs** (multi-source web research, multi-agent workflows): ALWAYS confirm scope with the user before launching; never auto-invoke.
 
-<!-- The two bullets above name *capabilities*, not skill slugs, so this file
-     stays portable. If your routing detail is bulky, move the table into a skill
-     (its description auto-fires) or a .claude/rules/ file, and keep only the
-     trigger here. -->
+<!-- The bullets above name *capabilities*, not skill slugs, so this file stays portable. If your routing detail is bulky, move the table into a skill (its description auto-fires) or a .claude/refs/ file, and keep only the trigger here. -->
 
 ## Planning [core]
 
-- **Boulder → Pebbles**: boulders (multi-step, architectural, or ambiguous) get
-  planned into trackable stories before work starts; pebbles (single file,
-  obvious) just get done.
+**Boulder → Pebbles**: boulders (multi-step, architectural, or ambiguous) get planned into trackable stories before work starts; pebbles (single file, obvious) just get done.
 
 ## Output style [core]
 
-- **Human-facing output** (responses, docs, reports): visual-first. Prefer
-  diagrams for flows/decisions/comparisons; structured data as clean YAML/JSON.
-- **LLM-facing artifacts** (context files, specs, agent prompts): token-optimized.
-  Strip prose, keep directives/facts/structure. No decoration.
+Three audiences, three styles:
 
-## Temp files [core]
+- **Conversation** (CLI replies): see Concision above.
+- **Human deliverables** (docs, reports, slides): visual-first — diagrams for flows/decisions/comparisons; structured data as clean YAML/JSON. Formatting dresses the prose, it doesn't replace it.
+- **LLM-facing artifacts** (context files, specs, agent prompts): token-optimized. Strip prose, keep directives/facts/structure. Diagrams only for complex flows. No decoration.
 
-- Write throwaway files under a single dedicated scratch dir (e.g. `.tmp/{task}/`),
-  never the system `/tmp`. Clean up when done.
+<!-- example: no hard wrap [pattern]
+**No hard wrap**: one paragraph = one line (the reader wraps). Except code/YAML/tables.
+-->
+<!-- example: deliverable prose rules [pattern] — your own voice, e.g.
+Full sentences with conjugated verbs, one idea per sentence, readable aloud. Ban <your tics: slogan appositions, decorative triads, ...>.
+-->
+> example: diagram syntax guard [pattern] — only if you render Mermaid (kept out of an HTML comment because the arrow syntax would close it)
+>
+> **Mermaid:** quote labels `["Label"]` · multi-target `A -->|l| B & C` · define nodes inside a subgraph before referencing them · colored fills need `color:#000` (`classDef ok fill:#90EE90,stroke:#333,color:#000`).
+
+## Links [pattern]
+
+<!-- example: pick the link syntax your reader renders
+**<Tool> links by default:** `[[target]]` / `[[target|alias]]` for internal links; standard markdown only for external URLs. (Read in <Obsidian/...> → graph + backlinks.)
+-->
 
 ## Git [pattern]
 
-> Pick the posture that matches how you work; delete the other example.
+> Pick the posture that matches how you work; delete the others.
 
 <!-- example: hand git to the human
-  User runs all git themselves — never invoke git, never add co-author/attribution
-  tags. Write commit messages only when asked.
+User runs all git themselves — never invoke git, never add co-author/attribution tags. Write commit messages only when asked.
 -->
 <!-- example: gated commits
-  Committing requires human validation unless told otherwise. Follow Conventional
-  Commits. Never add AI attribution or co-author tags.
+Committing requires human validation unless told otherwise. Follow Conventional Commits. Never add AI attribution or co-author tags.
+-->
+<!-- example: gated commits + explicit bypass flag
+Committing requires human validation unless told otherwise. An explicit `--yes`/`-y` flag (`/<commit-skill> --yes <repo>`) IS that authorization → commit directly. Follow Conventional Commits.
 -->
 
-## Lazy detail — the `.claude/rules/` pattern [pattern]
+## Paths [pattern]
 
-> The lever that keeps this file small. Any bulky, rarely-needed reference —
-> path/alias maps, a checkpoint-clause menu, language-specific rules — lives in a
-> file under `.claude/rules/`, and CLAUDE.md carries only a one-line *trigger* that
-> tells Claude when to read it. Two ways `.claude/rules/` files load:
+Aliases, control/data split, locations → `.claude/rules/paths.md`, always loaded. Resolve against its tables; never guess a path.
+
+<!-- Useful once you juggle several repos: "control" = where the instructions live, "data" = the separate repo the work lands in. Template: examples/.claude/rules/paths.md.example. -->
+
+## Temp files [core]
+
+- Temp files: `<scratch-dir>/{task}/` (e.g. `.tmp/{task}/`), NEVER the system `/tmp`. Clean up after.
+- `**/.in/`: bootstrap context dropped in by the user (read-only). [pattern]
+
+## Where things go — load tiers [pattern]
+
+> The lever that keeps this file small. Route each piece of content by *when* it is needed:
 >
-> - **Auto-loaded** — a file with `paths:` frontmatter (e.g. `**/*.py`) loads only
->   when you touch a matching file. Good for language/domain rules.
-> - **Read-on-demand** — a file with no frontmatter loads only when a trigger in
->   CLAUDE.md tells Claude to read it. Good for lookup tables. Example trigger:
-
-<!-- example: a read-on-demand pointer
-
-## Paths
-
-Before writing to any aliased repo/project location — or when a path isn't
-obvious — read `.claude/rules/paths.md` first (it holds the alias→location map).
-
--->
+> | Content | Where | Load cost |
+> |---|---|---|
+> | Triggers + standing biases, needed every turn | `CLAUDE.md` | every session, sub-agents too, survives `/compact` |
+> | Small lookup table needed most sessions (alias map) | `.claude/rules/*.md` **without** frontmatter | every session, same as `CLAUDE.md` |
+> | Language/domain rules | `.claude/rules/*.md` **with** `paths:` frontmatter (e.g. `"**/*.py"`) | when Claude reads a matching file |
+> | Bulky, rarely needed reference (clause menu, procedure) | `.claude/refs/*.md` + a one-line pointer here | only when the pointer fires |
+> | Personal cross-session facts | auto-memory | managed by the harness |
+>
+> Gotchas:
+> - A `rules/` file without `paths:` is **not** on-demand — it loads at launch. Only `refs/` (any folder outside `rules/`) behind a pointer is truly lazy.
+> - `@path` imports load eagerly at launch — they organize, they don't save context.
+> - `outputStyle` applies to the main conversation only; `CLAUDE.md` reaches sub-agents (except built-in Explore/Plan). Rules sub-agents must follow go here.
+> - Only the root `CLAUDE.md` is re-injected after `/compact`; path-scoped rules and nested `CLAUDE.md` reload only when a matching file is read again.
+> - Personal, uncommitted variant: `CLAUDE.local.md` (gitignored); machine-wide: `~/.claude/CLAUDE.md` and `~/.claude/rules/`.

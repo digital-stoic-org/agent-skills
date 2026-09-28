@@ -1,0 +1,8 @@
+---
+paths: ["**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/package.json"]
+---
+
+# JavaScript/TypeScript Standards
+
+- **`<package-manager>`** (e.g. `bun`): default for JS/TS (`bun install|run|test`)
+- **npm**: only if required; local installs (no `-g`)

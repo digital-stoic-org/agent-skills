@@ -1,0 +1,10 @@
+---
+paths: "**/*.py"
+---
+
+# Python Standards
+
+- **MANDATORY:** All Python commands MUST run inside a venv
+- Create `.venv` if missing, activate before ANY pip/python command
+- NEVER run pip/python outside the venv (no global installs)
+- Always call `<python-binary>` (e.g. `python3`) — `<why: only python3 exists on this system>`

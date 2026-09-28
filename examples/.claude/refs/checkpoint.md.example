@@ -1,0 +1,27 @@
+# Checkpoint trailer — clause menu & authoring
+
+On-demand reference. Read when composing a `<!-- ckpt` trailer (the trigger for *when* to emit one lives in CLAUDE.md `## Checkpoint trailer`).
+
+> Copy to `.claude/refs/checkpoint.md` and delete this note. Lives in `refs/`, not `rules/`: a `rules/` file without frontmatter would load every session. Clause names are harvested by `dstoic:checkpoint`, `dstoic:save-context` and `ring` — rename them and those skills lose the signal.
+
+## Format
+
+`<!-- ckpt` + any of the clauses below (omit empties, one clause ≤~20 words, author don't quote) then `-->`.
+
+## Clauses
+
+- `decision:` choice + why
+- `reasoning:` consequence DERIVED this turn (even w/ no decision)
+- `learning:` non-obvious fact/gotcha found
+- `pivot:` frame/scope that changed
+- `rejected:` path + why
+- `constraint:` hard rule in force
+- `assumption:` unverified premise the work rests on
+- `open:` unresolved fork
+- `definition:` term=meaning
+- `refs:` path→anchor/URL
+
+## Rules
+
+- Skip on clarifying/ack/pure-tool turns.
+- Keep `<!-- ckpt` stable (`/checkpoint` greps it).

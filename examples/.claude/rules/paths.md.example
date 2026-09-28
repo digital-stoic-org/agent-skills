@@ -1,0 +1,20 @@
+# Paths & aliases
+
+> Copy to `.claude/rules/paths.md` and delete this note. No frontmatter → loaded at every session start, like CLAUDE.md: keep it short (tables only). If it grows bulky and rarely needed, move it to `.claude/refs/` behind a pointer instead.
+
+Always loaded. Resolve against these tables before writing to an aliased repo/project — never guess a path or the control/data split.
+
+## Alias paths
+
+Shortcuts: <alias1>=<repo-name-1>, <alias2>=<repo-name-2>
+
+Pattern: control `<workspace>/repos/{alias}` | data `<data-root>/{alias}`. Exceptions:
+- **<workspace-name>**: data `<workspace>` (self-referencing root)
+- **<alias>**: data `<other/location>` (<why it differs>)
+
+Control = instructions (CLAUDE.md, briefs, specs). Data = separate git repo where the work lands. Used by `dstoic:commit-repo`.
+
+## Other locations
+
+- `<inputs-dir>/` = **inputs** (read / to read) · `<outputs-dir>/` = **outputs**. Don't mix.
+- Project analysis: `<project>/<analysis-dir>/`, NEVER `<sources-dir>/`.

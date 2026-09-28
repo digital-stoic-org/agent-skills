@@ -1,0 +1,17 @@
+---
+paths: "**/*.sh"
+---
+
+# Bash Scripting Standards
+
+- `set -e` — fail fast, no silent errors
+- Trust exit codes, not file existence checks
+- Run the command, don't verify preconditions it already checks
+- One script = one job (build, test, deploy — not all three)
+- If the command succeeds, it worked — no redundant validation
+
+<!-- example: modern CLI tools [pattern] — only list tools actually installed
+## Modern CLI Tools
+
+Prefer: `rg` over `grep`, `fd` over `find`, `bat` over `cat`, `eza` over `ls`, `delta` over `diff`, `dust`/`duf` over `du`/`df`, `procs` over `ps`, `hyperfine` for benchmarks, `jq` for JSON.
+-->
