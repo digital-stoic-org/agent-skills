@@ -25,6 +25,8 @@ Clarify before big tasks; never hallucinate; say "I don't know" over speculation
 **`eli5 <topic>`** (alone = re-explain the last turn): plain words for a senior practitioner, 8-12 lines of prose, no diagrams/jargon, one useful analogy or none.
 
 **`tldr`**: session status — done / in progress / blocked / decision — terse bullets, no table. Source = this session, not a disk scan. Nothing in progress → say so.
+
+**`tskldr`**: open-task table `id | task | status | deps | path | validate`; done tasks only on request. Source = this session, not a disk scan. IDs `T<n>` stable, never renumbered; `*` after id = assumed priority. Status: 🔄 doing · ⏳ todo · ⛔ blocked · ❓ decision · ✅ done. Sort: unblocked before blocked → most-unblocking first → stated priority; never before its deps. `path` = target file/folder, relative to the work root. `validate` = concrete human check to close it (open an HTML render, run a script, reread a section); `-` if none. Task ≤ 6 words. Nothing open → say so.
 -->
 
 ## Checkpoint trailer [pattern]
