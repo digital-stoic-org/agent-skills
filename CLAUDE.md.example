@@ -51,19 +51,28 @@ Classify the task first, then match the tool — don't start big and walk back, 
 
 Three audiences, three styles:
 
-- **Conversation** (CLI replies): see Concision above.
+- **Conversation** (CLI replies): see Concision above. Diagrams follow the Diagrams rules below.
 - **Human deliverables** (docs, reports, slides): visual-first — diagrams for flows/decisions/comparisons; structured data as clean YAML/JSON. Formatting dresses the prose, it doesn't replace it.
 - **LLM-facing artifacts** (context files, specs, agent prompts): token-optimized. Strip prose, keep directives/facts/structure. Diagrams only for complex flows. No decoration.
 
+<!-- example: deliverable prose rules [pattern] — your own voice; append to the Human deliverables bullet, not globally (LLM-facing artifacts strip prose)
+Prose: full sentences with conjugated verbs, one idea per sentence, readable aloud. Ban <your tics: slogan appositions, decorative triads, ...>.
+-->
+<!-- example: emoji policy [pattern]
+**Emoji** (✅❌🎯⚠️🚀): used liberally in conversation and deliverables. Never in LLM-facing artifacts or inside ASCII diagrams.
+-->
 <!-- example: no hard wrap [pattern]
-**No hard wrap**: one paragraph = one line (the reader wraps). Except code/YAML/tables.
+**No hard wrap**: never break a line to fit a width. One paragraph = one line (the reader wraps); same for long lines in code/YAML/tables. Exception: ASCII diagrams keep their line breaks.
 -->
-<!-- example: deliverable prose rules [pattern] — your own voice, e.g.
-Full sentences with conjugated verbs, one idea per sentence, readable aloud. Ban <your tics: slogan appositions, decorative triads, ...>.
--->
-> example: diagram syntax guard [pattern] — only if you render Mermaid (kept out of an HTML comment because the arrow syntax would close it)
->
-> **Mermaid:** quote labels `["Label"]` · multi-target `A -->|l| B & C` · define nodes inside a subgraph before referencing them · colored fills need `color:#000` (`classDef ok fill:#90EE90,stroke:#333,color:#000`).
+
+## Diagrams [pattern]
+
+> ASCII is the portable default: it renders in any terminal. Keep Mermaid for surfaces that render it (docs, wikis) or for explicit requests. Tune the limits to your screen.
+
+- **Conversation**: ASCII art in a fenced code block. Mermaid only on explicit request.
+- **Deliverables**: <Mermaid | ASCII> (<where they are read: Obsidian, GitHub, ...>).
+- **ASCII**: simplicity is the goal — if it doesn't fit the limits, split or simplify, never cram. Limits: ≤ 80 columns, ≤ 25 lines, ≤ 10 boxes, one idea per diagram. Charset: plain ASCII (`+ - | > v < ^`), no Unicode box-drawing, no accented characters inside boxes. Labels ≤ 3 words; detail goes in the prose under the diagram.
+- **Mermaid:** quote labels `["Label"]` · multi-target `A -->|l| B & C` · define nodes inside a subgraph before referencing them · colored fills need `color:#000` (`classDef ok fill:#90EE90,stroke:#333,color:#000`).
 
 ## Links [pattern]
 
