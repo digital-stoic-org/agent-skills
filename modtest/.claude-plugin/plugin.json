@@ -1,0 +1,9 @@
+{
+  "name": "modtest",
+  "version": "0.1.0",
+  "description": "Sandbox for Claude Code mods experiments (not published)",
+  "author": {
+    "name": "dstoic",
+    "url": "https://github.com/digital-stoic-org"
+  }
+}

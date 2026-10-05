@@ -1,0 +1,4 @@
+{
+  "description": "modtest hooks module",
+  "modules": ["./register.ts"]
+}
