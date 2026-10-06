@@ -5,14 +5,14 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.47.0"
+    "version": "0.48.0"
   },
   "plugins": [
     {
       "name": "dstoic",
       "source": "./dstoic",
       "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, verbatim checkpoint, resumable work plans (plan-context), meta-prompt (RELIANCE recursive ledger), and session post-mortem",
-      "version": "0.53.0",
+      "version": "0.53.1",
       "author": {
         "name": "dstoic"
       },
@@ -67,7 +67,7 @@
       "name": "toolsmith",
       "source": "./toolsmith",
       "description": "Plugin and skill authoring: create/edit skills, agents, plugins, CLAUDE.md files, search skills, manage dependencies",
-      "version": "0.37.5",
+      "version": "0.38.0",
       "author": {
         "name": "dstoic"
       },
@@ -178,6 +178,17 @@
       "source": "./ring",
       "description": "Control-plane plugin for tracking rings: recursive units of work, each a problem to settle rather than a session. A ring has a Brief frozen at open, a Trace of local working memory discarded at close, and a Delta typed by effect (ESTABLISHED, INVALIDATED, SURFACED, DELIVERABLE) that crosses exactly one turn to its parent. Ring state is orthogonal to what carries it: the four vehicles are inline, subagent, session and resumed. For vehicle session, ring layers on top of the team plugin as its vehicle — team keeps circulating mandates, reports and relay packets between named agents unchanged, while ring tracks which problem is open, who is carrying it, and what crosses back up. Ships four skills (open, close, rings, sync) for descending into and ascending out of a ring, listing/graphing the live tree, and persisting a ring's state so it survives a /clear, an on-disk writer token (carrier:) taken over by resuming a parked or active ring, exclusive create:/writes: write-right tracking with prefix-inclusion collision detection and a lineage exception for parent-child delegation, and a closing sweep that scans disk for files born or touched outside declared claims.",
       "version": "0.2.0",
+      "author": {
+        "name": "dstoic"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/digital-stoic-org/agent-skills"
+    },
+    {
+      "name": "stoa",
+      "source": "./stoa",
+      "description": "Next plugin generation (experimental), successor of dstoic. Ships the pack mod: /pack saves a stream's progress and arms a fresh start after /clear, /pack save only saves, /unpack <stream> loads a saved stream in a new session.",
+      "version": "0.1.0",
       "author": {
         "name": "dstoic"
       },

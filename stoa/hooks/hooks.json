@@ -1,0 +1,4 @@
+{
+  "description": "stoa hooks module",
+  "modules": ["./register.ts"]
+}
