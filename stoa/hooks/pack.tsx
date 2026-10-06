@@ -13,8 +13,10 @@ const PANE = 'pack'
 const STORE_KEY = 'pack:pending'
 const STALE_MS = 10 * 60 * 1000
 const MARKDOWN_MAX = 10_000
-// Hard cap of the state file, enforced by code (the fork prompt only asks for it).
+// Hard cap of the state file, enforced by code: the fork is told the ceiling and the room left (forkPrompt), assemble() cuts what still overflows.
 const STATE_MAX = 8_000
+// Below this much room under STATE_MAX, the fork is told to designate retire_* ids first.
+const ROOM_TIGHT = 1_500
 const STREAM_RE = /^[a-zA-Z0-9_-]{1,50}$/
 const RESERVED = ['save', 'load', 'cancel']
 const SHRINK_LINE = 80
@@ -82,8 +84,7 @@ Rules:
 - Return the COMPLETE current content of every list you own: carry forward the still-valid lines of PREVIOUS STATE that have no (cNN) suffix.
 - A line ending with (cNN) belongs to code: never output one.
 - Retire keys take ids from PREVIOUS STATE or from the entries below. retire_answered: open: / assumption: items now resolved. retire_done: next items now done. retire_learned: learnings now obsolete (a bug since fixed, a fact replaced by a later one). retire_reversed: decisions proved wrong and reversed. retire_superseded: decisions overtaken by a later decision without being wrong. Omit a retire key when it is empty.
-- A pointer (absolute path, path:line, command) replaces any explanation. Do not run commands; write them.
-- Total ≤ 8,000 characters.`
+- A pointer (absolute path, path:line, command) replaces any explanation. Do not run commands; write them.`
 
 type Phase = 'idle' | 'review' | 'armed'
 type Pending = { pack: string; createdAt: number; cwd: string; stream?: string }
@@ -316,12 +317,9 @@ export type AssembleInput = {
   prev: string | null
   entries: Entry[]
   fork: ForkFields
-  // Last resort (the retry fork did not fit either): drop discarded then learnings to fit, rather than write nothing.
-  degrade?: boolean
 }
 export type Assembled =
   | { kind: 'ok'; state: string; cursor: string; cut: string[]; degraded: boolean }
-  | { kind: 'over'; length: number }
   | { kind: 'blocked'; reason: string }
 
 // The core rule: the fork designated ids and wrote its own fields; every trailer-sourced line is copied by code.
@@ -391,14 +389,19 @@ export function assemble(input: AssembleInput): Assembled {
     deliverable: oneLine(fields.scalars.deliverable || prev?.scalars.deliverable || 'none'),
   }
 
+  // The overflow line (set by the last-resort cut) is the last line of stale, outside `lists` so no cut step can drop it.
+  let overflowLine: string | null = null
   const render = () => {
     const head = SCALARS_HEADER.map(k => `${k}: ${scalars[k]}`).join('\n')
-    const body = BODY_ORDER.map(k => (k === 'deliverable' ? `deliverable: ${scalars.deliverable}` : `${k}:${lists[k].map(l => `\n- ${l}`).join('')}`)).join('\n')
+    const shown = (k: string) => (k === 'stale' && overflowLine ? [...lists.stale, overflowLine] : lists[k])
+    const body = BODY_ORDER.map(k => (k === 'deliverable' ? `deliverable: ${scalars.deliverable}` : `${k}:${shown(k).map(l => `\n- ${l}`).join('')}`)).join('\n')
     return `${head}\n\n${body}\n`
   }
 
-  // 5. hard cap, cut order: read_if_needed (compress), stale, in_progress. Still over: 'over' (the caller retries the fork),
-  // or with `degrade` discarded then learnings, oldest first, named by an overflow line in stale. Never decisions, next, unknowns.
+  // 5. hard cap, enforced here whatever the fork wrote. Cut order: read_if_needed (compress), stale, in_progress, discarded,
+  // learnings (each oldest first). Still over: id'd lines (cNN) of every body section but read_first, lowest cNN first, then the
+  // un-id'd lines (the fork's own, the newest). Every dropped id is named by an overflow line in stale (the journal keeps them).
+  // Never cut: header scalars, read_first, deliverable. 'blocked' only when those plus the overflow line exceed the cap alone.
   const cut: string[] = []
   let text = render()
   const over = () => text.length > STATE_MAX
@@ -422,31 +425,56 @@ export function assemble(input: AssembleInput): Assembled {
     }
     if (dropped) cut.push(`${sec} -${dropped}`)
   }
-  if (over() && !input.degrade) return { kind: 'over', length: text.length }
-  let degraded = false
+  const droppedIds = new Set<number>()
+  let plain = 0
   if (over()) {
-    degraded = true
-    const ids: string[] = []
-    let plain = 0
     const overflow = () =>
-      `overflow: dropped to fit ${STATE_MAX} chars: ${ids.join(', ') || 'no journal line'}${plain ? ` + ${plain} unnumbered` : ''} — grep the journal by id`
-    lists.stale.push(overflow())
+      `overflow: dropped to fit ${STATE_MAX} chars: ${[...droppedIds].sort((a, b) => a - b).map(n => `c${pad(n)}`).join(', ') || 'no journal line'}${plain ? ` + ${plain} unnumbered` : ''} — grep the journal by id`
+    // One line dropped: its id (or the unnumbered count) goes on the overflow line, which is part of the measured text.
+    const drop = (line: string) => {
+      const id = idOf(line)
+      if (id === null) plain++
+      else droppedIds.add(id)
+      overflowLine = overflow()
+      text = render()
+    }
+    overflowLine = overflow()
     text = render()
     for (const sec of ['discarded', 'learnings'] as const) {
       let dropped = 0
       while (over() && lists[sec].length > 0) {
-        const id = idOf(lists[sec].shift() as string)
-        if (id === null) plain++
-        else ids.push(`c${pad(id)}`)
+        drop(lists[sec].shift() as string)
         dropped++
-        lists.stale[lists.stale.length - 1] = overflow()
-        text = render()
       }
       if (dropped) cut.push(`${sec} -${dropped}`)
     }
+    // Oldest id'd line across all remaining body sections (a same id in two sections goes one line at a time).
+    const perSection: Record<string, number> = {}
+    while (over()) {
+      let best: { sec: string; i: number; n: number } | null = null
+      for (const sec of BODY_ORDER) {
+        if (sec === 'deliverable' || sec === 'read_first') continue
+        for (let i = 0; i < lists[sec].length; i++) {
+          const n = idOf(lists[sec][i])
+          if (n !== null && (!best || n < best.n)) best = { sec, i, n }
+        }
+      }
+      if (!best) break
+      const found: { sec: string; i: number } = best
+      drop(lists[found.sec].splice(found.i, 1)[0])
+      perSection[found.sec] = (perSection[found.sec] ?? 0) + 1
+    }
+    // Only un-id'd lines left: the most expendable section first, oldest first inside it.
+    for (const sec of ['stale', 'in_progress', 'discarded', 'learnings', 'read_if_needed', 'next', 'unknowns', 'decisions']) {
+      while (over() && lists[sec].length > 0) {
+        drop(lists[sec].shift() as string)
+        perSection[sec] = (perSection[sec] ?? 0) + 1
+      }
+    }
+    for (const sec of BODY_ORDER) if (perSection[sec]) cut.push(`${sec} -${perSection[sec]}`)
   }
-  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; what is never cut (header, read_first, decisions, next, unknowns) is too long alone: trim decisions by hand. Nothing written.` }
-  return { kind: 'ok', state: text, cursor, cut, degraded }
+  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; the header, read_first and the overflow line alone exceed the cap: shorten read_first by hand. Nothing written.` }
+  return { kind: 'ok', state: text, cursor, cut, degraded: overflowLine !== null }
 }
 
 // ---------- journal (all disk access of the mod goes through these three functions) ----------
@@ -628,12 +656,11 @@ type Built =
 
 function forkPrompt(prev: string | null, entries: Entry[]): string {
   const news = entries.length ? entries.map(e => `### ${e.id}\n${e.trailer}`).join('\n\n') : '(none)'
-  return `${FORK_PROMPT}\n\nPREVIOUS STATE:\n${prev ?? '(none)'}\n\nJOURNAL ENTRIES TO ROUTE (after the cursor):\n${news}`
-}
-
-// The retry after an over-cap assembly: the cap is enforced by code, so the fork is told by how much it missed.
-function overflowNote(length: number): string {
-  return `OVERFLOW: a first answer to this prompt assembled into ${length.toLocaleString('en-US')} characters, ${(length - STATE_MAX).toLocaleString('en-US')} over the ${STATE_MAX.toLocaleString('en-US')} cap. Answer again, same format. Lines ending in (cNN) are copied by code: retiring their id is the only way to shrink them, so designate every retire_* id you can justify (obsolete learnings, done next items, superseded decisions first), then shorten the lines you own.`
+  const n = (v: number) => v.toLocaleString('en-US')
+  // The ceiling is enforced by code (assemble); the fork is told the room so it can retire ids before code has to cut.
+  const room = STATE_MAX - (prev?.length ?? 0)
+  const budget = `SIZE: the state file may not exceed ${n(STATE_MAX)} characters; past it code drops the oldest (cNN) lines. PREVIOUS STATE is ${n(prev?.length ?? 0)} characters: ${room >= 0 ? `${n(room)} left` : `${n(-room)} over`} for what the new entries and your lines add.${room < ROOM_TIGHT ? ' Room is tight: designate retire_* ids first (obsolete learnings, done next items, superseded decisions), then shorten the lines you own.' : ''}`
+  return `${FORK_PROMPT}\n\n${budget}\n\nPREVIOUS STATE:\n${prev ?? '(none)'}\n\nJOURNAL ENTRIES TO ROUTE (after the cursor):\n${news}`
 }
 
 type Asked = { kind: 'ok'; fork: ForkFields } | { kind: 'blocked'; reason: string }
@@ -660,17 +687,10 @@ async function assembleAndWrite($: EngineInterface, stream: string): Promise<Bui
     const cursor = prev ? Number((parseState(prev).scalars.journal_cursor ?? '').replace(/^c/, '')) || 0 : 0
     const entries = parseJournal(journal ?? '').filter(e => e.n > cursor)
 
-    const prompt = forkPrompt(prev, entries)
-    const first = await askFork($, prompt)
+    // One fork per save: an over-cap answer is cut by assemble(), never re-asked.
+    const first = await askFork($, forkPrompt(prev, entries))
     if (first.kind === 'blocked') return first
-    const input = { stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, entries }
-    let result = assemble({ ...input, fork: first.fork })
-    if (result.kind === 'over') {
-      // Once: a failed or blocked retry falls back to the first answer, degraded.
-      const retry = await askFork($, `${prompt}\n\n${overflowNote(result.length)}`)
-      result = assemble({ ...input, fork: retry.kind === 'ok' ? retry.fork : first.fork, degrade: true })
-    }
-    if (result.kind === 'over') return { kind: 'blocked', reason: `state ${result.length} chars > ${STATE_MAX}. Nothing written.` }
+    const result = assemble({ stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, entries, fork: first.fork })
     if (result.kind === 'blocked') return result
     await $.fs.write(statePath(stream), result.state)
     return { ...result, migrated }

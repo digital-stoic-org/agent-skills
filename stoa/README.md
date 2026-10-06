@@ -54,7 +54,9 @@ Files live in the session's working directory. The journal is shared with modtes
 
 The fork retires trailer lines by id: `retire_answered` (open/assumption resolved), `retire_done` (next item done), `retire_learned` (learning obsolete), `retire_reversed` (decision proved wrong) and `retire_superseded` (decision overtaken). The last two move the decision to `discarded`.
 
-Over 8,000 chars, code cuts `read_if_needed` (compressed), then `stale`, then `in_progress`. Still over, the fork runs once more, told by how much it missed. Still over, code drops `discarded` then `learnings`, oldest first, writes an `overflow:` line in `stale` naming the dropped ids, and advances the cursor: a degraded state beats none. A save is refused only when what is never cut (header, `read_first`, `decisions`, `next`, `unknowns`) exceeds the cap alone.
+The ceiling is 8,000 chars, enforced by code. The single fork per save is told the ceiling, the size of the previous state and the room left; when the room is tight it is asked to designate `retire_*` ids first. There is no second fork: an over-cap answer goes straight to the deterministic cut.
+
+Cut order: `read_if_needed` (compressed), then `stale`, `in_progress`, `discarded`, `learnings`. Still over, code drops numbered `(cNN)` lines across every body section but `read_first` (`decisions`, `next` and `unknowns` included), lowest `cNN` first, then the un-numbered lines the fork wrote itself. Every dropped id is named by an `overflow:` line at the end of `stale` (the journal keeps the lines), the cursor advances, and the save is reported as degraded. The header and `read_first` are never cut: a save is refused only when they alone (plus the overflow line) exceed the cap.
 
 Do not enable modtest and stoa together: both capture every trailer into the same journal.
 

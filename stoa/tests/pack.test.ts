@@ -296,8 +296,23 @@ test('--yes: no pane, armed, pack = state + journal rule, submitted after the hu
   expect(w.submits[0].startsWith(`${state.trimEnd()}\n\n${RULE}\n\nReply with one line saying you are ready, then stop there.`)).toBe(true)
 })
 
-test('-y with a state over 8,000 chars after cuts: blocked, nothing written, nothing armed, no pane', async ($, on) => {
+test('-y with a 9,000-char decision: cut to fit by code, one fork, overflow line, armed', async ($, on) => {
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
+  await fresh($)
+  const out = await packProj($, '-y')
+  expect(out.text).toContain('Type /clear')
+  expect(w.forkPrompts).toHaveLength(1)
+  const state = w.files.get(STATE) ?? ''
+  expect(state.length).toBeLessThanOrEqual(8_000)
+  expect(state).not.toContain('xxxxxxxxxx')
+  // un-id'd lines go last, oldest first: nothing numbered to drop here, so they are counted, not named
+  expect(section(state, 'stale').at(-1)).toBe('overflow: dropped to fit 8000 chars: no journal line + 3 unnumbered — grep the journal by id')
+  expect(w.files.get('pack-proj-status-llm.md')).toContain('outcome: degraded')
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+})
+
+test('-y with header + read_first alone over the cap: blocked, nothing written, nothing armed, no pane', async ($, on) => {
+  const w = world(on, OK(['read_first:', `- /w/${'x'.repeat(9_000)} — role`]))
   await fresh($)
   const out = await packProj($, '-y')
   expect(out.text).toContain('pack: could not save stream "proj": state')
@@ -306,8 +321,7 @@ test('-y with a state over 8,000 chars after cuts: blocked, nothing written, not
   expect(w.clears).toBe(0)
   expect(w.files.has(STATE)).toBe(false)
   expect(w.store.get('pack:pending')).toBeUndefined()
-  // decisions are never cut: the retry fork and the degraded cut cannot help, the reason is left for the model
-  expect(w.forkPrompts).toHaveLength(2)
+  expect(w.forkPrompts).toHaveLength(1)
   expect(w.files.get('pack-proj-status-llm.md')).toContain('outcome: blocked\nreason: state')
   await clear($)
   expect(w.submits).toHaveLength(0)
@@ -665,7 +679,7 @@ const nearCap = (n: number) =>
     'learnings:', ...Array.from({ length: n }, (_, i) => `- L${i + 3} ${'y'.repeat(90)} (c${pad2(i + 3)})`),
   ].join('\n')
 
-test('over cap after the retry: degraded state written (discarded then learnings dropped, overflow named), cursor advances', async ($, on) => {
+test('over cap: one fork only, degraded state written (discarded then learnings dropped, overflow named), cursor advances', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
   w.files.set(STATE, nearCap(74))
@@ -673,8 +687,8 @@ test('over cap after the retry: degraded state written (discarded then learnings
   w.files.set(JOURNAL, [77, 78, 79].map(n => entry(`c${n}`, `<!-- ckpt learning: new ${n} -->`)).join(''))
   await runPack($, 'save proj')
   await settle(() => w.toasts.length > 0)
-  expect(w.forkPrompts).toHaveLength(2)
-  expect(w.forkPrompts[1]).toContain('OVERFLOW:')
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.forkPrompts[0]).not.toContain('OVERFLOW:')
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
   expect(state).toContain('journal_cursor: c79')
@@ -692,21 +706,89 @@ test('over cap after the retry: degraded state written (discarded then learnings
   expect(w.files.get(STATUS)).toContain('discarded -2, learnings -')
 })
 
-test('over cap, the retry fork retires enough: clean state, nothing dropped', async ($, on) => {
+test('over cap, the fork retires enough on its first call: clean state, nothing dropped, one fork', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
   w.files.set(STATE, nearCap(74))
   w.files.set(JOURNAL, [77, 78, 79].map(n => entry(`c${n}`, `<!-- ckpt learning: new ${n} -->`)).join(''))
   const ids = Array.from({ length: 20 }, (_, i) => `c${pad2(i + 3)}`).join(', ')
-  w.forkQueue = [OK(), OK([`retire_learned: ${ids}`])]
+  w.forkText = OK([`retire_learned: ${ids}`])
   await packProj($, '--yes')
   const state = w.files.get(STATE) ?? ''
-  expect(w.forkPrompts).toHaveLength(2)
+  expect(w.forkPrompts).toHaveLength(1)
   expect(state).not.toContain('overflow:')
   expect(section(state, 'discarded')).toHaveLength(2)
   expect(section(state, 'learnings')).not.toContain(`L3 ${'y'.repeat(90)} (c03)`)
   expect(section(state, 'learnings')).toContain(`L23 ${'y'.repeat(90)} (c23)`)
   expect(w.files.get(STATUS)).toContain('outcome: ok')
+})
+
+test('first fork prompt: ceiling, previous size and room; the retire-first nudge only when the room is tight', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await packProj($, '--yes')
+  expect(w.forkPrompts[0]).toContain('may not exceed 8,000 characters')
+  expect(w.forkPrompts[0]).toContain('PREVIOUS STATE is 0 characters: 8,000 left')
+  expect(w.forkPrompts[0]).not.toContain('Room is tight')
+  expect(w.forkPrompts[0]).not.toContain('Total ≤ 8,000')
+  await clear($)
+  const prev = w.files.get(STATE) ?? ''
+  // a fatter previous state: the figures follow its real length
+  w.files.set(STATE, nearCap(74))
+  const size = (w.files.get(STATE) ?? '').length
+  await packProj($, '--yes')
+  const prompt = w.forkPrompts[1]
+  expect(prompt).toContain(`PREVIOUS STATE is ${size.toLocaleString('en-US')} characters: ${(8_000 - size).toLocaleString('en-US')} left`)
+  expect(prompt).toContain('Room is tight: designate retire_* ids first')
+  expect(prev.length).toBeLessThan(size)
+})
+
+test('over cap: id\'d lines of every section go oldest cNN first, decisions included; ceiling holds; overflow names them', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  const big = (tag: string) => `${tag} ${'z'.repeat(3_000)}`
+  w.files.set(
+    STATE,
+    [
+      'stream: proj', `saved: ${ISO} sess-1`, 'status: building', 'previous_session: none', 'goal: ship v2', 'journal: journal/proj.md', 'journal_cursor: c07', '',
+      'decisions:', `- ${big('D5')} (c05)`, `- ${big('D7')} (c07)`,
+      'next:', `- ${big('N1')} (c01)`,
+      'unknowns:', `- ${big('U3')} (c03)`,
+    ].join('\n'),
+  )
+  await packProj($, '--yes')
+  expect(w.forkPrompts).toHaveLength(1)
+  const state = w.files.get(STATE) ?? ''
+  expect(state.length).toBeLessThanOrEqual(8_000)
+  // 12,000+ chars of numbered lines: c01 (next) and c03 (unknowns) go, the decisions c05 and c07 stay
+  expect(section(state, 'next')).toEqual([])
+  expect(section(state, 'unknowns').some(l => l.includes('U3'))).toBe(false)
+  expect(section(state, 'decisions').filter(l => l.includes('(c0'))).toEqual([`${big('D5')} (c05)`, `${big('D7')} (c07)`])
+  expect(section(state, 'stale').at(-1)).toBe('overflow: dropped to fit 8000 chars: c01, c03 — grep the journal by id')
+  expect(w.files.get(STATUS)).toContain('next -1, unknowns -1')
+})
+
+test('over cap: after discarded and learnings, a decision is cut too, the oldest cNN first', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  const big = (tag: string) => `${tag} ${'z'.repeat(3_000)}`
+  w.files.set(
+    STATE,
+    [
+      'stream: proj', `saved: ${ISO} sess-1`, 'status: building', 'previous_session: none', 'goal: ship v2', 'journal: journal/proj.md', 'journal_cursor: c09', '',
+      'decisions:', `- ${big('D9')} (c09)`, `- ${big('D2')} (c02)`, `- ${big('D4')} (c04)`,
+      'learnings:', `- ${big('L6')} (c06)`,
+    ].join('\n'),
+  )
+  await packProj($, '--yes')
+  const state = w.files.get(STATE) ?? ''
+  expect(state.length).toBeLessThanOrEqual(8_000)
+  expect(section(state, 'learnings')).toEqual([])
+  expect(section(state, 'decisions').some(l => l.includes('D2'))).toBe(false)
+  expect(section(state, 'decisions').some(l => l.includes('D9'))).toBe(true)
+  // learnings go first (existing step), then the oldest numbered decision: c02 before c04 and c09
+  expect(section(state, 'decisions').some(l => l.includes('D4'))).toBe(true)
+  expect(section(state, 'stale').at(-1)).toBe('overflow: dropped to fit 8000 chars: c02, c06 — grep the journal by id')
 })
 
 test('status file: a failed save leaves its reason on disk and the toast points to it', async ($, on) => {
