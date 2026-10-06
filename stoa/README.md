@@ -18,7 +18,7 @@ claude plugin test /repos/agent-skills/stoa
 | command | does |
 |---|---|
 | `/pack [stream] [--yes\|-y]` | save (awaited) + review pane `[c]`/`[x]`, or `--yes` arm only; you type `/clear`; the pack is re-injected |
-| `/pack save [stream]` | fork -> `pack-<stream>-llm.md`; returns at once, the outcome is a toast, no `/clear` |
+| `/pack save [stream]` | fork -> `pack-<stream>-llm.md`; returns at once, the outcome is a toast and `pack-<stream>-status-llm.md`, no `/clear` |
 | `/unpack <stream>` | `pack-<stream>-llm.md` -> first message of this session (state + journal rule + unpack rules) |
 
 `/pack load` is removed: it replies with a pointer to `/unpack <stream>`. `save` and `load` are reserved words, never stream names.
@@ -27,12 +27,19 @@ Stream = explicit argument (`^[a-zA-Z0-9_-]{1,50}$`, binds for the session; `/un
 
 ## Storage
 
-Files live in the session's working directory. The journal is shared with modtest. The state file is not: modtest writes `relay-<stream>-llm.md`, which stoa does not read. To unpack a stream saved by modtest, rename its file to `pack-<stream>-llm.md` first.
+Files live in the session's working directory. The journal is shared with modtest. The state file is not: modtest and stoa 0.1.0 write `relay-<stream>-llm.md`. When `pack-<stream>-llm.md` is missing, a save reads `relay-<stream>-llm.md` as the previous state (`predecessor` kept as `previous_session`), writes forward under the new name and says "migrated" in its toast. The old file stays on disk. `/unpack` does not migrate: run `/pack save <stream>` once first.
 
 | file | content |
 |---|---|
 | `journal/<stream>.md` | one entry per `<!-- ckpt ... -->` trailer of a main-loop answer, append-only |
 | `pack-<stream>-llm.md` | state: header + body fields, at most 8,000 chars |
+| `pack-<stream>-status-llm.md` | outcome of the last save (`ok` / `degraded` / `blocked`, reason or detail), rewritten at every save so the model can read why a save failed |
+
+## Retirement and the cap
+
+The fork retires trailer lines by id: `retire_answered` (open/assumption resolved), `retire_done` (next item done), `retire_learned` (learning obsolete), `retire_reversed` (decision proved wrong) and `retire_superseded` (decision overtaken). The last two move the decision to `discarded`.
+
+Over 8,000 chars, code cuts `read_if_needed` (compressed), then `stale`, then `in_progress`. Still over, the fork runs once more, told by how much it missed. Still over, code drops `discarded` then `learnings`, oldest first, writes an `overflow:` line in `stale` naming the dropped ids, and advances the cursor: a degraded state beats none. A save is refused only when what is never cut (header, `read_first`, `decisions`, `next`, `unknowns`) exceeds the cap alone.
 
 Do not enable modtest and stoa together: both capture every trailer into the same journal.
 

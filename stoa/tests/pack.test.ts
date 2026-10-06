@@ -47,12 +47,16 @@ type World = {
   // runs right after each fs.read answered: simulates another session writing between read and the size check
   afterRead: ((path: string) => void) | null
   failWrites: boolean
+  // classic events whose bottom hook throws once (the chain beneath a gating hook failing), by event name
+  failOps: Set<string>
   forkText: string | null
+  // answers of the next forks, in order; empty = forkText
+  forkQueue: string[]
   clock: { advance: (ms: number) => Promise<void> }
 }
 
 // The engine resolves a relative path against the session cwd before the fs.* ops are answered: key files by their relative tail.
-const rel = (path: string) => path.replace(/^.*?((?:pack-[^/]+-llm\.md)|(?:journal\/[^/]+\.md))$/, '$1')
+const rel = (path: string) => path.replace(/^.*?((?:(?:pack|relay)-[^/]+-llm\.md)|(?:journal\/[^/]+\.md))$/, '$1')
 
 const bytes = (s: string) => new TextEncoder().encode(s).length
 
@@ -74,7 +78,9 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     gate: null,
     afterRead: null,
     failWrites: false,
+    failOps: new Set(),
     forkText,
+    forkQueue: [],
     clock: { advance: async () => undefined },
   }
   on('store.get', (_$, e) => ({ value: w.store.get(e.key) }))
@@ -85,11 +91,12 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
   on('model.fork', async (_$, e) => {
     w.forkPrompts.push(e.prompt)
     if (w.gate) await w.gate
+    const text = w.forkQueue.shift() ?? w.forkText
     return {
       value:
-        w.forkText === null
+        text === null
           ? { isAnswered: false, reason: 'nothing-to-fork' }
-          : { isAnswered: true, text: w.forkText, usage: { input_tokens: 1, output_tokens: 1 } },
+          : { isAnswered: true, text, usage: { input_tokens: 1, output_tokens: 1 } },
     }
   })
   on('session.cwd', () => ({ value: CWD }))
@@ -118,8 +125,14 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
   on('ui.status', (_$, e) => (w.statuses.push(e.text), { value: undefined }))
   on('ui.toast', (_$, e) => (w.toasts.push(e.text), { value: undefined }))
   on('ui.log', (_$, e) => (w.logs.push(e.text), w.logSinks.push(e.to), { value: undefined }))
-  on('classic.SessionStart', () => ({}))
-  on('classic.UserPromptSubmit', () => ({}))
+  on('classic.SessionStart', () => {
+    if (w.failOps.delete('classic.SessionStart')) throw new Error('chain down')
+    return {}
+  })
+  on('classic.UserPromptSubmit', () => {
+    if (w.failOps.delete('classic.UserPromptSubmit')) throw new Error('chain down')
+    return {}
+  })
   on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('command.run', { command: 'clear' }, () => {
@@ -293,6 +306,9 @@ test('-y with a state over 8,000 chars after cuts: blocked, nothing written, not
   expect(w.clears).toBe(0)
   expect(w.files.has(STATE)).toBe(false)
   expect(w.store.get('pack:pending')).toBeUndefined()
+  // decisions are never cut: the retry fork and the degraded cut cannot help, the reason is left for the model
+  expect(w.forkPrompts).toHaveLength(2)
+  expect(w.files.get('pack-proj-status-llm.md')).toContain('outcome: blocked\nreason: state')
   await clear($)
   expect(w.submits).toHaveLength(0)
 })
@@ -581,6 +597,123 @@ test('state: read_if_needed is compressed before anything is dropped', async ($,
   const lines = section(w.files.get(STATE) ?? '', 'read_if_needed')
   expect(lines.length).toBeGreaterThan(0)
   expect(lines.every(l => l.length <= 80)).toBe(true)
+})
+
+// ---------- 0.4.0: legacy state, retire keys, over-cap degradation, status file ----------
+
+const LEGACY = 'relay-proj-llm.md'
+const STATUS = 'pack-proj-status-llm.md'
+
+test('migration: state under the legacy relay- name only -> previous state, written forward, cursor and predecessor kept', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  w.files.set(
+    LEGACY,
+    ['stream: proj', `saved: ${ISO} sess-1`, 'predecessor: older-sess', 'goal: ship v1', 'journal: journal/proj.md', 'journal_cursor: c02', '', 'decisions:', '- use A — why (c01)', 'learnings:', '- L1 (c02)'].join('\n'),
+  )
+  w.files.set(JOURNAL, entry('c01', '<!-- ckpt decision: use A -->') + entry('c02', '<!-- ckpt learning: L1 -->') + entry('c03', '<!-- ckpt learning: L3 -->'))
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.length > 0)
+  expect(w.toasts[0]).toContain('migrated from relay-proj-llm.md')
+  const state = w.files.get(STATE) ?? ''
+  expect(state).toContain('journal_cursor: c03')
+  expect(state).toContain('previous_session: older-sess')
+  expect(section(state, 'decisions')).toContain('use A — why (c01)')
+  expect(section(state, 'learnings')).toEqual(['L1 (c02)', 'L3 (c03)'])
+  // incremental: the fork got the legacy state and only the entries after its cursor
+  expect(w.forkPrompts[0]).toContain('PREVIOUS STATE:\nstream: proj')
+  expect(w.forkPrompts[0]).toContain('### c03')
+  expect(w.forkPrompts[0]).not.toContain('### c02')
+  // written forward: the next save reads the new name, no second migration
+  await runPack($, 'save')
+  await settle(() => w.toasts.length > 1)
+  expect(w.toasts[1]).not.toContain('migrated')
+})
+
+test('migration: the new name wins when both files exist', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  w.files.set(STATE, 'stream: proj\ngoal: from pack\n')
+  w.files.set(LEGACY, 'stream: proj\ngoal: from relay\n')
+  await packProj($, '--yes')
+  expect(w.forkPrompts[0]).toContain('goal: from pack')
+  expect(w.forkPrompts[0]).not.toContain('goal: from relay')
+})
+
+test('retire: superseded decision -> discarded, done next item and obsolete learning vanish', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  w.files.set(JOURNAL, entry('c01', '<!-- ckpt decision: use A · open: write docs · learning: bug in X -->'))
+  await packProj($, '--yes')
+  await clear($)
+  w.files.set(JOURNAL, (w.files.get(JOURNAL) ?? '') + entry('c02', '<!-- ckpt decision: use B · learning: X fixed -->'))
+  w.forkText = OK(['retire_superseded: c01', 'retire_done: c01', 'retire_learned: c01'])
+  await packProj($, '--yes')
+  const state = w.files.get(STATE) ?? ''
+  expect(section(state, 'decisions')).not.toContain('use A (c01)')
+  expect(section(state, 'decisions')).toContain('use B (c02)')
+  expect(section(state, 'discarded')).toEqual(['use A — superseded (c01)'])
+  expect(section(state, 'next')).toEqual([])
+  expect(section(state, 'learnings')).toEqual(['X fixed (c02)'])
+})
+
+// A saved state near the cap: discarded c01-c02, learnings c03..c<n+2>, cursor on the last one.
+const nearCap = (n: number) =>
+  [
+    'stream: proj', `saved: ${ISO} sess-1`, 'status: building', 'previous_session: none', 'goal: ship v2', 'journal: journal/proj.md', `journal_cursor: c${pad2(n + 2)}`, '',
+    'discarded:', '- tried D1 — slow (c01)', '- tried D2 — slow (c02)',
+    'learnings:', ...Array.from({ length: n }, (_, i) => `- L${i + 3} ${'y'.repeat(90)} (c${pad2(i + 3)})`),
+  ].join('\n')
+
+test('over cap after the retry: degraded state written (discarded then learnings dropped, overflow named), cursor advances', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  w.files.set(STATE, nearCap(74))
+  expect((w.files.get(STATE) ?? '').length).toBeGreaterThan(7_700)
+  w.files.set(JOURNAL, [77, 78, 79].map(n => entry(`c${n}`, `<!-- ckpt learning: new ${n} -->`)).join(''))
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.length > 0)
+  expect(w.forkPrompts).toHaveLength(2)
+  expect(w.forkPrompts[1]).toContain('OVERFLOW:')
+  const state = w.files.get(STATE) ?? ''
+  expect(state.length).toBeLessThanOrEqual(8_000)
+  expect(state).toContain('journal_cursor: c79')
+  expect(section(state, 'discarded')).toEqual([])
+  const learnings = section(state, 'learnings')
+  expect(learnings).not.toContain(`L3 ${'y'.repeat(90)} (c03)`)
+  expect(learnings.slice(-3)).toEqual(['new 77 (c77)', 'new 78 (c78)', 'new 79 (c79)'])
+  expect(section(state, 'stale').at(-1)).toMatch(/^overflow: dropped to fit 8000 chars: c01, c02, c03.* — grep the journal by id$/)
+  expect(section(state, 'decisions')).toHaveLength(1)
+  expect(w.toasts[0]).toContain('over the cap, dropped: ')
+  expect(w.toasts[0]).toContain('discarded -2, learnings -')
+  expect(w.files.get(STATUS)).toContain('outcome: degraded')
+})
+
+test('over cap, the retry fork retires enough: clean state, nothing dropped', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  w.files.set(STATE, nearCap(74))
+  w.files.set(JOURNAL, [77, 78, 79].map(n => entry(`c${n}`, `<!-- ckpt learning: new ${n} -->`)).join(''))
+  const ids = Array.from({ length: 20 }, (_, i) => `c${pad2(i + 3)}`).join(', ')
+  w.forkQueue = [OK(), OK([`retire_learned: ${ids}`])]
+  await packProj($, '--yes')
+  const state = w.files.get(STATE) ?? ''
+  expect(w.forkPrompts).toHaveLength(2)
+  expect(state).not.toContain('overflow:')
+  expect(section(state, 'discarded')).toHaveLength(2)
+  expect(section(state, 'learnings')).not.toContain(`L3 ${'y'.repeat(90)} (c03)`)
+  expect(section(state, 'learnings')).toContain(`L23 ${'y'.repeat(90)} (c23)`)
+  expect(w.files.get(STATUS)).toContain('outcome: ok')
+})
+
+test('status file: a failed save leaves its reason on disk and the toast points to it', async ($, on) => {
+  const w = world(on, 'GATE: blocked - mid synthesis')
+  await fresh($)
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.length > 0)
+  expect(w.toasts[0]).toContain('pack-proj-status-llm.md')
+  expect(w.files.get(STATUS)).toBe(`stream: proj\nat: ${ISO}\noutcome: blocked\nreason: mid synthesis\n`)
+  expect(w.files.has(STATE)).toBe(false)
 })
 
 // ---------- T11 save: unawaited fork ----------
@@ -1512,4 +1645,25 @@ test('zones: wall cached after the first usage call, dropped by a /clear', async
   await clear($)
   await measure($, at(0.6))
   expect(calls.n).toBe(2)
+})
+
+// ---------- gating hooks: a failing hook is silently absent unless it has a .catch; here the catch handler runs and logs, then passes the event on ----------
+// Limits of the test engine: a `$` call of the plugin that fails is dropped, never thrown, so the hook itself cannot be made to throw before its next(e);
+// the failure comes from the chain beneath (next(e) rejects). The handler's replayed next(e) then rejects the same way: what is asserted is that the handler ran.
+// ui.close with a person origin cannot be raised from the test engine (no $.ui.close): that hook's .catch is not covered here.
+
+test('catch: UserPromptSubmit failing -> the catch handler runs and logs the failure', async ($, on) => {
+  const w = world(on, OK())
+  w.failOps.add('classic.UserPromptSubmit')
+  await title($, 'proj').catch(() => undefined)
+  expect(w.logs.some(l => l.includes('pack: classic.UserPromptSubmit hook throw: '))).toBe(true)
+  expect(w.logSinks).toContain('debug')
+})
+
+test('catch: SessionStart failing -> the catch handler runs and logs the failure', async ($, on) => {
+  const w = world(on, OK())
+  w.failOps.add('classic.SessionStart')
+  await fresh($).catch(() => undefined)
+  expect(w.logs.some(l => l.includes('pack: classic.SessionStart hook throw: '))).toBe(true)
+  expect(w.logSinks).toContain('debug')
 })

@@ -67,12 +67,15 @@ unknowns:
 stale:
 - <path — replaced by X; do not reload>
 retire_answered: <ids, e.g. c03, c07>
+retire_done: <ids>
+retire_learned: <ids>
 retire_reversed: <ids, e.g. c05>
+retire_superseded: <ids>
 Rules:
 - Every list except read_if_needed, learnings, discarded, next and decisions is yours entirely, and for those five you give EXTRAS only: whatever the trailers below do not already say.
 - Return the COMPLETE current content of every list you own: carry forward the still-valid lines of PREVIOUS STATE that have no (cNN) suffix.
 - A line ending with (cNN) belongs to code: never output one.
-- retire_answered: ids of open: / assumption: items (in PREVIOUS STATE or in the entries below) that are now resolved. retire_reversed: ids of decisions that were reversed. Omit a retire key when it is empty.
+- Retire keys take ids from PREVIOUS STATE or from the entries below. retire_answered: open: / assumption: items now resolved. retire_done: next items now done. retire_learned: learnings now obsolete (a bug since fixed, a fact replaced by a later one). retire_reversed: decisions proved wrong and reversed. retire_superseded: decisions overtaken by a later decision without being wrong. Omit a retire key when it is empty.
 - A pointer (absolute path, path:line, command) replaces any explanation. Do not run commands; write them.
 - Total ≤ 8,000 characters.`
 
@@ -107,6 +110,10 @@ let cycle = 0
 
 export const pad = (n: number) => String(n).padStart(2, '0')
 export const statePath = (stream: string) => `pack-${stream}-llm.md`
+// stoa 0.1.0 and modtest saved the state under this name (header field `predecessor` for previous_session): read on a miss, written forward.
+export const legacyStatePath = (stream: string) => `relay-${stream}-llm.md`
+// Outcome of the last save, rewritten at every save: the toast reaches the human only, this file the model too.
+export const statusPath = (stream: string) => `pack-${stream}-status-llm.md`
 export const journalPath = (stream: string) => `journal/${stream}.md`
 const bufferKey = (sid: string) => `pack:buffer:${sid}`
 
@@ -243,10 +250,19 @@ export function parseKeyed(text: string, scalarKeys: string[], listKeys: string[
 }
 
 const STATE_SCALARS = [...SCALARS_HEADER, 'deliverable']
-const parseState = (text: string) => parseKeyed(text, STATE_SCALARS, LISTS)
+// `predecessor`: previous_session in a legacy state file, parsed so the migration keeps it.
+const parseState = (text: string) => parseKeyed(text, [...STATE_SCALARS, 'predecessor'], LISTS)
 
-const FORK_SCALARS = ['status', 'goal', 'deliverable', 'retire_answered', 'retire_reversed']
-export type ForkFields = { fields: Keyed; answered: Set<number>; reversed: Set<number> }
+const RETIRE_KEYS = ['retire_answered', 'retire_done', 'retire_learned', 'retire_reversed', 'retire_superseded'] as const
+const FORK_SCALARS = ['status', 'goal', 'deliverable', ...RETIRE_KEYS]
+export type ForkFields = {
+  fields: Keyed
+  answered: Set<number>
+  done: Set<number>
+  learned: Set<number>
+  reversed: Set<number>
+  superseded: Set<number>
+}
 export type ForkParse = { kind: 'ok'; body: string } | { kind: 'blocked'; reason: string }
 
 export function parseFork(text: string): ForkParse {
@@ -265,7 +281,14 @@ export function parseForkBody(body: string): ForkFields | null {
   const fields = parseKeyed(body, FORK_SCALARS, LISTS)
   if (Object.keys(fields.scalars).length === 0 && Object.keys(fields.lists).length === 0) return null
   const ids = (s: string | undefined) => new Set([...(s ?? '').matchAll(/c(\d+)/g)].map(m => Number(m[1])))
-  return { fields, answered: ids(fields.scalars.retire_answered), reversed: ids(fields.scalars.retire_reversed) }
+  return {
+    fields,
+    answered: ids(fields.scalars.retire_answered),
+    done: ids(fields.scalars.retire_done),
+    learned: ids(fields.scalars.retire_learned),
+    reversed: ids(fields.scalars.retire_reversed),
+    superseded: ids(fields.scalars.retire_superseded),
+  }
 }
 
 const oneLine = (s: string) => s.replace(/\s+/g, ' ').trim()
@@ -278,13 +301,18 @@ export type AssembleInput = {
   prev: string | null
   entries: Entry[]
   fork: ForkFields
+  // Last resort (the retry fork did not fit either): drop discarded then learnings to fit, rather than write nothing.
+  degrade?: boolean
 }
-export type Assembled = { kind: 'ok'; state: string; cursor: string; cut: string[] } | { kind: 'blocked'; reason: string }
+export type Assembled =
+  | { kind: 'ok'; state: string; cursor: string; cut: string[]; degraded: boolean }
+  | { kind: 'over'; length: number }
+  | { kind: 'blocked'; reason: string }
 
 // The core rule: the fork designated ids and wrote its own fields; every trailer-sourced line is copied by code.
 export function assemble(input: AssembleInput): Assembled {
   const prev = input.prev ? parseState(input.prev) : null
-  const { fields, answered, reversed } = input.fork
+  const { fields, answered, done, learned, reversed, superseded } = input.fork
 
   const lists: Record<string, string[]> = {}
   for (const sec of LISTS) lists[sec] = []
@@ -301,15 +329,18 @@ export function assemble(input: AssembleInput): Assembled {
     }
   }
 
-  // 2. retire: answered open/assumption items vanish, reversed decisions move to discarded with their id.
+  // 2. retire: answered open/assumption items, done next items and obsolete learnings vanish; reversed or superseded
+  // decisions move to discarded with their id.
   const movedToDiscarded: string[] = []
   for (const sec of LISTS) {
     lists[sec] = uniq([...carried[sec], ...routed[sec]]).filter(line => {
       const id = idOf(line)
       if (id === null) return true
       if ((sec === 'next' || sec === 'unknowns') && answered.has(id)) return false
-      if (sec === 'decisions' && reversed.has(id)) {
-        movedToDiscarded.push(`${stripId(line)} — reversed (c${pad(id)})`)
+      if (sec === 'next' && done.has(id)) return false
+      if (sec === 'learnings' && learned.has(id)) return false
+      if (sec === 'decisions' && (reversed.has(id) || superseded.has(id))) {
+        movedToDiscarded.push(`${stripId(line)} — ${reversed.has(id) ? 'reversed' : 'superseded'} (c${pad(id)})`)
         return false
       }
       return true
@@ -332,7 +363,8 @@ export function assemble(input: AssembleInput): Assembled {
   const cursor = `c${pad(Math.max(prevCursor, ...allNs))}`
   const prevSaved = (prev?.scalars.saved ?? '').split(/\s+/)
   const prevWriter = prevSaved[1]
-  const previousSession = prevWriter && prevWriter !== input.sid ? prevWriter : prev?.scalars.previous_session || 'none'
+  const previousSession =
+    prevWriter && prevWriter !== input.sid ? prevWriter : prev?.scalars.previous_session || prev?.scalars.predecessor || 'none'
   const scalars: Record<string, string> = {
     stream: input.stream,
     saved: `${input.saved} ${input.sid}`,
@@ -350,7 +382,8 @@ export function assemble(input: AssembleInput): Assembled {
     return `${head}\n\n${body}\n`
   }
 
-  // 5. hard cap, cut order: read_if_needed (compress), stale, in_progress. Never decisions, discarded, next, unknowns.
+  // 5. hard cap, cut order: read_if_needed (compress), stale, in_progress. Still over: 'over' (the caller retries the fork),
+  // or with `degrade` discarded then learnings, oldest first, named by an overflow line in stale. Never decisions, next, unknowns.
   const cut: string[] = []
   let text = render()
   const over = () => text.length > STATE_MAX
@@ -374,8 +407,31 @@ export function assemble(input: AssembleInput): Assembled {
     }
     if (dropped) cut.push(`${sec} -${dropped}`)
   }
-  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; trim decisions/discarded/next/unknowns or prune the journal by hand. Nothing written.` }
-  return { kind: 'ok', state: text, cursor, cut }
+  if (over() && !input.degrade) return { kind: 'over', length: text.length }
+  let degraded = false
+  if (over()) {
+    degraded = true
+    const ids: string[] = []
+    let plain = 0
+    const overflow = () =>
+      `overflow: dropped to fit ${STATE_MAX} chars: ${ids.join(', ') || 'no journal line'}${plain ? ` + ${plain} unnumbered` : ''} — grep the journal by id`
+    lists.stale.push(overflow())
+    text = render()
+    for (const sec of ['discarded', 'learnings'] as const) {
+      let dropped = 0
+      while (over() && lists[sec].length > 0) {
+        const id = idOf(lists[sec].shift() as string)
+        if (id === null) plain++
+        else ids.push(`c${pad(id)}`)
+        dropped++
+        lists.stale[lists.stale.length - 1] = overflow()
+        text = render()
+      }
+      if (dropped) cut.push(`${sec} -${dropped}`)
+    }
+  }
+  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; what is never cut (header, read_first, decisions, next, unknowns) is too long alone: trim decisions by hand. Nothing written.` }
+  return { kind: 'ok', state: text, cursor, cut, degraded }
 }
 
 // ---------- journal (all disk access of the mod goes through these three functions) ----------
@@ -548,36 +604,82 @@ async function capture($: EngineInterface, answer: string) {
 
 // ---------- state build (fork + assembly + write) ----------
 
-type Built = { kind: 'ok'; state: string; cursor: string; cut: string[] } | { kind: 'blocked'; reason: string }
+type Built =
+  | { kind: 'ok'; state: string; cursor: string; cut: string[]; degraded: boolean; migrated: boolean }
+  | { kind: 'blocked'; reason: string }
 
 function forkPrompt(prev: string | null, entries: Entry[]): string {
   const news = entries.length ? entries.map(e => `### ${e.id}\n${e.trailer}`).join('\n\n') : '(none)'
   return `${FORK_PROMPT}\n\nPREVIOUS STATE:\n${prev ?? '(none)'}\n\nJOURNAL ENTRIES TO ROUTE (after the cursor):\n${news}`
 }
 
-async function buildState($: EngineInterface, stream: string): Promise<Built> {
+// The retry after an over-cap assembly: the cap is enforced by code, so the fork is told by how much it missed.
+function overflowNote(length: number): string {
+  return `OVERFLOW: a first answer to this prompt assembled into ${length.toLocaleString('en-US')} characters, ${(length - STATE_MAX).toLocaleString('en-US')} over the ${STATE_MAX.toLocaleString('en-US')} cap. Answer again, same format. Lines ending in (cNN) are copied by code: retiring their id is the only way to shrink them, so designate every retire_* id you can justify (obsolete learnings, done next items, superseded decisions first), then shorten the lines you own.`
+}
+
+type Asked = { kind: 'ok'; fork: ForkFields } | { kind: 'blocked'; reason: string }
+
+async function askFork($: EngineInterface, prompt: string): Promise<Asked> {
+  const reply = await $.model.fork({ prompt })
+  if (!reply.isAnswered) return { kind: 'blocked', reason: `fork failed (${reply.reason})` }
+  const parsed = parseFork(reply.text)
+  if (parsed.kind === 'blocked') return parsed
+  const fork = parseForkBody(parsed.body)
+  return fork ? { kind: 'ok', fork } : { kind: 'blocked', reason: 'unparseable fork output' }
+}
+
+async function assembleAndWrite($: EngineInterface, stream: string): Promise<Built> {
   try {
     const sid = await $.session.id()
-    const prev = await readOptional($, statePath(stream))
+    let prev = await readOptional($, statePath(stream))
+    let migrated = false
+    if (prev === null) {
+      prev = await readOptional($, legacyStatePath(stream))
+      migrated = prev !== null
+    }
     const journal = await readOptional($, journalPath(stream))
     const cursor = prev ? Number((parseState(prev).scalars.journal_cursor ?? '').replace(/^c/, '')) || 0 : 0
     const entries = parseJournal(journal ?? '').filter(e => e.n > cursor)
 
-    const reply = await $.model.fork({ prompt: forkPrompt(prev, entries) })
-    if (!reply.isAnswered) return { kind: 'blocked', reason: `fork failed (${reply.reason})` }
-    const parsed = parseFork(reply.text)
-    if (parsed.kind === 'blocked') return parsed
-    const fork = parseForkBody(parsed.body)
-    if (!fork) return { kind: 'blocked', reason: 'unparseable fork output' }
-
-    const saved = new Date(await $.clock.now()).toISOString()
-    const result = assemble({ stream, saved, sid, prev, entries, fork })
+    const prompt = forkPrompt(prev, entries)
+    const first = await askFork($, prompt)
+    if (first.kind === 'blocked') return first
+    const input = { stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, entries }
+    let result = assemble({ ...input, fork: first.fork })
+    if (result.kind === 'over') {
+      // Once: a failed or blocked retry falls back to the first answer, degraded.
+      const retry = await askFork($, `${prompt}\n\n${overflowNote(result.length)}`)
+      result = assemble({ ...input, fork: retry.kind === 'ok' ? retry.fork : first.fork, degrade: true })
+    }
+    if (result.kind === 'over') return { kind: 'blocked', reason: `state ${result.length} chars > ${STATE_MAX}. Nothing written.` }
     if (result.kind === 'blocked') return result
     await $.fs.write(statePath(stream), result.state)
-    return result
+    return { ...result, migrated }
   } catch (err) {
     return { kind: 'blocked', reason: `error: ${String(err)}` }
   }
+}
+
+// What a save did beyond writing the state, for the toast and the {text} replies.
+function savedNotes(stream: string, built: Extract<Built, { kind: 'ok' }>): string {
+  const notes = [`${built.state.length.toLocaleString('en-US')} chars`]
+  if (built.migrated) notes.push(`migrated from ${legacyStatePath(stream)}`)
+  if (built.cut.length) notes.push(`${built.degraded ? 'over the cap, dropped' : 'trimmed'}: ${built.cut.join(', ')}`)
+  return notes.join(', ')
+}
+
+async function buildState($: EngineInterface, stream: string): Promise<Built> {
+  const built = await assembleAndWrite($, stream)
+  try {
+    const at = new Date(await $.clock.now()).toISOString()
+    const outcome = built.kind === 'blocked' ? 'blocked' : built.degraded ? 'degraded' : 'ok'
+    const detail = built.kind === 'blocked' ? `reason: ${built.reason}` : `detail: ${savedNotes(stream, built)}`
+    await $.fs.write(statusPath(stream), `stream: ${stream}\nat: ${at}\noutcome: ${outcome}\n${detail}\n`)
+  } catch (err) {
+    $.ui.log(`pack: status file not written: ${String(err)}`)
+  }
+  return built
 }
 
 // `/pack save`: the command already returned; the outcome is a toast.
@@ -592,8 +694,8 @@ async function saveInBackground($: EngineInterface, stream: string, auto?: { pct
     } else {
       $.ui.toast(
         built.kind === 'ok'
-          ? `Stream "${stream}" saved (${built.state.length.toLocaleString('en-US')} chars${built.cut.length ? `, trimmed: ${built.cut.join(', ')}` : ''})`
-          : `Could not save stream "${stream}": ${built.reason}`,
+          ? `Stream "${stream}" saved (${savedNotes(stream, built)})`
+          : `Could not save stream "${stream}": ${built.reason} (also in ${statusPath(stream)})`,
       )
     }
   } catch (err) {
@@ -615,6 +717,15 @@ function rearmZones() {
   hardDone = false
   advice = null
   cycle++
+}
+
+// A gating hook that failed: logged for diagnosis; its `.catch` then passes the event on unchanged (a stoa failure never blocks the user).
+function noteCaught($: EngineInterface, hook: string, error: { kind: string; message?: string }) {
+  try {
+    $.ui.log(`pack: ${hook} hook ${error.kind}${error.message ? `: ${error.message}` : ''}`, { to: 'debug' })
+  } catch {
+    // nothing left to do
+  }
 }
 
 // Full session reset (/clear, new/resumed/forked session): flags, seam, last fill and the cached wall.
@@ -880,7 +991,7 @@ async function packStream($: EngineInterface, stream: string, yes: boolean) {
     rearmZones()
     await persist($)
     flowStatus($, 'Ready: type /clear to continue in a fresh session')
-    return { text: `pack: stream "${stream}" saved. Type /clear to continue in a fresh session.` }
+    return { text: `pack: stream "${stream}" saved (${savedNotes(stream, built)}). Type /clear to continue in a fresh session.` }
   }
 
   phase = 'review'
@@ -1049,9 +1160,13 @@ export function registerPack(on: On) {
     }
   })
 
+  // The three gating hooks below carry a `.catch`: a hook that fails is silently absent, so the handler lets the close, the prompt and the session through unchanged.
   // Esc / close mark while reviewing = cancel.
   on('ui.close', async ($, e, next) => {
     if (e.id === PANE && e.origin.kind === 'person' && phase === 'review') await reset($)
+    return next(e)
+  }).catch(($, e, next) => {
+    noteCaught($, 'ui.close', next.error)
     return next(e)
   })
 
@@ -1061,6 +1176,9 @@ export function registerPack(on: On) {
     } catch (err) {
       $.ui.log(`pack: title not read: ${String(err)}`)
     }
+    return next(e)
+  }).catch(($, e, next) => {
+    noteCaught($, 'classic.UserPromptSubmit', next.error)
     return next(e)
   })
 
@@ -1101,6 +1219,9 @@ export function registerPack(on: On) {
       $.ui.toast(`Could not load the saved notes: ${String(err)}. Type /unpack ${restored ?? '<stream>'}`)
     })
     $.ui.toast(restored ? `Fresh session started with the saved notes of stream "${restored}"` : 'Fresh session started with the saved notes')
+    return next(e)
+  }).catch(($, e, next) => {
+    noteCaught($, 'classic.SessionStart', next.error)
     return next(e)
   })
 
