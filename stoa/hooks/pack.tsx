@@ -3,6 +3,7 @@ import type { EngineInterface, On } from 'claude-code'
 // pack (stoa), ported from the modtest prototype: one mod for context.
 //   /pack save [stream]            fork -> pack-<stream>-llm.md (not awaited, no clear)
 //   /pack [stream] [--yes|-y]      save (awaited) + review pane / arm + /clear + re-inject
+//   /pack cancel                   leave the review or the armed state (the saved file stays)
 //   /unpack <stream>               state file -> first message of this session
 // Journal: every `<!-- ckpt ... -->` trailer of a main-loop answer is appended verbatim to journal/<stream>.md by code.
 // The fork DESIGNATES (routing ids + fork-owned fields); code COPIES trailer text and assembles the state file.
@@ -15,8 +16,13 @@ const MARKDOWN_MAX = 10_000
 // Hard cap of the state file, enforced by code (the fork prompt only asks for it).
 const STATE_MAX = 8_000
 const STREAM_RE = /^[a-zA-Z0-9_-]{1,50}$/
-const RESERVED = ['save', 'load']
+const RESERVED = ['save', 'load', 'cancel']
 const SHRINK_LINE = 80
+// Feedback channels. Status line = the present state; a toast = an event; a {text} reply = the record (past tense).
+// A "..." on the status always ends in an outcome on the status. Errors stay on the status and toast for ERROR_TOAST_MS.
+const ERROR_TOAST_MS = 12_000
+// A flow line older than this says it may be stuck ($.model.fork cannot be cancelled).
+export const SLOW_MS = 3 * 60 * 1000
 // Context-fill floors (T19, T21, T22), as a share of the model's context window (e.context.window), the same figure as the
 // status line. To calibrate live from the `pack: ctx` log lines.
 // STRONG: floor for a strong seam (a task closed, a pivot). SOFT: floor for a simple seam (a decision). HARD: auto pre-save.
@@ -80,7 +86,7 @@ Rules:
 - Total ≤ 8,000 characters.`
 
 type Phase = 'idle' | 'review' | 'armed'
-type Pending = { pack: string; createdAt: number; cwd: string }
+type Pending = { pack: string; createdAt: number; cwd: string; stream?: string }
 type Stored = Pending & { phase: Phase }
 
 // Module scope: survives /clear (module not reloaded), lost on mod reload -> $.store backup.
@@ -103,6 +109,14 @@ let hardDone = false
 // The persistent advice line (T21) and the line of the active save/pack flow: one `$.ui.status` per plugin, see paint().
 let advice: Advice | null = null
 let flowLine: string | undefined
+// Ticks the elapsed time on the flow line; any other flow line stops it.
+let ticker: { cancel: () => void } | null = null
+// Last outcome of a command, under the flow line. ok: goes at the end of the next prompted turn. sticky (warning, error): until the next command.
+type Outcome = { text: string; sticky: boolean; prompted: boolean }
+let outcome: Outcome | null = null
+// Checkpoints kept in the store and not yet in a journal (no stream, or a failed write).
+type Waiting = { count: number; stream: string | null }
+let waiting: Waiting | null = null
 // Bumped at every re-arm: a hard save finishing in an older cycle must not set a stale advice.
 let cycle = 0
 
@@ -133,7 +147,7 @@ export function slugify(title: string): string | null {
   return slug === '' ? null : slug
 }
 
-export type Verb = 'save' | 'load' | 'pack'
+export type Verb = 'save' | 'load' | 'pack' | 'cancel'
 export type ParsedArgs = { verb: Verb; stream?: string; yes: boolean } | { error: string }
 
 export function parseArgs(args: string): ParsedArgs {
@@ -141,12 +155,13 @@ export function parseArgs(args: string): ParsedArgs {
   const yes = tokens.some(t => t === '--yes' || t === '-y')
   const rest = tokens.filter(t => t !== '--yes' && t !== '-y')
   const bad = rest.find(t => t.startsWith('-'))
-  if (bad) return { error: `unknown option ${bad}. Usage: /pack save [stream] | [stream] [--yes]` }
+  if (bad) return { error: `unknown option ${bad}. Usage: /pack save [stream] | cancel | [stream] [--yes]` }
   let verb: Verb = 'pack'
   if (rest[0] === 'load') return { error: 'load moved: type /unpack <stream>' }
+  if (rest[0] === 'cancel') return yes || rest.length > 1 ? { error: 'cancel takes nothing else. Usage: /pack cancel' } : { verb: 'cancel', yes: false }
   if (rest[0] === 'save') verb = rest.shift() as Verb
   if (yes && verb !== 'pack') return { error: `--yes only goes with the full form (/pack [stream] --yes), not /pack save` }
-  if (rest.length > 1) return { error: `too many arguments. Usage: /pack save [stream] | [stream] [--yes]` }
+  if (rest.length > 1) return { error: `too many arguments. Usage: /pack save [stream] | cancel | [stream] [--yes]` }
   const stream = rest[0]
   if (stream !== undefined) {
     if (RESERVED.includes(stream)) return { error: `"${stream}" is a reserved word, not a stream name` }
@@ -490,14 +505,17 @@ async function ingest($: EngineInterface, fresh: Item[]) {
   const stream = current()
   if (!stream) {
     await $.store.set(key, items)
+    setWaiting($, { count: items.length, stream: null })
     return
   }
   const ids = await enqueue(() => appendEntries($, stream, items))
   if (ids) {
     if (buffered.length > 0) await $.store.delete(key)
+    setWaiting($, null)
   } else {
     await $.store.set(key, items)
-    $.ui.toast(`Could not write the journal of stream "${stream}"; ${items.length} ${items.length === 1 ? 'entry' : 'entries'} kept for later`)
+    setWaiting($, { count: items.length, stream })
+    $.ui.toast(`Could not write the journal of stream "${stream}"; ${items.length} ${items.length === 1 ? 'entry' : 'entries'} kept for later`, { timeoutMs: ERROR_TOAST_MS })
   }
 }
 
@@ -662,10 +680,11 @@ async function assembleAndWrite($: EngineInterface, stream: string): Promise<Bui
 }
 
 // What a save did beyond writing the state, for the toast and the {text} replies.
-function savedNotes(stream: string, built: Extract<Built, { kind: 'ok' }>): string {
+// `brief`: the toast and the status line leave out the cut details (kept in the status file and the {text} replies).
+function savedNotes(stream: string, built: Extract<Built, { kind: 'ok' }>, brief = false): string {
   const notes = [`${built.state.length.toLocaleString('en-US')} chars`]
   if (built.migrated) notes.push(`migrated from ${legacyStatePath(stream)}`)
-  if (built.cut.length) notes.push(`${built.degraded ? 'over the cap, dropped' : 'trimmed'}: ${built.cut.join(', ')}`)
+  if (built.cut.length && !brief) notes.push(`${built.degraded ? 'over the cap, dropped' : 'trimmed'}: ${built.cut.join(', ')}`)
   return notes.join(', ')
 }
 
@@ -691,16 +710,22 @@ async function saveInBackground($: EngineInterface, stream: string, auto?: { pct
     const built = await buildState($, stream)
     if (auto) {
       failure = built.kind === 'ok' ? null : built.reason
+    } else if (built.kind === 'ok') {
+      const line = await savedLine($, stream, built)
+      // The toast is the event, the status line the state (with the time, so a later glance tells which save it was).
+      if (line.sticky) $.ui.toast(line.text, { timeoutMs: ERROR_TOAST_MS })
+      else $.ui.toast(`Stream "${stream}" saved (${savedNotes(stream, built, true)})`)
+      outcome = line
     } else {
-      $.ui.toast(
-        built.kind === 'ok'
-          ? `Stream "${stream}" saved (${savedNotes(stream, built)})`
-          : `Could not save stream "${stream}": ${built.reason} (also in ${statusPath(stream)})`,
-      )
+      $.ui.toast(`Could not save stream "${stream}": ${built.reason} (also in ${statusPath(stream)})`, { timeoutMs: ERROR_TOAST_MS })
+      outcome = failedLine(stream, built.reason)
     }
   } catch (err) {
     if (auto) failure = `error: ${String(err)}`
-    else $.ui.toast(`Saving stream "${stream}" failed: ${String(err)}. Try /pack save again`)
+    else {
+      $.ui.toast(`Saving stream "${stream}" failed: ${String(err)}. Try /pack save again`, { timeoutMs: ERROR_TOAST_MS })
+      outcome = failedLine(stream, `error: ${String(err)}`)
+    }
   } finally {
     saving = false
     if (!auto) rearmZones()
@@ -708,6 +733,26 @@ async function saveInBackground($: EngineInterface, stream: string, auto?: { pct
     else flowStatus($, undefined)
   }
 }
+
+const hhmm = (ms: number) => new Date(ms).toTimeString().slice(0, 5)
+
+// The outcome line of a save: ok (goes after the next turn) or, over the cap, a sticky warning.
+async function savedLine($: EngineInterface, stream: string, built: Extract<Built, { kind: 'ok' }>): Promise<Outcome> {
+  if (built.degraded) {
+    return { text: `\u26A0 Stream "${stream}" saved over the size cap: old entries dropped, see ${statusPath(stream)}`, sticky: true, prompted: false }
+  }
+  const at = hhmm(await $.clock.now())
+  return { text: `\u2713 Stream "${stream}" saved at ${at} (${savedNotes(stream, built, true)})`, sticky: false, prompted: false }
+}
+
+const failedLine = (stream: string, reason: string): Outcome => ({
+  text: `\u26A0 Could not save stream "${stream}": ${shortReason(reason)} (see ${statusPath(stream)})`,
+  sticky: true,
+  prompted: false,
+})
+
+const keptText = (stream: string | null | undefined) =>
+  stream ? `staying in this session; stream "${stream}" stays saved in ${statePath(stream)}` : 'staying in this session; the saved stream stays on disk'
 
 // ---------- context zones (T19, T21) ----------
 
@@ -740,13 +785,65 @@ function resetZones() {
 // A plugin has ONE `$.ui.status`. Precedence: an active save/pack flow (flowLine) wins; when it clears, the advice line
 // (if still valid) is drawn again. Every status of the mod goes through flowStatus() / paint(), never `$.ui.status` directly.
 
+// Precedence: the active flow, the last outcome, a failed journal write, the advice, then checkpoints waiting for a stream.
 function paint($: EngineInterface) {
-  $.ui.status(flowLine ?? (advice ? adviceText(advice) : undefined))
+  const journalFailed = waiting && waiting.stream !== null ? waitingText(waiting) : undefined
+  const noStream = waiting && waiting.stream === null ? waitingText(waiting) : undefined
+  $.ui.status(flowLine ?? outcome?.text ?? journalFailed ?? (advice ? adviceText(advice) : undefined) ?? noStream)
 }
 
 function flowStatus($: EngineInterface, text: string | undefined) {
+  stopProgress()
   flowLine = text
   paint($)
+}
+
+export const elapsed = (ms: number) => {
+  const s = Math.floor(ms / 1000)
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${pad(s % 60)}s`
+}
+
+export function progressText(label: string, ms: number): string {
+  if (ms >= SLOW_MS) return `${label}: still running after ${elapsed(ms)}, slow or stuck; the outcome will show here`
+  return ms < 1000 ? `${label}...` : `${label}... ${elapsed(ms)}`
+}
+
+// A flow line with its elapsed time, ticking every second until the next flowStatus(). `label` is read at each tick.
+function startProgress($: EngineInterface, label: () => string) {
+  flowStatus($, progressText(label(), 0))
+  let ms = 0
+  ticker = $.clock.every(1000, () => {
+    ms += 1000
+    flowLine = progressText(label(), ms)
+    paint($)
+  })
+}
+
+function stopProgress() {
+  ticker?.cancel()
+  ticker = null
+}
+
+export function waitingText(w: Waiting): string {
+  const n = `${w.count} checkpoint${w.count === 1 ? '' : 's'}`
+  return w.stream === null
+    ? `${n} waiting for a stream: /rename the session or type /pack save <name>`
+    : `\u26A0 Journal of stream "${w.stream}" not written: ${n} kept, retried at the next checkpoint`
+}
+
+function setWaiting($: EngineInterface, next: Waiting | null) {
+  if (next === null && waiting === null) return
+  if (next && waiting && next.count === waiting.count && next.stream === waiting.stream) return
+  waiting = next
+  paint($)
+}
+
+// An ok outcome goes at the end of the first turn prompted after it.
+function outcomeTurnDone($: EngineInterface) {
+  if (outcome && !outcome.sticky && outcome.prompted) {
+    outcome = null
+    paint($)
+  }
 }
 
 // ---------- advice wording (plain words, each says what happened and what to type) ----------
@@ -786,7 +883,7 @@ export function adviceText(a: Advice): string {
   }
 }
 
-const savingText = (pct: number) => `Context almost full (${pct}%): automatically saving your progress...`
+const savingText = (pct: number) => `Context almost full (${pct}%): automatically saving your progress`
 
 const seamName = (s: Seam) => (s.level === 'strong' ? `strong:${s.task ?? 'pivot'}` : s.level)
 
@@ -844,6 +941,7 @@ function adviceStep($: EngineInterface, fill: number, pct: number): string {
       : { kind: 'decision', rank: 1, floor: SOFT, pct }
   if (!advice) {
     advice = next
+    if (outcome && !outcome.sticky) outcome = null
     paint($)
     if (!softDone) {
       softDone = true
@@ -853,6 +951,7 @@ function adviceStep($: EngineInterface, fill: number, pct: number): string {
   }
   if (next.rank > advice.rank) {
     advice = next
+    if (outcome && !outcome.sticky) outcome = null
     paint($)
     return 'advice-upgrade'
   }
@@ -881,7 +980,7 @@ function hardSave($: EngineInterface, pct: number): string {
   }
   if (saving || phase !== 'idle') return saving ? 'hard-skip-saving' : `hard-skip-${phase}`
   saving = true
-  flowStatus($, savingText(pct))
+  startProgress($, () => savingText(pct))
   saveInBackground($, stream, { pct, cycle }).catch(() => {
     saving = false
   })
@@ -890,7 +989,10 @@ function hardSave($: EngineInterface, pct: number): string {
 
 // The hard save finished: its outcome is the advice line (the flow line goes) and one toast. Stale (re-armed meanwhile): log only.
 function hardOutcome($: EngineInterface, auto: { pct: number; cycle: number }, failure: string | null) {
+  stopProgress()
   flowLine = undefined
+  // Newer than any ok outcome still shown.
+  if (outcome && !outcome.sticky) outcome = null
   if (auto.cycle !== cycle) {
     paint($)
     return
@@ -898,7 +1000,7 @@ function hardOutcome($: EngineInterface, auto: { pct: number; cycle: number }, f
   const pct = lastM ? lastM.pct : auto.pct
   advice = failure === null ? { kind: 'saved', rank: 3, floor: SOFT, pct } : { kind: 'failed', rank: 3, floor: SOFT, pct, reason: failure }
   paint($)
-  $.ui.toast(adviceText(advice))
+  $.ui.toast(adviceText(advice), failure === null ? undefined : { timeoutMs: ERROR_TOAST_MS })
 }
 
 async function onMeasure($: EngineInterface, tokens: number, window: number, percent: number | undefined) {
@@ -935,11 +1037,17 @@ async function persist($: EngineInterface) {
   if (pending) await $.store.set(STORE_KEY, { ...pending, phase } satisfies Stored)
 }
 
-async function cancel($: EngineInterface) {
+// [x] in the pane, Esc on it, or /pack cancel: the save is already written, only the fresh start is dropped.
+async function cancel($: EngineInterface, closePane: boolean): Promise<string> {
+  const stream = pending?.stream ?? current()
   await reset($)
-  await $.ui.close({ id: PANE })
-  $.ui.toast('Fresh start cancelled')
+  if (closePane) await $.ui.close({ id: PANE })
+  const text = keptText(stream)
+  $.ui.toast(text.charAt(0).toUpperCase() + text.slice(1))
+  return text
 }
+
+const READY = 'Ready: type /clear to continue in a fresh session, or /pack cancel to stay'
 
 async function clearAndContinue($: EngineInterface) {
   phase = 'armed'
@@ -949,7 +1057,7 @@ async function clearAndContinue($: EngineInterface) {
   await $.ui.close({ id: PANE })
   flowStatus($, 'Starting a fresh session...')
   $.command.run({ command: 'clear' }).catch(() => {
-    flowStatus($, 'Ready: type /clear to continue in a fresh session')
+    flowStatus($, READY)
   })
 }
 
@@ -966,7 +1074,7 @@ async function armedPack($: EngineInterface): Promise<string | null> {
 
 async function packStream($: EngineInterface, stream: string, yes: boolean) {
   saving = true
-  flowStatus($, `Saving stream "${stream}" before the fresh start...`)
+  startProgress($, () => `Saving stream "${stream}" before the fresh start`)
   let built: Built
   try {
     built = await buildState($, stream)
@@ -974,14 +1082,14 @@ async function packStream($: EngineInterface, stream: string, yes: boolean) {
     saving = false
   }
   if (built.kind === 'blocked') {
-    // Nothing armed: the advice (if still valid) comes back with the flow line gone.
+    // Nothing armed: the failure stays on the status line; the {text} reply is the record, no toast.
+    outcome = failedLine(stream, built.reason)
     flowStatus($, undefined)
-    $.ui.toast(`Fresh start cancelled: ${built.reason}`)
-    return { text: `pack: fresh start cancelled: ${built.reason}` }
+    return { text: `pack: could not save stream "${stream}": ${built.reason.replace(/\.$/, '')}. No fresh start armed.` }
   }
 
   const pack = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
-  pending = { pack, createdAt: await $.clock.now(), cwd: await $.session.cwd() }
+  pending = { pack, createdAt: await $.clock.now(), cwd: await $.session.cwd(), stream }
 
   // --yes: no pane, so every outcome goes back as {text} (visible over Remote Control, unlike status/pane).
   // The 8,000-char cap is already enforced on the state by assemble().
@@ -990,13 +1098,13 @@ async function packStream($: EngineInterface, stream: string, yes: boolean) {
     phase = 'armed'
     rearmZones()
     await persist($)
-    flowStatus($, 'Ready: type /clear to continue in a fresh session')
-    return { text: `pack: stream "${stream}" saved (${savedNotes(stream, built)}). Type /clear to continue in a fresh session.` }
+    flowStatus($, READY)
+    return { text: `pack: stream "${stream}" saved (${savedNotes(stream, built)}). Type /clear to continue in a fresh session, or /pack cancel to stay.` }
   }
 
   phase = 'review'
   await persist($)
-  flowStatus($, 'Check the summary, then confirm or cancel')
+  flowStatus($, 'Saved. Check the pack, then clear & continue [c] or keep working [x]')
   await $.ui.open({ id: PANE, title: 'pack', focus: true, closeOnEscape: true })
   return {}
 }
@@ -1020,10 +1128,17 @@ async function load($: EngineInterface, stream: string) {
   const text = `${state.trimEnd()}\n\n${journalRule(stream)}\n\n${UNPACK_RULES}`
   $.clock.after(1, () => {
     $.prompt.submit({ text, asUser: true }).catch(err => {
-      $.ui.toast(`Loading stream "${stream}" failed: ${String(err)}. Try /unpack ${stream} again`)
+      loadFailed($, `Loading stream "${stream}" failed: ${String(err)}. Try /unpack ${stream} again`)
     })
   })
   return { text: `unpack: loading stream "${stream}" as the first message.` }
+}
+
+// A failed injection: toast + sticky status line (the {text} reply already said "loading").
+function loadFailed($: EngineInterface, text: string) {
+  $.ui.toast(text, { timeoutMs: ERROR_TOAST_MS })
+  outcome = { text: `\u26A0 ${shortReason(text)}`, sticky: true, prompted: false }
+  paint($)
 }
 
 // ---------- hooks ----------
@@ -1031,13 +1146,26 @@ async function load($: EngineInterface, stream: string) {
 // Shared by /pack and /unpack: `prefix` names the command in the replies.
 async function handle($: EngineInterface, args: ParsedArgs, prefix: 'pack' | 'unpack') {
   if ('error' in args) return { text: `${prefix}: ${args.error}` }
+  if (args.verb === 'cancel') {
+    if (saving) return { text: `${prefix}: a save is running and cannot be stopped; its outcome will show in the status line` }
+    if (phase === 'idle') return { text: `${prefix}: nothing to cancel` }
+    const text = await cancel($, phase === 'review')
+    outcome = null
+    paint($)
+    return { text: `${prefix}: ${text}` }
+  }
   if (phase !== 'idle' || saving) return {
       text: saving
-        ? `${prefix}: already saving, wait a few seconds`
+        ? `${prefix}: a save is running, its outcome will show in the status line`
         : phase === 'review'
-          ? `${prefix}: a summary is waiting for your review, confirm or cancel it first`
-          : `${prefix}: ready for a fresh start, type /clear`,
+          ? `${prefix}: a pack is waiting for your review: clear & continue [c] or keep working [x]`
+          : `${prefix}: ready for a fresh start: type /clear, or /pack cancel to stay`,
     }
+  // A new command replaces the last outcome.
+  if (outcome) {
+    outcome = null
+    paint($)
+  }
 
   // stream = explicit arg (sticky binding) > last session_title seen > refuse
   const arg = args.stream
@@ -1059,12 +1187,12 @@ async function handle($: EngineInterface, args: ParsedArgs, prefix: 'pack' | 'un
 
   if (args.verb === 'save') {
     saving = true
-    flowStatus($, `Saving stream "${stream}"...`)
+    startProgress($, () => `Saving stream "${stream}"`)
     // Not awaited: the hook returns at once. Whether the fork outlives the hook is proven live (plan T14).
     saveInBackground($, stream).catch(() => {
       saving = false
     })
-    return { text: `${prefix}: saving stream "${stream}"...` }
+    return { text: `${prefix}: save of stream "${stream}" started; the outcome will show in the status line` }
   }
 
   return packStream($, stream, args.yes)
@@ -1076,7 +1204,7 @@ export function registerPack(on: On) {
       {
         name: 'pack',
         description: 'Save the progress of a stream, then continue it in a fresh session after /clear',
-        argumentHint: 'save [stream] | [stream] [--yes]',
+        argumentHint: 'save [stream] | cancel | [stream] [--yes]',
       },
       {
         name: 'unpack',
@@ -1100,21 +1228,22 @@ export function registerPack(on: On) {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Markdown, Button } = $.ui.resolve(e)
     const pack = pending?.pack ?? ''
+    const stream = pending?.stream ?? current()
     const isCut = pack.length > MARKDOWN_MAX
     const shown = isCut ? pack.slice(0, MARKDOWN_MAX - 200) : pack
 
     return (
       <Box flexDirection="column">
         <Text dimColor>
-          pack: {pack.length} chars{isCut ? ' (view truncated, full pack kept)' : ''}
+          {stream ? `Saved to ${statePath(stream)}` : 'Saved'}, {pack.length} chars{isCut ? ' (view truncated, full pack kept)' : ''}. Clear now to continue in a fresh session?
         </Text>
         <Markdown text={shown} />
         <Box flexDirection="row" gap={2}>
           <Button key="continue" hotkey="c" variant="primary" onPress={() => clearAndContinue($)}>
             clear & continue
           </Button>
-          <Button key="cancel" hotkey="x" role="dismiss" onPress={() => cancel($)}>
-            cancel
+          <Button key="cancel" hotkey="x" role="dismiss" onPress={() => cancel($, true)}>
+            keep working
           </Button>
         </Box>
       </Box>
@@ -1163,7 +1292,7 @@ export function registerPack(on: On) {
   // The three gating hooks below carry a `.catch`: a hook that fails is silently absent, so the handler lets the close, the prompt and the session through unchanged.
   // Esc / close mark while reviewing = cancel.
   on('ui.close', async ($, e, next) => {
-    if (e.id === PANE && e.origin.kind === 'person' && phase === 'review') await reset($)
+    if (e.id === PANE && e.origin.kind === 'person' && phase === 'review') await cancel($, false)
     return next(e)
   }).catch(($, e, next) => {
     noteCaught($, 'ui.close', next.error)
@@ -1171,6 +1300,7 @@ export function registerPack(on: On) {
   })
 
   on('classic.UserPromptSubmit', async ($, e, next) => {
+    if (outcome && !outcome.sticky) outcome.prompted = true
     try {
       await noteTitle($, e.session_title)
     } catch (err) {
@@ -1183,8 +1313,9 @@ export function registerPack(on: On) {
   })
 
   on('classic.SessionStart', async ($, e, next) => {
-    // Any source: the wall may differ (model), the fill starts over; seam, flags and the advice line re-arm.
+    // Any source: the wall may differ (model), the fill starts over; seam, flags and the advice line re-arm. The last outcome goes.
     resetZones()
+    outcome = null
     if (e.source !== 'clear') {
       // A new, resumed or forked session is another session: unbind and drop any armed pack.
       if (e.source === 'startup' || e.source === 'resume' || e.source === 'fork') {
@@ -1193,7 +1324,9 @@ export function registerPack(on: On) {
         phase = 'idle'
         pending = null
         saving = false
+        stopProgress()
         flowLine = undefined
+        waiting = null
       }
       paint($)
       try {
@@ -1216,7 +1349,7 @@ export function registerPack(on: On) {
 
     const restored = current()
     $.prompt.submit({ text: `${pack}\n\n${UNPACK_RULES}`, asUser: true }).catch(err => {
-      $.ui.toast(`Could not load the saved notes: ${String(err)}. Type /unpack ${restored ?? '<stream>'}`)
+      loadFailed($, `Could not load the saved notes: ${String(err)}. Type /unpack ${restored ?? '<stream>'}`)
     })
     $.ui.toast(restored ? `Fresh session started with the saved notes of stream "${restored}"` : 'Fresh session started with the saved notes')
     return next(e)
@@ -1246,6 +1379,7 @@ export function registerPack(on: On) {
       // Seam of the last main turn, for the advice. The d.ts does not order turn.complete against session.measure:
       // re-check the soft advice here with the last known fill, so either order works.
       try {
+        outcomeTurnDone($)
         seam = seamOf(e.answer)
         if (lastM !== null && lastM.tokens < lastM.hardAt) {
           const action = adviceStep($, lastM.fill, lastM.pct)
@@ -1258,7 +1392,7 @@ export function registerPack(on: On) {
         await capture($, e.answer)
       } catch (err) {
         try {
-          $.ui.toast(`Could not record this turn's checkpoint: ${String(err)}`)
+          $.ui.toast(`Could not record this turn's checkpoint: ${String(err)}`, { timeoutMs: ERROR_TOAST_MS })
         } catch {
           // nothing left to do
         }

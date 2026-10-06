@@ -18,12 +18,27 @@ claude plugin test /repos/agent-skills/stoa
 | command | does |
 |---|---|
 | `/pack [stream] [--yes\|-y]` | save (awaited) + review pane `[c]`/`[x]`, or `--yes` arm only; you type `/clear`; the pack is re-injected |
-| `/pack save [stream]` | fork -> `pack-<stream>-llm.md`; returns at once, the outcome is a toast and `pack-<stream>-status-llm.md`, no `/clear` |
+| `/pack save [stream]` | fork -> `pack-<stream>-llm.md`; returns at once, the outcome is a toast, the status line and `pack-<stream>-status-llm.md`, no `/clear` |
+| `/pack cancel` | leaves the review pane or the armed state (`--yes`); the saved file stays, `/clear` then injects nothing |
 | `/unpack <stream>` | `pack-<stream>-llm.md` -> first message of this session (state + journal rule + unpack rules) |
 
-`/pack load` is removed: it replies with a pointer to `/unpack <stream>`. `save` and `load` are reserved words, never stream names.
+`/pack load` is removed: it replies with a pointer to `/unpack <stream>`. `save`, `load` and `cancel` are reserved words, never stream names.
 
 Stream = explicit argument (`^[a-zA-Z0-9_-]{1,50}$`, binds for the session; `/unpack <stream>` binds too) > the session title set by `/rename` (slugified when it is not a valid name) > refused with a message. The binding survives `/clear`.
+
+## Feedback
+
+One channel per role. The status line holds the present state, a toast announces an event, and a `{text}` reply is the record in the transcript, written in the past tense.
+
+| what | status line | toast |
+|---|---|---|
+| save running | `Saving stream "x"... 12s`, ticking; past 3 min it says slow or stuck (the fork cannot be cancelled) | - |
+| save ok | `✓ Stream "x" saved at 14:32 (N chars)`, until the end of the next prompted turn | 4 s |
+| save over the cap (degraded), save failed, unpack failed | `⚠ ...`, until the next `/pack` or `/unpack` | 12 s |
+| checkpoints and no stream | `N checkpoints waiting for a stream: ...`, under the advice | - |
+| journal write failed | `⚠ Journal of stream "x" not written: ...`, over the advice | 12 s |
+
+Precedence on the one status line: running flow, last outcome, failed journal write, context advice, checkpoints waiting for a stream. A newer advice or auto-save outcome replaces an ok outcome.
 
 ## Storage
 

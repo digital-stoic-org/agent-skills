@@ -187,8 +187,8 @@
     {
       "name": "stoa",
       "source": "./stoa",
-      "description": "Next plugin generation (experimental), replaces dstoic. Ships the pack mod: /pack saves a stream's progress and arms a fresh start after /clear, /pack save only saves, /unpack <stream> loads a saved stream in a new session.",
-      "version": "0.4.1",
+      "description": "Next plugin generation (experimental), replaces dstoic. Ships the pack mod: /pack saves a stream's progress and arms a fresh start after /clear, /pack save only saves, /pack cancel drops an armed fresh start, /unpack <stream> loads a saved stream in a new session.",
+      "version": "0.5.0",
       "author": {
         "name": "dstoic"
       },

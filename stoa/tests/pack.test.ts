@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { HARD, SOFT, STRONG, WALL_CAP, hardAtOf, hasDecisionSeam, hideTrailer, seamOf } from '../hooks/pack.tsx'
+import { HARD, SLOW_MS, SOFT, STRONG, WALL_CAP, elapsed, hardAtOf, hasDecisionSeam, hideTrailer, progressText, seamOf, waitingText } from '../hooks/pack.tsx'
 
 const PANE_PROPS = {
   title: 'pack',
@@ -197,7 +197,7 @@ test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => 
   const w = world(on, 'GATE: blocked - mid synthesis')
   await fresh($)
   const out = await packProj($)
-  expect(out.text).toBe('pack: fresh start cancelled: mid synthesis')
+  expect(out.text).toBe('pack: could not save stream "proj": mid synthesis. No fresh start armed.')
   expect(w.opens).toHaveLength(0)
   expect(w.store.get('pack:pending')).toBeUndefined()
   expect(w.files.has(STATE)).toBe(false)
@@ -207,7 +207,7 @@ test('fork without answer: blocked with the reason', async ($, on) => {
   const w = world(on, null)
   await fresh($)
   const out = await packProj($)
-  expect(out.text).toBe('pack: fresh start cancelled: fork failed (nothing-to-fork)')
+  expect(out.text).toBe('pack: could not save stream "proj": fork failed (nothing-to-fork). No fresh start armed.')
   expect(w.opens).toHaveLength(0)
 })
 
@@ -300,7 +300,7 @@ test('-y with a state over 8,000 chars after cuts: blocked, nothing written, not
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
   await fresh($)
   const out = await packProj($, '-y')
-  expect(out.text).toContain('pack: fresh start cancelled: state')
+  expect(out.text).toContain('pack: could not save stream "proj": state')
   expect(out.text).toContain('> 8000')
   expect(w.opens).toHaveLength(0)
   expect(w.clears).toBe(0)
@@ -684,9 +684,12 @@ test('over cap after the retry: degraded state written (discarded then learnings
   expect(learnings.slice(-3)).toEqual(['new 77 (c77)', 'new 78 (c78)', 'new 79 (c79)'])
   expect(section(state, 'stale').at(-1)).toMatch(/^overflow: dropped to fit 8000 chars: c01, c02, c03.* — grep the journal by id$/)
   expect(section(state, 'decisions')).toHaveLength(1)
-  expect(w.toasts[0]).toContain('over the cap, dropped: ')
-  expect(w.toasts[0]).toContain('discarded -2, learnings -')
+  // toast + sticky status: plain words; the cut details stay in the status file
+  expect(w.toasts[0]).toBe('\u26A0 Stream "proj" saved over the size cap: old entries dropped, see pack-proj-status-llm.md')
+  expect(w.statuses.at(-1)).toBe(w.toasts[0])
   expect(w.files.get(STATUS)).toContain('outcome: degraded')
+  expect(w.files.get(STATUS)).toContain('over the cap, dropped: ')
+  expect(w.files.get(STATUS)).toContain('discarded -2, learnings -')
 })
 
 test('over cap, the retry fork retires enough: clean state, nothing dropped', async ($, on) => {
@@ -724,9 +727,9 @@ test('save: returns before the fork settles, writes the state after, toasts the 
   let release: () => void = () => undefined
   w.gate = new Promise<void>(r => (release = r))
   const out = await runPack($, 'save proj')
-  expect(out.text).toBe('pack: saving stream "proj"...')
+  expect(out.text).toBe('pack: save of stream "proj" started; the outcome will show in the status line')
   expect(w.files.has(STATE)).toBe(false)
-  expect((await runPack($, 'save proj')).text).toBe('pack: already saving, wait a few seconds')
+  expect((await runPack($, 'save proj')).text).toBe('pack: a save is running, its outcome will show in the status line')
   release()
   await settle(() => w.files.has(STATE))
   expect(w.files.get(STATE)).toContain('goal: ship v2')
@@ -735,7 +738,7 @@ test('save: returns before the fork settles, writes the state after, toasts the 
   expect(w.opens).toHaveLength(0)
   expect(w.clears).toBe(0)
   // the guard is released: a second save runs
-  expect((await runPack($, 'save')).text).toBe('pack: saving stream "proj"...')
+  expect((await runPack($, 'save')).text).toBe('pack: save of stream "proj" started; the outcome will show in the status line')
   await settle(() => w.toasts.filter(t => t.includes('saved')).length === 2)
 })
 
@@ -797,7 +800,7 @@ test('unpack: bad arguments are refused with the unpack usage', async ($, on) =>
 test('unpack <stream> reaches load: injects the state of a stream saved by /pack, and binds the stream', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  expect((await runPack($, 'save proj')).text).toBe('pack: saving stream "proj"...')
+  expect((await runPack($, 'save proj')).text).toBe('pack: save of stream "proj" started; the outcome will show in the status line')
   await settle(() => w.files.has(STATE))
   await fresh($)
   const out = await runUnpack($, 'proj')
@@ -807,7 +810,7 @@ test('unpack <stream> reaches load: injects the state of a stream saved by /pack
   expect(w.submits[0]).toContain('goal: ship v2')
   expect(w.submits[0]).toContain(RULE)
   // the stream is bound for the rest of the session, as the old load verb did
-  expect((await runPack($, 'save')).text).toBe('pack: saving stream "proj"...')
+  expect((await runPack($, 'save')).text).toBe('pack: save of stream "proj" started; the outcome will show in the status line')
   await settle(() => w.toasts.some(t => t.includes('saved')))
 })
 
@@ -829,7 +832,7 @@ test('register: /pack and /unpack are both declared at session start', async ($,
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
   expect(registered.map(c => c.name).sort()).toEqual(['pack', 'unpack'])
   expect(registered.find(c => c.name === 'unpack')?.argumentHint).toBe('<stream>')
-  expect(registered.find(c => c.name === 'pack')?.argumentHint).toBe('save [stream] | [stream] [--yes]')
+  expect(registered.find(c => c.name === 'pack')?.argumentHint).toBe('save [stream] | cancel | [stream] [--yes]')
 })
 
 // ---------- on-screen trailer hiding ----------
@@ -1019,7 +1022,13 @@ const measure = ($: Engine, tokens: number | undefined, changed: string[] = ['co
 
 const at = (fill: number) => Math.round(fill * WINDOW)
 const advised = (w: World) => w.toasts.filter(t => t.includes(FRESH))
-const lastStatus = (w: World) => w.statuses[w.statuses.length - 1]
+// The zone tests bind no stream: their trailers wait in the store and the no-stream hint is the background line, read as no line.
+const HINT = /^\d+ checkpoints? waiting for a stream/
+const lastStatus = (w: World) => {
+  const s = w.statuses[w.statuses.length - 1]
+  return s !== undefined && HINT.test(s) ? undefined : s
+}
+const lines = (w: World) => w.statuses.filter(s => s !== undefined && !HINT.test(s))
 const ctxLines = (w: World) => w.logs.filter(l => l.startsWith('pack: ctx pct='))
 
 test('zones: constants', () => {
@@ -1135,7 +1144,7 @@ test('zones: simple seam at 40% -> nothing', async ($, on) => {
   await complete($, SEAM)
   await measure($, at(0.4))
   expect(w.toasts).toHaveLength(0)
-  expect(w.statuses.filter(s => s !== undefined)).toHaveLength(0)
+  expect(lines(w)).toHaveLength(0)
   expect(w.forkPrompts).toHaveLength(0)
 })
 
@@ -1156,7 +1165,7 @@ test('zones: no seam -> nothing at any fill below hard', async ($, on) => {
   await complete($, 'Done.\n\n<!-- ckpt learning: a -->')
   await measure($, at(0.65))
   expect(w.toasts).toHaveLength(0)
-  expect(w.statuses.filter(s => s !== undefined)).toHaveLength(0)
+  expect(lines(w)).toHaveLength(0)
   expect(w.forkPrompts).toHaveLength(0)
 })
 
@@ -1276,8 +1285,9 @@ test('status: a pack flow wins over the advice, and the advice is back when the 
   expect(lastStatus(w)).toBe('Saving stream "proj" before the fresh start...')
   release()
   const out = await run
-  expect(out.text).toContain('pack: fresh start cancelled')
-  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  expect(out.text).toContain('pack: could not save stream "proj"')
+  // the failure stays on the status line, over the advice
+  expect(lastStatus(w)).toBe('\u26A0 Could not save stream "proj": fork failed (nothing-to-fork) (see pack-proj-status-llm.md)')
   expect(advised(w)).toHaveLength(1)
 })
 
@@ -1288,7 +1298,7 @@ test('status: review pane wins over the advice, cancel brings the advice back, n
   await complete($, TASK)
   await measure($, at(0.4))
   await packProj($)
-  expect(lastStatus(w)).toBe('Check the summary, then confirm or cancel')
+  expect(lastStatus(w)).toBe('Saved. Check the pack, then clear & continue [c] or keep working [x]')
   const ui = await mountPane($)
   await ui.press({ key: 'cancel' })
   await ui.unmount()
@@ -1305,8 +1315,8 @@ test('status: a flow never erases the advice for good: a manual save shows its l
   await runPack($, 'save proj')
   expect(w.statuses).toContain('Saving stream "proj"...')
   await settle(() => w.toasts.some(t => t.includes('saved (')))
-  // save done = re-arm: the line is gone, the toast may fire again at the next measure
-  expect(lastStatus(w)).toBeUndefined()
+  // save done = re-arm: the outcome line replaces the advice, the toast may fire again at the next measure
+  expect(lastStatus(w)).toMatch(/^\u2713 Stream "proj" saved at \d\d:\d\d \(\d+ chars\)$/)
   await measure($, at(0.41))
   expect(advised(w)).toHaveLength(2)
   expect(lastStatus(w)).toBe(STRONG_MSG(41))
@@ -1321,7 +1331,7 @@ test('advice clears: on pack --yes (armed)', async ($, on) => {
   await complete($, TASK)
   await measure($, at(0.4))
   await packProj($, '--yes')
-  expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session')
+  expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session, or /pack cancel to stay')
   await clear($)
   expect(lastStatus(w)).toBeUndefined()
 })
@@ -1666,4 +1676,120 @@ test('catch: SessionStart failing -> the catch handler runs and logs the failure
   await fresh($).catch(() => undefined)
   expect(w.logs.some(l => l.includes('pack: classic.SessionStart hook throw: '))).toBe(true)
   expect(w.logSinks).toContain('debug')
+})
+
+// ---------- feedback: progress, outcome line, /pack cancel, waiting checkpoints ----------
+
+test('feedback: elapsed and progress wording, slow past SLOW_MS', () => {
+  expect(elapsed(0)).toBe('0s')
+  expect(elapsed(59_999)).toBe('59s')
+  expect(elapsed(185_000)).toBe('3m 05s')
+  expect(progressText('Saving stream "p"', 0)).toBe('Saving stream "p"...')
+  expect(progressText('Saving stream "p"', 12_000)).toBe('Saving stream "p"... 12s')
+  expect(progressText('Saving stream "p"', SLOW_MS)).toBe('Saving stream "p": still running after 3m 00s, slow or stuck; the outcome will show here')
+  expect(waitingText({ count: 1, stream: null })).toBe('1 checkpoint waiting for a stream: /rename the session or type /pack save <name>')
+  expect(waitingText({ count: 2, stream: 'p' })).toBe('\u26A0 Journal of stream "p" not written: 2 checkpoints kept, retried at the next checkpoint')
+})
+
+test('feedback: the saving line ticks, says slow past SLOW_MS, and stops at the outcome', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  let release: () => void = () => undefined
+  w.gate = new Promise<void>(r => (release = r))
+  await runPack($, 'save proj')
+  expect(w.statuses.at(-1)).toBe('Saving stream "proj"...')
+  await w.clock.advance(2_000)
+  expect(w.statuses.at(-1)).toBe('Saving stream "proj"... 2s')
+  await w.clock.advance(SLOW_MS)
+  expect(w.statuses.at(-1)).toContain('still running after 3m 02s, slow or stuck')
+  release()
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  const done = w.statuses.at(-1)
+  expect(done).toMatch(/^\u2713 Stream "proj" saved at \d\d:\d\d \(\d+ chars\)$/)
+  await w.clock.advance(5_000)
+  expect(w.statuses.at(-1)).toBe(done)
+})
+
+test('feedback: the ok outcome stays through a turn not prompted, goes at the end of the next prompted turn', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  const done = w.statuses.at(-1)
+  expect(done).toContain('\u2713 Stream "proj" saved at')
+  await complete($, 'still running from before')
+  expect(w.statuses.at(-1)).toBe(done)
+  await title($, 'proj')
+  await complete($, 'next answer')
+  expect(w.statuses.at(-1)).toBeUndefined()
+})
+
+test('feedback: a failed save stays on the status line through turns, until the next command', async ($, on) => {
+  const w = world(on, 'GATE: blocked - mid synthesis')
+  await fresh($)
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.length > 0)
+  const failed = '\u26A0 Could not save stream "proj": mid synthesis (see pack-proj-status-llm.md)'
+  expect(w.statuses.at(-1)).toBe(failed)
+  await title($, 'proj')
+  await complete($, 'answer')
+  expect(w.statuses.at(-1)).toBe(failed)
+  w.forkText = OK()
+  await runPack($, 'save')
+  expect(w.statuses).toContain('Saving stream "proj"...')
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  expect(w.statuses.at(-1)).toContain('\u2713 Stream "proj" saved at')
+})
+
+test('feedback: /pack cancel leaves the armed state, the state file stays, /clear injects nothing', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  expect((await runPack($, 'cancel')).text).toBe('pack: nothing to cancel')
+  await packProj($, '--yes')
+  expect((await runPack($, 'save')).text).toBe('pack: ready for a fresh start: type /clear, or /pack cancel to stay')
+  const out = await runPack($, 'cancel')
+  expect(out.text).toBe('pack: staying in this session; stream "proj" stays saved in pack-proj-llm.md')
+  expect(w.statuses.at(-1)).toBeUndefined()
+  expect(w.store.get('pack:pending')).toBeUndefined()
+  expect(w.files.has(STATE)).toBe(true)
+  await clear($)
+  expect(w.submits).toHaveLength(0)
+})
+
+test('feedback: /pack cancel during the review closes the pane; cancel takes no argument and is not a stream name', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  expect((await runPack($, 'cancel proj')).text).toBe('pack: cancel takes nothing else. Usage: /pack cancel')
+  expect((await runPack($, 'cancel -y')).text).toBe('pack: cancel takes nothing else. Usage: /pack cancel')
+  expect((await runUnpack($, 'cancel')).text).toContain('reserved word')
+  await packProj($)
+  expect(w.opens).toEqual(['pack'])
+  const out = await runPack($, 'cancel')
+  expect(out.text).toBe('pack: staying in this session; stream "proj" stays saved in pack-proj-llm.md')
+  expect(w.store.get('pack:pending')).toBeUndefined()
+  expect(w.toasts.at(-1)).toBe('Staying in this session; stream "proj" stays saved in pack-proj-llm.md')
+})
+
+test('feedback: the pane says where the pack was saved and offers keep working', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await packProj($)
+  const ui = await mountPane($)
+  expect(await ui.find({ type: 'Text', text: /^Saved to pack-proj-llm\.md, \d+ chars\. Clear now/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: 'keep working' })).toBeDefined()
+  await ui.press({ key: 'cancel' })
+  await ui.unmount()
+  expect(w.toasts.at(-1)).toBe('Staying in this session; stream "proj" stays saved in pack-proj-llm.md')
+})
+
+test('feedback: checkpoints with no stream show a hint, gone once a stream takes them', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await complete($, `a\n\n${TRAILER}`)
+  expect(w.statuses.at(-1)).toBe('1 checkpoint waiting for a stream: /rename the session or type /pack save <name>')
+  await complete($, `b\n\n${TRAILER}`)
+  expect(w.statuses.at(-1)).toBe('2 checkpoints waiting for a stream: /rename the session or type /pack save <name>')
+  await title($, 'proj')
+  expect(w.statuses.at(-1)).toBeUndefined()
+  expect(w.files.get(JOURNAL)).toContain('### c02 ')
 })
