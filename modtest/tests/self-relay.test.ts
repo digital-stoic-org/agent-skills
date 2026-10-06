@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
-import { hideTrailer } from '../hooks/self-relay.tsx'
+import { HARD, SOFT, STRONG, WALL_CAP, hardAtOf, hasDecisionSeam, hideTrailer, seamOf } from '../hooks/self-relay.tsx'
 
 const PANE_PROPS = {
   title: 'self-relay',
@@ -36,6 +36,9 @@ type World = {
   opens: string[]
   clears: number
   toasts: string[]
+  logs: string[]
+  logSinks: string[]
+  statuses: (string | undefined)[]
   forkPrompts: string[]
   store: Map<string, unknown>
   files: Map<string, string>
@@ -61,6 +64,9 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     opens: [],
     clears: 0,
     toasts: [],
+    logs: [],
+    logSinks: [],
+    statuses: [],
     forkPrompts: [],
     store: new Map(Object.entries(store ?? {})),
     files: new Map(),
@@ -109,12 +115,13 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     return { value: { isPlaced: true } }
   })
   on('ui.close', () => ({ value: undefined }))
-  on('ui.status', () => ({ value: undefined }))
+  on('ui.status', (_$, e) => (w.statuses.push(e.text), { value: undefined }))
   on('ui.toast', (_$, e) => (w.toasts.push(e.text), { value: undefined }))
-  on('ui.log', () => ({ value: undefined }))
+  on('ui.log', (_$, e) => (w.logs.push(e.text), w.logSinks.push(e.to), { value: undefined }))
   on('classic.SessionStart', () => ({}))
   on('classic.UserPromptSubmit', () => ({}))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
+  on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('command.run', { command: 'clear' }, () => {
     w.clears++
     return {}
@@ -174,7 +181,7 @@ test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => 
   const w = world(on, 'GATE: blocked - mid synthesis')
   await fresh($)
   const out = await relayProj($)
-  expect(out.text).toBe('self-relay blocked: mid synthesis')
+  expect(out.text).toBe('self-relay: fresh start cancelled: mid synthesis')
   expect(w.opens).toHaveLength(0)
   expect(w.store.get('self-relay:pending')).toBeUndefined()
   expect(w.files.has(STATE)).toBe(false)
@@ -184,7 +191,7 @@ test('fork without answer: blocked with the reason', async ($, on) => {
   const w = world(on, null)
   await fresh($)
   const out = await relayProj($)
-  expect(out.text).toBe('self-relay blocked: fork failed (nothing-to-fork)')
+  expect(out.text).toBe('self-relay: fresh start cancelled: fork failed (nothing-to-fork)')
   expect(w.opens).toHaveLength(0)
 })
 
@@ -277,7 +284,7 @@ test('-y with a state over 8,000 chars after cuts: blocked, nothing written, not
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
   await fresh($)
   const out = await relayProj($, '-y')
-  expect(out.text).toContain('self-relay blocked: state')
+  expect(out.text).toContain('self-relay: fresh start cancelled: state')
   expect(out.text).toContain('> 8000')
   expect(w.opens).toHaveLength(0)
   expect(w.clears).toBe(0)
@@ -297,7 +304,7 @@ test('stream: explicit arg > session_title > refuse', async ($, on) => {
   expect(w.forkPrompts).toHaveLength(0)
 
   await title($, 'my-title')
-  expect((await runSelfRelay($, '--yes')).text).toContain('relay-my-title-llm.md')
+  expect((await runSelfRelay($, '--yes')).text).toContain('stream "my-title" saved')
   await clear($)
 
   await runSelfRelay($, 'explicit --yes')
@@ -306,7 +313,7 @@ test('stream: explicit arg > session_title > refuse', async ($, on) => {
 
   // the explicit binding wins over a later title
   await title($, 'later-title')
-  expect((await runSelfRelay($, '--yes')).text).toContain('relay-explicit-llm.md')
+  expect((await runSelfRelay($, '--yes')).text).toContain('stream "explicit" saved')
 })
 
 test('stream: a session_title that is not a stream name is slugified', async ($, on) => {
@@ -315,7 +322,7 @@ test('stream: a session_title that is not a stream name is slugified', async ($,
     await fresh($)
     await title($, t)
     const out = await runSelfRelay($, '--yes')
-    return out.text?.match(/relay-(.+)-llm\.md/)?.[1] ?? 'none'
+    return out.text?.match(/stream "(.+)" saved/)?.[1] ?? 'none'
   }
   expect(await streamOf('Keep_Case-1')).toBe('Keep_Case-1')
   expect(await streamOf('  Hello, World!! ')).toBe('hello-world')
@@ -435,7 +442,7 @@ test('journal: still racing after the retry -> toast, entry kept in the store bu
   await complete($, TRAILER)
   expect(w.files.get(JOURNAL)).not.toContain(TRAILER)
   expect(w.store.get('self-relay:buffer:sess-1')).toHaveLength(1)
-  expect(w.toasts.some(t => t.includes('journal write failed'))).toBe(true)
+  expect(w.toasts.some(t => t.includes('Could not write the journal of stream'))).toBe(true)
   // the next successful capture flushes the buffer first
   w.afterRead = null
   await complete($, '<!-- ckpt decision: later -->')
@@ -581,18 +588,18 @@ test('save: returns before the fork settles, writes the state after, toasts the 
   let release: () => void = () => undefined
   w.gate = new Promise<void>(r => (release = r))
   const out = await runSelfRelay($, 'save proj')
-  expect(out.text).toBe('self-relay: saving proj...')
+  expect(out.text).toBe('self-relay: saving stream "proj"...')
   expect(w.files.has(STATE)).toBe(false)
-  expect((await runSelfRelay($, 'save proj')).text).toBe('self-relay: already saving')
+  expect((await runSelfRelay($, 'save proj')).text).toBe('self-relay: already saving, wait a few seconds')
   release()
   await settle(() => w.files.has(STATE))
   expect(w.files.get(STATE)).toContain('goal: ship v2')
   await settle(() => w.toasts.some(t => t.includes('saved')))
-  expect(w.toasts.some(t => t.includes('proj saved'))).toBe(true)
+  expect(w.toasts.some(t => t.includes('Stream "proj" saved'))).toBe(true)
   expect(w.opens).toHaveLength(0)
   expect(w.clears).toBe(0)
   // the guard is released: a second save runs
-  expect((await runSelfRelay($, 'save')).text).toBe('self-relay: saving proj...')
+  expect((await runSelfRelay($, 'save')).text).toBe('self-relay: saving stream "proj"...')
   await settle(() => w.toasts.filter(t => t.includes('saved')).length === 2)
 })
 
@@ -612,7 +619,7 @@ test('load: injects state + journal rule + regime as the first message', async (
   await fresh($)
   w.files.set(STATE, 'stream: proj\ngoal: g\n')
   const out = await runSelfRelay($, 'load proj')
-  expect(out.text).toContain('loading relay-proj-llm.md')
+  expect(out.text).toContain('loading stream "proj" as the first message')
   // the host refuses prompt.submit inside the command.run hook: it runs from a clock.after dispatch
   expect(w.submits).toHaveLength(0)
   await w.clock.advance(5)
@@ -630,7 +637,7 @@ test('load: missing state file -> {text} error, nothing injected', async ($, on)
   const w = world(on, OK())
   await fresh($)
   const out = await runSelfRelay($, 'load nowhere')
-  expect(out.text).toContain('no state file relay-nowhere-llm.md')
+  expect(out.text).toContain('no saved stream "nowhere" in this folder')
   expect(w.submits).toHaveLength(0)
 })
 
@@ -779,4 +786,679 @@ test('journal capture still sees the full trailer while the drawing hides it', a
   await ui.unmount()
   await complete($, answer)
   expect(w.files.get(JOURNAL)).toContain(TRAILER)
+})
+
+
+// ---------- T19 / T21 context zones ----------
+
+// Live shape: 200k window, wall (autoCompactThreshold) below it. All floors are relative to the WINDOW (T22).
+const WINDOW = 200_000
+const WALL = 160_000
+// A decision = a simple seam. A closed task or a pivot = a strong seam (text detection, no new clause).
+const SEAM = 'Done.\n\n<!-- ckpt decision: use code · reasoning: because -->'
+const TASK = 'Done.\n\n<!-- ckpt learning: x · open: T19 done -->'
+const PIVOT = 'Done.\n\n<!-- ckpt pivot: switch to code · reasoning: because -->'
+
+const FRESH = 'Good moment for a fresh start'
+const STRONG_MSG = (pct: number) => `${FRESH}: T19 just closed (context ${pct}%). Type /self-relay --yes`
+const PIVOT_MSG = (pct: number) => `${FRESH}: the direction just changed (context ${pct}%). Type /self-relay --yes`
+const SIMPLE_MSG = (pct: number) => `${FRESH}: a decision just landed (context ${pct}%). Type /self-relay --yes`
+const SAVED_MSG = (pct: number) => `Progress saved automatically (context ${pct}%). Type /self-relay --yes to continue in a fresh session`
+const SAVING_MSG = (pct: number) => `Context almost full (${pct}%): automatically saving your progress...`
+
+// Stubs session.usage; `calls.n` counts the asks. wall null = no autoCompactThreshold; raw null = no rawMaxTokens.
+function usage(on: On, wall: number | null = WALL, raw: number | null = null, window = WINDOW) {
+  const calls = { n: 0, args: [] as unknown[] }
+  on('session.usage', (_$, e) => {
+    calls.n++
+    calls.args.push({ breakdown: e.breakdown })
+    return {
+      value: {
+        startedAt: 0,
+        context: {
+          window,
+          breakdown: { autoCompactThreshold: wall ?? undefined, rawMaxTokens: raw ?? undefined },
+        },
+        rateLimits: [],
+      },
+    } as never
+  })
+  return calls
+}
+
+const measure = ($: Engine, tokens: number | undefined, changed: string[] = ['context'], percent?: number, window = WINDOW) =>
+  $.session.measure({
+    context: tokens === undefined ? { window } : { window, tokens, ...(percent === undefined ? {} : { percent }) },
+    rateLimits: [],
+    changed,
+  } as never)
+
+const at = (fill: number) => Math.round(fill * WINDOW)
+const advised = (w: World) => w.toasts.filter(t => t.includes(FRESH))
+const lastStatus = (w: World) => w.statuses[w.statuses.length - 1]
+const ctxLines = (w: World) => w.logs.filter(l => l.startsWith('self-relay: ctx pct='))
+
+test('zones: constants', () => {
+  expect(STRONG).toBe(0.3)
+  expect(SOFT).toBe(0.5)
+  expect(HARD).toBe(0.7)
+  expect(WALL_CAP).toBe(0.95)
+})
+
+test('zones: hardAtOf = min(HARD * window, WALL_CAP * wall); no wall = HARD * window', () => {
+  expect(hardAtOf(200_000, 167_000)).toBe(140_000)
+  expect(hardAtOf(1_000_000, 400_000)).toBe(380_000)
+  expect(hardAtOf(1_000_000, 1_000_000)).toBe(700_000)
+  expect(hardAtOf(200_000, null)).toBe(140_000)
+})
+
+test('zones: floors are exact on the WINDOW (strong 30%, simple 50%, hard 70%)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await complete($, TASK)
+  await measure($, 59_999)
+  expect(advised(w)).toHaveLength(0)
+  await measure($, 60_000)
+  expect(advised(w)).toEqual([STRONG_MSG(30)])
+  await clear($)
+  await complete($, SEAM)
+  await measure($, 99_999)
+  expect(advised(w)).toHaveLength(1)
+  await measure($, 100_000)
+  expect(advised(w)).toEqual([STRONG_MSG(30), SIMPLE_MSG(50)])
+  await clear($)
+  await measure($, 139_999)
+  expect(w.forkPrompts).toHaveLength(0)
+  await measure($, 140_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+})
+
+test('zones: the message shows the window percent, the status-line one when present (live: 116,000 / 200,000, wall 167,000 -> 58%)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on, 167_000)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, 116_000)
+  expect(lastStatus(w)).toBe(STRONG_MSG(58))
+  await measure($, 116_000, ['context'], 57)
+  expect(lastStatus(w)).toBe(STRONG_MSG(57))
+  expect(advised(w)).toEqual([STRONG_MSG(58)])
+})
+
+test('zones: hasDecisionSeam needs a decision clause in a ckpt trailer', () => {
+  expect(hasDecisionSeam(SEAM)).toBe(true)
+  expect(hasDecisionSeam('x\n<!-- ckpt learning: a · open: b -->')).toBe(false)
+  expect(hasDecisionSeam('decision: not in a trailer')).toBe(false)
+})
+
+test('seam: "T19 done", "T21 ✅", "closes T4" and a pivot clause are strong', () => {
+  expect(seamOf('<!-- ckpt learning: x · open: T19 done -->')).toEqual({ level: 'strong', task: 'T19' })
+  expect(seamOf('<!-- ckpt decision: ship · learning: T21 ✅ -->')).toEqual({ level: 'strong', task: 'T21' })
+  expect(seamOf('<!-- ckpt learning: closes T4 -->')).toEqual({ level: 'strong', task: 'T4' })
+  expect(seamOf('<!-- ckpt learning: T7 CLOSED -->')).toEqual({ level: 'strong', task: 'T7' })
+  expect(seamOf('<!-- ckpt pivot: new direction · reasoning: x -->')).toEqual({ level: 'strong' })
+  // the id nearest to the done word
+  expect(seamOf('<!-- ckpt learning: T5 blocked, T4 done -->')).toEqual({ level: 'strong', task: 'T4' })
+})
+
+test('seam: a decision alone is simple; a task id without done, or done without an id, is not strong', () => {
+  expect(seamOf(SEAM)).toEqual({ level: 'simple' })
+  expect(seamOf('<!-- ckpt learning: T19 is next -->')).toEqual({ level: 'none' })
+  expect(seamOf('<!-- ckpt learning: the migration is done -->')).toEqual({ level: 'none' })
+  expect(seamOf('<!-- ckpt learning: T19 undone -->')).toEqual({ level: 'none' })
+  expect(seamOf('T19 done, pivot: no trailer here')).toEqual({ level: 'none' })
+  expect(seamOf('no trailer')).toEqual({ level: 'none' })
+})
+
+test('zones: strong seam at 40% -> advice line + one toast, same wording', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(advised(w)).toEqual([STRONG_MSG(40)])
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('zones: strong seam by a pivot -> the direction wording', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, PIVOT)
+  await measure($, at(0.41))
+  expect(advised(w)).toEqual([PIVOT_MSG(41)])
+  expect(lastStatus(w)).toBe(PIVOT_MSG(41))
+})
+
+test('zones: strong seam below STRONG -> nothing', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.29))
+  expect(w.toasts).toHaveLength(0)
+  expect(lastStatus(w)).toBeUndefined()
+})
+
+test('zones: simple seam at 40% -> nothing', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, at(0.4))
+  expect(w.toasts).toHaveLength(0)
+  expect(w.statuses.filter(s => s !== undefined)).toHaveLength(0)
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('zones: simple seam at 63% -> advice line + one toast', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, at(0.63))
+  expect(advised(w)).toEqual([SIMPLE_MSG(63)])
+  expect(lastStatus(w)).toBe(SIMPLE_MSG(63))
+})
+
+test('zones: no seam -> nothing at any fill below hard', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, 'Done.\n\n<!-- ckpt learning: a -->')
+  await measure($, at(0.65))
+  expect(w.toasts).toHaveLength(0)
+  expect(w.statuses.filter(s => s !== undefined)).toHaveLength(0)
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('zones: toast once per cycle, the line follows the fill', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await complete($, 'No seam this time.')
+  await measure($, at(0.45))
+  await complete($, TASK)
+  await measure($, at(0.5))
+  expect(advised(w)).toHaveLength(1)
+  // a later turn without a seam does not drop the advice
+  expect(lastStatus(w)).toBe(STRONG_MSG(50))
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('zones: strong seam after a simple advice upgrades the line, no second toast', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, at(0.65))
+  expect(lastStatus(w)).toBe(SIMPLE_MSG(65))
+  await complete($, TASK)
+  expect(lastStatus(w)).toBe(STRONG_MSG(65))
+  expect(advised(w)).toHaveLength(1)
+  // a simple seam later does not downgrade it
+  await complete($, SEAM)
+  expect(lastStatus(w)).toBe(STRONG_MSG(65))
+})
+
+test('zones: strong seam, measure BEFORE turn.complete -> still one toast and the line', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await measure($, at(0.4))
+  expect(advised(w)).toHaveLength(0)
+  expect(lastStatus(w)).toBeUndefined()
+  await complete($, TASK)
+  expect(advised(w)).toEqual([STRONG_MSG(40)])
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  await measure($, at(0.41))
+  expect(advised(w)).toHaveLength(1)
+})
+
+test('zones: subagent and aborted turns do not set the seam', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await measure($, at(0.65))
+  await complete($, SEAM, { agentId: 'sub-1' })
+  await complete($, TASK, { agentId: 'sub-1' })
+  await complete($, SEAM, { isAborted: true, reason: 'aborted' })
+  expect(advised(w)).toHaveLength(0)
+  expect(lastStatus(w)).toBeUndefined()
+})
+
+test('zones: usage is only asked from 35% of the window; a strong seam at 30% needs no call', async ($, on) => {
+  const w = world(on, OK())
+  const calls = usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, 40_000)
+  expect(calls.n).toBe(0)
+  await measure($, at(0.3))
+  expect(calls.n).toBe(0)
+  expect(advised(w)).toEqual([STRONG_MSG(30)])
+  await measure($, at(0.34))
+  expect(calls.n).toBe(0)
+  await measure($, at(0.35))
+  expect(calls.n).toBe(1)
+  expect(calls.args[0]).toEqual({ breakdown: 'summary' })
+})
+
+test('zones: a log line for every measure, silent ones included, debug sink only', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  // far below, no seam, no usage call
+  await measure($, 40_000, ['context'], 20)
+  // usage asked, no seam; the status-line percent is the one shown
+  await measure($, at(0.45), ['context'], 40)
+  // simple seam below its floor
+  await complete($, SEAM)
+  await measure($, at(0.45))
+  // strong seam acting
+  await complete($, TASK)
+  await measure($, at(0.5))
+  const lines = ctxLines(w)
+  expect(lines).toHaveLength(5)
+  expect(lines[0]).toBe(`self-relay: ctx pct=20% tokens=40000 window=${WINDOW} wall=none hard=140000 seam=none action=no-seam src=measure`)
+  expect(lines[1]).toBe(`self-relay: ctx pct=40% tokens=${at(0.45)} window=${WINDOW} wall=${WALL} hard=140000 seam=none action=no-seam src=measure`)
+  expect(lines[2]).toContain('seam=simple action=below-floor')
+  expect(lines[3]).toContain('seam=strong:T19 action=advice src=turn')
+  expect(lines[4]).toContain('pct=50% tokens=100000')
+  expect(lines[4]).toContain('seam=strong:T19 action=advice-keep')
+  expect(w.logs.every((l, i) => (l.startsWith('self-relay: ctx fill=') ? w.logSinks[i] === 'debug' : true))).toBe(true)
+  expect(w.toasts).toHaveLength(1)
+})
+
+// ---- status precedence: an active flow wins, the advice comes back ----
+
+test('status: a relay flow wins over the advice, and the advice is back when the relay is blocked', async ($, on) => {
+  const w = world(on, null)
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  const run = relayProj($)
+  await settle(() => w.forkPrompts.length === 1)
+  expect(lastStatus(w)).toBe('Saving stream "proj" before the fresh start...')
+  release()
+  const out = await run
+  expect(out.text).toContain('self-relay: fresh start cancelled')
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  expect(advised(w)).toHaveLength(1)
+})
+
+test('status: review pane wins over the advice, cancel brings the advice back, no second toast', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await relayProj($)
+  expect(lastStatus(w)).toBe('Check the summary, then confirm or cancel')
+  const ui = await mountPane($)
+  await ui.press({ key: 'cancel' })
+  await ui.unmount()
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  expect(advised(w)).toHaveLength(1)
+})
+
+test('status: a flow never erases the advice for good: a manual save shows its line, then the zones re-arm', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await runSelfRelay($, 'save proj')
+  expect(w.statuses).toContain('Saving stream "proj"...')
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  // save done = re-arm: the line is gone, the toast may fire again at the next measure
+  expect(lastStatus(w)).toBeUndefined()
+  await measure($, at(0.41))
+  expect(advised(w)).toHaveLength(2)
+  expect(lastStatus(w)).toBe(STRONG_MSG(41))
+})
+
+// ---- the advice line goes when ----
+
+test('advice clears: on relay --yes (armed)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await relayProj($, '--yes')
+  expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session')
+  await clear($)
+  expect(lastStatus(w)).toBeUndefined()
+})
+
+test('advice clears: on clear & relay (armed), not at review', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await relayProj($)
+  const ui = await mountPane($)
+  await ui.press({ key: 'relay' })
+  await ui.unmount()
+  expect(lastStatus(w)).toBe('Starting a fresh session...')
+  await clear($)
+  expect(lastStatus(w)).toBeUndefined()
+  // seam was reset by the clear: nothing comes back at the same fill
+  await measure($, at(0.4))
+  expect(lastStatus(w)).toBeUndefined()
+})
+
+test('advice clears: on /clear, and the seam is gone with it', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  await clear($)
+  expect(lastStatus(w)).toBeUndefined()
+  await measure($, at(0.4))
+  expect(advised(w)).toHaveLength(1)
+  await complete($, TASK)
+  expect(advised(w)).toHaveLength(2)
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+})
+
+test('advice clears: when the fill drops below the floor (strong: STRONG; simple: SOFT)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await measure($, at(0.36))
+  expect(lastStatus(w)).toBe(STRONG_MSG(36))
+  await measure($, at(0.25))
+  expect(lastStatus(w)).toBeUndefined()
+  expect(w.logs.some(l => l.includes('action=rearm'))).toBe(true)
+  // re-armed: a new seam at the same fill advises again
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(advised(w)).toHaveLength(2)
+  // simple seam: floor SOFT
+  await clear($)
+  await complete($, SEAM)
+  await measure($, at(0.65))
+  expect(lastStatus(w)).toBe(SIMPLE_MSG(65))
+  await measure($, at(0.45))
+  expect(lastStatus(w)).toBeUndefined()
+})
+
+test('advice clears: far below the floors (after a compaction) too', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, at(0.4))
+  await measure($, 20_000)
+  expect(lastStatus(w)).toBeUndefined()
+  expect(w.logs.some(l => l.includes('action=rearm'))).toBe(true)
+})
+
+// ---- hard zone ----
+
+test('zones: hard with a stream -> saving line, then saved line + toast; not two saves', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await runSelfRelay($, 'save proj')
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  w.toasts.length = 0
+  w.statuses.length = 0
+  w.forkPrompts.length = 0
+  await measure($, at(0.9))
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.files.has(STATE)).toBe(true)
+  expect(w.statuses).toEqual([SAVING_MSG(90), SAVED_MSG(90)])
+  expect(w.toasts).toEqual([SAVED_MSG(90)])
+  expect(lastStatus(w)).toBe(SAVED_MSG(90))
+  await measure($, at(0.92))
+  await complete($, SEAM)
+  await new Promise(r => setTimeout(r, 20))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.toasts).toHaveLength(1)
+  expect(lastStatus(w)).toBe(SAVED_MSG(92))
+  expect(w.clears).toBe(0)
+  expect(w.store.get('self-relay:pending')).toBeUndefined()
+  expect(w.logs.some(l => l.includes('action=hard-save'))).toBe(true)
+})
+
+test('zones: hard save blocked -> failed line with a short reason', async ($, on) => {
+  const w = world(on, 'GATE: blocked - cross-item step')
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, at(0.9))
+  await settle(() => w.toasts.length > 0)
+  const msg = 'Context almost full (90%) and the automatic save failed (cross-item step). Type /self-relay --yes to continue in a fresh session'
+  expect(w.toasts).toEqual([msg])
+  expect(lastStatus(w)).toBe(msg)
+})
+
+test('zones: hard over a strong advice -> the saving line wins, then the hard outcome replaces the advice', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(lastStatus(w)).toBe(STRONG_MSG(40))
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await measure($, at(0.9))
+  expect(lastStatus(w)).toBe(SAVING_MSG(90))
+  release()
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(lastStatus(w)).toBe(SAVED_MSG(90))
+})
+
+test('zones: hard save finishing after a /clear leaves no stale advice', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await measure($, at(0.9))
+  await settle(() => w.forkPrompts.length === 1)
+  await clear($)
+  release()
+  await new Promise(r => setTimeout(r, 40))
+  expect(lastStatus(w)).toBeUndefined()
+  expect(w.toasts).toHaveLength(0)
+})
+
+test('zones: hard while saving -> no second fork', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await runSelfRelay($, 'save proj')
+  await settle(() => w.forkPrompts.length === 1)
+  expect(w.forkPrompts).toHaveLength(1)
+  await measure($, at(0.9))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.logs.some(l => l.includes('action=hard-skip-saving'))).toBe(true)
+  release()
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  await new Promise(r => setTimeout(r, 20))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.toasts.filter(t => t.includes('Progress saved'))).toHaveLength(0)
+})
+
+test('zones: hard with no stream bound -> message with the save command, no save', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await measure($, at(0.9))
+  const msg = 'Context almost full (90%) but no stream is set, so nothing was saved. Type /self-relay save <name>'
+  expect(w.toasts).toEqual([msg])
+  expect(lastStatus(w)).toBe(msg)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(w.files.size).toBe(0)
+})
+
+test('zones: hard jumping over every floor in one measure -> hard action only', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await complete($, SEAM)
+  await measure($, at(0.9))
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(advised(w)).toHaveLength(0)
+  expect(w.toasts).toHaveLength(1)
+})
+
+test('zones: re-arm after a hard save when the fill drops below SOFT', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, at(0.9))
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  await measure($, at(0.45))
+  expect(lastStatus(w)).toBeUndefined()
+  await complete($, TASK)
+  await measure($, at(0.5))
+  expect(advised(w)).toHaveLength(1)
+})
+
+test('zones: re-arm after a manual save', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, at(0.65))
+  expect(advised(w)).toHaveLength(1)
+  await runSelfRelay($, 'save proj')
+  await settle(() => w.toasts.some(t => t.includes('saved (')))
+  await measure($, at(0.66))
+  expect(advised(w)).toHaveLength(2)
+})
+
+test('zones: tokens absent or context unchanged -> nothing', async ($, on) => {
+  const w = world(on, OK())
+  const calls = usage(on)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, undefined)
+  await measure($, at(0.9), ['cost'])
+  expect(w.toasts).toHaveLength(0)
+  expect(calls.n).toBe(0)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(ctxLines(w)).toHaveLength(0)
+})
+
+test('zones: wall falls back to rawMaxTokens', async ($, on) => {
+  const w = world(on, OK())
+  usage(on, null, 150_000)
+  await fresh($)
+  await complete($, SEAM)
+  await measure($, 100_000)
+  expect(w.logs.some(l => l.includes('pct=50%') && l.includes('wall=150000') && l.includes('hard=140000'))).toBe(true)
+  expect(advised(w)).toEqual([SIMPLE_MSG(50)])
+})
+
+test('zones: usage unavailable (no wall in the breakdown) -> hard = HARD * window alone', async ($, on) => {
+  const w = world(on, OK())
+  usage(on, null, null)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, 139_999)
+  expect(w.forkPrompts).toHaveLength(0)
+  await measure($, 140_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.logs.some(l => l.includes('wall=none hard=140000') && l.includes('action=hard-save'))).toBe(true)
+})
+
+test('zones: usage call failing -> hard = HARD * window alone, logged, nothing thrown', async ($, on) => {
+  const w = world(on, OK())
+  on('session.usage', () => {
+    throw new Error('no usage')
+  })
+  await fresh($)
+  await title($, 'proj')
+  await measure($, 140_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.logs.some(l => l.includes('usage unavailable'))).toBe(true)
+  expect(w.logs.some(l => l.includes('wall=none hard=140000'))).toBe(true)
+})
+
+test('zones: hard cap = 95% of a low wall (window 1M, wall 400k, HARD * window 700k) -> fires at 380k', async ($, on) => {
+  const w = world(on, OK())
+  const calls = usage(on, 400_000, null, 1_000_000)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, 379_999, ['context'], undefined, 1_000_000)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(calls.n).toBe(1)
+  await measure($, 380_000, ['context'], undefined, 1_000_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.statuses).toContain(SAVING_MSG(38))
+  expect(lastStatus(w)).toBe(SAVED_MSG(38))
+  expect(w.logs.some(l => l.includes('window=1000000 wall=400000 hard=380000') && l.includes('action=hard-save'))).toBe(true)
+})
+
+test('zones: hard cap, a low wall does not re-arm at once (no second save at 37%), only well below it', async ($, on) => {
+  const w = world(on, OK())
+  usage(on, 400_000, null, 1_000_000)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, 380_000, ['context'], undefined, 1_000_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  await measure($, 370_000, ['context'], undefined, 1_000_000)
+  await measure($, 380_000, ['context'], undefined, 1_000_000)
+  expect(w.forkPrompts).toHaveLength(1)
+  // under 90% of the hard start (342k): re-armed
+  await measure($, 300_000, ['context'], undefined, 1_000_000)
+  expect(lastStatus(w)).toBeUndefined()
+  await measure($, 380_000, ['context'], undefined, 1_000_000)
+  await settle(() => w.forkPrompts.length === 2)
+  expect(w.forkPrompts).toHaveLength(2)
+})
+
+test('zones: on a 1M window the floors follow the window (strong 30% = 300k, no usage call)', async ($, on) => {
+  const w = world(on, OK())
+  const calls = usage(on, 400_000, null, 1_000_000)
+  await fresh($)
+  await complete($, TASK)
+  await measure($, 299_999, ['context'], undefined, 1_000_000)
+  expect(advised(w)).toHaveLength(0)
+  await measure($, 300_000, ['context'], undefined, 1_000_000)
+  expect(advised(w)).toEqual([STRONG_MSG(30)])
+  expect(calls.n).toBe(0)
+})
+
+test('zones: wall cached after the first usage call, dropped by a /clear', async ($, on) => {
+  world(on, OK())
+  const calls = usage(on)
+  await fresh($)
+  await measure($, at(0.6))
+  await measure($, at(0.62))
+  await measure($, at(0.3))
+  expect(calls.n).toBe(1)
+  await clear($)
+  await measure($, at(0.6))
+  expect(calls.n).toBe(2)
 })

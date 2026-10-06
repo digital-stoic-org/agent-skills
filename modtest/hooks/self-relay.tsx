@@ -17,6 +17,18 @@ const STATE_MAX = 8_000
 const STREAM_RE = /^[a-zA-Z0-9_-]{1,50}$/
 const RESERVED = ['save', 'load']
 const SHRINK_LINE = 80
+// Context-fill floors (T19, T21, T22), as a share of the model's context window (e.context.window), the same figure as the
+// status line. To calibrate live from the `self-relay: ctx` log lines.
+// STRONG: floor for a strong seam (a task closed, a pivot). SOFT: floor for a simple seam (a decision). HARD: auto pre-save.
+export const STRONG = 0.3
+export const SOFT = 0.5
+export const HARD = 0.7
+// Safety cap on HARD: the pre-save must happen before auto-compaction (the fork is refused at the wall), so the hard zone
+// starts at min(HARD * window, WALL_CAP * wall).
+export const WALL_CAP = 0.95
+// usage() (the wall) is only asked once tokens / window reaches this, then cached. Under it a strong seam at STRONG needs no call, and a
+// wall of at least 0.35 / WALL_CAP = 37% of the window is still seen before the cap bites.
+const USAGE_FROM = 0.35
 
 // Regime lines 1-4: /repos/agent-skills/team/skills/relay/SKILL.md §3 (md5 615b560cfe2e88c19763e668bf89570a at copy time).
 // Line 5 (orchestrator, team-only) replaced by a solo line; line 6 added for v2 (read_first after the go).
@@ -78,6 +90,18 @@ let boundArg: string | null = null
 let titleStream: string | null = null
 // Journal appends of this process, one at a time.
 let journalQueue: Promise<unknown> = Promise.resolve()
+// T19 context zones. Module scope like the rest: survives /clear (reset by hand there), lost on mod reload.
+let wallCache: number | null = null
+let lastM: Measure | null = null
+let seam: Seam = { level: 'none' }
+// softDone: the advice toast was shown in this cycle. hardDone: the hard zone acted in this cycle.
+let softDone = false
+let hardDone = false
+// The persistent advice line (T21) and the line of the active save/relay flow: one `$.ui.status` per plugin, see paint().
+let advice: Advice | null = null
+let flowLine: string | undefined
+// Bumped at every re-arm: a hard save finishing in an older cycle must not set a stale advice.
+let cycle = 0
 
 // ---------- pure helpers ----------
 
@@ -403,7 +427,7 @@ async function ingest($: EngineInterface, fresh: Item[]) {
     if (buffered.length > 0) await $.store.delete(key)
   } else {
     await $.store.set(key, items)
-    $.ui.toast(`self-relay: journal write failed, ${items.length} entr${items.length === 1 ? 'y' : 'ies'} kept in the store buffer`)
+    $.ui.toast(`Could not write the journal of stream "${stream}"; ${items.length} ${items.length === 1 ? 'entry' : 'entries'} kept for later`)
   }
 }
 
@@ -458,6 +482,48 @@ export function hideTrailer(text: string): string {
 // Message ids (e.requestId) whose trailer is expanded on screen. Module scope: a press flips it and redraws; lost on mod reload (all collapsed again).
 const expanded = new Set<string>()
 
+// A seam = the answer holds a ckpt trailer with a `decision` clause.
+export function hasDecisionSeam(answer: string): boolean {
+  const trailers = answer.match(/<!-- ckpt[\s\S]*?-->/g)
+  return !!trailers && trailers.some(t => parseTrailer(t).some(c => c.type === 'decision'))
+}
+
+// Seam strength of the answer, by code from its ckpt trailers. strong = a `pivot` clause, or a clause naming a task id T<n>
+// together with done / closed / closes / a check mark. simple = a `decision` clause. A closed task wins over a pivot (more specific message).
+export type Seam = { level: 'none' } | { level: 'simple' } | { level: 'strong'; task?: string }
+
+const DONE_RE = /\b(?:done|clos(?:e|es|ed|ing))\b|\u2705/gi
+
+// The task id nearest to a done word in one clause text, or null.
+function closedTask(text: string): string | null {
+  const ids = [...text.matchAll(/\bT(\d+)\b/g)]
+  const dones = [...text.matchAll(DONE_RE)]
+  if (ids.length === 0 || dones.length === 0) return null
+  let best: { n: string; d: number } | null = null
+  for (const id of ids) for (const done of dones) {
+    const d = Math.abs((id.index ?? 0) - (done.index ?? 0))
+    if (!best || d < best.d) best = { n: id[1] ?? '', d }
+  }
+  return best ? `T${best.n}` : null
+}
+
+export function seamOf(answer: string): Seam {
+  const trailers = answer.match(/<!-- ckpt[\s\S]*?-->/g) ?? []
+  let pivot = false
+  let simple = false
+  let task: string | null = null
+  for (const t of trailers) {
+    for (const c of parseTrailer(t)) {
+      if (c.type === 'pivot') pivot = true
+      if (c.type === 'decision') simple = true
+      task = closedTask(c.text) ?? task
+    }
+  }
+  if (task) return { level: 'strong', task }
+  if (pivot) return { level: 'strong' }
+  return simple ? { level: 'simple' } : { level: 'none' }
+}
+
 async function capture($: EngineInterface, answer: string) {
   const trailers = answer.match(/<!-- ckpt[\s\S]*?-->/g)
   if (!trailers) return
@@ -501,20 +567,234 @@ async function buildState($: EngineInterface, stream: string): Promise<Built> {
 }
 
 // `/self-relay save`: the command already returned; the outcome is a toast.
-async function saveInBackground($: EngineInterface, stream: string) {
+// `auto` = the hard zone (T19): the outcome becomes the persistent advice line + a toast, and the zone flags are not re-armed
+// (the fill is still high: re-arming would save again at every measure).
+async function saveInBackground($: EngineInterface, stream: string, auto?: { pct: number; cycle: number }) {
+  let failure: string | null = null
   try {
     const built = await buildState($, stream)
-    $.ui.toast(
-      built.kind === 'ok'
-        ? `self-relay: ${stream} saved (${built.state.length} chars, cursor ${built.cursor}${built.cut.length ? `, cut: ${built.cut.join(', ')}` : ''})`
-        : `self-relay: save blocked: ${built.reason}`,
-    )
+    if (auto) {
+      failure = built.kind === 'ok' ? null : built.reason
+    } else {
+      $.ui.toast(
+        built.kind === 'ok'
+          ? `Stream "${stream}" saved (${built.state.length.toLocaleString('en-US')} chars${built.cut.length ? `, trimmed: ${built.cut.join(', ')}` : ''})`
+          : `Could not save stream "${stream}": ${built.reason}`,
+      )
+    }
   } catch (err) {
-    $.ui.toast(`self-relay: save failed: ${String(err)}`)
+    if (auto) failure = `error: ${String(err)}`
+    else $.ui.toast(`Saving stream "${stream}" failed: ${String(err)}. Try /self-relay save again`)
   } finally {
     saving = false
-    $.ui.status(undefined)
+    if (!auto) rearmZones()
+    if (auto) hardOutcome($, auto, failure)
+    else flowStatus($, undefined)
   }
+}
+
+// ---------- context zones (T19, T21) ----------
+
+// Re-arm: the toast may fire again, the advice line goes (callers repaint).
+function rearmZones() {
+  softDone = false
+  hardDone = false
+  advice = null
+  cycle++
+}
+
+// Full session reset (/clear, new/resumed/forked session): flags, seam, last fill and the cached wall.
+function resetZones() {
+  rearmZones()
+  seam = { level: 'none' }
+  lastM = null
+  wallCache = null
+}
+
+// ---------- the one status line ----------
+// A plugin has ONE `$.ui.status`. Precedence: an active save/relay flow (flowLine) wins; when it clears, the advice line
+// (if still valid) is drawn again. Every status of the mod goes through flowStatus() / paint(), never `$.ui.status` directly.
+
+function paint($: EngineInterface) {
+  $.ui.status(flowLine ?? (advice ? adviceText(advice) : undefined))
+}
+
+function flowStatus($: EngineInterface, text: string | undefined) {
+  flowLine = text
+  paint($)
+}
+
+// ---------- advice wording (plain words, each says what happened and what to type) ----------
+
+export type Advice = {
+  kind: 'task' | 'pivot' | 'decision' | 'saved' | 'failed' | 'nostream'
+  // 1 simple seam, 2 strong seam, 3 hard zone: a higher rank replaces a lower one, never the other way round.
+  rank: 1 | 2 | 3
+  // The advice is dropped when the fill falls under this.
+  floor: number
+  pct: number
+  task?: string
+  reason?: string
+}
+
+const SHORT_REASON = 80
+
+const shortReason = (reason: string) => {
+  const one = reason.replace(/\s+/g, ' ').trim()
+  return one.length > SHORT_REASON ? `${one.slice(0, SHORT_REASON - 1)}…` : one
+}
+
+export function adviceText(a: Advice): string {
+  switch (a.kind) {
+    case 'task':
+      return `Good moment for a fresh start: ${a.task} just closed (context ${a.pct}%). Type /self-relay --yes`
+    case 'pivot':
+      return `Good moment for a fresh start: the direction just changed (context ${a.pct}%). Type /self-relay --yes`
+    case 'decision':
+      return `Good moment for a fresh start: a decision just landed (context ${a.pct}%). Type /self-relay --yes`
+    case 'saved':
+      return `Progress saved automatically (context ${a.pct}%). Type /self-relay --yes to continue in a fresh session`
+    case 'failed':
+      return `Context almost full (${a.pct}%) and the automatic save failed (${shortReason(a.reason ?? 'unknown')}). Type /self-relay --yes to continue in a fresh session`
+    case 'nostream':
+      return `Context almost full (${a.pct}%) but no stream is set, so nothing was saved. Type /self-relay save <name>`
+  }
+}
+
+const savingText = (pct: number) => `Context almost full (${pct}%): automatically saving your progress...`
+
+const seamName = (s: Seam) => (s.level === 'strong' ? `strong:${s.task ?? 'pivot'}` : s.level)
+
+// fill = tokens / window; pct = the figure shown (status-line percent when present, else the rounded fill); hardAt = tokens at which the hard zone starts.
+type Measure = { fill: number; pct: number; tokens: number; window: number; wall: number | null; hardAt: number }
+
+// One line per measure, silent ones included, to the debug log (nothing on screen).
+function ctxLog($: EngineInterface, src: 'measure' | 'turn', m: Measure, action: string) {
+  $.ui.log(
+    `self-relay: ctx pct=${m.pct}% tokens=${m.tokens} window=${m.window} wall=${m.wall ?? 'none'} hard=${m.hardAt} seam=${seamName(seam)} action=${action} src=${src}`,
+    { to: 'debug' },
+  )
+}
+
+// The wall = the token count where auto-compaction fires: auto-compact threshold, else the compaction window, else unknown (null).
+async function wallOf($: EngineInterface): Promise<number | null> {
+  if (wallCache !== null) return wallCache
+  try {
+    const breakdown = (await $.session.usage({ breakdown: 'summary' })).context.breakdown
+    const wall = breakdown?.autoCompactThreshold ?? breakdown?.rawMaxTokens
+    if (wall !== undefined && wall > 0) {
+      wallCache = wall
+      return wall
+    }
+  } catch (err) {
+    $.ui.log(`self-relay: ctx usage unavailable, hard = HARD * window: ${String(err)}`, { to: 'debug' })
+  }
+  return null
+}
+
+// Tokens at which the hard pre-save starts: HARD * window, capped at WALL_CAP * wall when the wall is known.
+export function hardAtOf(window: number, wall: number | null): number {
+  const byWindow = HARD * window
+  return Math.round(wall === null ? byWindow : Math.min(byWindow, WALL_CAP * wall))
+}
+
+// Seam advice. Runs from session.measure (fill moved) and from turn.complete (seam moved), so the order of the two events does not matter.
+// strong seam + fill >= STRONG, or simple seam + fill >= SOFT: the advice line is drawn and the toast shown once per cycle.
+// A stronger seam later upgrades the line without a second toast; the percentage on the line follows the fill.
+// Returns the action for the log line.
+function adviceStep($: EngineInterface, fill: number, pct: number): string {
+  if (phase === 'armed') return 'skip-armed'
+  const eligible = seam.level === 'strong' ? fill >= STRONG : seam.level === 'simple' ? fill >= SOFT : false
+  if (!eligible) {
+    if (!advice) return seam.level === 'none' ? 'no-seam' : 'below-floor'
+    advice.pct = pct
+    paint($)
+    return 'advice-keep'
+  }
+  const next: Advice =
+    seam.level === 'strong'
+      ? seam.task
+        ? { kind: 'task', rank: 2, floor: STRONG, pct, task: seam.task }
+        : { kind: 'pivot', rank: 2, floor: STRONG, pct }
+      : { kind: 'decision', rank: 1, floor: SOFT, pct }
+  if (!advice) {
+    advice = next
+    paint($)
+    if (!softDone) {
+      softDone = true
+      $.ui.toast(adviceText(next))
+    }
+    return 'advice'
+  }
+  if (next.rank > advice.rank) {
+    advice = next
+    paint($)
+    return 'advice-upgrade'
+  }
+  advice.pct = pct
+  paint($)
+  return 'advice-keep'
+}
+
+// Hard: the existing save path, once per cycle, never a clear, never an arm. Returns the action for the log line.
+function hardSave($: EngineInterface, pct: number): string {
+  if (hardDone) {
+    if (advice) {
+      advice.pct = pct
+      paint($)
+    }
+    return 'hard-done'
+  }
+  hardDone = true
+  softDone = true
+  const stream = current()
+  if (!stream) {
+    advice = { kind: 'nostream', rank: 3, floor: SOFT, pct }
+    paint($)
+    $.ui.toast(adviceText(advice))
+    return 'hard-nostream'
+  }
+  if (saving || phase !== 'idle') return saving ? 'hard-skip-saving' : `hard-skip-${phase}`
+  saving = true
+  flowStatus($, savingText(pct))
+  saveInBackground($, stream, { pct, cycle }).catch(() => {
+    saving = false
+  })
+  return 'hard-save'
+}
+
+// The hard save finished: its outcome is the advice line (the flow line goes) and one toast. Stale (re-armed meanwhile): log only.
+function hardOutcome($: EngineInterface, auto: { pct: number; cycle: number }, failure: string | null) {
+  flowLine = undefined
+  if (auto.cycle !== cycle) {
+    paint($)
+    return
+  }
+  const pct = lastM ? lastM.pct : auto.pct
+  advice = failure === null ? { kind: 'saved', rank: 3, floor: SOFT, pct } : { kind: 'failed', rank: 3, floor: SOFT, pct, reason: failure }
+  paint($)
+  $.ui.toast(adviceText(advice))
+}
+
+async function onMeasure($: EngineInterface, tokens: number, window: number, percent: number | undefined) {
+  const fill = tokens / window
+  const pct = percent !== undefined ? Math.round(percent) : Math.round(fill * 100)
+  // The wall only matters for the hard cap: not asked far below the window, then cached.
+  const wall = wallCache !== null || fill >= USAGE_FROM ? await wallOf($) : null
+  const hardAt = hardAtOf(window, wall)
+  const m: Measure = { fill, pct, tokens, window, wall, hardAt }
+  lastM = m
+  let action: string
+  // The floor the current advice holds to: its own, or after the hard zone the lower of SOFT and 90% of where it started
+  // (a low cap must not re-arm at once and save again), else the lowest one.
+  const floor = hardDone ? Math.min(SOFT, (0.9 * hardAt) / window) : (advice?.floor ?? STRONG)
+  if ((advice || softDone || hardDone) && fill < floor) {
+    rearmZones()
+    paint($)
+    action = 'rearm'
+  } else if (tokens >= hardAt) action = hardSave($, pct)
+  else action = adviceStep($, fill, pct)
+  ctxLog($, 'measure', m, action)
 }
 
 // ---------- relay flow (v1 unchanged from the packet on) ----------
@@ -523,7 +803,7 @@ async function reset($: EngineInterface) {
   phase = 'idle'
   pending = null
   await $.store.delete(STORE_KEY)
-  $.ui.status(undefined)
+  flowStatus($, undefined)
 }
 
 async function persist($: EngineInterface) {
@@ -533,16 +813,18 @@ async function persist($: EngineInterface) {
 async function cancel($: EngineInterface) {
   await reset($)
   await $.ui.close({ id: PANE })
-  $.ui.toast('self-relay: cancelled')
+  $.ui.toast('Fresh start cancelled')
 }
 
 async function clearAndRelay($: EngineInterface) {
   phase = 'armed'
+  // Armed: the advice has done its job. Re-arm the zones (advice line off) before the flow line is drawn.
+  rearmZones()
   await persist($)
   await $.ui.close({ id: PANE })
-  $.ui.status('self-relay: armed, clearing...')
+  flowStatus($, 'Starting a fresh session...')
   $.command.run({ command: 'clear' }).catch(() => {
-    $.ui.status('self-relay armed: type /clear')
+    flowStatus($, 'Ready: type /clear to continue in a fresh session')
   })
 }
 
@@ -559,7 +841,7 @@ async function armedPacket($: EngineInterface): Promise<string | null> {
 
 async function relay($: EngineInterface, stream: string, yes: boolean) {
   saving = true
-  $.ui.status('self-relay: writing state...')
+  flowStatus($, `Saving stream "${stream}" before the fresh start...`)
   let built: Built
   try {
     built = await buildState($, stream)
@@ -567,9 +849,10 @@ async function relay($: EngineInterface, stream: string, yes: boolean) {
     saving = false
   }
   if (built.kind === 'blocked') {
-    $.ui.status(undefined)
-    $.ui.toast(`self-relay: ${built.reason}`)
-    return { text: `self-relay blocked: ${built.reason}` }
+    // Nothing armed: the advice (if still valid) comes back with the flow line gone.
+    flowStatus($, undefined)
+    $.ui.toast(`Fresh start cancelled: ${built.reason}`)
+    return { text: `self-relay: fresh start cancelled: ${built.reason}` }
   }
 
   const packet = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
@@ -580,14 +863,15 @@ async function relay($: EngineInterface, stream: string, yes: boolean) {
   if (yes) {
     // $.command.run rejects inside the hook the run waits on (d.ts: command.run), so the human types /clear.
     phase = 'armed'
+    rearmZones()
     await persist($)
-    $.ui.status('self-relay armed: type /clear')
-    return { text: `self-relay: ${statePath(stream)} written (${built.state.length} chars), packet armed. Type /clear to relay it.` }
+    flowStatus($, 'Ready: type /clear to continue in a fresh session')
+    return { text: `self-relay: stream "${stream}" saved. Type /clear to continue in a fresh session.` }
   }
 
   phase = 'review'
   await persist($)
-  $.ui.status('self-relay: review the packet')
+  flowStatus($, 'Check the summary, then confirm or cancel')
   await $.ui.open({ id: PANE, title: 'self-relay', focus: true, closeOnEscape: true })
   return {}
 }
@@ -604,17 +888,17 @@ async function load($: EngineInterface, stream: string) {
   try {
     state = await readOptional($, path)
   } catch (err) {
-    return { text: `self-relay: cannot read ${path}: ${String(err)}` }
+    return { text: `self-relay: cannot read the saved stream "${stream}": ${String(err)}` }
   }
-  if (state === null) return { text: `self-relay: no state file ${path} in this directory. Nothing loaded.` }
+  if (state === null) return { text: `self-relay: no saved stream "${stream}" in this folder. Nothing loaded.` }
 
   const text = `${state.trimEnd()}\n\n${journalRule(stream)}\n\n${REGIME}`
   $.clock.after(1, () => {
     $.prompt.submit({ text, asUser: true }).catch(err => {
-      $.ui.toast(`self-relay: load failed: ${String(err)}`)
+      $.ui.toast(`Loading stream "${stream}" failed: ${String(err)}. Try /self-relay load ${stream} again`)
     })
   })
-  return { text: `self-relay: loading ${path} (${state.length} chars) as the first message.` }
+  return { text: `self-relay: loading stream "${stream}" as the first message.` }
 }
 
 // ---------- hooks ----------
@@ -624,7 +908,7 @@ export function registerSelfRelay(on: On) {
     try {
       await $.command.register({
         name: 'self-relay',
-        description: 'Save the session state to relay-<stream>-llm.md, relay it through /clear, or load it in a new session',
+        description: 'Save the progress of a stream, continue it in a fresh session after /clear, or load it in a new session',
         argumentHint: 'save [stream] | load <stream> | [stream] [--yes]',
       })
     } catch (err) {
@@ -636,7 +920,13 @@ export function registerSelfRelay(on: On) {
   on('command.run', { command: 'self-relay' }, async ($, e) => {
     const args = parseArgs(e.args)
     if ('error' in args) return { text: `self-relay: ${args.error}` }
-    if (phase !== 'idle' || saving) return { text: `self-relay: already ${saving ? 'saving' : phase}` }
+    if (phase !== 'idle' || saving) return {
+        text: saving
+          ? 'self-relay: already saving, wait a few seconds'
+          : phase === 'review'
+            ? 'self-relay: a summary is waiting for your review, confirm or cancel it first'
+            : 'self-relay: ready for a fresh start, type /clear',
+      }
 
     // stream = explicit arg (sticky binding) > last session_title seen > refuse
     const arg = args.stream
@@ -651,19 +941,19 @@ export function registerSelfRelay(on: On) {
     }
     const stream = current()
     if (!stream) {
-      return { text: 'self-relay: no stream. Pass one (/self-relay save <stream>) or /rename this session first.' }
+      return { text: 'self-relay: no stream for this session. Type /self-relay save <name>, or /rename the session first.' }
     }
 
     if (args.verb === 'load') return load($, stream)
 
     if (args.verb === 'save') {
       saving = true
-      $.ui.status(`self-relay: saving ${stream}...`)
+      flowStatus($, `Saving stream "${stream}"...`)
       // Not awaited: the hook returns at once. Whether the fork outlives the hook is proven live (plan T14).
       saveInBackground($, stream).catch(() => {
         saving = false
       })
-      return { text: `self-relay: saving ${stream}...` }
+      return { text: `self-relay: saving stream "${stream}"...` }
     }
 
     return relay($, stream, args.yes)
@@ -748,6 +1038,8 @@ export function registerSelfRelay(on: On) {
   })
 
   on('classic.SessionStart', async ($, e, next) => {
+    // Any source: the wall may differ (model), the fill starts over; seam, flags and the advice line re-arm.
+    resetZones()
     if (e.source !== 'clear') {
       // A new, resumed or forked session is another session: unbind and drop any armed packet.
       if (e.source === 'startup' || e.source === 'resume' || e.source === 'fork') {
@@ -756,7 +1048,9 @@ export function registerSelfRelay(on: On) {
         phase = 'idle'
         pending = null
         saving = false
+        flowLine = undefined
       }
+      paint($)
       try {
         await noteTitle($, e.session_title)
       } catch (err) {
@@ -775,21 +1069,48 @@ export function registerSelfRelay(on: On) {
     await reset($)
     if (packet === null) return next(e)
 
+    const restored = current()
     $.prompt.submit({ text: `${packet}\n\n${REGIME}`, asUser: true }).catch(err => {
-      $.ui.toast(`self-relay: re-inject failed: ${String(err)}`)
+      $.ui.toast(`Could not load the saved notes: ${String(err)}. Type /self-relay load ${restored ?? '<stream>'}`)
     })
-    $.ui.toast('self-relay: packet re-injected')
+    $.ui.toast(restored ? `Fresh session started with the saved notes of stream "${restored}"` : 'Fresh session started with the saved notes')
+    return next(e)
+  })
+
+  // Context zones (T19): observe only. Acts when the context fill moved and a token count exists (absent right after /clear or a compact).
+  on('session.measure', async ($, e, next) => {
+    try {
+      const tokens = e.context.tokens
+      if (e.changed.includes('context') && tokens !== undefined && e.context.window > 0) await onMeasure($, tokens, e.context.window, e.context.percent)
+    } catch (err) {
+      try {
+        $.ui.log(`self-relay: ctx measure failed: ${String(err)}`, { to: 'debug' })
+      } catch {
+        // nothing left to do
+      }
+    }
     return next(e)
   })
 
   // Journal capture: main loop only, completed turns only. Never throws into the engine.
   on('turn.complete', async ($, e, next) => {
     if (e.agentId === undefined && !e.isAborted) {
+      // Seam of the last main turn, for the advice. The d.ts does not order turn.complete against session.measure:
+      // re-check the soft advice here with the last known fill, so either order works.
+      try {
+        seam = seamOf(e.answer)
+        if (lastM !== null && lastM.tokens < lastM.hardAt) {
+          const action = adviceStep($, lastM.fill, lastM.pct)
+          if (action.startsWith('advice')) ctxLog($, 'turn', lastM, action)
+        }
+      } catch {
+        // observe only
+      }
       try {
         await capture($, e.answer)
       } catch (err) {
         try {
-          $.ui.toast(`self-relay: capture failed: ${String(err)}`)
+          $.ui.toast(`Could not record this turn's checkpoint: ${String(err)}`)
         } catch {
           // nothing left to do
         }
