@@ -1,7 +1,7 @@
 import type { EngineInterface, On } from 'claude-code'
 
-// pack (stoa), ported from modtest/hooks/self-relay.tsx: one mod for context.
-//   /pack save [stream]            fork -> relay-<stream>-llm.md (not awaited, no clear)
+// pack (stoa), ported from the modtest prototype: one mod for context.
+//   /pack save [stream]            fork -> pack-<stream>-llm.md (not awaited, no clear)
 //   /pack [stream] [--yes|-y]      save (awaited) + review pane / arm + /clear + re-inject
 //   /unpack <stream>               state file -> first message of this session
 // Journal: every `<!-- ckpt ... -->` trailer of a main-loop answer is appended verbatim to journal/<stream>.md by code.
@@ -30,12 +30,12 @@ export const WALL_CAP = 0.95
 // wall of at least 0.35 / WALL_CAP = 37% of the window is still seen before the cap bites.
 const USAGE_FROM = 0.35
 
-// Regime lines 1-4: /repos/agent-skills/team/skills/relay/SKILL.md §3 (md5 615b560cfe2e88c19763e668bf89570a at copy time).
+// UNPACK_RULES lines 1-4: /repos/agent-skills/team/skills/relay/SKILL.md §3 (md5 615b560cfe2e88c19763e668bf89570a at copy time).
 // Line 5 (orchestrator, team-only) replaced by a solo line; line 6 added for v2 (read_first after the go).
-const REGIME = `You are taking over this name. Announce [READY] on a single line and stop there.
+const UNPACK_RULES = `Reply with one line saying you are ready, then stop there.
 Do nothing without my explicit go — no file read, no command, no sub-agent, no continuation of what is in progress.
-Do not read the packet back to me. One line of acknowledgement is the whole answer.
-You emit a message only on a state transition. The rest of the time you are silent.
+Do not read the pack back to me. One line of acknowledgement is the whole answer.
+Write a message only when something changes. The rest of the time stay silent.
 Questions go to me, in this window.
 After my go, read the \`read_first\` files before acting.`
 
@@ -48,7 +48,7 @@ If ok, from line 2 output ONLY the block below, keys in this order, no markdown,
 status: <one word or short phrase: building | blocked | review ...>
 goal: <1 sentence, carried from PREVIOUS STATE unless it changed>
 read_first:
-- <path — role>   (closed list, read only after the human's go, never at [READY])
+- <path — role>   (closed list, read only after the human's go, never before the go)
 read_if_needed:
 - <path or URL — when to read it>   (extras only)
 deliverable: <path where the written work lives>
@@ -77,13 +77,13 @@ Rules:
 - Total ≤ 8,000 characters.`
 
 type Phase = 'idle' | 'review' | 'armed'
-type Pending = { packet: string; createdAt: number; cwd: string }
+type Pending = { pack: string; createdAt: number; cwd: string }
 type Stored = Pending & { phase: Phase }
 
 // Module scope: survives /clear (module not reloaded), lost on mod reload -> $.store backup.
 let phase: Phase = 'idle'
 let pending: Pending | null = null
-// A save or a relay build is running (the fork is slow): refuse a second command meanwhile.
+// A save or a pack build is running (the fork is slow): refuse a second command meanwhile.
 let saving = false
 // Stream binding. Same session across /clear, so it survives /clear; reset on startup/resume/fork.
 let boundArg: string | null = null
@@ -97,7 +97,7 @@ let seam: Seam = { level: 'none' }
 // softDone: the advice toast was shown in this cycle. hardDone: the hard zone acted in this cycle.
 let softDone = false
 let hardDone = false
-// The persistent advice line (T21) and the line of the active save/relay flow: one `$.ui.status` per plugin, see paint().
+// The persistent advice line (T21) and the line of the active save/pack flow: one `$.ui.status` per plugin, see paint().
 let advice: Advice | null = null
 let flowLine: string | undefined
 // Bumped at every re-arm: a hard save finishing in an older cycle must not set a stale advice.
@@ -106,7 +106,7 @@ let cycle = 0
 // ---------- pure helpers ----------
 
 export const pad = (n: number) => String(n).padStart(2, '0')
-export const statePath = (stream: string) => `relay-${stream}-llm.md`
+export const statePath = (stream: string) => `pack-${stream}-llm.md`
 export const journalPath = (stream: string) => `journal/${stream}.md`
 const bufferKey = (sid: string) => `pack:buffer:${sid}`
 
@@ -126,7 +126,7 @@ export function slugify(title: string): string | null {
   return slug === '' ? null : slug
 }
 
-export type Verb = 'save' | 'load' | 'relay'
+export type Verb = 'save' | 'load' | 'pack'
 export type ParsedArgs = { verb: Verb; stream?: string; yes: boolean } | { error: string }
 
 export function parseArgs(args: string): ParsedArgs {
@@ -135,10 +135,10 @@ export function parseArgs(args: string): ParsedArgs {
   const rest = tokens.filter(t => t !== '--yes' && t !== '-y')
   const bad = rest.find(t => t.startsWith('-'))
   if (bad) return { error: `unknown option ${bad}. Usage: /pack save [stream] | [stream] [--yes]` }
-  let verb: Verb = 'relay'
+  let verb: Verb = 'pack'
   if (rest[0] === 'load') return { error: 'load moved: type /unpack <stream>' }
   if (rest[0] === 'save') verb = rest.shift() as Verb
-  if (yes && verb !== 'relay') return { error: `--yes only goes with the relay form (/pack [stream] --yes)` }
+  if (yes && verb !== 'pack') return { error: `--yes only goes with the full form (/pack [stream] --yes), not /pack save` }
   if (rest.length > 1) return { error: `too many arguments. Usage: /pack save [stream] | [stream] [--yes]` }
   const stream = rest[0]
   if (stream !== undefined) {
@@ -214,7 +214,7 @@ const idOf = (line: string): number | null => {
 }
 const stripId = (line: string) => line.replace(ID_END, '')
 
-const SCALARS_HEADER = ['stream', 'saved', 'status', 'predecessor', 'goal', 'journal', 'journal_cursor']
+const SCALARS_HEADER = ['stream', 'saved', 'status', 'previous_session', 'goal', 'journal', 'journal_cursor']
 const LISTS: Section[] = ['read_first', 'read_if_needed', 'decisions', 'learnings', 'discarded', 'in_progress', 'next', 'unknowns', 'stale']
 // Body order of the state file (deliverable is the only scalar among them).
 const BODY_ORDER = ['read_first', 'read_if_needed', 'deliverable', 'decisions', 'learnings', 'discarded', 'in_progress', 'next', 'unknowns', 'stale']
@@ -332,12 +332,12 @@ export function assemble(input: AssembleInput): Assembled {
   const cursor = `c${pad(Math.max(prevCursor, ...allNs))}`
   const prevSaved = (prev?.scalars.saved ?? '').split(/\s+/)
   const prevWriter = prevSaved[1]
-  const predecessor = prevWriter && prevWriter !== input.sid ? prevWriter : prev?.scalars.predecessor || 'none'
+  const previousSession = prevWriter && prevWriter !== input.sid ? prevWriter : prev?.scalars.previous_session || 'none'
   const scalars: Record<string, string> = {
     stream: input.stream,
     saved: `${input.saved} ${input.sid}`,
     status: oneLine(fields.scalars.status || prev?.scalars.status || 'unknown'),
-    predecessor,
+    previous_session: previousSession,
     goal: oneLine(fields.scalars.goal || prev?.scalars.goal || 'unknown'),
     journal: journalPath(input.stream),
     journal_cursor: cursor,
@@ -626,7 +626,7 @@ function resetZones() {
 }
 
 // ---------- the one status line ----------
-// A plugin has ONE `$.ui.status`. Precedence: an active save/relay flow (flowLine) wins; when it clears, the advice line
+// A plugin has ONE `$.ui.status`. Precedence: an active save/pack flow (flowLine) wins; when it clears, the advice line
 // (if still valid) is drawn again. Every status of the mod goes through flowStatus() / paint(), never `$.ui.status` directly.
 
 function paint($: EngineInterface) {
@@ -811,7 +811,7 @@ async function onMeasure($: EngineInterface, tokens: number, window: number, per
   ctxLog($, 'measure', m, action)
 }
 
-// ---------- relay flow (v1 unchanged from the packet on) ----------
+// ---------- pack flow (v1 unchanged from the pack on) ----------
 
 async function reset($: EngineInterface) {
   phase = 'idle'
@@ -830,7 +830,7 @@ async function cancel($: EngineInterface) {
   $.ui.toast('Fresh start cancelled')
 }
 
-async function clearAndRelay($: EngineInterface) {
+async function clearAndContinue($: EngineInterface) {
   phase = 'armed'
   // Armed: the advice has done its job. Re-arm the zones (advice line off) before the flow line is drawn.
   rearmZones()
@@ -842,18 +842,18 @@ async function clearAndRelay($: EngineInterface) {
   })
 }
 
-// The packet to re-inject after /clear: module var first, else a fresh store entry from this cwd.
-async function armedPacket($: EngineInterface): Promise<string | null> {
-  if (phase === 'armed' && pending) return pending.packet
+// The pack to re-inject after /clear: module var first, else a fresh store entry from this cwd.
+async function armedPack($: EngineInterface): Promise<string | null> {
+  if (phase === 'armed' && pending) return pending.pack
   const stored = (await $.store.get(STORE_KEY)) as Stored | undefined
   if (!stored || stored.phase !== 'armed') return null
   const now = await $.clock.now()
   if (now - stored.createdAt >= STALE_MS) return null
   if (stored.cwd !== (await $.session.cwd())) return null
-  return stored.packet
+  return stored.pack
 }
 
-async function relay($: EngineInterface, stream: string, yes: boolean) {
+async function packStream($: EngineInterface, stream: string, yes: boolean) {
   saving = true
   flowStatus($, `Saving stream "${stream}" before the fresh start...`)
   let built: Built
@@ -869,8 +869,8 @@ async function relay($: EngineInterface, stream: string, yes: boolean) {
     return { text: `pack: fresh start cancelled: ${built.reason}` }
   }
 
-  const packet = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
-  pending = { packet, createdAt: await $.clock.now(), cwd: await $.session.cwd() }
+  const pack = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
+  pending = { pack, createdAt: await $.clock.now(), cwd: await $.session.cwd() }
 
   // --yes: no pane, so every outcome goes back as {text} (visible over Remote Control, unlike status/pane).
   // The 8,000-char cap is already enforced on the state by assemble().
@@ -892,7 +892,7 @@ async function relay($: EngineInterface, stream: string, yes: boolean) {
 
 // ---------- load ----------
 
-// Injection = $.prompt.submit({ asUser: true }): it starts a turn (so REGIME can hold the model at [READY]), while a
+// Injection = $.prompt.submit({ asUser: true }): it starts a turn (so UNPACK_RULES can hold the model at its acknowledgement line), while a
 // {text} / {context} answer of command.run only records a transcript line and starts no turn.
 // The host REFUSES prompt.submit called from inside the command.run hook ("it would wait on the turn this hook is
 // holding; submit from a later event"), so the submit runs from a $.clock.after dispatch, after the hook returned.
@@ -906,7 +906,7 @@ async function load($: EngineInterface, stream: string) {
   }
   if (state === null) return { text: `unpack: no saved stream "${stream}" in this folder. Nothing loaded.` }
 
-  const text = `${state.trimEnd()}\n\n${journalRule(stream)}\n\n${REGIME}`
+  const text = `${state.trimEnd()}\n\n${journalRule(stream)}\n\n${UNPACK_RULES}`
   $.clock.after(1, () => {
     $.prompt.submit({ text, asUser: true }).catch(err => {
       $.ui.toast(`Loading stream "${stream}" failed: ${String(err)}. Try /unpack ${stream} again`)
@@ -956,7 +956,7 @@ async function handle($: EngineInterface, args: ParsedArgs, prefix: 'pack' | 'un
     return { text: `${prefix}: saving stream "${stream}"...` }
   }
 
-  return relay($, stream, args.yes)
+  return packStream($, stream, args.yes)
 }
 
 export function registerPack(on: On) {
@@ -988,19 +988,19 @@ export function registerPack(on: On) {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Markdown, Button } = $.ui.resolve(e)
-    const packet = pending?.packet ?? ''
-    const isCut = packet.length > MARKDOWN_MAX
-    const shown = isCut ? packet.slice(0, MARKDOWN_MAX - 200) : packet
+    const pack = pending?.pack ?? ''
+    const isCut = pack.length > MARKDOWN_MAX
+    const shown = isCut ? pack.slice(0, MARKDOWN_MAX - 200) : pack
 
     return (
       <Box flexDirection="column">
         <Text dimColor>
-          relay packet: {packet.length} chars{isCut ? ' (view truncated, full packet kept)' : ''}
+          pack: {pack.length} chars{isCut ? ' (view truncated, full pack kept)' : ''}
         </Text>
         <Markdown text={shown} />
         <Box flexDirection="row" gap={2}>
-          <Button key="relay" hotkey="c" variant="primary" onPress={() => clearAndRelay($)}>
-            clear & relay
+          <Button key="continue" hotkey="c" variant="primary" onPress={() => clearAndContinue($)}>
+            clear & continue
           </Button>
           <Button key="cancel" hotkey="x" role="dismiss" onPress={() => cancel($)}>
             cancel
@@ -1068,7 +1068,7 @@ export function registerPack(on: On) {
     // Any source: the wall may differ (model), the fill starts over; seam, flags and the advice line re-arm.
     resetZones()
     if (e.source !== 'clear') {
-      // A new, resumed or forked session is another session: unbind and drop any armed packet.
+      // A new, resumed or forked session is another session: unbind and drop any armed pack.
       if (e.source === 'startup' || e.source === 'resume' || e.source === 'fork') {
         boundArg = null
         titleStream = null
@@ -1091,13 +1091,13 @@ export function registerPack(on: On) {
     } catch {
       // the binding stays as it was
     }
-    const packet = await armedPacket($)
+    const pack = await armedPack($)
     if (phase === 'review') await $.ui.close({ id: PANE })
     await reset($)
-    if (packet === null) return next(e)
+    if (pack === null) return next(e)
 
     const restored = current()
-    $.prompt.submit({ text: `${packet}\n\n${REGIME}`, asUser: true }).catch(err => {
+    $.prompt.submit({ text: `${pack}\n\n${UNPACK_RULES}`, asUser: true }).catch(err => {
       $.ui.toast(`Could not load the saved notes: ${String(err)}. Type /unpack ${restored ?? '<stream>'}`)
     })
     $.ui.toast(restored ? `Fresh session started with the saved notes of stream "${restored}"` : 'Fresh session started with the saved notes')

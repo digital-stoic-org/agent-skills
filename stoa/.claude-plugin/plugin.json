@@ -1,7 +1,7 @@
 {
   "name": "stoa",
-  "version": "0.1.0",
-  "description": "Next plugin generation (experimental), successor of dstoic",
+  "version": "0.3.0",
+  "description": "Next plugin generation (experimental), replaces dstoic",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

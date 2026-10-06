@@ -25,7 +25,7 @@ const FORK_LINES = [
 ]
 const OK = (extra: string[] = []) => `GATE: ok\n${[...FORK_LINES, ...extra].join('\n')}`
 const CWD = '/work'
-const STATE = 'relay-proj-llm.md'
+const STATE = 'pack-proj-llm.md'
 const JOURNAL = 'journal/proj.md'
 const RULE = "Journal journal/proj.md: never read it whole; to see an entry, grep by id: grep -A8 '^### cNN' journal/proj.md"
 const ISO = new Date(1_000_000).toISOString()
@@ -52,7 +52,7 @@ type World = {
 }
 
 // The engine resolves a relative path against the session cwd before the fs.* ops are answered: key files by their relative tail.
-const rel = (path: string) => path.replace(/^.*?((?:relay-[^/]+-llm\.md)|(?:journal\/[^/]+\.md))$/, '$1')
+const rel = (path: string) => path.replace(/^.*?((?:pack-[^/]+-llm\.md)|(?:journal\/[^/]+\.md))$/, '$1')
 
 const bytes = (s: string) => new TextEncoder().encode(s).length
 
@@ -144,8 +144,8 @@ const runCommand = ($: Engine, command: string, args = '') =>
 const runPack = ($: Engine, args = '') => runCommand($, 'pack', args)
 const runUnpack = ($: Engine, args = '') => runCommand($, 'unpack', args)
 
-// Relay on stream `proj` (explicit arg binds it).
-const relayProj = ($: Engine, flags = '') => runPack($, `proj ${flags}`.trim())
+// Pack on stream `proj` (explicit arg binds it).
+const packProj = ($: Engine, flags = '') => runPack($, `proj ${flags}`.trim())
 
 const mountPane = ($: Engine) =>
   $.ui.mount({ plugin: 'stoa', surface: 'terminal', component: 'Pane', requestId: 'pack', props: PANE_PROPS })
@@ -183,7 +183,7 @@ const section = (text: string, key: string) => {
 test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => {
   const w = world(on, 'GATE: blocked - mid synthesis')
   await fresh($)
-  const out = await relayProj($)
+  const out = await packProj($)
   expect(out.text).toBe('pack: fresh start cancelled: mid synthesis')
   expect(w.opens).toHaveLength(0)
   expect(w.store.get('pack:pending')).toBeUndefined()
@@ -193,7 +193,7 @@ test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => 
 test('fork without answer: blocked with the reason', async ($, on) => {
   const w = world(on, null)
   await fresh($)
-  const out = await relayProj($)
+  const out = await packProj($)
   expect(out.text).toBe('pack: fresh start cancelled: fork failed (nothing-to-fork)')
   expect(w.opens).toHaveLength(0)
 })
@@ -201,14 +201,14 @@ test('fork without answer: blocked with the reason', async ($, on) => {
 test('ok gate: state written, pane opens with state + journal rule and two buttons', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($)
+  await packProj($)
   expect(w.opens).toEqual(['pack'])
   const state = w.files.get(STATE) ?? ''
   expect(state).toContain('stream: proj')
   expect(state).toContain('goal: ship v2')
-  const stored = w.store.get('pack:pending') as { packet: string; phase: string; cwd: string }
+  const stored = w.store.get('pack:pending') as { pack: string; phase: string; cwd: string }
   expect(stored).toMatchObject({ phase: 'review', cwd: CWD })
-  expect(stored.packet).toBe(`${state.trimEnd()}\n\n${RULE}`)
+  expect(stored.pack).toBe(`${state.trimEnd()}\n\n${RULE}`)
   const ui = await mountPane($)
   expect(await ui.findAll({ type: 'Button' })).toHaveLength(2)
   await ui.press({ key: 'cancel' })
@@ -218,21 +218,21 @@ test('ok gate: state written, pane opens with state + journal rule and two butto
 test('cancel: store emptied, back to idle', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($)
+  await packProj($)
   const ui = await mountPane($)
   await ui.press({ key: 'cancel' })
   await ui.unmount()
   expect(w.store.get('pack:pending')).toBeUndefined()
-  const again = await relayProj($)
+  const again = await packProj($)
   expect(again.text).toBeUndefined()
 })
 
-test('clear & relay: armed, /clear run, packet + regime submitted once after clear', async ($, on) => {
+test('clear & continue: armed, /clear run, pack + unpack rules submitted once after clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($)
+  await packProj($)
   const ui = await mountPane($)
-  await ui.press({ key: 'relay' })
+  await ui.press({ key: 'continue' })
   await ui.unmount()
   expect(w.clears).toBe(1)
   expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
@@ -240,21 +240,21 @@ test('clear & relay: armed, /clear run, packet + regime submitted once after cle
   expect(w.submits).toHaveLength(1)
   expect(w.submits[0]).toContain('goal: ship v2')
   expect(w.submits[0]).toContain(RULE)
-  expect(w.submits[0]).toContain('Announce [READY] on a single line and stop there.')
+  expect(w.submits[0]).toContain('Reply with one line saying you are ready, then stop there.')
   expect(w.store.get('pack:pending')).toBeUndefined()
 })
 
 test('/clear during review: no injection, pending dropped', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($)
+  await packProj($)
   await clear($)
   expect(w.submits).toHaveLength(0)
   expect(w.store.get('pack:pending')).toBeUndefined()
 })
 
 test('stale store entry (> 10 min): no injection', async ($, on) => {
-  const stale = { packet: 'p', phase: 'armed', cwd: CWD, createdAt: 0 }
+  const stale = { pack: 'p', phase: 'armed', cwd: CWD, createdAt: 0 }
   const w = world(on, null, { 'pack:pending': stale }, 11 * 60 * 1000)
   await fresh($)
   await clear($)
@@ -263,16 +263,16 @@ test('stale store entry (> 10 min): no injection', async ($, on) => {
 })
 
 test('fresh store entry from same cwd (mod reloaded): injected', async ($, on) => {
-  const fresher = { packet: 'p', phase: 'armed', cwd: CWD, createdAt: 0 }
+  const fresher = { pack: 'p', phase: 'armed', cwd: CWD, createdAt: 0 }
   const w = world(on, null, { 'pack:pending': fresher }, 60 * 1000)
   await clear($)
   expect(w.submits).toHaveLength(1)
 })
 
-test('--yes: no pane, armed, relay packet = state + journal rule, submitted after the human /clear', async ($, on) => {
+test('--yes: no pane, armed, pack = state + journal rule, submitted after the human /clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  const out = await relayProj($, '--yes')
+  const out = await packProj($, '--yes')
   expect(out.text).toContain('Type /clear')
   expect(w.opens).toHaveLength(0)
   expect(w.clears).toBe(0)
@@ -280,13 +280,13 @@ test('--yes: no pane, armed, relay packet = state + journal rule, submitted afte
   await clear($)
   expect(w.submits).toHaveLength(1)
   const state = w.files.get(STATE) ?? ''
-  expect(w.submits[0].startsWith(`${state.trimEnd()}\n\n${RULE}\n\nYou are taking over this name.`)).toBe(true)
+  expect(w.submits[0].startsWith(`${state.trimEnd()}\n\n${RULE}\n\nReply with one line saying you are ready, then stop there.`)).toBe(true)
 })
 
 test('-y with a state over 8,000 chars after cuts: blocked, nothing written, nothing armed, no pane', async ($, on) => {
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
   await fresh($)
-  const out = await relayProj($, '-y')
+  const out = await packProj($, '-y')
   expect(out.text).toContain('pack: fresh start cancelled: state')
   expect(out.text).toContain('> 8000')
   expect(w.opens).toHaveLength(0)
@@ -311,7 +311,7 @@ test('stream: explicit arg > session_title > refuse', async ($, on) => {
   await clear($)
 
   await runPack($, 'explicit --yes')
-  expect(w.files.has('relay-explicit-llm.md')).toBe(true)
+  expect(w.files.has('pack-explicit-llm.md')).toBe(true)
   await clear($)
 
   // the explicit binding wins over a later title
@@ -336,7 +336,7 @@ test('stream: a session_title that is not a stream name is slugified', async ($,
 test('stream: binding survives /clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   await clear($)
   await complete($, `done\n${TRAILER}`)
   expect(w.files.get(JOURNAL)).toContain(TRAILER)
@@ -349,7 +349,7 @@ test('stream: reserved words and invalid names are refused', async ($, on) => {
   expect((await runUnpack($, 'load')).text).toContain('reserved word')
   expect((await runPack($, 'bad/name')).text).toContain('invalid stream')
   expect((await runPack($, 'a b')).text).toContain('too many arguments')
-  expect((await runPack($, 'save --yes')).text).toContain('--yes only goes with the relay form')
+  expect((await runPack($, 'save --yes')).text).toContain('--yes only goes with the full form')
   expect(w.forkPrompts).toHaveLength(0)
 })
 
@@ -479,7 +479,7 @@ test('state: clauses parsed by code and routed by type, reasoning and pivot stay
         '<!-- ckpt\nrejected: tried A — too slow\nconstraint: no git\nopen: who owns X?\nassumption: cwd is stable\ndefinition: stream=named journal\nrefs: /w/a.md→§2\n-->',
       ),
   )
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const state = w.files.get(STATE) ?? ''
   expect(section(state, 'decisions')).toEqual(['use code (c01)', 'no git (c02)', 'assemble by code — the fork cannot be trusted to copy'])
   expect(section(state, 'learnings')).toEqual(['L1 (c01)', 'stream=named journal (c02)'])
@@ -497,10 +497,10 @@ test('state: clauses parsed by code and routed by type, reasoning and pivot stay
 test('state: 7 header fields then 10 body fields, in table order', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const keys = (w.files.get(STATE) ?? '').split('\n').flatMap(l => l.match(/^([a-z_]+):/)?.[1] ?? [])
   expect(keys).toEqual([
-    'stream', 'saved', 'status', 'predecessor', 'goal', 'journal', 'journal_cursor',
+    'stream', 'saved', 'status', 'previous_session', 'goal', 'journal', 'journal_cursor',
     'read_first', 'read_if_needed', 'deliverable', 'decisions', 'learnings', 'discarded', 'in_progress', 'next', 'unknowns', 'stale',
   ])
   const state = w.files.get(STATE) ?? ''
@@ -513,13 +513,13 @@ test('state: reversed decision moves to discarded with its id, answered open is 
   const w = world(on, OK())
   await fresh($)
   w.files.set(JOURNAL, entry('c01', '<!-- ckpt decision: use A · open: who owns X? · assumption: cwd stable -->'))
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   expect(section(w.files.get(STATE) ?? '', 'decisions')).toContain('use A (c01)')
   await clear($)
 
   w.files.set(JOURNAL, (w.files.get(JOURNAL) ?? '') + entry('c02', '<!-- ckpt decision: use B instead · learning: A is slow -->'))
   w.forkText = OK(['retire_reversed: c01', 'retire_answered: c01'])
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const state = w.files.get(STATE) ?? ''
   expect(section(state, 'decisions')).not.toContain('use A (c01)')
   expect(section(state, 'decisions')).toContain('use B instead (c02)')
@@ -536,21 +536,21 @@ test('state: reversed decision moves to discarded with its id, answered open is 
 test('state: a fork decision without its why is flagged, a fork line ending in (cNN) is dropped', async ($, on) => {
   const w = world(on, OK(['decisions:', '- no why here', '- stolen line (c42)']))
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const decisions = section(w.files.get(STATE) ?? '', 'decisions')
   expect(decisions).toContain('no why here — why missing')
   expect(decisions.join('\n')).not.toContain('c42')
 })
 
-test('state: predecessor = previous writer when another session saves', async ($, on) => {
+test('state: previous_session = previous writer when another session saves', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await relayProj($, '--yes')
-  expect(w.files.get(STATE)).toContain('predecessor: none')
+  await packProj($, '--yes')
+  expect(w.files.get(STATE)).toContain('previous_session: none')
   await clear($)
   w.sid = 'sess-2'
-  await relayProj($, '--yes')
-  expect(w.files.get(STATE)).toContain('predecessor: sess-1')
+  await packProj($, '--yes')
+  expect(w.files.get(STATE)).toContain('previous_session: sess-1')
   expect(w.files.get(STATE)).toContain(`saved: ${ISO} sess-2`)
 })
 
@@ -559,7 +559,7 @@ test('state: over 8,000 chars cuts read_if_needed, then stale, then in_progress;
   const big = OK([...lines('read_if_needed', 5), ...lines('stale', 40), ...lines('in_progress', 30), ...lines('next', 3)])
   const w = world(on, big)
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
   expect(section(state, 'read_if_needed')).toHaveLength(0)
@@ -577,7 +577,7 @@ test('state: read_if_needed is compressed before anything is dropped', async ($,
   const rin = ['read_if_needed:', ...Array.from({ length: 45 }, (_, i) => `- /r/${pad2(i)} — ${'x'.repeat(200)}`)]
   const w = world(on, OK(rin))
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const lines = section(w.files.get(STATE) ?? '', 'read_if_needed')
   expect(lines.length).toBeGreaterThan(0)
   expect(lines.every(l => l.length <= 80)).toBe(true)
@@ -617,7 +617,7 @@ test('save: a blocked fork toasts the reason and writes nothing', async ($, on) 
 
 // ---------- T12 load ----------
 
-test('load: injects state + journal rule + regime as the first message', async ($, on) => {
+test('load: injects state + journal rule + unpack rules as the first message', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
   w.files.set(STATE, 'stream: proj\ngoal: g\n')
@@ -630,7 +630,7 @@ test('load: injects state + journal rule + regime as the first message', async (
   expect(w.submits).toHaveLength(1)
   expect(w.submits[0].startsWith('stream: proj\ngoal: g\n\nJournal journal/proj.md')).toBe(true)
   expect(w.submits[0]).toContain(RULE)
-  expect(w.submits[0]).toContain('Announce [READY] on a single line and stop there.')
+  expect(w.submits[0]).toContain('Reply with one line saying you are ready, then stop there.')
   expect(w.submits[0]).toContain('Questions go to me, in this window.')
   expect(w.submits[0]).toContain('After my go, read the `read_first` files before acting.')
   expect(w.submits[0]).not.toContain('orchestrator')
@@ -830,7 +830,7 @@ test('journal capture still sees the full trailer while the drawing hides it', a
   const w = world(on, OK())
   drawMessages(on)
   await fresh($)
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   const answer = `Done.\n\n${TRAILER}`
   const ui = await mountMessage($, answer)
   expect(await ui.findAll({ text: /<!-- ckpt/ })).toHaveLength(0)
@@ -1129,7 +1129,7 @@ test('zones: a log line for every measure, silent ones included, debug sink only
 
 // ---- status precedence: an active flow wins, the advice comes back ----
 
-test('status: a relay flow wins over the advice, and the advice is back when the relay is blocked', async ($, on) => {
+test('status: a pack flow wins over the advice, and the advice is back when the pack is blocked', async ($, on) => {
   const w = world(on, null)
   usage(on)
   await fresh($)
@@ -1138,7 +1138,7 @@ test('status: a relay flow wins over the advice, and the advice is back when the
   expect(lastStatus(w)).toBe(STRONG_MSG(40))
   let release = () => {}
   w.gate = new Promise<void>(r => (release = r))
-  const run = relayProj($)
+  const run = packProj($)
   await settle(() => w.forkPrompts.length === 1)
   expect(lastStatus(w)).toBe('Saving stream "proj" before the fresh start...')
   release()
@@ -1154,7 +1154,7 @@ test('status: review pane wins over the advice, cancel brings the advice back, n
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await relayProj($)
+  await packProj($)
   expect(lastStatus(w)).toBe('Check the summary, then confirm or cancel')
   const ui = await mountPane($)
   await ui.press({ key: 'cancel' })
@@ -1181,27 +1181,27 @@ test('status: a flow never erases the advice for good: a manual save shows its l
 
 // ---- the advice line goes when ----
 
-test('advice clears: on relay --yes (armed)', async ($, on) => {
+test('advice clears: on pack --yes (armed)', async ($, on) => {
   const w = world(on, OK())
   usage(on)
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await relayProj($, '--yes')
+  await packProj($, '--yes')
   expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session')
   await clear($)
   expect(lastStatus(w)).toBeUndefined()
 })
 
-test('advice clears: on clear & relay (armed), not at review', async ($, on) => {
+test('advice clears: on clear & continue (armed), not at review', async ($, on) => {
   const w = world(on, OK())
   usage(on)
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await relayProj($)
+  await packProj($)
   const ui = await mountPane($)
-  await ui.press({ key: 'relay' })
+  await ui.press({ key: 'continue' })
   await ui.unmount()
   expect(lastStatus(w)).toBe('Starting a fresh session...')
   await clear($)
