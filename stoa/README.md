@@ -17,7 +17,7 @@ claude plugin test /repos/agent-skills/stoa
 
 | command | does |
 |---|---|
-| `/pack [stream] [--yes\|-y]` | save (awaited) + review pane `[c]`/`[x]`, or `--yes` arm only; you type `/clear`; the pack is re-injected |
+| `/pack [stream] [--yes\|-y]` | save (awaited) + review pane `[c]`/`[x]`, or `--yes` saves, arms and runs `/clear` automatically (falls back to "type `/clear`" if the host refuses); the pack is re-injected |
 | `/pack save [stream]` | fork -> `pack-<stream>-llm.md`; returns at once, the outcome is a toast, the status line and `pack-<stream>-status-llm.md`, no `/clear` |
 | `/pack cancel` | leaves the review pane or the armed state (`--yes`); the saved file stays, `/clear` then injects nothing |
 | `/unpack <stream>` | `pack-<stream>-llm.md` -> first message of this session (state + journal rule + unpack rules) |

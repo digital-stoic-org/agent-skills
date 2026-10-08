@@ -282,13 +282,17 @@ test('fresh store entry from same cwd (mod reloaded): injected', async ($, on) =
   expect(w.submits).toHaveLength(1)
 })
 
-test('--yes: no pane, armed, pack = state + journal rule, submitted after the human /clear', async ($, on) => {
+test('--yes: no pane, armed, /clear scheduled after the hook, pack = state + journal rule, submitted after the clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
   const out = await packProj($, '--yes')
-  expect(out.text).toContain('Type /clear')
+  expect(out.text).toContain('Starting a fresh session')
+  expect(out.text).toContain('type /clear')
   expect(w.opens).toHaveLength(0)
+  // the host rejects command.run inside the hook: the clear runs from a clock.after dispatch
   expect(w.clears).toBe(0)
+  await w.clock.advance(5)
+  expect(w.clears).toBe(1)
   expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
   await clear($)
   expect(w.submits).toHaveLength(1)
@@ -300,7 +304,7 @@ test('-y with a 9,000-char decision: cut to fit by code, one fork, overflow line
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
   await fresh($)
   const out = await packProj($, '-y')
-  expect(out.text).toContain('Type /clear')
+  expect(out.text).toContain('Starting a fresh session')
   expect(w.forkPrompts).toHaveLength(1)
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
@@ -1413,7 +1417,7 @@ test('advice clears: on pack --yes (armed)', async ($, on) => {
   await complete($, TASK)
   await measure($, at(0.4))
   await packProj($, '--yes')
-  expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session, or /pack cancel to stay')
+  expect(lastStatus(w)).toBe('Starting a fresh session...')
   await clear($)
   expect(lastStatus(w)).toBeUndefined()
 })

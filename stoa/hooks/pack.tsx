@@ -2,7 +2,7 @@ import type { EngineInterface, On } from 'claude-code'
 
 // pack (stoa), ported from the modtest prototype: one mod for context.
 //   /pack save [stream]            fork -> pack-<stream>-llm.md (not awaited, no clear)
-//   /pack [stream] [--yes|-y]      save (awaited) + review pane / arm + /clear + re-inject
+//   /pack [stream] [--yes|-y]      save (awaited) + review pane / --yes: arm + /clear (automatic) + re-inject
 //   /pack cancel                   leave the review or the armed state (the saved file stays)
 //   /unpack <stream>               state file -> first message of this session
 // Journal: every `<!-- ckpt ... -->` trailer of a main-loop answer is appended verbatim to journal/<stream>.md by code.
@@ -1114,12 +1114,16 @@ async function packStream($: EngineInterface, stream: string, yes: boolean) {
   // --yes: no pane, so every outcome goes back as {text} (visible over Remote Control, unlike status/pane).
   // The 8,000-char cap is already enforced on the state by assemble().
   if (yes) {
-    // $.command.run rejects inside the hook the run waits on (d.ts: command.run), so the human types /clear.
+    // $.command.run rejects inside the hook the run waits on (d.ts: command.run), so the /clear runs from a
+    // $.clock.after dispatch, after the hook returned (same seam as load()). If the host still refuses, the human types /clear.
     phase = 'armed'
     rearmZones()
     await persist($)
-    flowStatus($, READY)
-    return { text: `pack: stream "${stream}" saved (${savedNotes(stream, built)}). Type /clear to continue in a fresh session, or /pack cancel to stay.` }
+    flowStatus($, 'Starting a fresh session...')
+    $.clock.after(1, () => {
+      $.command.run({ command: 'clear' }).catch(() => flowStatus($, READY))
+    })
+    return { text: `pack: stream "${stream}" saved (${savedNotes(stream, built)}). Starting a fresh session; if nothing happens, type /clear, or /pack cancel to stay.` }
   }
 
   phase = 'review'
