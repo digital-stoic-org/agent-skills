@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
-import type { On } from 'claude-code'
+import type { AgentInfo, On } from 'claude-code'
 import { HARD, SLOW_MS, SOFT, STRONG, WALL_CAP, elapsed, hardAtOf, hasDecisionSeam, hideTrailer, progressText, seamOf, waitingText } from '../hooks/pack.tsx'
 
 const PANE_PROPS = {
@@ -53,6 +53,10 @@ type World = {
   // answers of the next forks, in order; empty = forkText
   forkQueue: string[]
   clock: { advance: (ms: number) => Promise<void> }
+  // what $.agent.list() answers; forkAgent joins it once a fork has started
+  agents: AgentInfo[]
+  forkAgent: AgentInfo | null
+  agentsThrow: boolean
 }
 
 // The engine resolves a relative path against the session cwd before the fs.* ops are answered: key files by their relative tail.
@@ -82,6 +86,9 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     forkText,
     forkQueue: [],
     clock: { advance: async () => undefined },
+    agents: [],
+    forkAgent: null,
+    agentsThrow: false,
   }
   on('store.get', (_$, e) => ({ value: w.store.get(e.key) }))
   on('store.set', (_$, e) => (w.store.set(e.key, e.value), { value: undefined }))
@@ -98,6 +105,11 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
           ? { isAnswered: false, reason: 'nothing-to-fork' }
           : { isAnswered: true, text, usage: { input_tokens: 1, output_tokens: 1 } },
     }
+  })
+  on('agent.list', () => {
+    if (w.agentsThrow) throw new Error('agent.list down')
+    // a forked skill is in the list while its fork runs: the plugin must have listed before it started
+    return { value: w.forkPrompts.length > 0 && w.forkAgent ? [...w.agents, w.forkAgent] : w.agents }
   })
   on('session.cwd', () => ({ value: CWD }))
   on('session.id', () => ({ value: w.sid }))
@@ -1878,4 +1890,82 @@ test('feedback: checkpoints with no stream show a hint, gone once a stream takes
   await title($, 'proj')
   expect(w.statuses.at(-1)).toBeUndefined()
   expect(w.files.get(JOURNAL)).toContain('### c02 ')
+})
+
+// ---------- agents in flight (listed by code in in_progress) ----------
+
+const agent = (id: string, status: AgentInfo['status'], extra: Partial<AgentInfo> = {}): AgentInfo => ({ id, status, description: `task of ${id}`, type: 'general-purpose', ...extra })
+const flying = (state: string) => section(state, 'in_progress').filter(l => l.startsWith('agent in flight:'))
+
+test('agents: a running agent is listed by code, a completed one is not', async ($, on) => {
+  const w = world(on, OK(['in_progress:', '- fork own line']))
+  w.agents = [agent('a1', 'running', { name: 'scout' }), agent('a2', 'completed'), agent('a3', 'idle'), agent('a4', 'failed')]
+  await fresh($)
+  await packProj($, '--yes')
+  const state = w.files.get(STATE) ?? ''
+  expect(flying(state)).toEqual(['agent in flight: scout [a1] running — task of a1', 'agent in flight: general-purpose [a3] idle — task of a3'])
+  expect(section(state, 'in_progress').at(-1)).toBe('fork own line')
+})
+
+test('agents: no live agent, no line', async ($, on) => {
+  const w = world(on, OK())
+  w.agents = [agent('a2', 'completed')]
+  await fresh($)
+  await packProj($, '--yes')
+  expect(w.files.get(STATE)).not.toContain('agent in flight')
+})
+
+test('agents: the save fork itself (in the list while it runs) is excluded, on /pack save too', async ($, on) => {
+  const w = world(on, OK())
+  w.agents = [agent('a1', 'running')]
+  w.forkAgent = agent('fork-1', 'running', { type: 'fork' })
+  await fresh($)
+  await runPack($, 'save proj')
+  await settle(() => w.toasts.length > 0)
+  const state = w.files.get(STATE) ?? ''
+  expect(flying(state)).toHaveLength(1)
+  expect(state).toContain('[a1]')
+  expect(state).not.toContain('fork-1')
+})
+
+test('agents: a fork that copies the agent lines does not duplicate them', async ($, on) => {
+  const w = world(on, OK(['in_progress:', '- agent in flight: ghost [g1] running — stale copy']))
+  w.agents = [agent('a1', 'running')]
+  await fresh($)
+  await packProj($, '--yes')
+  expect(flying(w.files.get(STATE) ?? '')).toEqual(['agent in flight: general-purpose [a1] running — task of a1'])
+})
+
+test('agents: agent.list throwing -> the save still succeeds, no line', async ($, on) => {
+  const w = world(on, OK())
+  w.agentsThrow = true
+  await fresh($)
+  const out = await packProj($, '--yes')
+  expect(out.text).toContain('Starting a fresh session')
+  expect(w.files.get(STATE)).toBeDefined()
+  expect(w.files.get(STATE)).not.toContain('agent in flight')
+  expect(w.files.get(STATUS)).toContain('outcome: ok')
+})
+
+test('agents: the lines survive an over-cap cut that empties in_progress', async ($, on) => {
+  const lines = (key: string, n: number) => [`${key}:`, ...Array.from({ length: n }, (_, i) => `- /${key}/${pad2(i)} — ${'x'.repeat(90)}`)]
+  const w = world(on, OK([...lines('read_if_needed', 5), ...lines('stale', 40), ...lines('in_progress', 60), ...lines('discarded', 20), ...lines('learnings', 120)]))
+  w.agents = [agent('a1', 'running'), agent('a2', 'waiting')]
+  await fresh($)
+  await packProj($, '--yes')
+  const state = w.files.get(STATE) ?? ''
+  expect(state.length).toBeLessThanOrEqual(8_000)
+  expect(section(state, 'in_progress').filter(l => l.startsWith('/in_progress/'))).toHaveLength(0)
+  expect(flying(state)).toHaveLength(2)
+  expect(section(state, 'in_progress').slice(0, 2)).toEqual(flying(state))
+})
+
+test('agents: more than 10 live -> 10 lines and a count line', async ($, on) => {
+  const w = world(on, OK())
+  w.agents = Array.from({ length: 13 }, (_, i) => agent(`a${i}`, 'running'))
+  await fresh($)
+  await packProj($, '--yes')
+  const f = flying(w.files.get(STATE) ?? '')
+  expect(f).toHaveLength(11)
+  expect(f.at(-1)).toBe('agent in flight: +3 more, not listed')
 })

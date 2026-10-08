@@ -308,6 +308,26 @@ export function parseForkBody(body: string): ForkFields | null {
 }
 
 const oneLine = (s: string) => s.replace(/\s+/g, ' ').trim()
+const AGENT_LINE = 'agent in flight:'
+const AGENTS_MAX = 10
+const AGENT_DESC_MAX = 100
+const LIVE_STATUS = ['pending', 'running', 'waiting', 'idle']
+// One code-written line per live background agent, so the fresh context after /clear knows whom it can still SendMessage.
+// Agents of a Workflow are not in $.agent.list (a forked skill is). Called BEFORE the save fork starts, so the fork never
+// lists itself. Any failure -> no lines: the save must never fail because of this.
+async function agentLines($: EngineInterface): Promise<string[]> {
+  try {
+    const live = (await $.agent.list()).filter(a => LIVE_STATUS.includes(a.status))
+    const lines = live.slice(0, AGENTS_MAX).map(a => {
+      const desc = oneLine(a.description ?? '')
+      return `${AGENT_LINE} ${oneLine(a.name || a.type)} [${a.id}] ${a.status}${desc ? ` — ${desc.slice(0, AGENT_DESC_MAX)}` : ''}`
+    })
+    if (live.length > AGENTS_MAX) lines.push(`${AGENT_LINE} +${live.length - AGENTS_MAX} more, not listed`)
+    return lines
+  } catch {
+    return []
+  }
+}
 const uniq = (lines: string[]) => [...new Set(lines)]
 
 export type AssembleInput = {
@@ -317,6 +337,8 @@ export type AssembleInput = {
   prev: string | null
   entries: Entry[]
   fork: ForkFields
+  // In-flight agent lines (agentLines()), written by code; rendered first in in_progress and never cut.
+  agents?: string[]
 }
 export type Assembled =
   | { kind: 'ok'; state: string; cursor: string; cut: string[]; degraded: boolean }
@@ -364,6 +386,7 @@ export function assemble(input: AssembleInput): Assembled {
   for (const sec of LISTS) {
     let own = (fields.lists[sec] ?? []).map(oneLine).filter(l => l !== '' && idOf(l) === null)
     if (sec === 'decisions') own = own.map(l => (l.includes('—') ? l : `${l} — why missing`))
+    if (sec === 'in_progress') own = own.filter(l => !l.startsWith(AGENT_LINE)) // code writes those, never the fork
     if (sec === 'read_first' || sec === 'in_progress' || sec === 'stale') lists[sec] = own
     else lists[sec] = uniq([...lists[sec], ...own])
   }
@@ -390,10 +413,12 @@ export function assemble(input: AssembleInput): Assembled {
   }
 
   // The overflow line (set by the last-resort cut) is the last line of stale, outside `lists` so no cut step can drop it.
+  // The agent lines (input.agents, <= 11 short lines) sit the same way in front of in_progress: counted in the cap, never cut.
   let overflowLine: string | null = null
   const render = () => {
     const head = SCALARS_HEADER.map(k => `${k}: ${scalars[k]}`).join('\n')
-    const shown = (k: string) => (k === 'stale' && overflowLine ? [...lists.stale, overflowLine] : lists[k])
+    const agents = input.agents ?? []
+    const shown = (k: string) => (k === 'stale' && overflowLine ? [...lists.stale, overflowLine] : k === 'in_progress' ? [...agents, ...lists.in_progress] : lists[k])
     const body = BODY_ORDER.map(k => (k === 'deliverable' ? `deliverable: ${scalars.deliverable}` : `${k}:${shown(k).map(l => `\n- ${l}`).join('')}`)).join('\n')
     return `${head}\n\n${body}\n`
   }
@@ -401,7 +426,7 @@ export function assemble(input: AssembleInput): Assembled {
   // 5. hard cap, enforced here whatever the fork wrote. Cut order: read_if_needed (compress), stale, in_progress, discarded,
   // learnings (each oldest first). Still over: id'd lines (cNN) of every body section but read_first, lowest cNN first, then the
   // un-id'd lines (the fork's own, the newest). Every dropped id is named by an overflow line in stale (the journal keeps them).
-  // Never cut: header scalars, read_first, deliverable. 'blocked' only when those plus the overflow line exceed the cap alone.
+  // Never cut: header scalars, read_first, deliverable, the agent lines. 'blocked' only when those plus the overflow line exceed the cap alone.
   const cut: string[] = []
   let text = render()
   const over = () => text.length > STATE_MAX
@@ -473,7 +498,7 @@ export function assemble(input: AssembleInput): Assembled {
     }
     for (const sec of BODY_ORDER) if (perSection[sec]) cut.push(`${sec} -${perSection[sec]}`)
   }
-  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; the header, read_first and the overflow line alone exceed the cap: shorten read_first by hand. Nothing written.` }
+  if (over()) return { kind: 'blocked', reason: `state ${text.length} chars > ${STATE_MAX} after cutting ${cut.join(', ') || 'nothing cuttable'}; the header, read_first, the agent lines and the overflow line alone exceed the cap: shorten read_first by hand. Nothing written.` }
   return { kind: 'ok', state: text, cursor, cut, degraded: overflowLine !== null }
 }
 
@@ -687,10 +712,12 @@ async function assembleAndWrite($: EngineInterface, stream: string): Promise<Bui
     const cursor = prev ? Number((parseState(prev).scalars.journal_cursor ?? '').replace(/^c/, '')) || 0 : 0
     const entries = parseJournal(journal ?? '').filter(e => e.n > cursor)
 
+    // Listed before the fork starts: agent.list includes forked skills, so the save fork is not yet there to filter out.
+    const agents = await agentLines($)
     // One fork per save: an over-cap answer is cut by assemble(), never re-asked.
     const first = await askFork($, forkPrompt(prev, entries))
     if (first.kind === 'blocked') return first
-    const result = assemble({ stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, entries, fork: first.fork })
+    const result = assemble({ stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, entries, fork: first.fork, agents })
     if (result.kind === 'blocked') return result
     await $.fs.write(statePath(stream), result.state)
     return { ...result, migrated }

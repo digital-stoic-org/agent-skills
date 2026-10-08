@@ -56,7 +56,9 @@ The fork retires trailer lines by id: `retire_answered` (open/assumption resolve
 
 The ceiling is 8,000 chars, enforced by code. The single fork per save is told the ceiling, the size of the previous state and the room left; when the room is tight it is asked to designate `retire_*` ids first. There is no second fork: an over-cap answer goes straight to the deterministic cut.
 
-Cut order: `read_if_needed` (compressed), then `stale`, `in_progress`, `discarded`, `learnings`. Still over, code drops numbered `(cNN)` lines across every body section but `read_first` (`decisions`, `next` and `unknowns` included), lowest `cNN` first, then the un-numbered lines the fork wrote itself. Every dropped id is named by an `overflow:` line at the end of `stale` (the journal keeps the lines), the cursor advances, and the save is reported as degraded. The header and `read_first` are never cut: a save is refused only when they alone (plus the overflow line) exceed the cap.
+Cut order: `read_if_needed` (compressed), then `stale`, `in_progress`, `discarded`, `learnings`. Still over, code drops numbered `(cNN)` lines across every body section but `read_first` (`decisions`, `next` and `unknowns` included), lowest `cNN` first, then the un-numbered lines the fork wrote itself. Every dropped id is named by an `overflow:` line at the end of `stale` (the journal keeps the lines), the cursor advances, and the save is reported as degraded. The header, `read_first` and the agent lines (below) are never cut: a save is refused only when they alone (plus the overflow line) exceed the cap.
+
+Every save (`/pack`, `--yes`, `save`, automatic) lists in `in_progress`, by code and before the fork starts, the agents still in flight (status `pending`, `running`, `waiting` or `idle`, at most 10) as `agent in flight: <name or type> [<id>] <status> — <description>`, so the fresh context after `/clear` can still `SendMessage` them; agents of a Workflow are not in `$.agent.list()` and are not listed.
 
 Do not enable modtest and stoa together: both capture every trailer into the same journal.
 
