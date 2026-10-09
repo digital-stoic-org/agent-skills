@@ -57,10 +57,16 @@ type World = {
   agents: AgentInfo[]
   forkAgent: AgentInfo | null
   agentsThrow: boolean
+  // $.agent.list() never answers
+  agentsHang: boolean
+  // argv of each $.process.run
+  procs: string[][]
+  // `rm -f` exits 1 and deletes nothing
+  rmFails: boolean
 }
 
 // The engine resolves a relative path against the session cwd before the fs.* ops are answered: key files by their relative tail.
-const rel = (path: string) => path.replace(/^.*?((?:(?:pack|relay)-[^/]+-llm\.md)|(?:journal\/[^/]+\.md))$/, '$1')
+const rel = (path: string) => path.replace(/^.*?((?:(?:pack|relay)-[^/]+-llm\.md)|(?:journal\/[^/]+\.md)|(?:\.stoa-pack-auto))$/, '$1')
 
 const bytes = (s: string) => new TextEncoder().encode(s).length
 
@@ -89,6 +95,9 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     agents: [],
     forkAgent: null,
     agentsThrow: false,
+    agentsHang: false,
+    procs: [],
+    rmFails: false,
   }
   on('store.get', (_$, e) => ({ value: w.store.get(e.key) }))
   on('store.set', (_$, e) => (w.store.set(e.key, e.value), { value: undefined }))
@@ -106,7 +115,8 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
           : { isAnswered: true, text, usage: { input_tokens: 1, output_tokens: 1 } },
     }
   })
-  on('agent.list', () => {
+  on('agent.list', async () => {
+    if (w.agentsHang) await new Promise(() => undefined)
     if (w.agentsThrow) throw new Error('agent.list down')
     // a forked skill is in the list while its fork runs: the plugin must have listed before it started
     return { value: w.forkPrompts.length > 0 && w.forkAgent ? [...w.agents, w.forkAgent] : w.agents }
@@ -129,6 +139,13 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     w.files.set(rel(e.path), e.text)
     return { value: undefined }
   })
+  // `rm -f <path>` is the only process pack runs (the auto toggle off): it deletes from w.files. Keel's ripgrep calls pass through too.
+  on('process.run', (_$, e) => {
+    w.procs.push([...e.argv])
+    const rm = e.argv[0] === 'rm'
+    if (rm && !w.rmFails) w.files.delete(rel(e.argv[e.argv.length - 1] as string))
+    return { value: { exitCode: rm && w.rmFails ? 1 : 0, stdout: '', stderr: rm && w.rmFails ? 'rm: denied' : '', isStdoutTruncated: false, isStderrTruncated: false } }
+  })
   on('ui.open', (_$, e) => {
     w.opens.push(e.id)
     return { value: { isPlaced: true } }
@@ -145,6 +162,7 @@ function world(on: On, forkText: string | null, store?: Record<string, unknown>,
     if (w.failOps.delete('classic.UserPromptSubmit')) throw new Error('chain down')
     return {}
   })
+  on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('command.run', { command: 'clear' }, () => {
@@ -208,7 +226,7 @@ const section = (text: string, key: string) => {
 test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => {
   const w = world(on, 'GATE: blocked - mid synthesis')
   await fresh($)
-  const out = await packProj($)
+  const out = await packProj($, '--review')
   expect(out.text).toBe('pack: could not save stream "proj": mid synthesis. No fresh start armed.')
   expect(w.opens).toHaveLength(0)
   expect(w.store.get('pack:pending')).toBeUndefined()
@@ -218,7 +236,7 @@ test('blocked gate: no pane, nothing stored, nothing written', async ($, on) => 
 test('fork without answer: blocked with the reason', async ($, on) => {
   const w = world(on, null)
   await fresh($)
-  const out = await packProj($)
+  const out = await packProj($, '--review')
   expect(out.text).toBe('pack: could not save stream "proj": fork failed (nothing-to-fork). No fresh start armed.')
   expect(w.opens).toHaveLength(0)
 })
@@ -226,7 +244,7 @@ test('fork without answer: blocked with the reason', async ($, on) => {
 test('ok gate: state written, pane opens with state + journal rule and two buttons', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($)
+  await packProj($, '--review')
   expect(w.opens).toEqual(['pack'])
   const state = w.files.get(STATE) ?? ''
   expect(state).toContain('stream: proj')
@@ -243,19 +261,19 @@ test('ok gate: state written, pane opens with state + journal rule and two butto
 test('cancel: store emptied, back to idle', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($)
+  await packProj($, '--review')
   const ui = await mountPane($)
   await ui.press({ key: 'cancel' })
   await ui.unmount()
   expect(w.store.get('pack:pending')).toBeUndefined()
-  const again = await packProj($)
+  const again = await packProj($, '--review')
   expect(again.text).toBeUndefined()
 })
 
 test('clear & continue: armed, /clear run, pack + unpack rules submitted once after clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($)
+  await packProj($, '--review')
   const ui = await mountPane($)
   await ui.press({ key: 'continue' })
   await ui.unmount()
@@ -272,7 +290,7 @@ test('clear & continue: armed, /clear run, pack + unpack rules submitted once af
 test('/clear during review: no injection, pending dropped', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($)
+  await packProj($, '--review')
   await clear($)
   expect(w.submits).toHaveLength(0)
   expect(w.store.get('pack:pending')).toBeUndefined()
@@ -294,10 +312,10 @@ test('fresh store entry from same cwd (mod reloaded): injected', async ($, on) =
   expect(w.submits).toHaveLength(1)
 })
 
-test('--yes: no pane, armed, /clear scheduled after the hook, pack = state + journal rule, submitted after the clear', async ($, on) => {
+test('default /pack: no pane, armed, /clear scheduled after the hook, pack = state + journal rule, submitted after the clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  const out = await packProj($, '--yes')
+  const out = await packProj($)
   expect(out.text).toContain('Starting a fresh session')
   expect(out.text).toContain('type /clear')
   expect(w.opens).toHaveLength(0)
@@ -312,10 +330,10 @@ test('--yes: no pane, armed, /clear scheduled after the hook, pack = state + jou
   expect(w.submits[0].startsWith(`${state.trimEnd()}\n\n${RULE}\n\nReply with one line saying you are ready, then stop there.`)).toBe(true)
 })
 
-test('-y with a 9,000-char decision: cut to fit by code, one fork, overflow line, armed', async ($, on) => {
+test('default with a 9,000-char decision: cut to fit by code, one fork, overflow line, armed', async ($, on) => {
   const w = world(on, OK(['decisions:', `- ${'x'.repeat(9_000)} — why`]))
   await fresh($)
-  const out = await packProj($, '-y')
+  const out = await packProj($)
   expect(out.text).toContain('Starting a fresh session')
   expect(w.forkPrompts).toHaveLength(1)
   const state = w.files.get(STATE) ?? ''
@@ -327,10 +345,10 @@ test('-y with a 9,000-char decision: cut to fit by code, one fork, overflow line
   expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
 })
 
-test('-y with header + read_first alone over the cap: blocked, nothing written, nothing armed, no pane', async ($, on) => {
+test('default with header + read_first alone over the cap: blocked, nothing written, nothing armed, no pane', async ($, on) => {
   const w = world(on, OK(['read_first:', `- /w/${'x'.repeat(9_000)} — role`]))
   await fresh($)
-  const out = await packProj($, '-y')
+  const out = await packProj($)
   expect(out.text).toContain('pack: could not save stream "proj": state')
   expect(out.text).toContain('> 8000')
   expect(w.opens).toHaveLength(0)
@@ -348,21 +366,21 @@ test('-y with header + read_first alone over the cap: blocked, nothing written, 
 test('stream: explicit arg > session_title > refuse', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  const refused = await runPack($, '--yes')
+  const refused = await runPack($)
   expect(refused.text).toContain('no stream')
   expect(w.forkPrompts).toHaveLength(0)
 
   await title($, 'my-title')
-  expect((await runPack($, '--yes')).text).toContain('stream "my-title" saved')
+  expect((await runPack($)).text).toContain('stream "my-title" saved')
   await clear($)
 
-  await runPack($, 'explicit --yes')
+  await runPack($, 'explicit')
   expect(w.files.has('pack-explicit-llm.md')).toBe(true)
   await clear($)
 
   // the explicit binding wins over a later title
   await title($, 'later-title')
-  expect((await runPack($, '--yes')).text).toContain('stream "explicit" saved')
+  expect((await runPack($)).text).toContain('stream "explicit" saved')
 })
 
 test('stream: a session_title that is not a stream name is slugified', async ($, on) => {
@@ -370,7 +388,7 @@ test('stream: a session_title that is not a stream name is slugified', async ($,
   const streamOf = async (t: string) => {
     await fresh($)
     await title($, t)
-    const out = await runPack($, '--yes')
+    const out = await runPack($)
     return out.text?.match(/stream "(.+)" saved/)?.[1] ?? 'none'
   }
   expect(await streamOf('Keep_Case-1')).toBe('Keep_Case-1')
@@ -382,7 +400,7 @@ test('stream: a session_title that is not a stream name is slugified', async ($,
 test('stream: binding survives /clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   await clear($)
   await complete($, `done\n${TRAILER}`)
   expect(w.files.get(JOURNAL)).toContain(TRAILER)
@@ -396,6 +414,38 @@ test('stream: reserved words and invalid names are refused', async ($, on) => {
   expect((await runPack($, 'bad/name')).text).toContain('invalid stream')
   expect((await runPack($, 'a b')).text).toContain('too many arguments')
   expect((await runPack($, 'save --yes')).text).toContain('--yes only goes with the full form')
+  expect((await runPack($, 'save --review')).text).toContain('--review only goes with the full form')
+  expect((await runPack($, '--review --yes')).text).toContain('exclude each other')
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('grammar: --yes and -y are silent aliases of the default, --review opens the pane', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  for (const flag of ['--yes', '-y']) {
+    const out = await packProj($, flag)
+    expect(out.text).toContain('Starting a fresh session')
+    expect(w.opens).toHaveLength(0)
+    expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+    await runPack($, 'cancel')
+  }
+  const reviewed = await packProj($, '--review')
+  expect(reviewed.text ?? '').not.toContain('Starting a fresh session')
+  expect(w.opens).toHaveLength(1)
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'review' })
+})
+
+test('grammar: auto [off] parses, extra args and flags are refused, auto is not a stream name', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  expect((await runPack($, 'auto x')).text).toBe('pack: Usage: /pack auto [off]')
+  expect((await runPack($, 'auto off x')).text).toBe('pack: Usage: /pack auto [off]')
+  expect((await runPack($, 'auto --review')).text).toBe('pack: Usage: /pack auto [off]')
+  expect((await runPack($, 'auto')).text).not.toContain('Usage')
+  expect((await runPack($, 'auto off')).text).not.toContain('Usage')
+  expect((await runPack($, 'save auto')).text).toContain('reserved word')
+  expect((await runUnpack($, 'auto')).text).toContain('reserved word')
+  expect((await runPack($, 'cancel --review')).text).toContain('cancel takes nothing else')
   expect(w.forkPrompts).toHaveLength(0)
 })
 
@@ -525,7 +575,7 @@ test('state: clauses parsed by code and routed by type, reasoning and pivot stay
         '<!-- ckpt\nrejected: tried A — too slow\nconstraint: no git\nopen: who owns X?\nassumption: cwd is stable\ndefinition: stream=named journal\nrefs: /w/a.md→§2\n-->',
       ),
   )
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(section(state, 'decisions')).toEqual(['use code (c01)', 'no git (c02)', 'assemble by code — the fork cannot be trusted to copy'])
   expect(section(state, 'learnings')).toEqual(['L1 (c01)', 'stream=named journal (c02)'])
@@ -543,7 +593,7 @@ test('state: clauses parsed by code and routed by type, reasoning and pivot stay
 test('state: 7 header fields then 10 body fields, in table order', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const keys = (w.files.get(STATE) ?? '').split('\n').flatMap(l => l.match(/^([a-z_]+):/)?.[1] ?? [])
   expect(keys).toEqual([
     'stream', 'saved', 'status', 'previous_session', 'goal', 'journal', 'journal_cursor',
@@ -559,13 +609,13 @@ test('state: reversed decision moves to discarded with its id, answered open is 
   const w = world(on, OK())
   await fresh($)
   w.files.set(JOURNAL, entry('c01', '<!-- ckpt decision: use A · open: who owns X? · assumption: cwd stable -->'))
-  await packProj($, '--yes')
+  await packProj($)
   expect(section(w.files.get(STATE) ?? '', 'decisions')).toContain('use A (c01)')
   await clear($)
 
   w.files.set(JOURNAL, (w.files.get(JOURNAL) ?? '') + entry('c02', '<!-- ckpt decision: use B instead · learning: A is slow -->'))
   w.forkText = OK(['retire_reversed: c01', 'retire_answered: c01'])
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(section(state, 'decisions')).not.toContain('use A (c01)')
   expect(section(state, 'decisions')).toContain('use B instead (c02)')
@@ -582,7 +632,7 @@ test('state: reversed decision moves to discarded with its id, answered open is 
 test('state: a fork decision without its why is flagged, a fork line ending in (cNN) is dropped', async ($, on) => {
   const w = world(on, OK(['decisions:', '- no why here', '- stolen line (c42)']))
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const decisions = section(w.files.get(STATE) ?? '', 'decisions')
   expect(decisions).toContain('no why here — why missing')
   expect(decisions.join('\n')).not.toContain('c42')
@@ -591,11 +641,11 @@ test('state: a fork decision without its why is flagged, a fork line ending in (
 test('state: previous_session = previous writer when another session saves', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.files.get(STATE)).toContain('previous_session: none')
   await clear($)
   w.sid = 'sess-2'
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.files.get(STATE)).toContain('previous_session: sess-1')
   expect(w.files.get(STATE)).toContain(`saved: ${ISO} sess-2`)
 })
@@ -605,7 +655,7 @@ test('state: over 8,000 chars cuts read_if_needed, then stale, then in_progress;
   const big = OK([...lines('read_if_needed', 5), ...lines('stale', 40), ...lines('in_progress', 30), ...lines('next', 3)])
   const w = world(on, big)
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
   expect(section(state, 'read_if_needed')).toHaveLength(0)
@@ -623,7 +673,7 @@ test('state: read_if_needed is compressed before anything is dropped', async ($,
   const rin = ['read_if_needed:', ...Array.from({ length: 45 }, (_, i) => `- /r/${pad2(i)} — ${'x'.repeat(200)}`)]
   const w = world(on, OK(rin))
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const lines = section(w.files.get(STATE) ?? '', 'read_if_needed')
   expect(lines.length).toBeGreaterThan(0)
   expect(lines.every(l => l.length <= 80)).toBe(true)
@@ -665,7 +715,7 @@ test('migration: the new name wins when both files exist', async ($, on) => {
   await fresh($)
   w.files.set(STATE, 'stream: proj\ngoal: from pack\n')
   w.files.set(LEGACY, 'stream: proj\ngoal: from relay\n')
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.forkPrompts[0]).toContain('goal: from pack')
   expect(w.forkPrompts[0]).not.toContain('goal: from relay')
 })
@@ -674,11 +724,11 @@ test('retire: superseded decision -> discarded, done next item and obsolete lear
   const w = world(on, OK())
   await fresh($)
   w.files.set(JOURNAL, entry('c01', '<!-- ckpt decision: use A · open: write docs · learning: bug in X -->'))
-  await packProj($, '--yes')
+  await packProj($)
   await clear($)
   w.files.set(JOURNAL, (w.files.get(JOURNAL) ?? '') + entry('c02', '<!-- ckpt decision: use B · learning: X fixed -->'))
   w.forkText = OK(['retire_superseded: c01', 'retire_done: c01', 'retire_learned: c01'])
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(section(state, 'decisions')).not.toContain('use A (c01)')
   expect(section(state, 'decisions')).toContain('use B (c02)')
@@ -729,7 +779,7 @@ test('over cap, the fork retires enough on its first call: clean state, nothing 
   w.files.set(JOURNAL, [77, 78, 79].map(n => entry(`c${n}`, `<!-- ckpt learning: new ${n} -->`)).join(''))
   const ids = Array.from({ length: 20 }, (_, i) => `c${pad2(i + 3)}`).join(', ')
   w.forkText = OK([`retire_learned: ${ids}`])
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(w.forkPrompts).toHaveLength(1)
   expect(state).not.toContain('overflow:')
@@ -742,7 +792,7 @@ test('over cap, the fork retires enough on its first call: clean state, nothing 
 test('first fork prompt: ceiling, previous size and room; the retire-first nudge only when the room is tight', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.forkPrompts[0]).toContain('may not exceed 8,000 characters')
   expect(w.forkPrompts[0]).toContain('PREVIOUS STATE is 0 characters: 8,000 left')
   expect(w.forkPrompts[0]).not.toContain('Room is tight')
@@ -752,7 +802,7 @@ test('first fork prompt: ceiling, previous size and room; the retire-first nudge
   // a fatter previous state: the figures follow its real length
   w.files.set(STATE, nearCap(74))
   const size = (w.files.get(STATE) ?? '').length
-  await packProj($, '--yes')
+  await packProj($)
   const prompt = w.forkPrompts[1]
   expect(prompt).toContain(`PREVIOUS STATE is ${size.toLocaleString('en-US')} characters: ${(8_000 - size).toLocaleString('en-US')} left`)
   expect(prompt).toContain('Room is tight: designate retire_* ids first')
@@ -772,7 +822,7 @@ test('over cap: id\'d lines of every section go oldest cNN first, decisions incl
       'unknowns:', `- ${big('U3')} (c03)`,
     ].join('\n'),
   )
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.forkPrompts).toHaveLength(1)
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
@@ -796,7 +846,7 @@ test('over cap: after discarded and learnings, a decision is cut too, the oldest
       'learnings:', `- ${big('L6')} (c06)`,
     ].join('\n'),
   )
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
   expect(section(state, 'learnings')).toEqual([])
@@ -922,15 +972,15 @@ test('pack load: removed, points to /unpack', async ($, on) => {
   expect(w.submits).toHaveLength(0)
 })
 
-test('register: /pack and /unpack are both declared at session start', async ($, on) => {
+test('register: /pack, /unpack (and keel\'s /keel) are declared at session start', async ($, on) => {
   const registered: { name: string; description?: string; argumentHint?: string }[] = []
   world(on, OK())
   on('command.register', (_$, e) => (registered.push(e as never), { value: { command: (e as { name: string }).name } }) as never)
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
-  expect(registered.map(c => c.name).sort()).toEqual(['pack', 'unpack'])
+  expect(registered.map(c => c.name).sort()).toEqual(['keel', 'pack', 'unpack'])
   expect(registered.find(c => c.name === 'unpack')?.argumentHint).toBe('<stream>')
-  expect(registered.find(c => c.name === 'pack')?.argumentHint).toBe('save [stream] | cancel | [stream] [--yes]')
+  expect(registered.find(c => c.name === 'pack')?.argumentHint).toBe('[stream] [--review] | save [stream] | cancel | auto [off]')
 })
 
 // ---------- on-screen trailer hiding ----------
@@ -1064,7 +1114,7 @@ test('journal capture still sees the full trailer while the drawing hides it', a
   const w = world(on, OK())
   drawMessages(on)
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const answer = `Done.\n\n${TRAILER}`
   const ui = await mountMessage($, answer)
   expect(await ui.findAll({ text: /<!-- ckpt/ })).toHaveLength(0)
@@ -1085,10 +1135,10 @@ const TASK = 'Done.\n\n<!-- ckpt learning: x · open: T19 done -->'
 const PIVOT = 'Done.\n\n<!-- ckpt pivot: switch to code · reasoning: because -->'
 
 const FRESH = 'Good moment for a fresh start'
-const STRONG_MSG = (pct: number) => `${FRESH}: T19 just closed (context ${pct}%). Type /pack --yes`
-const PIVOT_MSG = (pct: number) => `${FRESH}: the direction just changed (context ${pct}%). Type /pack --yes`
-const SIMPLE_MSG = (pct: number) => `${FRESH}: a decision just landed (context ${pct}%). Type /pack --yes`
-const SAVED_MSG = (pct: number) => `Progress saved automatically (context ${pct}%). Type /pack --yes to continue in a fresh session`
+const STRONG_MSG = (pct: number) => `${FRESH}: T19 just closed (context ${pct}%). Type /pack`
+const PIVOT_MSG = (pct: number) => `${FRESH}: the direction just changed (context ${pct}%). Type /pack`
+const SIMPLE_MSG = (pct: number) => `${FRESH}: a decision just landed (context ${pct}%). Type /pack`
+const SAVED_MSG = (pct: number) => `Progress saved automatically (context ${pct}%). Type /pack to continue in a fresh session`
 const SAVING_MSG = (pct: number) => `Context almost full (${pct}%): automatically saving your progress...`
 
 // Stubs session.usage; `calls.n` counts the asks. wall null = no autoCompactThreshold; raw null = no rawMaxTokens.
@@ -1378,7 +1428,7 @@ test('status: a pack flow wins over the advice, and the advice is back when the 
   expect(lastStatus(w)).toBe(STRONG_MSG(40))
   let release = () => {}
   w.gate = new Promise<void>(r => (release = r))
-  const run = packProj($)
+  const run = packProj($, '--review')
   await settle(() => w.forkPrompts.length === 1)
   expect(lastStatus(w)).toBe('Saving stream "proj" before the fresh start...')
   release()
@@ -1395,7 +1445,7 @@ test('status: review pane wins over the advice, cancel brings the advice back, n
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await packProj($)
+  await packProj($, '--review')
   expect(lastStatus(w)).toBe('Saved. Check the pack, then clear & continue [c] or keep working [x]')
   const ui = await mountPane($)
   await ui.press({ key: 'cancel' })
@@ -1422,13 +1472,13 @@ test('status: a flow never erases the advice for good: a manual save shows its l
 
 // ---- the advice line goes when ----
 
-test('advice clears: on pack --yes (armed)', async ($, on) => {
+test('advice clears: on pack (armed)', async ($, on) => {
   const w = world(on, OK())
   usage(on)
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await packProj($, '--yes')
+  await packProj($)
   expect(lastStatus(w)).toBe('Starting a fresh session...')
   await clear($)
   expect(lastStatus(w)).toBeUndefined()
@@ -1440,7 +1490,7 @@ test('advice clears: on clear & continue (armed), not at review', async ($, on) 
   await fresh($)
   await complete($, TASK)
   await measure($, at(0.4))
-  await packProj($)
+  await packProj($, '--review')
   const ui = await mountPane($)
   await ui.press({ key: 'continue' })
   await ui.unmount()
@@ -1539,7 +1589,7 @@ test('zones: hard save blocked -> failed line with a short reason', async ($, on
   await title($, 'proj')
   await measure($, at(0.9))
   await settle(() => w.toasts.length > 0)
-  const msg = 'Context almost full (90%) and the automatic save failed (cross-item step). Type /pack --yes to continue in a fresh session'
+  const msg = 'Context almost full (90%) and the automatic save failed (cross-item step). Type /pack to continue in a fresh session'
   expect(w.toasts).toEqual([msg])
   expect(lastStatus(w)).toBe(msg)
 })
@@ -1843,7 +1893,7 @@ test('feedback: /pack cancel leaves the armed state, the state file stays, /clea
   const w = world(on, OK())
   await fresh($)
   expect((await runPack($, 'cancel')).text).toBe('pack: nothing to cancel')
-  await packProj($, '--yes')
+  await packProj($)
   expect((await runPack($, 'save')).text).toBe('pack: ready for a fresh start: type /clear, or /pack cancel to stay')
   const out = await runPack($, 'cancel')
   expect(out.text).toBe('pack: staying in this session; stream "proj" stays saved in pack-proj-llm.md')
@@ -1860,7 +1910,7 @@ test('feedback: /pack cancel during the review closes the pane; cancel takes no 
   expect((await runPack($, 'cancel proj')).text).toBe('pack: cancel takes nothing else. Usage: /pack cancel')
   expect((await runPack($, 'cancel -y')).text).toBe('pack: cancel takes nothing else. Usage: /pack cancel')
   expect((await runUnpack($, 'cancel')).text).toContain('reserved word')
-  await packProj($)
+  await packProj($, '--review')
   expect(w.opens).toEqual(['pack'])
   const out = await runPack($, 'cancel')
   expect(out.text).toBe('pack: staying in this session; stream "proj" stays saved in pack-proj-llm.md')
@@ -1871,7 +1921,7 @@ test('feedback: /pack cancel during the review closes the pane; cancel takes no 
 test('feedback: the pane says where the pack was saved and offers keep working', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  await packProj($)
+  await packProj($, '--review')
   const ui = await mountPane($)
   expect(await ui.find({ type: 'Text', text: /^Saved to pack-proj-llm\.md, \d+ chars\. Clear now/ })).toBeDefined()
   expect(await ui.find({ type: 'Button', text: 'keep working' })).toBeDefined()
@@ -1901,7 +1951,7 @@ test('agents: a running agent is listed by code, a completed one is not', async 
   const w = world(on, OK(['in_progress:', '- fork own line']))
   w.agents = [agent('a1', 'running', { name: 'scout' }), agent('a2', 'completed'), agent('a3', 'idle'), agent('a4', 'failed')]
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(flying(state)).toEqual(['agent in flight: scout [a1] running — task of a1', 'agent in flight: general-purpose [a3] idle — task of a3'])
   expect(section(state, 'in_progress').at(-1)).toBe('fork own line')
@@ -1911,7 +1961,7 @@ test('agents: no live agent, no line', async ($, on) => {
   const w = world(on, OK())
   w.agents = [agent('a2', 'completed')]
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   expect(w.files.get(STATE)).not.toContain('agent in flight')
 })
 
@@ -1932,7 +1982,7 @@ test('agents: a fork that copies the agent lines does not duplicate them', async
   const w = world(on, OK(['in_progress:', '- agent in flight: ghost [g1] running — stale copy']))
   w.agents = [agent('a1', 'running')]
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   expect(flying(w.files.get(STATE) ?? '')).toEqual(['agent in flight: general-purpose [a1] running — task of a1'])
 })
 
@@ -1940,7 +1990,7 @@ test('agents: agent.list throwing -> the save still succeeds, no line', async ($
   const w = world(on, OK())
   w.agentsThrow = true
   await fresh($)
-  const out = await packProj($, '--yes')
+  const out = await packProj($)
   expect(out.text).toContain('Starting a fresh session')
   expect(w.files.get(STATE)).toBeDefined()
   expect(w.files.get(STATE)).not.toContain('agent in flight')
@@ -1952,7 +2002,7 @@ test('agents: the lines survive an over-cap cut that empties in_progress', async
   const w = world(on, OK([...lines('read_if_needed', 5), ...lines('stale', 40), ...lines('in_progress', 60), ...lines('discarded', 20), ...lines('learnings', 120)]))
   w.agents = [agent('a1', 'running'), agent('a2', 'waiting')]
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const state = w.files.get(STATE) ?? ''
   expect(state.length).toBeLessThanOrEqual(8_000)
   expect(section(state, 'in_progress').filter(l => l.startsWith('/in_progress/'))).toHaveLength(0)
@@ -1964,8 +2014,405 @@ test('agents: more than 10 live -> 10 lines and a count line', async ($, on) => 
   const w = world(on, OK())
   w.agents = Array.from({ length: 13 }, (_, i) => agent(`a${i}`, 'running'))
   await fresh($)
-  await packProj($, '--yes')
+  await packProj($)
   const f = flying(w.files.get(STATE) ?? '')
   expect(f).toHaveLength(11)
   expect(f.at(-1)).toBe('agent in flight: +3 more, not listed')
+})
+
+test('agents: agent.list hanging -> after 5 s the save goes on with one `unknown` line', async ($, on) => {
+  const w = world(on, OK())
+  w.agentsHang = true
+  await fresh($)
+  const done = packProj($)
+  await w.clock.advance(4_999)
+  expect(w.forkPrompts).toHaveLength(0)
+  await w.clock.advance(1)
+  const out = await done
+  expect(out.text).toContain('Starting a fresh session')
+  const state = w.files.get(STATE) ?? ''
+  expect(section(state, 'in_progress')).toEqual(['agents: unknown (list timed out)'])
+  expect(flying(state)).toHaveLength(0)
+  expect(w.files.get(STATUS)).toContain('outcome: ok')
+})
+
+test('agents: a fork that copies the `unknown` line does not duplicate it', async ($, on) => {
+  const w = world(on, OK(['in_progress:', '- agents: unknown (list timed out)']))
+  await fresh($)
+  await packProj($)
+  expect(section(w.files.get(STATE) ?? '', 'in_progress')).toEqual([])
+})
+
+// ---------- auto mode state (P2) ----------
+
+const AUTO_REL = '.stoa-pack-auto'
+const lastOf = (w: World) => w.statuses[w.statuses.length - 1]
+
+test('auto: /pack auto creates the file, says so, shows `auto` on the status line', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await title($, 'proj')
+  const out = await runPack($, 'auto')
+  expect(out.text).toBe('pack: auto mode on for /work (stream "proj")')
+  expect(w.files.has(AUTO_REL)).toBe(true)
+  expect(lastOf(w)).toBe('auto')
+})
+
+test('auto: no stream yet -> the reply says auto will only advise', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  const out = await runPack($, 'auto')
+  expect(out.text).toBe('pack: auto mode on for /work (no stream yet: auto will only advise until /pack save <name> or /rename)')
+  expect(w.files.has(AUTO_REL)).toBe(true)
+})
+
+test('auto: /pack auto off removes the file through rm -f and clears the segment', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await title($, 'proj')
+  await runPack($, 'auto')
+  const out = await runPack($, 'auto off')
+  expect(out.text).toBe('pack: auto mode off')
+  expect(w.procs.filter(a => a[0] === 'rm')).toEqual([['rm', '-f', '/work/.stoa-pack-auto']])
+  expect(w.files.has(AUTO_REL)).toBe(false)
+  expect(lastOf(w)).toBeUndefined()
+})
+
+test('auto: the segment follows the line it joins (advice, flow) and stands alone otherwise', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await runPack($, 'auto')
+  await complete($, TASK)
+  await measure($, at(0.4))
+  expect(lastOf(w)).toBe(`${STRONG_MSG(40)} · auto`)
+})
+
+test('auto: a file present at session start turns the mode on, absent turns it off (shell touch / rm honored)', async ($, on) => {
+  const w = world(on, OK())
+  w.files.set(AUTO_REL, '')
+  await fresh($)
+  expect(lastOf(w)).toBe('auto')
+  w.files.delete(AUTO_REL)
+  await clear($)
+  expect(lastOf(w)).toBeUndefined()
+})
+
+test('auto: a failed rm leaves the mode on and says so', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await runPack($, 'auto')
+  w.rmFails = true
+  const out = await runPack($, 'auto off')
+  expect(out.text).toContain('could not remove .stoa-pack-auto')
+  expect(w.files.has(AUTO_REL)).toBe(true)
+})
+
+// ---------- auto trigger, grace, hard deferral (P4) ----------
+
+const HARD_AT = at(0.7)
+const GRACE = (pct: number) => `Context ${pct}%: fresh session for stream "proj" in 10 s. /pack cancel to stay`
+const SAVED_AUTO = (pct: number) => `Progress saved automatically (context ${pct}%). Type /pack to continue in a fresh session`
+const startTurn = ($: Engine) => $.turn.start({ text: 'go', turnId: 't1' } as never)
+const ctxActions = (w: World) => ctxLines(w).map(l => l.match(/action=(\S+)/)?.[1])
+
+// Auto mode on, stream proj bound, the fill at the hard floor (the measure deferred the hard save).
+async function autoReady($: Engine, w: World, tokens = HARD_AT) {
+  w.files.set(AUTO_REL, '')
+  await fresh($)
+  await title($, 'proj')
+  await measure($, tokens)
+}
+
+test('auto trigger: below hardAt nothing, at hardAt the pack starts at the turn end', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await complete($, SEAM)
+  expect(w.forkPrompts).toHaveLength(0)
+  // a measure inside the next turn: the hard save is deferred to its end
+  await startTurn($)
+  await measure($, HARD_AT)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(ctxActions(w).at(-1)).toBe('hard-auto-deferred')
+  await complete($, SEAM)
+  await settle(() => w.toasts.some(t => t.includes('fresh session')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.files.get(STATE)).toContain('goal: ship v2')
+  // the turn's own trailer was journaled before the save
+  expect(w.files.get(JOURNAL)).toContain('use code')
+  expect(w.toasts).toContain(GRACE(70))
+})
+
+test('auto trigger: grace 10 s -> /clear, then the pack is re-injected once', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  await complete($, SEAM)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed', cwd: CWD })
+  expect(lastOf(w)).toBe(`${GRACE(70)} · auto`)
+  await w.clock.advance(1_000)
+  expect(lastOf(w)).toBe(`Context 70%: fresh session for stream "proj" in 9 s. /pack cancel to stay · auto`)
+  await w.clock.advance(8_999)
+  expect(w.clears).toBe(0)
+  await w.clock.advance(1)
+  expect(w.clears).toBe(1)
+  await clear($)
+  await settle(() => w.submits.length === 1)
+  expect(w.submits[0]).toContain('stream: proj')
+  expect(w.store.get('pack:pending')).toBeUndefined()
+})
+
+test('auto trigger: an aborted turn, a subagent turn, auto off, and no stream start nothing', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  await complete($, SEAM, { isAborted: true, reason: 'aborted' })
+  await complete($, SEAM, { agentId: 'sub-1' })
+  expect(w.forkPrompts).toHaveLength(0)
+  await runPack($, 'auto off')
+  await complete($, SEAM)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(w.clears).toBe(0)
+})
+
+test('auto trigger: no stream -> the nostream advice, nothing saved', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  w.files.set(AUTO_REL, '')
+  await fresh($)
+  await measure($, HARD_AT)
+  expect(lastOf(w)).toContain('no stream is set, so nothing was saved')
+  await complete($, SEAM)
+  expect(w.forkPrompts).toHaveLength(0)
+})
+
+test('auto trigger: a save running at the turn end -> deferred, then a fresh save when it ends', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await runPack($, 'save proj')
+  await settle(() => w.forkPrompts.length === 1)
+  await complete($, SEAM)
+  expect(ctxActions(w).at(-1)).toBe('auto-deferred')
+  expect(w.forkPrompts).toHaveLength(1)
+  release()
+  await settle(() => w.forkPrompts.length === 2)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  expect(w.forkPrompts).toHaveLength(2)
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+})
+
+test('auto grace: a prompt during the countdown -> no clear, saved file kept, advice saved', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  await complete($, SEAM)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  await title($, 'proj')
+  expect(w.store.get('pack:pending')).toBeUndefined()
+  expect(lastOf(w)).toBe(`${SAVED_AUTO(70)} · auto`)
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(0)
+  expect(w.files.has(STATE)).toBe(true)
+  // asleep until the fill falls back: the next turn end does not pack again
+  await complete($, SEAM)
+  expect(w.forkPrompts).toHaveLength(1)
+})
+
+test('auto grace: /pack cancel during the countdown -> no clear, advice saved', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  await complete($, SEAM)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  const out = await runPack($, 'cancel')
+  expect(out.text).toContain('staying in this session')
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(0)
+  expect(lastOf(w)).toBe(`${SAVED_AUTO(70)} · auto`)
+})
+
+test('auto grace: a prompt while the fork still runs -> the save ends, nothing armed, no clear', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await complete($, SEAM)
+  await settle(() => w.forkPrompts.length === 1)
+  await title($, 'proj')
+  release()
+  await settle(() => w.files.has(STATE))
+  await settle(() => lastOf(w) === `${SAVED_AUTO(70)} · auto`)
+  expect(w.store.get('pack:pending')).toBeUndefined()
+  expect(w.toasts.some(t => t.includes('fresh session'))).toBe(false)
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(0)
+})
+
+test('auto grace: /pack cancel while the fork runs -> told it cannot stop, the pack does not arm', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  let release = () => {}
+  w.gate = new Promise<void>(r => (release = r))
+  await complete($, SEAM)
+  await settle(() => w.forkPrompts.length === 1)
+  const out = await runPack($, 'cancel')
+  expect(out.text).toContain('no fresh start will follow')
+  release()
+  await settle(() => lastOf(w) === `${SAVED_AUTO(70)} · auto`)
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(0)
+})
+
+test('auto grace: a manual /clear during the countdown is not cleared twice', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  await complete($, SEAM)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  await clear($)
+  await settle(() => w.submits.length === 1)
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(0)
+})
+
+test('auto trigger: GATE blocked -> no arm, advice failed, retried at each turn end, 3 tries then advice only', async ($, on) => {
+  const w = world(on, 'GATE: blocked - mid synthesis')
+  usage(on)
+  await autoReady($, w)
+  for (let i = 1; i <= 3; i++) {
+    await complete($, SEAM)
+    await settle(() => w.forkPrompts.length === i)
+    await settle(() => !lastOf(w)?.includes('automatically saving'))
+  }
+  expect(lastOf(w)).toBe('Context almost full (70%) and the automatic save failed (mid synthesis). Type /pack to continue in a fresh session \u00B7 auto')
+  expect(w.store.get('pack:pending')).toBeUndefined()
+  expect(w.clears).toBe(0)
+  await complete($, SEAM)
+  expect(w.forkPrompts).toHaveLength(3)
+  expect(ctxActions(w).at(-1)).toBe('auto-tries')
+})
+
+test('auto hard: wall close (tokens >= WALL_CAP * wall) -> the hard save runs mid-turn as before', async ($, on) => {
+  const w = world(on, OK())
+  usage(on, 100_000)
+  w.files.set(AUTO_REL, '')
+  await fresh($)
+  await title($, 'proj')
+  await measure($, 95_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.clears).toBe(0)
+})
+
+test('auto hard: /pack auto off after a deferral gives the hard save back to the next measure', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w)
+  expect(w.forkPrompts).toHaveLength(0)
+  await runPack($, 'auto off')
+  await measure($, HARD_AT + 1_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+})
+
+test('auto trigger: a shell touch after the session start is honored at the turn end', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await fresh($)
+  await title($, 'proj')
+  await measure($, HARD_AT)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  w.files.set(AUTO_REL, '')
+  await complete($, SEAM)
+  await settle(() => w.forkPrompts.length === 2)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+})
+
+// ---------- live order: the measure of a turn follows its turn.complete (D1, D2) ----------
+
+test('auto live order: turn.complete sees the old fill, the measure that follows it starts the pack (D1)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await startTurn($)
+  await complete($, SEAM)
+  expect(ctxActions(w).at(-1)).toBe('auto-skip')
+  expect(w.forkPrompts).toHaveLength(0)
+  await measure($, HARD_AT)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  expect(w.forkPrompts).toHaveLength(1)
+  // the turn's own trailer was journaled before the save, as on the turn-end path
+  expect(w.files.get(JOURNAL)).toContain('use code')
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+  expect(ctxActions(w).at(-1)).toBe('hard-auto-deferred+auto-pack')
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(1)
+})
+
+test('auto live order: a late measure past the wall cap goes to the auto pack, not the hard save (D2)', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await startTurn($)
+  await complete($, SEAM)
+  await measure($, 155_000)
+  await settle(() => w.toasts.includes(GRACE(78)))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(w.toasts.some(t => t.includes('Progress saved'))).toBe(false)
+  expect(w.store.get('pack:pending')).toMatchObject({ phase: 'armed' })
+  await w.clock.advance(10_000)
+  expect(w.clears).toBe(1)
+})
+
+test('auto live order: the same measure mid-turn past the wall cap keeps the hard save, no clear', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await complete($, SEAM)
+  await startTurn($)
+  await measure($, 155_000)
+  await settle(() => w.toasts.some(t => t.includes('Progress saved')))
+  expect(w.forkPrompts).toHaveLength(1)
+  expect(ctxActions(w).at(-1)).toBe('hard-save')
+  await w.clock.advance(15_000)
+  expect(w.clears).toBe(0)
+})
+
+test('auto live order: an aborted turn or a subagent turn does not open the window; a prompt turn closes it', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await complete($, SEAM, { isAborted: true, reason: 'aborted' })
+  await measure($, HARD_AT)
+  await complete($, SEAM, { agentId: 'sub-1' })
+  await measure($, HARD_AT + 1_000)
+  expect(w.forkPrompts).toHaveLength(0)
+  await complete($, SEAM)
+  await startTurn($)
+  await measure($, HARD_AT + 2_000)
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(w.clears).toBe(0)
+})
+
+test('auto live order: a prompt typed in the grace window after a late measure still stops the clear', async ($, on) => {
+  const w = world(on, OK())
+  usage(on)
+  await autoReady($, w, HARD_AT - 1)
+  await complete($, SEAM)
+  await measure($, HARD_AT)
+  await settle(() => w.toasts.includes(GRACE(70)))
+  await title($, 'proj')
+  await w.clock.advance(15_000)
+  expect(w.clears).toBe(0)
+  expect(lastOf(w)).toContain(SAVED_AUTO(70))
 })

@@ -2,7 +2,9 @@ import type { EngineInterface, On } from 'claude-code'
 
 // pack (stoa), ported from the modtest prototype: one mod for context.
 //   /pack save [stream]            fork -> pack-<stream>-llm.md (not awaited, no clear)
-//   /pack [stream] [--yes|-y]      save (awaited) + review pane / --yes: arm + /clear (automatic) + re-inject
+//   /pack [stream]                 save (awaited) + arm + /clear (automatic) + re-inject; --yes|-y = silent alias
+//   /pack [stream] --review        save (awaited) + review pane: clear & continue [c] / keep working [x]
+//   /pack auto [off]               toggle auto mode: .stoa-pack-auto in the session cwd
 //   /pack cancel                   leave the review or the armed state (the saved file stays)
 //   /unpack <stream>               state file -> first message of this session
 // Journal: every `<!-- ckpt ... -->` trailer of a main-loop answer is appended verbatim to journal/<stream>.md by code.
@@ -18,8 +20,16 @@ const STATE_MAX = 8_000
 // Below this much room under STATE_MAX, the fork is told to designate retire_* ids first.
 const ROOM_TIGHT = 1_500
 const STREAM_RE = /^[a-zA-Z0-9_-]{1,50}$/
-const RESERVED = ['save', 'load', 'cancel']
+const RESERVED = ['save', 'load', 'cancel', 'auto']
 const SHRINK_LINE = 80
+// Auto mode toggle: this file in the session cwd (same convention as keel's .stoa-keel-off). Shell touch / rm are valid too.
+const AUTO_FILE = '.stoa-pack-auto'
+// $.agent.list() is raced against this: a hang would leave a save (and auto mode) stuck without a word.
+const AGENT_LIST_MS = 5_000
+// Auto mode: failed saves (GATE blocked...) retried at the next turn end, per cycle; then the advice line alone.
+const AUTO_TRIES = 3
+// Auto mode: seconds between the saved pack and the /clear, to type a prompt or /pack cancel and stay.
+const AUTO_GRACE_MS = 10_000
 // Feedback channels. Status line = the present state; a toast = an event; a {text} reply = the record (past tense).
 // A "..." on the status always ends in an outcome on the status. Errors stay on the status and toast for ERROR_TOAST_MS.
 const ERROR_TOAST_MS = 12_000
@@ -120,6 +130,21 @@ type Waiting = { count: number; stream: string | null }
 let waiting: Waiting | null = null
 // Bumped at every re-arm: a hard save finishing in an older cycle must not set a stale advice.
 let cycle = 0
+// Auto mode: .stoa-pack-auto exists in the session cwd. Refreshed from the disk at session start, after a toggle and at trigger time.
+let autoOn = false
+// Auto pack in flight (save, then grace before the /clear). aborted: a prompt or /pack cancel came in; graceStarted: armed and counting down.
+type AutoRun = { aborted: boolean; graceStarted: boolean }
+let autoRun: AutoRun | null = null
+// Failed auto saves in this cycle (reset by rearmZones).
+let autoTries = 0
+// A turn ended while a save was running: the auto pack starts again when that save ends (the running one lacks the end of the turn).
+let autoDue = false
+// The hard save was deferred to the turn end because auto mode is on; auto off gives it back to the measure.
+let hardDeferred = false
+// The main loop is between two turns: set at a main-loop turn.complete (not aborted), cleared by turn.start (main loop only, a subagent's run raises none).
+// Live, session.measure of a turn arrives AFTER its turn.complete: a measure seen while this is set belongs to the turn that just ended, so the
+// auto pack may start on it (no turn runs, a /clear kills nothing). A measure seen mid-turn never does (A7).
+let turnOver = false
 
 // ---------- pure helpers ----------
 
@@ -148,27 +173,37 @@ export function slugify(title: string): string | null {
   return slug === '' ? null : slug
 }
 
-export type Verb = 'save' | 'load' | 'pack' | 'cancel'
-export type ParsedArgs = { verb: Verb; stream?: string; yes: boolean } | { error: string }
+export type Verb = 'save' | 'load' | 'pack' | 'cancel' | 'auto'
+export type ParsedArgs = { verb: Verb; stream?: string; review: boolean; off?: boolean } | { error: string }
+
+const PACK_USAGE = 'Usage: /pack [stream] [--review] | save [stream] | cancel | auto [off]'
 
 export function parseArgs(args: string): ParsedArgs {
   const tokens = args.split(/\s+/).filter(t => t !== '')
+  const review = tokens.includes('--review')
+  // --yes / -y: silent alias of the default (the fresh start is what /pack does now).
   const yes = tokens.some(t => t === '--yes' || t === '-y')
-  const rest = tokens.filter(t => t !== '--yes' && t !== '-y')
+  const rest = tokens.filter(t => t !== '--review' && t !== '--yes' && t !== '-y')
   const bad = rest.find(t => t.startsWith('-'))
-  if (bad) return { error: `unknown option ${bad}. Usage: /pack save [stream] | cancel | [stream] [--yes]` }
+  if (bad) return { error: `unknown option ${bad}. ${PACK_USAGE}` }
+  if (review && yes) return { error: `--review and --yes exclude each other. ${PACK_USAGE}` }
+  const flagged = review || yes
   let verb: Verb = 'pack'
   if (rest[0] === 'load') return { error: 'load moved: type /unpack <stream>' }
-  if (rest[0] === 'cancel') return yes || rest.length > 1 ? { error: 'cancel takes nothing else. Usage: /pack cancel' } : { verb: 'cancel', yes: false }
+  if (rest[0] === 'cancel') return flagged || rest.length > 1 ? { error: 'cancel takes nothing else. Usage: /pack cancel' } : { verb: 'cancel', review: false }
+  if (rest[0] === 'auto') {
+    if (flagged || rest.length > 2 || (rest.length === 2 && rest[1] !== 'off')) return { error: 'Usage: /pack auto [off]' }
+    return { verb: 'auto', review: false, off: rest[1] === 'off' }
+  }
   if (rest[0] === 'save') verb = rest.shift() as Verb
-  if (yes && verb !== 'pack') return { error: `--yes only goes with the full form (/pack [stream] --yes), not /pack save` }
-  if (rest.length > 1) return { error: `too many arguments. Usage: /pack save [stream] | cancel | [stream] [--yes]` }
+  if (flagged && verb !== 'pack') return { error: `${review ? '--review' : '--yes'} only goes with the full form (/pack [stream] [--review]), not /pack save` }
+  if (rest.length > 1) return { error: `too many arguments. ${PACK_USAGE}` }
   const stream = rest[0]
   if (stream !== undefined) {
     if (RESERVED.includes(stream)) return { error: `"${stream}" is a reserved word, not a stream name` }
     if (!STREAM_RE.test(stream)) return { error: `invalid stream "${stream}": use 1-50 chars of a-z A-Z 0-9 _ -` }
   }
-  return { verb, stream, yes }
+  return { verb, stream, review }
 }
 
 // `/unpack <stream>`: the stream is required; the load verb is the same one /pack used to carry.
@@ -181,7 +216,7 @@ export function parseUnpackArgs(args: string): ParsedArgs {
   const stream = tokens[0] as string
   if (RESERVED.includes(stream)) return { error: `"${stream}" is a reserved word, not a stream name` }
   if (!STREAM_RE.test(stream)) return { error: `invalid stream "${stream}": use 1-50 chars of a-z A-Z 0-9 _ -` }
-  return { verb: 'load', stream, yes: false }
+  return { verb: 'load', stream, review: false }
 }
 
 export type Clause = 'decision' | 'reasoning' | 'learning' | 'pivot' | 'rejected' | 'constraint' | 'assumption' | 'open' | 'definition' | 'refs'
@@ -309,15 +344,23 @@ export function parseForkBody(body: string): ForkFields | null {
 
 const oneLine = (s: string) => s.replace(/\s+/g, ' ').trim()
 const AGENT_LINE = 'agent in flight:'
+// The list did not answer in AGENT_LIST_MS: said once in the pack instead of silently listing nobody.
+const AGENTS_UNKNOWN = 'agents: unknown (list timed out)'
 const AGENTS_MAX = 10
 const AGENT_DESC_MAX = 100
 const LIVE_STATUS = ['pending', 'running', 'waiting', 'idle']
 // One code-written line per live background agent, so the fresh context after /clear knows whom it can still SendMessage.
 // Agents of a Workflow are not in $.agent.list (a forked skill is). Called BEFORE the save fork starts, so the fork never
-// lists itself. Any failure -> no lines: the save must never fail because of this.
+// lists itself. A failure -> no lines; a list slower than AGENT_LIST_MS -> one `unknown` line. The save never fails because of this.
 async function agentLines($: EngineInterface): Promise<string[]> {
+  let timer: { cancel: () => void } | null = null
   try {
-    const live = (await $.agent.list()).filter(a => LIVE_STATUS.includes(a.status))
+    const timeout = new Promise<'timeout'>(resolve => {
+      timer = $.clock.after(AGENT_LIST_MS, () => resolve('timeout'))
+    })
+    const listed = await Promise.race([$.agent.list(), timeout])
+    if (listed === 'timeout') return [AGENTS_UNKNOWN]
+    const live = listed.filter(a => LIVE_STATUS.includes(a.status))
     const lines = live.slice(0, AGENTS_MAX).map(a => {
       const desc = oneLine(a.description ?? '')
       return `${AGENT_LINE} ${oneLine(a.name || a.type)} [${a.id}] ${a.status}${desc ? ` — ${desc.slice(0, AGENT_DESC_MAX)}` : ''}`
@@ -326,6 +369,8 @@ async function agentLines($: EngineInterface): Promise<string[]> {
     return lines
   } catch {
     return []
+  } finally {
+    ;(timer as { cancel: () => void } | null)?.cancel()
   }
 }
 const uniq = (lines: string[]) => [...new Set(lines)]
@@ -386,7 +431,7 @@ export function assemble(input: AssembleInput): Assembled {
   for (const sec of LISTS) {
     let own = (fields.lists[sec] ?? []).map(oneLine).filter(l => l !== '' && idOf(l) === null)
     if (sec === 'decisions') own = own.map(l => (l.includes('—') ? l : `${l} — why missing`))
-    if (sec === 'in_progress') own = own.filter(l => !l.startsWith(AGENT_LINE)) // code writes those, never the fork
+    if (sec === 'in_progress') own = own.filter(l => !l.startsWith(AGENT_LINE) && l !== AGENTS_UNKNOWN) // code writes those, never the fork
     if (sec === 'read_first' || sec === 'in_progress' || sec === 'stale') lists[sec] = own
     else lists[sec] = uniq([...lists[sec], ...own])
   }
@@ -778,6 +823,8 @@ async function saveInBackground($: EngineInterface, stream: string, auto?: { pct
     if (!auto) rearmZones()
     if (auto) hardOutcome($, auto, failure)
     else flowStatus($, undefined)
+    // A main turn ended during this save: the auto pack it asked for starts now, on a fresh save.
+    if (autoDue) autoTrigger($).catch(() => undefined)
   }
 }
 
@@ -808,6 +855,8 @@ function rearmZones() {
   softDone = false
   hardDone = false
   advice = null
+  autoTries = 0
+  hardDeferred = false
   cycle++
 }
 
@@ -836,7 +885,53 @@ function resetZones() {
 function paint($: EngineInterface) {
   const journalFailed = waiting && waiting.stream !== null ? waitingText(waiting) : undefined
   const noStream = waiting && waiting.stream === null ? waitingText(waiting) : undefined
-  $.ui.status(flowLine ?? outcome?.text ?? journalFailed ?? (advice ? adviceText(advice) : undefined) ?? noStream)
+  const main = flowLine ?? outcome?.text ?? journalFailed ?? (advice ? adviceText(advice) : undefined) ?? noStream
+  // Auto mode is a state, not a message: a segment after whatever the line says, alone when the line is empty.
+  $.ui.status(autoOn ? (main ? `${main} \u00B7 auto` : 'auto') : main)
+}
+
+// ---------- auto mode state ----------
+
+const autoPath = async ($: EngineInterface) => `${await $.session.cwd()}/${AUTO_FILE}`
+
+// Reads the toggle file; any failure counts as off. Repaints when the state moved.
+async function refreshAuto($: EngineInterface) {
+  const before = autoOn
+  try {
+    autoOn = await $.fs.exists(await autoPath($))
+  } catch {
+    autoOn = false
+  }
+  if (autoOn !== before) paint($)
+}
+
+async function autoToggle($: EngineInterface, off: boolean) {
+  const path = await autoPath($)
+  try {
+    if (off) {
+      const r = await $.process.run(['rm', '-f', path])
+      if (r.exitCode !== 0) return { text: `pack: could not remove ${AUTO_FILE}: ${shortReason(r.stderr || `exit ${r.exitCode}`)}. Auto mode unchanged.` }
+    } else {
+      await $.fs.write(path, 'pack auto mode: delete this file or type /pack auto off\n')
+    }
+  } catch (err) {
+    return { text: `pack: could not ${off ? 'remove' : 'create'} ${AUTO_FILE}: ${shortReason(String(err))}. Auto mode unchanged.` }
+  }
+  await refreshAuto($)
+  if (off && !autoOn) {
+    autoDue = false
+    // The hard save was deferred to a turn end that will not auto-pack any more: the next measure runs it as before.
+    if (hardDeferred) hardDone = false
+    hardDeferred = false
+  }
+  if (off) return { text: autoOn ? `pack: ${AUTO_FILE} is still there, auto mode stays on` : 'pack: auto mode off' }
+  const stream = current()
+  const cwd = await $.session.cwd()
+  return {
+    text: stream
+      ? `pack: auto mode on for ${cwd} (stream "${stream}")`
+      : `pack: auto mode on for ${cwd} (no stream yet: auto will only advise until /pack save <name> or /rename)`,
+  }
 }
 
 function flowStatus($: EngineInterface, text: string | undefined) {
@@ -916,15 +1011,15 @@ const shortReason = (reason: string) => {
 export function adviceText(a: Advice): string {
   switch (a.kind) {
     case 'task':
-      return `Good moment for a fresh start: ${a.task} just closed (context ${a.pct}%). Type /pack --yes`
+      return `Good moment for a fresh start: ${a.task} just closed (context ${a.pct}%). Type /pack`
     case 'pivot':
-      return `Good moment for a fresh start: the direction just changed (context ${a.pct}%). Type /pack --yes`
+      return `Good moment for a fresh start: the direction just changed (context ${a.pct}%). Type /pack`
     case 'decision':
-      return `Good moment for a fresh start: a decision just landed (context ${a.pct}%). Type /pack --yes`
+      return `Good moment for a fresh start: a decision just landed (context ${a.pct}%). Type /pack`
     case 'saved':
-      return `Progress saved automatically (context ${a.pct}%). Type /pack --yes to continue in a fresh session`
+      return `Progress saved automatically (context ${a.pct}%). Type /pack to continue in a fresh session`
     case 'failed':
-      return `Context almost full (${a.pct}%) and the automatic save failed (${shortReason(a.reason ?? 'unknown')}). Type /pack --yes to continue in a fresh session`
+      return `Context almost full (${a.pct}%) and the automatic save failed (${shortReason(a.reason ?? 'unknown')}). Type /pack to continue in a fresh session`
     case 'nostream':
       return `Context almost full (${a.pct}%) but no stream is set, so nothing was saved. Type /pack save <name>`
   }
@@ -1026,6 +1121,12 @@ function hardSave($: EngineInterface, pct: number): string {
     return 'hard-nostream'
   }
   if (saving || phase !== 'idle') return saving ? 'hard-skip-saving' : `hard-skip-${phase}`
+  // Auto mode: the save is the auto pack at the turn end (a fork now would save before the end of the turn, and the turn is still running).
+  // Exception: the wall is close (compaction imminent), a mid-turn save beats none. Not once the turn is over: the auto pack runs from this measure.
+  if (autoOn && (turnOver || !(lastM?.wall != null && lastM.tokens >= WALL_CAP * lastM.wall))) {
+    hardDeferred = true
+    return 'hard-auto-deferred'
+  }
   saving = true
   startProgress($, () => savingText(pct))
   saveInBackground($, stream, { pct, cycle }).catch(() => {
@@ -1068,7 +1169,108 @@ async function onMeasure($: EngineInterface, tokens: number, window: number, per
     action = 'rearm'
   } else if (tokens >= hardAt) action = hardSave($, pct)
   else action = adviceStep($, fill, pct)
+  // The measure of the turn that just ended (it follows turn.complete): the turn-end trigger saw the turn before's fill, so it runs again on this one.
+  if (turnOver && tokens >= hardAt) {
+    const auto = await autoTrigger($)
+    if (auto !== 'auto-off') action = `${action}+${auto}`
+  }
   ctxLog($, 'measure', m, action)
+}
+
+// ---------- auto pack (turn end) ----------
+
+// The human stayed (a prompt, /pack cancel): no clear. The save stays on disk; auto sleeps until the fill falls back under the floor.
+function autoStay($: EngineInterface, pct: number) {
+  autoRun = null
+  autoTries = AUTO_TRIES
+  hardDone = true
+  softDone = true
+  advice = { kind: 'saved', rank: 3, floor: SOFT, pct }
+  paint($)
+}
+
+// A 1 s countdown on the flow line, until the next flowStatus().
+function startCountdown($: EngineInterface, label: (left: number) => string, seconds: number) {
+  flowStatus($, label(seconds))
+  let left = seconds
+  ticker = $.clock.every(1000, () => {
+    left = Math.max(left - 1, 0)
+    flowLine = label(left)
+    paint($)
+  })
+}
+
+// Same body as the default /pack (fork -> arm -> clear) with the grace window before the clear. Not awaited by its caller.
+async function autoPack($: EngineInterface, stream: string, pct: number, run: AutoRun) {
+  saving = true
+  startProgress($, () => savingText(pct))
+  let built: Built
+  try {
+    built = await buildState($, stream)
+  } finally {
+    saving = false
+  }
+  if (built.kind === 'blocked') {
+    autoRun = null
+    autoTries++
+    if (outcome && !outcome.sticky) outcome = null
+    advice = { kind: 'failed', rank: 3, floor: SOFT, pct, reason: built.reason }
+    flowStatus($, undefined)
+    $.ui.toast(adviceText(advice), { timeoutMs: ERROR_TOAST_MS })
+    return
+  }
+  const pack = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
+  pending = { pack, createdAt: await $.clock.now(), cwd: await $.session.cwd(), stream }
+  if (!run.aborted) {
+    phase = 'armed'
+    rearmZones()
+    await persist($)
+  }
+  if (run.aborted) {
+    // Stayed during the save: nothing armed (or the arm is undone), the saved file stays.
+    if (phase === 'armed') await reset($)
+    else pending = null
+    flowStatus($, undefined)
+    autoStay($, pct)
+    return
+  }
+  run.graceStarted = true
+  const s = Math.round(AUTO_GRACE_MS / 1000)
+  $.ui.toast(`Context ${pct}%: fresh session for stream "${stream}" in ${s} s. /pack cancel to stay`)
+  startCountdown($, left => `Context ${pct}%: fresh session for stream "${stream}" in ${left} s. /pack cancel to stay`, s)
+  $.clock.after(AUTO_GRACE_MS, () => {
+    if (autoRun !== run || run.aborted || phase !== 'armed') return
+    autoRun = null
+    flowStatus($, 'Starting a fresh session...')
+    $.command.run({ command: 'clear' }).catch(() => flowStatus($, READY))
+  })
+}
+
+// Called at the end of a main turn (after capture) and when a save that blocked it ends. Returns the action for the log line.
+async function autoTrigger($: EngineInterface): Promise<string> {
+  await refreshAuto($)
+  if (!autoOn) {
+    autoDue = false
+    return 'auto-off'
+  }
+  const stream = current()
+  const m = lastM
+  if (!stream || !m || m.tokens < m.hardAt) return 'auto-skip'
+  if (phase !== 'idle' || autoRun) return `auto-skip-${autoRun ? 'running' : phase}`
+  if (saving) {
+    autoDue = true
+    return 'auto-deferred'
+  }
+  if (autoTries >= AUTO_TRIES) return 'auto-tries'
+  autoDue = false
+  const run: AutoRun = { aborted: false, graceStarted: false }
+  autoRun = run
+  autoPack($, stream, m.pct, run).catch(() => {
+    saving = false
+    autoRun = null
+    flowStatus($, undefined)
+  })
+  return 'auto-pack'
 }
 
 // ---------- pack flow (v1 unchanged from the pack on) ----------
@@ -1119,7 +1321,7 @@ async function armedPack($: EngineInterface): Promise<string | null> {
   return stored.pack
 }
 
-async function packStream($: EngineInterface, stream: string, yes: boolean) {
+async function packStream($: EngineInterface, stream: string, review: boolean) {
   saving = true
   startProgress($, () => `Saving stream "${stream}" before the fresh start`)
   let built: Built
@@ -1138,9 +1340,9 @@ async function packStream($: EngineInterface, stream: string, yes: boolean) {
   const pack = `${built.state.trimEnd()}\n\n${journalRule(stream)}`
   pending = { pack, createdAt: await $.clock.now(), cwd: await $.session.cwd(), stream }
 
-  // --yes: no pane, so every outcome goes back as {text} (visible over Remote Control, unlike status/pane).
+  // Default: no pane, so every outcome goes back as {text} (visible over Remote Control, unlike status/pane).
   // The 8,000-char cap is already enforced on the state by assemble().
-  if (yes) {
+  if (!review) {
     // $.command.run rejects inside the hook the run waits on (d.ts: command.run), so the /clear runs from a
     // $.clock.after dispatch, after the hook returned (same seam as load()). If the host still refuses, the human types /clear.
     phase = 'armed'
@@ -1198,13 +1400,22 @@ function loadFailed($: EngineInterface, text: string) {
 async function handle($: EngineInterface, args: ParsedArgs, prefix: 'pack' | 'unpack') {
   if ('error' in args) return { text: `${prefix}: ${args.error}` }
   if (args.verb === 'cancel') {
+    if (saving && autoRun) {
+      autoRun.aborted = true
+      return { text: `${prefix}: the automatic save cannot be stopped; no fresh start will follow, the saved stream stays on disk` }
+    }
     if (saving) return { text: `${prefix}: a save is running and cannot be stopped; its outcome will show in the status line` }
     if (phase === 'idle') return { text: `${prefix}: nothing to cancel` }
     const text = await cancel($, phase === 'review')
     outcome = null
+    if (autoRun) {
+      autoRun.aborted = true
+      autoStay($, lastM?.pct ?? 0)
+    }
     paint($)
     return { text: `${prefix}: ${text}` }
   }
+  if (args.verb === 'auto') return autoToggle($, args.off === true)
   if (phase !== 'idle' || saving) return {
       text: saving
         ? `${prefix}: a save is running, its outcome will show in the status line`
@@ -1246,7 +1457,7 @@ async function handle($: EngineInterface, args: ParsedArgs, prefix: 'pack' | 'un
     return { text: `${prefix}: save of stream "${stream}" started; the outcome will show in the status line` }
   }
 
-  return packStream($, stream, args.yes)
+  return packStream($, stream, args.review)
 }
 
 export function registerPack(on: On) {
@@ -1254,8 +1465,8 @@ export function registerPack(on: On) {
     const commands = [
       {
         name: 'pack',
-        description: 'Save the progress of a stream, then continue it in a fresh session after /clear',
-        argumentHint: 'save [stream] | cancel | [stream] [--yes]',
+        description: 'Save the progress of a stream and continue it in a fresh session (--review to check it first)',
+        argumentHint: '[stream] [--review] | save [stream] | cancel | auto [off]',
       },
       {
         name: 'unpack',
@@ -1270,6 +1481,7 @@ export function registerPack(on: On) {
         $.ui.log(`pack: command ${command.name} not registered: ${String(err)}`)
       }
     }
+    await refreshAuto($)
     return next(e)
   })
 
@@ -1352,6 +1564,19 @@ export function registerPack(on: On) {
 
   on('classic.UserPromptSubmit', async ($, e, next) => {
     if (outcome && !outcome.sticky) outcome.prompted = true
+    // A prompt during an auto pack (save or grace): the human is here, no clear.
+    if (autoRun) {
+      const run = autoRun
+      run.aborted = true
+      if (run.graceStarted) {
+        try {
+          await cancel($, false)
+          autoStay($, lastM?.pct ?? 0)
+        } catch (err) {
+          $.ui.log(`pack: auto pack not stopped: ${String(err)}`)
+        }
+      }
+    }
     try {
       await noteTitle($, e.session_title)
     } catch (err) {
@@ -1367,6 +1592,10 @@ export function registerPack(on: On) {
     // Any source: the wall may differ (model), the fill starts over; seam, flags and the advice line re-arm. The last outcome goes.
     resetZones()
     outcome = null
+    autoRun = null
+    autoDue = false
+    turnOver = false
+    await refreshAuto($)
     if (e.source !== 'clear') {
       // A new, resumed or forked session is another session: unbind and drop any armed pack.
       if (e.source === 'startup' || e.source === 'resume' || e.source === 'fork') {
@@ -1424,8 +1653,18 @@ export function registerPack(on: On) {
     return next(e)
   })
 
+  // A main-loop turn begins (a typed prompt, an agent's notification, a continuation): measures are mid-turn again. Subagent runs raise no turn.start.
+  on('turn.start', (_$, e, next) => {
+    turnOver = false
+    return next(e)
+  }).catch(($, e, next) => {
+    noteCaught($, 'turn.start', next.error)
+    return next(e)
+  })
+
   // Journal capture: main loop only, completed turns only. Never throws into the engine.
   on('turn.complete', async ($, e, next) => {
+    if (e.agentId === undefined) turnOver = !e.isAborted
     if (e.agentId === undefined && !e.isAborted) {
       // Seam of the last main turn, for the advice. The d.ts does not order turn.complete against session.measure:
       // re-check the soft advice here with the last known fill, so either order works.
@@ -1447,6 +1686,13 @@ export function registerPack(on: On) {
         } catch {
           // nothing left to do
         }
+      }
+      // Auto mode, after capture (this turn's trailer is in the journal before the save). Not awaited past the check: the pack runs on.
+      try {
+        const action = await autoTrigger($)
+        if (lastM !== null && action !== 'auto-off') ctxLog($, 'turn', lastM, action)
+      } catch {
+        // observe only
       }
     }
     return next(e)
