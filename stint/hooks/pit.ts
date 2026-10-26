@@ -26,7 +26,7 @@ export const WALL_CAP = 0.95
 // Injected after the notes, verbatim from the previous generation (the "wait for my go" variant).
 export const UNPACK_RULES = `Reply with one line saying you are ready, then stop there.
 Do nothing without my explicit go — no file read, no command, no sub-agent, no continuation of what is in progress.
-Do not read the pack back to me. One line of acknowledgement is the whole answer.
+Do not read the notes back to me. One line of acknowledgement is the whole answer.
 Write a message only when something changes. The rest of the time stay silent.
 Questions go to me, in this window.
 After my go, read the \`read_first\` files before acting.`

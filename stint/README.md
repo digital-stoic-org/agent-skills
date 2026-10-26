@@ -4,9 +4,13 @@ Run your agent in stints. Pit before the redline.
 
 Requires Claude Code 2.1.275+.
 
-⚠️ Mods are not sandboxed: a hooks module runs with your permissions. Read the code in `hooks/` before loading it.
+## Install
 
-## Load
+```
+/plugin install stint --marketplace digital-stoic-org/agent-skills
+```
+
+## Load from a local copy
 
 ```bash
 claude --plugin-dir <path-to>/stint
@@ -29,7 +33,7 @@ Stream name, in order: the argument (`a-z A-Z 0-9 _ -`, up to 50 characters, kep
 
 ## Notes file
 
-`<working directory>/.stint/<stream>-notes.md`, at most 8,000 characters, written by one model fork that sees the previous notes of the stream and merges them. Header: `stream`, `saved`, `status`, `previous_session`, `goal`. Body lists: `read_first`, `read_if_needed`, `deliverable`, `decisions`, `learnings`, `discarded`, `in_progress`, `next`, `unknowns`, `stale`. Over the cap, code cuts `read_if_needed`, `stale`, `in_progress`, `discarded`, `learnings` in that order and marks the status `degraded`; agents still running are listed in `in_progress` by code.
+`<working directory>/.stint/<stream>-notes.md`, at most 8,000 characters, written by one model fork that sees the previous notes of the stream and merges them. Header: `stream`, `saved`, `status`, `previous_session`, `goal`. Body lists: `read_first`, `read_if_needed`, `deliverable`, `decisions`, `learnings`, `discarded`, `in_progress`, `next`, `unknowns`, `stale`. Over the cap, code marks the status `degraded`, shortens long `read_if_needed` lines, then drops items oldest first from `stale`, `in_progress`, `discarded`, `learnings`. Still over, it drops from `read_if_needed`, `next`, `unknowns`, `decisions` and names the cut in `stale`. The header, `read_first`, `deliverable` and the running agents are never cut; if they alone exceed the cap, nothing is written and the pit is refused. Agents still running are listed in `in_progress` by code.
 
 Do not load stint and stoa together.
 
