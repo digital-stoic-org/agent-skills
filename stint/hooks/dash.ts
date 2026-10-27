@@ -30,6 +30,8 @@ export const LINE_MAX = 80
 export const BOARD_MIN = 12
 export const REDLINE_MESSAGE = 'box this lap: /pit'
 export const PIT_DONE_TOAST = '✅ pit done · fresh window'
+// How long a finished pit waits for the first measure of the fresh context before it settles for the plain toast.
+export const PIT_WAIT_MS = 30_000
 
 export type Zone = 0 | 1 | 2
 export type Reading = { percent: number; tokens: number; window: number; rateLimits: readonly SessionRateLimit[] }
@@ -143,6 +145,9 @@ export type LineInput = {
   fuelFlashAt?: number
   delta?: number
   deltaAt?: number
+  // The revs points a pit just freed, shown like the rise for 3 s.
+  gain?: number
+  gainAt?: number
 }
 
 export const flashing = (now: number, at: number) => at >= 0 && now >= at && now - at < FLASH_MS
@@ -169,6 +174,8 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   }
   const age = now - (input.deltaAt ?? -1)
   if ((input.deltaAt ?? -1) >= 0 && (input.delta ?? 0) > 0 && age >= 0 && age < DELTA_MS) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: age >= DELTA_DIM_MS })
+  const gainAge = now - (input.gainAt ?? -1)
+  if ((input.gainAt ?? -1) >= 0 && (input.gain ?? 0) > 0 && gainAge >= 0 && gainAge < DELTA_MS) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
   if (fuel !== null && fuel < FUEL_BELOW) {
     runs.push(sep, { text: emoji ? `⛽ ${fuel}%` : `fuel ${fuel}%`, ...hot(YELLOW), ...(flashing(now, input.fuelFlashAt ?? -1) ? flash : {}) })
   }
@@ -192,6 +199,13 @@ export function toastText(zone: Zone, reading: Pick<Reading, 'percent' | 'window
   if (zone === 1) return `${mark(1)}${revs} ${dot} plan your pit`
   if (zone === 2) return `${mark(2)}${revs} ${dot} REDLINE ${dot} ${REDLINE_MESSAGE}`
   return null
+}
+
+// The toast of a finished pit: with the measured revs before and after when both are known, plain otherwise.
+export function pitDoneText(emoji: boolean, gain?: { from: number; to: number }): string {
+  if (!gain) return emoji ? PIT_DONE_TOAST : 'pit done - fresh window'
+  const n = gain.from - gain.to
+  return emoji ? `✅ pit done · revs ${gain.from}% → ${gain.to}% ↓${n}` : `pit done - revs ${gain.from}% -> ${gain.to}% -${n}`
 }
 
 // One toast slot per plugin: a live toast is only replaced by one of the same or a higher kind.
@@ -225,9 +239,15 @@ let deltaAt = -1
 // The band has been raised (terminal, desktop): the status line is left to pit.
 let bandSeen = false
 let toastSlot: ToastSlot = null
+// The pit's gain: revs % at the last measure before the /clear, then the wait for the first measure of the fresh context.
+let pitFrom: number | null = null
+let pitWait: { from: number } | null = null
+let pitTimer: { cancel: () => void } | null = null
+let gain = 0
+let gainAt = -1
 
 const inputOf = (now: number): LineInput | null =>
-  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, deltaAt }
+  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, deltaAt, gain, gainAt }
 
 // The status-line text, or undefined while dash is off or has no reading yet (fresh session, just cleared).
 export function dashLine(): string | undefined {
@@ -263,9 +283,46 @@ async function announce($: EngineInterface, text: string, kind: ToastKind) {
   $.ui.toast(text, { timeoutMs: TOAST_MS[kind] })
 }
 
-// pit calls this once the /clear went through.
+// pit calls this just before the /clear: the revs of the last measure are the "before".
+export function pitStart() {
+  pitFrom = reading ? Math.round(reading.percent) : null
+}
+
+// pit calls this once the /clear went through. With a "before" the toast waits for the first measure of the fresh context (ingest settles it); after PIT_WAIT_MS without one, or with no "before", it is the plain toast.
 export async function pitDone($: EngineInterface) {
-  await announce($, PIT_DONE_TOAST, 'positive')
+  if (mode === 'off') return
+  const from = pitFrom
+  pitFrom = null
+  if (from === null) {
+    await announce($, pitDoneText(mode === 'full'), 'positive')
+    return
+  }
+  pitWait = { from }
+  pitTimer?.cancel()
+  pitTimer = $.clock.after(PIT_WAIT_MS, async () => {
+    pitTimer = null
+    if (pitWait === null) return
+    pitWait = null
+    await announce($, pitDoneText(mode === 'full'), 'positive')
+  })
+}
+
+// The first measure after a pit: the real "after". A pit that did not lower the revs gets the plain toast and no delta.
+async function settlePit($: EngineInterface, percent: number) {
+  if (pitWait === null) return
+  const from = pitWait.from
+  pitWait = null
+  pitTimer?.cancel()
+  pitTimer = null
+  const to = Math.round(percent)
+  if (from <= to) {
+    await announce($, pitDoneText(mode === 'full'), 'positive')
+    return
+  }
+  gain = from - to
+  gainAt = nowMs
+  redrawIn($, DELTA_MS)
+  await announce($, pitDoneText(mode === 'full', { from, to }), 'positive')
 }
 
 export async function setLap($: EngineInterface, n: number) {
@@ -331,6 +388,7 @@ async function ingest($: EngineInterface, context: SessionContextUsage, rateLimi
     if (text) await announce($, text, zone === 2 ? 'redline' : 'zone')
   }
   lastZone = zone
+  await settlePit($, percent)
   repaint($)
 }
 
@@ -359,6 +417,11 @@ export function registerDash(on: On, userOptions: PluginOptions) {
   deltaAt = -1
   bandSeen = false
   toastSlot = null
+  pitFrom = null
+  pitWait = null
+  pitTimer = null
+  gain = 0
+  gainAt = -1
 
   // Applied the moment the row changes: the line is redrawn (or cleared) without waiting for a measure.
   on('config.set', { key: DASH_KEY }, async ($, e, next) => {
@@ -422,7 +485,11 @@ export function registerDash(on: On, userOptions: PluginOptions) {
       fuelShown = false
       delta = 0
       deltaAt = -1
-      if (source === 'startup' || source === 'resume' || source === 'fork') await setLap($, 1)
+      if (source === 'startup' || source === 'resume' || source === 'fork') {
+        pitFrom = null
+        pitWait = null
+        await setLap($, 1)
+      }
       repaint($)
       return next(e)
     }).catch(($, e, next) => {

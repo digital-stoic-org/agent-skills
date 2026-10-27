@@ -2,7 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 import type { Board } from '../types'
-import { BASE_WINDOW, DASH_MODES, FLASH_MS, LINE_MAX, PIT_DONE_TOAST, REDLINE_MESSAGE, TOAST_MS, bar, buildRuns, canToast, cols, fit, flashing, fuelOf, modeOf, pickBoard, renderLine, thresholdsOf, toastText, windowTag, zoneOf } from '../hooks/dash.ts'
+import { BASE_WINDOW, DASH_MODES, FLASH_MS, LINE_MAX, PIT_DONE_TOAST, PIT_WAIT_MS, REDLINE_MESSAGE, TOAST_MS, bar, buildRuns, canToast, cols, fit, flashing, fuelOf, modeOf, pickBoard, pitDoneText, renderLine, thresholdsOf, toastText, windowTag, zoneOf } from '../hooks/dash.ts'
 import { assemble, parseFork, parseForkBody, stintOf } from '../hooks/pit.ts'
 
 // ---------- pure functions ----------
@@ -370,15 +370,20 @@ test('toasts: one slot, redline > zone > positive, never stacked', async ($, on)
   await measure($, 20)
   await measure($, 45)
   expect(w.toasts).toHaveLength(1)
-  // nor the positive pit toast
+  // nor the positive pit toast: the first measure of the fresh context settles it, and the slot is still taken
   await run($, 'pit', 'proj')
   await w.clock.advance(5)
-  expect(w.toasts).toHaveLength(1)
+  await clear($)
+  await measure($, 5)
+  expect(pitToasts(w)).toEqual([])
   // past it, the pit toast shows for 3 s
   await w.clock.advance(10_001)
+  await measure($, 30)
   await run($, 'pit', 'proj')
   await w.clock.advance(5)
-  expect(w.toasts.slice(1)).toEqual([PIT_DONE_TOAST])
+  await clear($)
+  await measure($, 12)
+  expect(pitToasts(w)).toEqual(['✅ pit done · revs 30% → 12% ↓18'])
   expect(w.toastMs.at(-1)).toBe(3000)
   // a zone toast replaces a positive one still on screen
   await clear($)
@@ -498,14 +503,100 @@ test('dash ascii: the line and the toasts are ASCII only', { options: { dash: 'a
   expect(/^[\x20-\x7e]*$/.test(last(w) ?? '')).toBe(true)
 })
 
-test('pit done: a positive toast of 3 s after the /clear went through', async ($, on) => {
+const pitToasts = (w: World) => w.toasts.filter(x => x.includes('pit done'))
+
+test('pit done: the gain toast waits for the first measure of the fresh context, 3 s, with the measured values', async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 30)
+  await run($, 'pit', 'proj')
+  await w.clock.advance(5)
+  // the /clear went through, no measure yet: no toast, no estimate
+  expect(pitToasts(w)).toEqual([])
+  await clear($)
+  await measure($, 12)
+  expect(pitToasts(w)).toEqual(['✅ pit done · revs 30% → 12% ↓18'])
+  expect(w.toastMs.at(-1)).toBe(3000)
+})
+
+test('pit done: ↓N shows on the line for 3 s, then is gone; a later measure does not show it again', async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 30)
+  await run($, 'pit', 'proj')
+  await w.clock.advance(5)
+  await clear($)
+  await measure($, 12)
+  expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ ↓18 · 🏁 2 · 📋 —')
+  await w.clock.advance(3_001)
+  expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ · 🏁 2 · 📋 —')
+  await measure($, 14)
+  expect(last(w)?.includes('↓')).toBe(false)
+  // the rise after the pit is the normal ↑N, the gain is not repeated on the next pit's toast
+  expect(pitToasts(w)).toHaveLength(1)
+})
+
+test('pit done: with no pre-pit value the plain toast shows at once and no delta', async ($, on) => {
   const w = world(on)
   await fresh($)
   await run($, 'pit', 'proj')
   await w.clock.advance(5)
-  expect(w.toasts).toEqual([PIT_DONE_TOAST])
-  expect(w.toastMs).toEqual([3000])
+  expect(pitToasts(w)).toEqual([PIT_DONE_TOAST])
+  expect(w.toastMs.at(-1)).toBe(3000)
+  await clear($)
+  await measure($, 5)
+  expect(last(w)?.includes('↓')).toBe(false)
+  expect(pitToasts(w)).toHaveLength(1)
 })
+
+test('pit done: with no measure after the pit the plain toast shows once the wait is over, no delta', async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 30)
+  await run($, 'pit', 'proj')
+  await w.clock.advance(5)
+  await clear($)
+  expect(pitToasts(w)).toEqual([])
+  await w.clock.advance(PIT_WAIT_MS + 1)
+  expect(pitToasts(w)).toEqual([PIT_DONE_TOAST])
+  // a measure that comes later shows no gain
+  await measure($, 12)
+  expect(pitToasts(w)).toHaveLength(1)
+  expect(last(w)?.includes('↓')).toBe(false)
+})
+
+test('pit done: a pit that did not lower the revs gets the plain toast and no delta', async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 10)
+  await run($, 'pit', 'proj')
+  await w.clock.advance(5)
+  await clear($)
+  await measure($, 12)
+  expect(pitToasts(w)).toEqual([PIT_DONE_TOAST])
+  expect(last(w)?.includes('↓')).toBe(false)
+})
+
+test('pit done: ascii mode is ASCII only, in the toast and on the line', { options: { dash: 'ascii' } }, async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 30)
+  await run($, 'pit', 'proj')
+  await w.clock.advance(5)
+  await clear($)
+  await measure($, 12)
+  expect(pitToasts(w)).toEqual(['pit done - revs 30% -> 12% -18'])
+  expect(last(w)).toBe('revs 12% #......... -18 | stint 2 | board -')
+  expect(/^[\x20-\x7e]*$/.test(pitToasts(w)[0]! + (last(w) ?? ''))).toBe(true)
+})
+
+test('pitDoneText: gain, plain, ascii', () => {
+  expect(pitDoneText(true, { from: 30, to: 12 })).toBe('✅ pit done · revs 30% → 12% ↓18')
+  expect(pitDoneText(true)).toBe(PIT_DONE_TOAST)
+  expect(pitDoneText(false, { from: 30, to: 12 })).toBe('pit done - revs 30% -> 12% -18')
+  expect(pitDoneText(false)).toBe('pit done - fresh window')
+})
+
 test('dash: a value outside full | ascii | off reads as full', { options: { dash: 'rainbow' } }, async ($, on) => {
   const w = world(on)
   await fresh($)
@@ -578,8 +669,7 @@ test('pit: the flow and outcome lines win over the dash line; the dash line come
   const w = world(on)
   await fresh($)
   await measure($, 30)
-  const dashLine = last(w)
-  expect(dashLine?.startsWith('🚀 revs 30%')).toBe(true)
+  expect(last(w)?.startsWith('🚀 revs 30%')).toBe(true)
   await run($, 'pit', 'proj')
   // the pit hands over: its flow line is up, not the dash line
   expect(last(w)).toBe('Starting a fresh session...')
@@ -588,7 +678,7 @@ test('pit: the flow and outcome lines win over the dash line; the dash line come
   await clear($)
   expect(last(w)).toBeUndefined()
   await measure($, 5)
-  expect(last(w)).toBe('🚀 revs 5% ▯▯▯▯▯▯▯▯▯▯ · 🏁 2 · 📋 —')
+  expect(last(w)).toBe('🚀 revs 5% ▯▯▯▯▯▯▯▯▯▯ ↓25 · 🏁 2 · 📋 —')
 })
 
 test('stint counter: +1 per successful /pit (absent = 1), shown as the lap, set by /rejoin, reset by a new session', async ($, on) => {

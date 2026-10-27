@@ -1,6 +1,6 @@
 import type { EngineInterface, On } from 'claude-code'
 
-import { pitDone, setLap } from './dash.ts'
+import { pitDone, pitStart, setLap } from './dash.ts'
 import { setPitLine, writeStatus } from './status.ts'
 
 // pit (stint): one mod, two commands.
@@ -555,6 +555,7 @@ async function pit($: EngineInterface, args: string) {
   pending = { text: built.state, createdAt: await $.clock.now(), cwd, stream }
   await persist($)
   await setLap($, built.stint)
+  pitStart()
   flowStatus($, 'Starting a fresh session...')
   // $.command.run rejects inside the hook the run waits on, so the /clear runs from a $.clock.after dispatch, after the hook returned.
   // If the host still refuses, the human types /clear.
