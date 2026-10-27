@@ -44,14 +44,15 @@ A band above the prompt carries the car's instruments, on by default (`dash`: `f
 | `revs` | Context fill, as a share of the model window (the figure of Claude Code's own status line). The bar has ten cells, one per 10%. When the window is not 200k its size follows the percentage, e.g. `revs <n>%/1M`. |
 | zone emoji | 🚀 under the soft threshold · 🔥 orange from the soft threshold · 🚨 bold red from the hard threshold, fixed, it does not pulse. |
 | thresholds | Soft 80k tokens, hard 120k tokens, which is 40% and 60% of a 200k window. A window under 200k caps them at 40% and 60% of itself. They are not the point where Claude Code compacts; that wall is read by `/pit` alone. |
-| `↑<n>` | The last rise of revs, for 3 seconds. |
+| `↑<n>` | Revs points the last prompt added: the revs at the end of the prompt minus those at the end of the one before, from measured values only. Dim, it stays until the next prompt replaces it. After a pit, the dim `↓<n>` stays the same way. |
+| sparkline `▁▂▃▄▅▆▇█` | At the right end of the band: the deltas of the last 8 prompts, newest on the right, shown from the second delta. Fixed scale, `▁` for 0 and `█` for 20 points or more; a delta above 10 is bold. It is cut after the board: oldest cells go first. The status-line fallback has no sparkline. Reset by `/pit`, `/clear` and a new session. ASCII mode uses `_.-=#`. |
 | `⛽` | What is left of the tighter of the five-hour and seven-day plan windows. Shown only below 30%, and only when the host reports rate limits. |
 | `🏁` | The stint counter, shown from the second stint: +1 at each successful `/pit`, taken from the notes by `/rejoin`. |
 | `📋` | Pit board: the sign the crew holds over the pit wall; one short message, `—` when empty. It is cut first when the line is too wide. |
 
 The revs figure flashes for half a second at each upward crossing of a threshold, and the fuel segment flashes when it appears. Nothing else repeats.
 
-A toast appears once per upward crossing: at the soft threshold (5 s, `plan your pit`) and at the hard one (10 s, `REDLINE · box this lap: /pit`, and the board keeps that message while the zone lasts). A successful `/pit` shows `✅ pit done · revs <n>% → <n>% ↓<n>` for 3 s: the revs of the last measure before the `/clear`, then those of the first measure of the fresh context (never an estimate), and a dim `↓<n>` after the revs on the band for 3 s. With no pre-pit value, no measure within 30 s, or no drop, it shows `✅ pit done · fresh window` and no `↓`. The plugin has one toast slot: a redline toast is never replaced by a zone toast, nor a zone toast by the pit one. Toasts re-arm after `/pit`, `/clear` or a new session.
+A toast appears once per upward crossing: at the soft threshold (5 s, `plan your pit`) and at the hard one (10 s, `REDLINE · box this lap: /pit`, and the board keeps that message while the zone lasts). A successful `/pit` shows `✅ pit done · revs <n>% → <n>% ↓<n>` for 3 s: the revs of the last measure before the `/clear`, then those of the first measure of the fresh context (never an estimate), and a dim `↓<n>` after the revs until the next prompt. With no pre-pit value, no measure within 30 s, or no drop, it shows `✅ pit done · fresh window` and no `↓`. The plugin has one toast slot: a redline toast is never replaced by a zone toast, nor a zone toast by the pit one. Toasts re-arm after `/pit`, `/clear` or a new session.
 
 Option (`/config`, row `stint · Dash`, or `pluginConfigs.stint.options.dash`), applied as soon as it changes:
 

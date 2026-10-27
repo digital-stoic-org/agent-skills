@@ -23,8 +23,12 @@ export const BASE_WINDOW = 200_000
 export const BAR_CELLS = 10
 export const FUEL_BELOW = 30
 export const FLASH_MS = 500
-export const DELTA_MS = 3000
-export const DELTA_DIM_MS = 2000
+// Sparkline of the last prompt deltas: fixed scale, a cell is one prompt, 20 points or more is a full block.
+export const SPARK_CELLS = 8
+export const SPARK_FULL = 20
+export const SPARK_BOLD_ABOVE = 10
+export const SPARK_EMOJI = '▁▂▃▄▅▆▇█'
+export const SPARK_ASCII = '_.-=#'
 // The board gives way first: revs, delta, fuel and the stint counter are never truncated.
 export const LINE_MAX = 80
 export const BOARD_MIN = 12
@@ -143,18 +147,25 @@ export type LineInput = {
   now?: number
   flashAt?: number
   fuelFlashAt?: number
+  // Revs points the last prompt added (↑N); shown until the next prompt replaces it.
   delta?: number
-  deltaAt?: number
-  // The revs points a pit just freed, shown like the rise for 3 s.
+  // The revs points a pit just freed (↓N); shown until the next prompt.
   gain?: number
-  gainAt?: number
+  // Per-prompt deltas, oldest first, newest last.
+  history?: readonly number[]
+}
+
+// One sparkline cell on the fixed scale: 0 is the lowest glyph, SPARK_FULL or more the highest.
+export function sparkCell(d: number, emoji: boolean): string {
+  const set = emoji ? SPARK_EMOJI : SPARK_ASCII
+  return set.charAt(Math.round((Math.min(Math.max(d, 0), SPARK_FULL) * (set.length - 1)) / SPARK_FULL))
 }
 
 export const flashing = (now: number, at: number) => at >= 0 && now >= at && now - at < FLASH_MS
 const widthOf = (runs: readonly Run[]) => runs.reduce((n, r) => n + cols(r.text), 0)
 
 // The line as styled runs.
-export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number): Run[] {
+export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number, spark = false): Run[] {
   const { reading, lap, message } = input
   const now = input.now ?? 0
   const zone = zoneOf(reading.tokens, reading.window)
@@ -172,19 +183,28 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   } else {
     runs.push({ text: bar(reading.percent, false) })
   }
-  const age = now - (input.deltaAt ?? -1)
-  if ((input.deltaAt ?? -1) >= 0 && (input.delta ?? 0) > 0 && age >= 0 && age < DELTA_MS) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: age >= DELTA_DIM_MS })
-  const gainAge = now - (input.gainAt ?? -1)
-  if ((input.gainAt ?? -1) >= 0 && (input.gain ?? 0) > 0 && gainAge >= 0 && gainAge < DELTA_MS) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
+  if ((input.delta ?? 0) > 0) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: true })
+  if ((input.gain ?? 0) > 0) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
   if (fuel !== null && fuel < FUEL_BELOW) {
     runs.push(sep, { text: emoji ? `⛽ ${fuel}%` : `fuel ${fuel}%`, ...hot(YELLOW), ...(flashing(now, input.fuelFlashAt ?? -1) ? flash : {}) })
   }
   if (lap >= 2) runs.push(sep, { text: emoji ? `🏁 ${lap}` : `stint ${lap}` })
   const label = emoji ? '📋 ' : 'board '
   runs.push(sep, { text: label })
-  const budget = Math.max(BOARD_MIN, columns - widthOf(runs))
+  const room = columns - widthOf(runs)
+  const history = spark && (input.history?.length ?? 0) >= 2 ? input.history!.slice(-SPARK_CELLS) : []
+  // The board gives way first, then the sparkline drops its oldest cells.
+  const n = history.length === 0 ? 0 : Math.max(0, Math.min(history.length, room - BOARD_MIN - 1))
+  const budget = Math.max(BOARD_MIN, room - (n > 0 ? n + 1 : 0))
   const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : { bold: true, ...hot(RED) }
   runs.push({ text: message ? fit(message.text, budget, emoji) : emoji ? '—' : '-', ...style })
+  if (n > 0) {
+    const pad = columns - widthOf(runs) - n
+    if (pad >= 1) {
+      runs.push({ text: ' '.repeat(pad) })
+      for (const d of history.slice(-n)) runs.push({ text: sparkCell(d, emoji), ...(d > SPARK_BOLD_ABOVE ? { bold: true } : {}) })
+    }
+  }
   return runs
 }
 
@@ -234,8 +254,10 @@ let boardTimer: { cancel: () => void } | null = null
 let flashAt = -1
 let fuelFlashAt = -1
 let fuelShown = false
+// Per-prompt context use: revs % at the end of the previous prompt, its delta, and the last SPARK_CELLS deltas.
+let turnBase: number | null = null
 let delta = 0
-let deltaAt = -1
+let history: number[] = []
 // The band has been raised (terminal, desktop): the status line is left to pit.
 let bandSeen = false
 let toastSlot: ToastSlot = null
@@ -244,10 +266,9 @@ let pitFrom: number | null = null
 let pitWait: { from: number } | null = null
 let pitTimer: { cancel: () => void } | null = null
 let gain = 0
-let gainAt = -1
 
 const inputOf = (now: number): LineInput | null =>
-  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, deltaAt, gain, gainAt }
+  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, gain, history }
 
 // The status-line text, or undefined while dash is off or has no reading yet (fresh session, just cleared).
 export function dashLine(): string | undefined {
@@ -264,7 +285,7 @@ function repaint($: EngineInterface) {
 // The band's runs at the host clock, or null while there is nothing to draw.
 export async function bandRuns($: EngineInterface, columns: number): Promise<Run[] | null> {
   const input = mode === 'off' ? null : inputOf(await $.clock.now())
-  return input ? buildRuns(input, { emoji: mode === 'full' }, columns) : null
+  return input ? buildRuns(input, { emoji: mode === 'full' }, columns, true) : null
 }
 
 // The band was raised: the status line stops carrying the dash.
@@ -320,9 +341,21 @@ async function settlePit($: EngineInterface, percent: number) {
     return
   }
   gain = from - to
-  gainAt = nowMs
-  redrawIn($, DELTA_MS)
+  repaint($)
   await announce($, pitDoneText(mode === 'full', { from, to }), 'positive')
+}
+
+// End of a prompt (turn.complete, main thread): the revs points it added, from measured values only.
+function endPrompt($: EngineInterface) {
+  if (reading === null) return
+  const cur = Math.round(reading.percent)
+  gain = 0
+  if (turnBase !== null) {
+    delta = Math.max(0, cur - turnBase)
+    history = [...history, delta].slice(-SPARK_CELLS)
+  }
+  turnBase = cur
+  repaint($)
 }
 
 export async function setLap($: EngineInterface, n: number) {
@@ -363,14 +396,7 @@ async function ingest($: EngineInterface, context: SessionContextUsage, rateLimi
     repaint($)
     return
   }
-  const rise = reading ? Math.round(percent - reading.percent) : 0
   reading = { percent, tokens: context.tokens ?? Math.round((percent / 100) * window), window, rateLimits }
-  if (rise > 0) {
-    delta = rise
-    deltaAt = nowMs
-    redrawIn($, DELTA_DIM_MS)
-    redrawIn($, DELTA_MS)
-  }
 
   const fuel = fuelOf(rateLimits)
   const showFuel = fuel !== null && fuel < FUEL_BELOW
@@ -413,15 +439,15 @@ export function registerDash(on: On, userOptions: PluginOptions) {
   flashAt = -1
   fuelFlashAt = -1
   fuelShown = false
+  turnBase = null
   delta = 0
-  deltaAt = -1
+  history = []
   bandSeen = false
   toastSlot = null
   pitFrom = null
   pitWait = null
   pitTimer = null
   gain = 0
-  gainAt = -1
 
   // Applied the moment the row changes: the line is redrawn (or cleared) without waiting for a measure.
   on('config.set', { key: DASH_KEY }, async ($, e, next) => {
@@ -456,6 +482,7 @@ export function registerDash(on: On, userOptions: PluginOptions) {
       const usage = await $.session.usage({ breakdown: 'summary' })
       await ingest($, usage.context, usage.rateLimits)
     }
+    if (e.agentId === undefined && mode !== 'off') endPrompt($)
     return next(e)
   }).catch(($, e, next) => {
     noteCaught($, 'turn.complete', next.error)
@@ -483,9 +510,11 @@ export function registerDash(on: On, userOptions: PluginOptions) {
       flashAt = -1
       fuelFlashAt = -1
       fuelShown = false
+      turnBase = null
       delta = 0
-      deltaAt = -1
+      history = []
       if (source === 'startup' || source === 'resume' || source === 'fork') {
+        gain = 0
         pitFrom = null
         pitWait = null
         await setLap($, 1)
