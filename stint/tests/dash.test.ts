@@ -2,7 +2,7 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 import type { Board } from '../types'
-import { BASE_WINDOW, SERIES_CELLS, seriesText, DASH_MODES, FLASH_MS, LINE_MAX, PIT_DONE_TOAST, PIT_WAIT_MS, REDLINE_MESSAGE, TOAST_MS, bar, buildRuns, canToast, cols, fit, flashing, fuelOf, modeOf, pickBoard, pitDoneText, renderLine, thresholdsOf, toastText, windowTag, zoneOf } from '../hooks/dash.ts'
+import { BASE_WINDOW, DASH_MODES, FLASH_MS, LINE_MAX, PIT_DONE_TOAST, PIT_WAIT_MS, REDLINE_MESSAGE, TOAST_MS, bar, buildRuns, canToast, cols, fit, flashing, fuelOf, modeOf, pickBoard, pitDoneText, renderLine, thresholdsOf, toastText, windowTag, zoneOf } from '../hooks/dash.ts'
 import { assemble, parseFork, parseForkBody, stintOf } from '../hooks/pit.ts'
 
 // ---------- pure functions ----------
@@ -102,17 +102,16 @@ test('renderLine: fuel only below 30%, stint only from 2', () => {
   expect(renderLine({ reading: R(10), lap: 1, message: null }, FULL)).not.toContain('⛽')
 })
 
-test('renderLine: the last delta and the pit gain show with no timer, dim', () => {
-  const at = (now: number) => buildRuns({ reading: R(30), lap: 1, message: null, now, delta: 4, gain: 7 }, FULL, LINE_MAX)
-  for (const now of [0, 3000, 600_000]) {
-    expect(at(now).find(r => r.text === ' ↑4')?.dim).toBe(true)
-    expect(at(now).find(r => r.text === ' ↓7')?.dim).toBe(true)
-  }
-  expect(renderLine({ reading: R(30), lap: 1, message: null, delta: 0 }, FULL)).not.toContain('↑')
+test('renderLine: the last rise shows for 3 s, dim from the second one', () => {
+  const at = (now: number) => buildRuns({ reading: R(30), lap: 1, message: null, now, delta: 4, deltaAt: 1000 }, FULL, LINE_MAX)
+  expect(at(1000).map(r => r.text).join('')).toContain(' ↑4')
+  expect(at(1000).find(r => r.text === ' ↑4')?.dim).toBe(false)
+  expect(at(3000).find(r => r.text === ' ↑4')?.dim).toBe(true)
+  expect(at(4000).find(r => r.text.includes('↑'))).toBeUndefined()
 })
 
 test('renderLine: emoji off is ASCII only, with no hex colour', () => {
-  const input = { reading: R(85, [{ kind: 'seven_day', percentUsed: 80 }]), lap: 3, message: { text: REDLINE_MESSAGE, rank: 'redline' as const }, now: 5, flashAt: 0, fuelFlashAt: 0, delta: 2 }
+  const input = { reading: R(85, [{ kind: 'seven_day', percentUsed: 80 }]), lap: 3, message: { text: REDLINE_MESSAGE, rank: 'redline' as const }, now: 5, flashAt: 0, fuelFlashAt: 0, delta: 2, deltaAt: 0 }
   const line = renderLine(input, ASCII)
   expect(line).toBe('revs 85% ########.. +2 | fuel 20% | stint 3 | board box this lap: /pit')
   expect(/^[\x20-\x7e]*$/.test(line)).toBe(true)
@@ -277,7 +276,6 @@ const last = (w: World) => w.statuses[w.statuses.length - 1]
 const fresh = ($: Engine) => $.classic.SessionStart({ source: 'startup' })
 const clear = ($: Engine) => $.classic.SessionStart({ source: 'clear' })
 const run = ($: Engine, command: string, args = '') => $.command.run({ command, args, origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 120 } })
-const endPrompt = ($: Engine) => $.turn.complete({ answer: 'x', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer' })
 const prompt = ($: Engine) => $.classic.UserPromptSubmit({ prompt: 'x' })
 
 // ---------- hooks ----------
@@ -300,7 +298,7 @@ test('measure: the status line shows revs and an empty board; zones come from ab
   await measure($, 59)
   expect(last(w)?.startsWith('🔥 revs 59%')).toBe(true)
   await measure($, 60)
-  expect(last(w)).toBe('🚨 revs 60% ▮▮▮▮▮▮▯▯▯▯ · 📋 box this lap: /pit')
+  expect(last(w)).toBe('🚨 revs 60% ▮▮▮▮▮▮▯▯▯▯ ↑1 · 📋 box this lap: /pit')
   // the compaction wall is pit's rail: dash never pulls it
   expect(w.usageCalls).toBe(0)
 })
@@ -521,7 +519,7 @@ test('pit done: the gain toast waits for the first measure of the fresh context,
   expect(w.toastMs.at(-1)).toBe(3000)
 })
 
-test('pit done: ↓N stays on the line until the next prompt ends, then the prompt delta replaces it', async ($, on) => {
+test('pit done: ↓N shows on the line for 3 s, then is gone; a later measure does not show it again', async ($, on) => {
   const w = world(on)
   await fresh($)
   await measure($, 30)
@@ -530,14 +528,11 @@ test('pit done: ↓N stays on the line until the next prompt ends, then the prom
   await clear($)
   await measure($, 12)
   expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ ↓18 · 🏁 2 · 📋 —')
-  await w.clock.advance(60_000)
-  expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ ↓18 · 🏁 2 · 📋 —')
-  // the first prompt after a pit only sets the base
-  await endPrompt($)
-  expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ ↓18 · 🏁 2 · 📋 —')
+  await w.clock.advance(3_001)
+  expect(last(w)).toBe('🚀 revs 12% ▮▯▯▯▯▯▯▯▯▯ · 🏁 2 · 📋 —')
   await measure($, 14)
-  await endPrompt($)
-  expect(last(w)).toBe('🚀 revs 14% ▮▯▯▯▯▯▯▯▯▯ ↑2 · 🏁 2 · 📋 —')
+  expect(last(w)?.includes('↓')).toBe(false)
+  // the rise after the pit is the normal ↑N, the gain is not repeated on the next pit's toast
   expect(pitToasts(w)).toHaveLength(1)
 })
 
@@ -732,172 +727,4 @@ test('stint counter: notes written before the field existed count as stint 1, th
   await fresh($)
   await run($, 'pit', 'proj')
   expect(w.files.get(NOTES)).toContain('\nstint: 2\n')
-})
-
-// ---------- per-prompt delta and series ----------
-
-const bandLine = async (ui: Awaited<ReturnType<typeof mountBand>>) => ((await ui.findAll({ type: 'Text' }))[0]?.text ?? '')
-const tail = (runs: ReturnType<typeof buildRuns>) => runs.filter(r => /^[+-]\d+$/.test(r.text))
-const FEW = { reading: R(42, [{ kind: 'seven_day', percentUsed: 80 }]), lap: 3, delta: 7, message: null }
-
-test('seriesText: +N for a rise, +0 for none, -N for the pit drop', () => {
-  expect(seriesText(5)).toBe('+5')
-  expect(seriesText(0)).toBe('+0')
-  expect(seriesText(-18)).toBe('-18')
-  expect(SERIES_CELLS).toBe(5)
-})
-
-test('series: all dim, bold only above 10, the pit drop never bold', () => {
-  const runs = buildRuns({ ...FEW, history: [-30, 0, 10, 11, 25] }, FULL, LINE_MAX, true)
-  const cells = tail(runs)
-  expect(cells.map(r => r.text)).toEqual(['-30', '+0', '+10', '+11', '+25'])
-  expect(cells.map(r => r.bold === true)).toEqual([false, false, false, true, true])
-  expect(cells.filter(r => !r.bold).every(r => r.dim === true)).toBe(true)
-  expect(cells.every(r => r.color === undefined)).toBe(true)
-})
-
-test('series: capped at 5, newest on the right, last entry on the last column; the bar arrows are hidden', () => {
-  const runs = buildRuns({ ...FEW, history: [1, 2, 3, 4, 5, 6, 7], gain: 4 }, FULL, 80, true)
-  const text = runs.map(r => r.text).join('')
-  expect(text.endsWith('+3 +4 +5 +6 +7')).toBe(true)
-  expect(cols(text)).toBe(80)
-  expect(text).not.toContain('↑')
-  expect(text).not.toContain('↓')
-})
-
-test('series: fewer than 2 entries keeps the arrow after the bar and draws no series', () => {
-  const one = buildRuns({ ...FEW, history: [7] }, FULL, 80, true).map(r => r.text).join('')
-  expect(one).toContain(' ↑7')
-  expect(tail(buildRuns({ ...FEW, history: [7] }, FULL, 80, true))).toHaveLength(0)
-  expect(buildRuns({ ...FEW, history: [-18], delta: 0, gain: 18 }, FULL, 80, true).map(r => r.text).join('')).toContain(' ↓18')
-})
-
-test('buildRuns at 80 columns: the board is cut first, then the series drops its oldest entries; the head is never cut', () => {
-  const base = { ...FEW, delta: 0, history: [1, 2, 3, 4, 5] }
-  const long = { text: 'x'.repeat(200), rank: 'info' as const }
-  const text = (columns: number, message: typeof long | null) => buildRuns({ ...base, message }, FULL, columns, true).map(r => r.text).join('')
-  const head = '🔥 revs 42% ▮▮▮▮▯▯▯▯▯▯ · ⛽ 20% · 🏁 3 · 📋 '
-  const count = (t: string) => (t.match(/ \+\d/g) ?? []).length
-  const cut = text(80, long)
-  expect(cols(cut)).toBeLessThanOrEqual(80)
-  expect(cut.startsWith(head)).toBe(true)
-  expect(cut).toContain('…')
-  expect(cut.endsWith('+1 +2 +3 +4 +5')).toBe(true)
-  // too narrow for the board minimum plus 5 entries: the oldest go first
-  const narrow = text(cols(head) + 12 + 1 + 8, long)
-  expect(narrow.startsWith(head)).toBe(true)
-  expect(narrow.endsWith('+3 +4 +5')).toBe(true)
-  expect(count(narrow)).toBe(3)
-  // no room at all: no series
-  expect(tail(buildRuns({ ...base, message: long }, FULL, cols(head) + 12, true))).toHaveLength(0)
-})
-
-test('prompt delta: measured revs at the end of a prompt minus the previous one, kept until the next prompt', async ($, on) => {
-  const w = world(on)
-  await fresh($)
-  await measure($, 10)
-  await endPrompt($)
-  expect(last(w)).toBe('🚀 revs 10% ▮▯▯▯▯▯▯▯▯▯ · 📋 —')
-  await measure($, 15)
-  await endPrompt($)
-  expect(last(w)).toBe('🚀 revs 15% ▮▯▯▯▯▯▯▯▯▯ ↑5 · 📋 —')
-  await measure($, 18)
-  await w.clock.advance(60_000)
-  expect(last(w)).toBe('🚀 revs 18% ▮▯▯▯▯▯▯▯▯▯ ↑5 · 📋 —')
-  await endPrompt($)
-  expect(last(w)).toBe('🚀 revs 18% ▮▯▯▯▯▯▯▯▯▯ ↑3 · 📋 —')
-  // a subagent's turn is not a prompt
-  await measure($, 30)
-  await $.turn.complete({ answer: 'x', durationMs: 1, isAborted: false, turnId: 'ta', agentId: 'a1', reason: 'answer' })
-  expect(last(w)).toBe('🚀 revs 30% ▮▮▮▯▯▯▯▯▯▯ ↑3 · 📋 —')
-  await endPrompt($)
-  await endPrompt($)
-  expect(last(w)?.includes('↑')).toBe(false)
-})
-
-test('band: the series replaces the arrow once there are 2 entries, +0 when nothing rose, the status fallback keeps the arrow', async ($, on) => {
-  const w = world(on)
-  await fresh($)
-  let pct = 1
-  await measure($, pct)
-  await endPrompt($)
-  for (const d of [3, 0]) {
-    pct += d
-    await measure($, pct)
-    await endPrompt($)
-  }
-  // no band yet: the status line carries the delta
-  expect(last(w)).toBe('🚀 revs 4% ▯▯▯▯▯▯▯▯▯▯ · 📋 —')
-  const ui = await mountBand($)
-  const text = await bandLine(ui)
-  expect(text).not.toContain('↑')
-  expect(text.endsWith('+3 +0')).toBe(true)
-  for (const d of [12, 4, 1, 2]) {
-    pct += d
-    await measure($, pct)
-    await endPrompt($)
-  }
-  expect((await bandLine(ui)).endsWith('+12 +4 +1 +2')).toBe(true)
-  expect(last(w)).toBeUndefined()
-})
-
-test('status fallback (no band): the delta shows, the series never does', async ($, on) => {
-  const w = world(on)
-  await fresh($)
-  let pct = 1
-  for (const d of [0, 5, 10, 11, 20, 3]) {
-    pct += d
-    await measure($, pct)
-    await endPrompt($)
-  }
-  expect(last(w)).toBe(`🔥 revs ${pct}% ▮▮▮▮▮▯▯▯▯▯ ↑3 · 📋 —`)
-})
-
-test('series: ASCII mode renders the same, ASCII only', { options: { dash: 'ascii' } }, async ($, on) => {
-  world(on)
-  await fresh($)
-  let pct = 1
-  await measure($, pct)
-  await endPrompt($)
-  const ui = await mountBand($)
-  for (const d of [0, 10, 20]) {
-    pct += d
-    await measure($, pct)
-    await endPrompt($)
-  }
-  const text = await bandLine(ui)
-  expect(text.endsWith('+0 +10 +20')).toBe(true)
-  expect(/^[\x20-\x7e]*$/.test(text)).toBe(true)
-})
-
-test('series: a pit restarts it with the measured drop as the first entry, then the prompts follow; /clear and a new session reset it', async ($, on) => {
-  const w = world(on)
-  await fresh($)
-  let pct = 30
-  await measure($, pct)
-  await endPrompt($)
-  for (const d of [4, 6]) {
-    pct += d
-    await measure($, pct)
-    await endPrompt($)
-  }
-  const ui = await mountBand($)
-  expect((await bandLine(ui)).endsWith('+4 +6')).toBe(true)
-  await run($, 'pit', 'proj')
-  await w.clock.advance(5)
-  await clear($)
-  await measure($, 12)
-  // one entry only: the arrow stays after the bar
-  expect(await bandLine(ui)).toContain('↓28')
-  await endPrompt($)
-  await measure($, 15)
-  await endPrompt($)
-  const text = await bandLine(ui)
-  expect(text.endsWith('-28 +3')).toBe(true)
-  expect(text).not.toContain('↓')
-  expect(text).not.toContain('↑')
-  await fresh($)
-  await measure($, 9)
-  await endPrompt($)
-  expect((await bandLine(ui)).includes('+')).toBe(false)
 })

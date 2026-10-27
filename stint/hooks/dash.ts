@@ -23,9 +23,8 @@ export const BASE_WINDOW = 200_000
 export const BAR_CELLS = 10
 export const FUEL_BELOW = 30
 export const FLASH_MS = 500
-// The series of the last prompt deltas: one `+N` per prompt, the pit drop `-N` first after a pit.
-export const SERIES_CELLS = 5
-export const SERIES_BOLD_ABOVE = 10
+export const DELTA_MS = 3000
+export const DELTA_DIM_MS = 2000
 // The board gives way first: revs, delta, fuel and the stint counter are never truncated.
 export const LINE_MAX = 80
 export const BOARD_MIN = 12
@@ -144,22 +143,18 @@ export type LineInput = {
   now?: number
   flashAt?: number
   fuelFlashAt?: number
-  // Revs points the last prompt added (↑N); shown until the next prompt replaces it.
   delta?: number
-  // The revs points a pit just freed (↓N); shown until the next prompt.
+  deltaAt?: number
+  // The revs points a pit just freed, shown like the rise for 3 s.
   gain?: number
-  // Per-prompt deltas, oldest first, newest last.
-  history?: readonly number[]
+  gainAt?: number
 }
-
-// One series entry: `+N` for a rise (`+0` for none), `-N` for the pit drop.
-export const seriesText = (d: number) => (d < 0 ? `-${-d}` : `+${d}`)
 
 export const flashing = (now: number, at: number) => at >= 0 && now >= at && now - at < FLASH_MS
 const widthOf = (runs: readonly Run[]) => runs.reduce((n, r) => n + cols(r.text), 0)
 
 // The line as styled runs.
-export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number, series = false): Run[] {
+export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number): Run[] {
   const { reading, lap, message } = input
   const now = input.now ?? 0
   const zone = zoneOf(reading.tokens, reading.window)
@@ -177,36 +172,19 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   } else {
     runs.push({ text: bar(reading.percent, false) })
   }
-  // Where the series shows (band, 2 entries or more) it carries the delta and the pit drop; otherwise the arrows do.
-  const entries = series && (input.history?.length ?? 0) >= 2 ? input.history!.slice(-SERIES_CELLS) : []
-  if (entries.length === 0) {
-    if ((input.delta ?? 0) > 0) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: true })
-    if ((input.gain ?? 0) > 0) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
-  }
+  const age = now - (input.deltaAt ?? -1)
+  if ((input.deltaAt ?? -1) >= 0 && (input.delta ?? 0) > 0 && age >= 0 && age < DELTA_MS) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: age >= DELTA_DIM_MS })
+  const gainAge = now - (input.gainAt ?? -1)
+  if ((input.gainAt ?? -1) >= 0 && (input.gain ?? 0) > 0 && gainAge >= 0 && gainAge < DELTA_MS) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
   if (fuel !== null && fuel < FUEL_BELOW) {
     runs.push(sep, { text: emoji ? `⛽ ${fuel}%` : `fuel ${fuel}%`, ...hot(YELLOW), ...(flashing(now, input.fuelFlashAt ?? -1) ? flash : {}) })
   }
   if (lap >= 2) runs.push(sep, { text: emoji ? `🏁 ${lap}` : `stint ${lap}` })
   const label = emoji ? '📋 ' : 'board '
   runs.push(sep, { text: label })
-  const room = columns - widthOf(runs)
-  // The board gives way first, then the series drops its oldest entries.
-  const widthFor = (k: number) => entries.slice(-k).reduce((n, d) => n + seriesText(d).length, 0) + k - 1
-  let k = entries.length
-  while (k > 0 && widthFor(k) + 1 > room - BOARD_MIN) k--
-  const budget = Math.max(BOARD_MIN, room - (k > 0 ? widthFor(k) + 1 : 0))
+  const budget = Math.max(BOARD_MIN, columns - widthOf(runs))
   const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : { bold: true, ...hot(RED) }
   runs.push({ text: message ? fit(message.text, budget, emoji) : emoji ? '—' : '-', ...style })
-  if (k > 0) {
-    const pad = columns - widthOf(runs) - widthFor(k)
-    if (pad >= 1) {
-      runs.push({ text: ' '.repeat(pad) })
-      entries.slice(-k).forEach((d, idx) => {
-        if (idx > 0) runs.push({ text: ' ' })
-        runs.push({ text: seriesText(d), ...(d > SERIES_BOLD_ABOVE ? { bold: true } : { dim: true }) })
-      })
-    }
-  }
   return runs
 }
 
@@ -256,10 +234,8 @@ let boardTimer: { cancel: () => void } | null = null
 let flashAt = -1
 let fuelFlashAt = -1
 let fuelShown = false
-// Per-prompt context use: revs % at the end of the previous prompt, its delta, and the last SERIES_CELLS entries.
-let turnBase: number | null = null
 let delta = 0
-let history: number[] = []
+let deltaAt = -1
 // The band has been raised (terminal, desktop): the status line is left to pit.
 let bandSeen = false
 let toastSlot: ToastSlot = null
@@ -268,9 +244,10 @@ let pitFrom: number | null = null
 let pitWait: { from: number } | null = null
 let pitTimer: { cancel: () => void } | null = null
 let gain = 0
+let gainAt = -1
 
 const inputOf = (now: number): LineInput | null =>
-  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, gain, history }
+  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, deltaAt, gain, gainAt }
 
 // The status-line text, or undefined while dash is off or has no reading yet (fresh session, just cleared).
 export function dashLine(): string | undefined {
@@ -287,7 +264,7 @@ function repaint($: EngineInterface) {
 // The band's runs at the host clock, or null while there is nothing to draw.
 export async function bandRuns($: EngineInterface, columns: number): Promise<Run[] | null> {
   const input = mode === 'off' ? null : inputOf(await $.clock.now())
-  return input ? buildRuns(input, { emoji: mode === 'full' }, columns, true) : null
+  return input ? buildRuns(input, { emoji: mode === 'full' }, columns) : null
 }
 
 // The band was raised: the status line stops carrying the dash.
@@ -343,22 +320,9 @@ async function settlePit($: EngineInterface, percent: number) {
     return
   }
   gain = from - to
-  history = [-gain]
-  repaint($)
+  gainAt = nowMs
+  redrawIn($, DELTA_MS)
   await announce($, pitDoneText(mode === 'full', { from, to }), 'positive')
-}
-
-// End of a prompt (turn.complete, main thread): the revs points it added, from measured values only.
-function endPrompt($: EngineInterface) {
-  if (reading === null) return
-  const cur = Math.round(reading.percent)
-  if (turnBase !== null) {
-    gain = 0
-    delta = Math.max(0, cur - turnBase)
-    history = [...history, delta].slice(-SERIES_CELLS)
-  }
-  turnBase = cur
-  repaint($)
 }
 
 export async function setLap($: EngineInterface, n: number) {
@@ -399,7 +363,14 @@ async function ingest($: EngineInterface, context: SessionContextUsage, rateLimi
     repaint($)
     return
   }
+  const rise = reading ? Math.round(percent - reading.percent) : 0
   reading = { percent, tokens: context.tokens ?? Math.round((percent / 100) * window), window, rateLimits }
+  if (rise > 0) {
+    delta = rise
+    deltaAt = nowMs
+    redrawIn($, DELTA_DIM_MS)
+    redrawIn($, DELTA_MS)
+  }
 
   const fuel = fuelOf(rateLimits)
   const showFuel = fuel !== null && fuel < FUEL_BELOW
@@ -442,15 +413,15 @@ export function registerDash(on: On, userOptions: PluginOptions) {
   flashAt = -1
   fuelFlashAt = -1
   fuelShown = false
-  turnBase = null
   delta = 0
-  history = []
+  deltaAt = -1
   bandSeen = false
   toastSlot = null
   pitFrom = null
   pitWait = null
   pitTimer = null
   gain = 0
+  gainAt = -1
 
   // Applied the moment the row changes: the line is redrawn (or cleared) without waiting for a measure.
   on('config.set', { key: DASH_KEY }, async ($, e, next) => {
@@ -485,7 +456,6 @@ export function registerDash(on: On, userOptions: PluginOptions) {
       const usage = await $.session.usage({ breakdown: 'summary' })
       await ingest($, usage.context, usage.rateLimits)
     }
-    if (e.agentId === undefined && mode !== 'off') endPrompt($)
     return next(e)
   }).catch(($, e, next) => {
     noteCaught($, 'turn.complete', next.error)
@@ -513,11 +483,9 @@ export function registerDash(on: On, userOptions: PluginOptions) {
       flashAt = -1
       fuelFlashAt = -1
       fuelShown = false
-      turnBase = null
       delta = 0
-      history = []
+      deltaAt = -1
       if (source === 'startup' || source === 'resume' || source === 'fork') {
-        gain = 0
         pitFrom = null
         pitWait = null
         await setLap($, 1)
