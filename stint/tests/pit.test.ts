@@ -9,6 +9,9 @@ import {
   UNPACK_RULES,
   WALL_CAP,
   agentLinesOf,
+  boardProgress,
+  hintBoard,
+  savedBoard,
   assemble,
   elapsed,
   forkPrompt,
@@ -390,6 +393,7 @@ function world(on: On, forkText: string | null, now = 1_000_000): World {
     if (names.length === 0) return { deny: 'ENOENT' }
     return { value: names.map(name => ({ name, kind: 'file', size: 1, mtimeMs: 0, isLink: false })) } as never
   })
+  on('session.measure', (_$, e) => ({ changed: [...e.changed] }))
   on('ui.status', (_$, e) => (w.statuses.push(e.text), { value: undefined }))
   on('ui.toast', (_$, e) => (w.toasts.push(e.text), { value: undefined }))
   on('ui.log', () => ({ value: undefined }))
@@ -414,13 +418,22 @@ const rejoin = ($: Engine, args = '') => runCommand($, 'rejoin', args)
 const fresh = ($: Engine) => $.classic.SessionStart({ source: 'startup' })
 const clear = ($: Engine) => $.classic.SessionStart({ source: 'clear' })
 const title = ($: Engine, session_title: string) => $.classic.UserPromptSubmit({ prompt: 'x', session_title })
+const BAND = { plugin: 'stint', surface: 'terminal', component: 'AbovePrompt', requestId: 'band', viewport: { columns: 120, rows: 40, isFullscreen: false }, props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 110, scroll: { first: 1, last: 1, of: 1 }, view: {} } } as never
+// The band's text now. Raising the band moves the pit lines off the status line, so call it after the status assertions.
+async function bandNow($: Engine): Promise<string> {
+  await $.session.measure({ context: { window: 200_000, tokens: 2_000, percent: 1 }, rateLimits: [], changed: ['context'] })
+  const ui = await $.ui.mount(BAND)
+  const text = (await ui.findAll({ type: 'Text' }))[0]?.text ?? ''
+  await ui.unmount()
+  return text
+}
 const lastStatus = (w: World) => w.statuses[w.statuses.length - 1]
 
 test('pit: saves, runs /clear after the hook, re-injects the notes + rules once after the clear', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
   const out = await pit($)
-  expect(out.text).toContain('pit: stream "proj" saved to .stint/proj-notes.md')
+  expect(out.text).toBe('pit: saved .stint/proj-notes.md')
   const notes = w.files.get(NOTES) ?? ''
   expect(notes).toContain('stream: proj')
   expect(notes).toContain('goal: ship v2')
@@ -445,6 +458,9 @@ test('pit: a fork gate that blocks, a fork without answer, a failed write: no /c
   expect(blocked.text).toBe('pit: could not save stream "proj": mid synthesis. No /clear run, the session is unchanged.')
   expect(lastStatus(w)).toMatch(/^⚠ /)
   expect(w.files.has(NOTES)).toBe(false)
+  // red and sticky on the board until the next command
+  await w.clock.advance(60_000)
+  expect(await bandNow($)).toContain('PIT FAILED, session kept')
 
   w.forkText = null
   const none = await pit($)
@@ -471,6 +487,7 @@ test('pit: refused before the fork when the context is at 95% of the wall', asyn
   expect(out.text).toContain('Nothing saved, the session is unchanged')
   expect(w.forkPrompts).toHaveLength(0)
   expect(lastStatus(w)).toMatch(/^⚠ Pit refused/)
+  expect(await bandNow($)).toContain('PIT REFUSED at 95% of the limit, nothing saved')
   await w.clock.advance(5)
   expect(w.clears).toBe(0)
   // just under goes through
@@ -489,20 +506,20 @@ test('pit: the stream binds for the session and survives /clear; the next pit wi
   await w.clock.advance(5)
   await clear($)
   const again = await pit($, '')
-  expect(again.text).toContain('stream "proj"')
+  expect(again.text).toBe('pit: saved .stint/proj-notes.md')
   expect(w.files.has('/work/.stint/main-notes.md')).toBe(false)
 })
 
 test('pit: stream = title (slugified) without argument, main without title', async ($, on) => {
   const w = world(on, OK())
   await fresh($)
-  expect((await pit($, '')).text).toContain('stream "main"')
+  expect((await pit($, '')).text).toBe('pit: saved .stint/main-notes.md')
   await title($, 'Ship the v2 plugin')
-  expect((await pit($, '')).text).toContain('stream "ship-the-v2-plugin"')
+  expect((await pit($, '')).text).toBe('pit: saved .stint/ship-the-v2-plugin-notes.md')
   expect(w.files.has('/work/.stint/ship-the-v2-plugin-notes.md')).toBe(true)
   // an explicit argument wins over the title
-  expect((await pit($, 'proj')).text).toContain('stream "proj"')
-  expect((await pit($, '')).text).toContain('stream "proj"')
+  expect((await pit($, 'proj')).text).toBe('pit: saved .stint/proj-notes.md')
+  expect((await pit($, '')).text).toBe('pit: saved .stint/proj-notes.md')
 })
 
 test('pit: previous notes of the stream are fed to the fork and merged', async ($, on) => {
@@ -522,6 +539,16 @@ test('pit: agents in flight are listed in in_progress by code before the fork', 
   expect(section(w.files.get(NOTES) ?? '', 'in_progress')).toEqual(['agent in flight: scout [a1] running — look around', 'parser half done'])
 })
 
+test('boardProgress, savedBoard, hintBoard: short board texts', () => {
+  expect(boardProgress('x', 0)).toBe('pitting "x"...')
+  expect(boardProgress('x', 12_000)).toBe('pitting "x"... 12s')
+  expect(boardProgress('x', SLOW_MS)).toContain('slow or stuck')
+  expect(savedBoard(9_800)).toBe('saved 9.8k -> clearing')
+  expect(savedBoard(420)).toBe('saved 420 -> clearing')
+  expect(hintBoard(['a'])).toBe('notes found: /rejoin a')
+  expect(hintBoard(['a', 'b'])).toBe('/rejoin <stream>: several notes found')
+})
+
 test('pit: a second pit while one runs is refused; progress ticks on the status line, slow past 3 min', async ($, on) => {
   const w = world(on, OK())
   let release = () => {}
@@ -536,6 +563,7 @@ test('pit: a second pit while one runs is refused; progress ticks on the status 
   expect(second.text).toBe('pit: a pit is already running, its outcome will show in the status line')
   await w.clock.advance(SLOW_MS)
   expect(lastStatus(w)).toContain('slow or stuck')
+  expect(await bandNow($)).toContain('pitting "proj": slow or stuck, 3m 12s')
   release()
   const done = await first
   expect(done.text).toContain('saved')
@@ -550,6 +578,7 @@ test('pit: when the host refuses /clear the status line says to type it, and the
   await w.clock.advance(5)
   await new Promise(r => setTimeout(r, 10))
   expect(lastStatus(w)).toBe('Ready: type /clear to continue in a fresh session')
+  expect(await bandNow($)).toContain('type /clear to continue')
   await clear($)
   expect(w.submits).toHaveLength(1)
 })
@@ -567,7 +596,7 @@ test('pit: a fresh armed entry in the store (mod reloaded) is injected and re-bi
   w.store.set('stint:pending', { text: 'n', createdAt: 0, cwd: CWD, stream: 'proj' })
   await clear($)
   expect(w.submits).toEqual([`n\n\n${UNPACK_RULES}`])
-  expect((await pit($, '')).text).toContain('stream "proj"')
+  expect((await pit($, '')).text).toBe('pit: saved .stint/proj-notes.md')
 })
 
 test('pit: bad arguments are refused with the usage', async ($, on) => {
@@ -588,7 +617,7 @@ test('rejoin: a named stream becomes the first message (after the hook) and bind
   await w.clock.advance(5)
   expect(w.submits).toEqual([`stream: proj\ngoal: g\n\n${UNPACK_RULES}`.replace('g\n\n', 'g\n\n')])
   // bound: a pit without argument uses it
-  expect((await pit($, '')).text).toContain('stream "proj"')
+  expect((await pit($, '')).text).toBe('pit: saved .stint/proj-notes.md')
 })
 
 test('rejoin: no argument takes the only notes file, or says none', async ($, on) => {

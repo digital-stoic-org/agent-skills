@@ -22,10 +22,10 @@ claude plugin test <path-to>/stint
 
 | command | does |
 |---|---|
-| `/pit [stream]` | The car comes into the pit: the agent writes its notes to a file, `/clear` runs by itself, and the notes are injected as the first message of the fresh context. If the host refuses the `/clear`, the status line says to type it. |
+| `/pit [stream]` | The car comes into the pit: the agent writes its notes to a file, `/clear` runs by itself, and the notes are injected as the first message of the fresh context. The progress, the outcome and a refusal show on the band's board (red for a failure, until the next command); the transcript gets one line, `pit: saved .stint/<stream>-notes.md`. If the host refuses the `/clear`, the board says to type it. |
 | `/rejoin [stream]` | The car goes back on track: the notes of a stream are injected as the first message of a new session. With no stream it takes the only notes file of the folder, lists them when there are several, and says so when there are none. |
 
-At session start, if the folder holds notes and no stream is set, the status line reads `Notes for stream "x" found: /rejoin x`.
+At session start, if the folder holds notes and no stream is set, the board reads `notes found: /rejoin x` (the status line `Notes for stream "x" found: /rejoin x` where there is no band).
 
 A `/pit` is refused, and nothing is cleared, when the save fails, when another `/pit` is running, or when the context is at 95% of the limit where Claude Code compacts on its own: the save runs in that same context and would fail there.
 
@@ -33,7 +33,7 @@ Stream name, in order: the argument (`a-z A-Z 0-9 _ -`, up to 50 characters, kep
 
 ## Dash
 
-A band above the prompt carries the car's instruments, on by default (`dash`: `full`). It is drawn on the terminal and the desktop app. Where there is no such band (VS Code, mobile) the same line goes to the status line instead. While `/pit` runs, or after a pit outcome or the notes hint, those lines take the status line; the band is not affected.
+A band above the prompt carries the car's instruments, on by default (`dash`: `full`). It is drawn on the terminal and the desktop app. Where there is no such band (VS Code, mobile) the same line goes to the status line instead. While `/pit` runs, or after a pit outcome or the notes hint, the band's board carries them above every other board message; only where there is no band do they take the status line.
 
 ```
 🚀 revs <n>% ▮▮▯▯▯▯▯▯▯▯ ↑<n> · ⛽ <n>% · 🏁 <n> · 📋 —

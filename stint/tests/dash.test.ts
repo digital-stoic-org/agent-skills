@@ -458,9 +458,10 @@ test('band: where it is raised it carries the dash and the status line is left e
   expect(last(w)).toBeUndefined()
   expect(await bandText(ui)).toContain('revs 29%')
   expect(await bandText(ui)).toContain('📋')
-  // pit keeps the status line even with the band up
+  // pit goes to the board while the band is up, not to the status line
   await run($, 'pit', 'proj')
-  expect(last(w)).toBe('Starting a fresh session...')
+  expect(last(w)).toBeUndefined()
+  expect(await bandText(ui)).toContain('saved')
   await ui.unmount()
 })
 
@@ -727,4 +728,66 @@ test('stint counter: notes written before the field existed count as stint 1, th
   await fresh($)
   await run($, 'pit', 'proj')
   expect(w.files.get(NOTES)).toContain('\nstint: 2\n')
+})
+
+// ---------- the pit on the band's board ----------
+
+test('pickBoard: the pit outranks alert, redline, warn and info; a failure is red, the rest plain', () => {
+  const stored = (level: 'info' | 'warn' | 'alert') => ({ text: 'note', level }) as Board
+  for (const level of ['info', 'warn', 'alert'] as const) {
+    expect(pickBoard(stored(level), 0, true, { text: 'saved 9.8k -> clearing' })).toEqual({ text: 'saved 9.8k -> clearing', rank: 'pit', bad: false })
+  }
+  expect(pickBoard(undefined, 0, true)?.rank).toBe('redline')
+  const input = { reading: R(10), lap: 1 }
+  const style = (bad: boolean) => buildRuns({ ...input, message: { text: 'x', rank: 'pit', bad } }, FULL, LINE_MAX).at(-1)!
+  expect(style(false).dim).toBeUndefined()
+  expect(style(false).color).toBeUndefined()
+  expect(style(true).bold).toBe(true)
+  expect(style(true).color).toBeDefined()
+})
+
+test('pit on the band: saved, then back on track for 3 s; the status line stays empty and the transcript has one line', async ($, on) => {
+  const w = world(on)
+  await fresh($)
+  await measure($, 64)
+  const ui = await mountBand($)
+  const shown = w.statuses.length
+  const out = await run($, 'pit', 'proj')
+  expect(out).toEqual({ text: 'pit: saved .stint/proj-notes.md' })
+  expect(await bandText(ui)).toMatch(/saved \d+(\.\d)?k? -> clearing/)
+  expect(w.statuses.slice(shown).filter(s => s !== undefined)).toEqual([])
+  // the host starts the fresh session (SessionStart clear) before the /clear command resolves
+  await clear($)
+  await w.clock.advance(5)
+  await measure($, 3)
+  expect(await bandText(ui)).toContain('back on track, stint 2')
+  expect(w.statuses.slice(shown).filter(s => s !== undefined)).toEqual([])
+  await w.clock.advance(3_001)
+  expect(await bandText(ui)).toContain('📋 —')
+})
+
+test('pit failure on the band: red and sticky until the next command, nothing on the status line', async ($, on) => {
+  const w = world(on)
+  w.forkText = 'GATE: blocked - mid synthesis'
+  await fresh($)
+  await measure($, 64)
+  const ui = await mountBand($)
+  const shown = w.statuses.length
+  await run($, 'pit', 'proj')
+  expect(await bandText(ui)).toContain('PIT FAILED, session kept')
+  await w.clock.advance(120_000)
+  expect(await bandText(ui)).toContain('PIT FAILED, session kept')
+  expect(w.statuses.slice(shown).filter(s => s !== undefined)).toEqual([])
+  w.forkText = 'GATE: ok\nstatus: building\ngoal: g\nread_first:\n- /a — b'
+  await run($, 'pit', 'proj')
+  expect(await bandText(ui)).not.toContain('PIT FAILED')
+})
+
+test('pit with no band raised: the flow and the failure go to the status line, the board slot is only for the band', async ($, on) => {
+  const w = world(on)
+  w.forkText = 'GATE: blocked - mid synthesis'
+  await fresh($)
+  await measure($, 64)
+  await run($, 'pit', 'proj')
+  expect(last(w)).toMatch(/^⚠ /)
 })

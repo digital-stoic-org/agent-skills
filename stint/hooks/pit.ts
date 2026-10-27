@@ -1,7 +1,7 @@
 import type { EngineInterface, On } from 'claude-code'
 
 import { pitDone, pitStart, setLap } from './dash.ts'
-import { setPitLine, writeStatus } from './status.ts'
+import { setPitBoard, setPitLine, writeStatus } from './status.ts'
 
 // pit (stint): one mod, two commands.
 //   /pit [stream]      save notes (awaited fork) -> /clear (automatic) -> notes re-injected as the first message of the fresh context
@@ -130,6 +130,18 @@ export const elapsed = (ms: number) => {
 export function progressText(label: string, ms: number): string {
   if (ms >= SLOW_MS) return `${label}: still running after ${elapsed(ms)}, slow or stuck; the outcome will show here`
   return ms < 1000 ? `${label}...` : `${label}... ${elapsed(ms)}`
+}
+
+// The same flow for the band's board slot: short, no quotes around nothing.
+export function boardProgress(stream: string, ms: number): string {
+  if (ms >= SLOW_MS) return `pitting "${stream}": slow or stuck, ${elapsed(ms)}`
+  return ms < 1000 ? `pitting "${stream}"...` : `pitting "${stream}"... ${elapsed(ms)}`
+}
+
+export const savedBoard = (chars: number) => `saved ${chars >= 1000 ? `${(chars / 1000).toFixed(1)}k` : chars} -> clearing`
+
+export function hintBoard(streams: string[]): string {
+  return streams.length === 1 ? `notes found: /rejoin ${streams[0]}` : '/rejoin <stream>: several notes found'
 }
 
 export function hintText(streams: string[]): string {
@@ -357,33 +369,39 @@ let saving = false
 // Stream binding. Same session across /clear, so it survives /clear; reset on startup/resume/fork.
 let boundArg: string | null = null
 let titleStream: string | null = null
-// The single status line: running flow, then last sticky outcome, then the session-start hint.
-let flowLine: string | undefined
+// The pit's message: running flow, then last sticky outcome, then the session-start hint. `status` goes to the status line
+// (only where the band was never raised), `board` to the band's board slot; `bad` draws it red. An empty status writes nothing.
+type Line = { status: string; board: string; bad?: boolean }
+let flowLine: Line | undefined
 let ticker: { cancel: () => void } | null = null
-let outcome: string | undefined
-let hint: string | undefined
+let outcome: Line | undefined
+let hint: Line | undefined
 
 const current = () => resolveStream(boundArg, titleStream)
 
 // pit's own lines (flow, outcome, hint) come first; with none, the dash line (status.ts).
 function paint($: EngineInterface) {
-  setPitLine(flowLine ?? outcome ?? hint)
+  const line = flowLine ?? outcome ?? hint
+  setPitLine(line?.status || undefined)
+  setPitBoard(line ? { text: line.board, ...(line.bad ? { bad: true } : {}) } : undefined)
   writeStatus($)
+  $.ui.invalidate('ui.render')
 }
 
-function flowStatus($: EngineInterface, text: string | undefined) {
+function flowStatus($: EngineInterface, line: Line | undefined) {
   stopProgress()
-  flowLine = text
+  flowLine = line
   paint($)
 }
 
 // A flow line with its elapsed time, ticking every second until the next flowStatus().
-function startProgress($: EngineInterface, label: string) {
-  flowStatus($, progressText(label, 0))
+function startProgress($: EngineInterface, label: string, stream: string) {
+  const at = (ms: number): Line => ({ status: progressText(label, ms), board: boardProgress(stream, ms) })
+  flowStatus($, at(0))
   let ms = 0
   ticker = $.clock.every(1000, () => {
     ms += 1000
-    flowLine = progressText(label, ms)
+    flowLine = at(ms)
     paint($)
   })
 }
@@ -393,8 +411,8 @@ function stopProgress() {
   ticker = null
 }
 
-function fail($: EngineInterface, text: string) {
-  outcome = `⚠ ${shortReason(text)}`
+function fail($: EngineInterface, text: string, board: string) {
+  outcome = { status: `⚠ ${shortReason(text)}`, board, bad: true }
   $.ui.toast(text, { timeoutMs: ERROR_TOAST_MS })
   flowStatus($, undefined)
 }
@@ -489,7 +507,8 @@ async function reset($: EngineInterface) {
   flowStatus($, undefined)
 }
 
-const READY = 'Ready: type /clear to continue in a fresh session'
+const READY: Line = { status: 'Ready: type /clear to continue in a fresh session', board: 'type /clear to continue', bad: true }
+const DONE_MS = 3000
 
 // The notes to re-inject after /clear: module var first, else a fresh store entry from this cwd.
 async function armedPending($: EngineInterface): Promise<Pending | null> {
@@ -508,11 +527,23 @@ async function armedPending($: EngineInterface): Promise<Pending | null> {
 function inject($: EngineInterface, stream: string, notes: string, defer: boolean) {
   const run = () => {
     $.prompt.submit({ text: injectText(notes), asUser: true }).catch(err => {
-      fail($, `Loading the notes of stream "${stream}" failed: ${String(err)}. Try /rejoin ${stream}`)
+      fail($, `Loading the notes of stream "${stream}" failed: ${String(err)}. Try /rejoin ${stream}`, `LOADING NOTES FAILED, try /rejoin ${stream}`)
     })
   }
   if (defer) $.clock.after(1, run)
   else run()
+}
+
+// The pit is done: a positive board message for a few seconds, then the board is free again. Nothing on the status line.
+function backOnTrack($: EngineInterface, stint: number) {
+  const line: Line = { status: '', board: `back on track, stint ${stint}` }
+  outcome = line
+  paint($)
+  $.clock.after(DONE_MS, () => {
+    if (outcome !== line) return
+    outcome = undefined
+    paint($)
+  })
 }
 
 // ---------- commands ----------
@@ -527,7 +558,7 @@ async function pit($: EngineInterface, args: string) {
   if (room && overWall(room.tokens, room.wall)) {
     const pct = Math.round((room.tokens / room.wall) * 100)
     const text = `pit: context is at ${pct}% of the limit where the host compacts on its own (${room.tokens} of ${room.wall} tokens); the save runs in this context and would fail there. Nothing saved, the session is unchanged.`
-    outcome = `⚠ Pit refused: context at ${pct}% of the compaction limit, nothing saved`
+    outcome = { status: `⚠ Pit refused: context at ${pct}% of the compaction limit, nothing saved`, board: `PIT REFUSED at ${pct}% of the limit, nothing saved`, bad: true }
     paint($)
     return { text }
   }
@@ -539,7 +570,7 @@ async function pit($: EngineInterface, args: string) {
   const stream = current()
 
   saving = true
-  startProgress($, `Pitting stream "${stream}"`)
+  startProgress($, `Pitting stream "${stream}"`, stream)
   let built: Built
   try {
     built = await buildNotes($, cwd, stream)
@@ -548,7 +579,7 @@ async function pit($: EngineInterface, args: string) {
   }
   if (built.kind === 'blocked') {
     // Rail 1: nothing is cleared, the session stays as it is.
-    fail($, `Pit of stream "${stream}" failed: ${built.reason.replace(/\.$/, '')}. Session kept.`)
+    fail($, `Pit of stream "${stream}" failed: ${built.reason.replace(/\.$/, '')}. Session kept.`, 'PIT FAILED, session kept')
     return { text: `pit: could not save stream "${stream}": ${built.reason.replace(/\.$/, '')}. No /clear run, the session is unchanged.` }
   }
 
@@ -556,15 +587,13 @@ async function pit($: EngineInterface, args: string) {
   await persist($)
   await setLap($, built.stint)
   pitStart()
-  flowStatus($, 'Starting a fresh session...')
+  flowStatus($, { status: 'Starting a fresh session...', board: savedBoard(built.state.length) })
   // $.command.run rejects inside the hook the run waits on, so the /clear runs from a $.clock.after dispatch, after the hook returned.
   // If the host still refuses, the human types /clear.
   $.clock.after(1, () => {
-    $.command.run({ command: 'clear' }).then(() => pitDone($), () => flowStatus($, READY))
+    $.command.run({ command: 'clear' }).then(() => { pitDone($); backOnTrack($, built.stint) }, () => flowStatus($, READY))
   })
-  const notes = [`${built.state.length.toLocaleString('en-US')} chars`]
-  if (built.cut.length) notes.push(`over the cap, cut: ${built.cut.join(', ')}`)
-  return { text: `pit: stream "${stream}" saved to ${NOTES_DIR}/${stream}-notes.md (${notes.join(', ')}). Starting a fresh session; if nothing happens, type /clear.` }
+  return { text: `pit: saved ${NOTES_DIR}/${stream}-notes.md` }
 }
 
 async function rejoin($: EngineInterface, args: string) {
@@ -673,7 +702,7 @@ export function registerPit(on: On) {
       await noteTitle(e.session_title)
       if (boundArg === null) {
         const streams = await listStreams($)
-        if (streams.length > 0) hint = hintText(streams)
+        if (streams.length > 0) hint = { status: hintText(streams), board: hintBoard(streams) }
       }
       paint($)
       return next(e)

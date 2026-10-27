@@ -1,6 +1,7 @@
 import type { EngineInterface, On, PluginOptions, SessionContextUsage, SessionRateLimit } from 'claude-code'
 import type { Board } from '../types'
-import { setDashLine, writeStatus } from './status.ts'
+import { getPitBoard, setBandUp, setDashLine, writeStatus } from './status.ts'
+import type { PitBoard } from './status.ts'
 
 // dash (stint): the car's instruments, in a band above the prompt.
 //   revs   context fill, % of the model window (the native status line's figure); `/1M` after it when the window is not 200k
@@ -99,15 +100,17 @@ export function fuelOf(rateLimits: readonly SessionRateLimit[]): number | null {
   return Math.min(100, Math.max(0, Math.round(100 - Math.max(...used))))
 }
 
-export type Message = { text: string; rank: 'info' | 'warn' | 'redline' | 'alert' }
-const RANK = { info: 0, warn: 1, redline: 2, alert: 3 } as const
+// `pit` is the /pit flow or outcome (`bad`: a failure, drawn red); it outranks everything on the board.
+export type Message = { text: string; rank: 'info' | 'warn' | 'redline' | 'alert' | 'pit'; bad?: boolean }
+const RANK = { info: 0, warn: 1, redline: 2, alert: 3, pit: 4 } as const
 
 // The slot's message: alert > redline > warn > info; a stored board message past its `until` is gone.
-export function pickBoard(stored: Board | undefined, now: number, inHard: boolean): Message | null {
+export function pickBoard(stored: Board | undefined, now: number, inHard: boolean, pit?: PitBoard): Message | null {
   const live = stored && (stored.until === undefined || stored.until > now) && stored.text.trim() !== '' ? stored : undefined
   const candidates: Message[] = []
   if (live) candidates.push({ text: live.text.replace(/\s+/g, ' ').trim(), rank: live.level })
   if (inHard) candidates.push({ text: REDLINE_MESSAGE, rank: 'redline' })
+  if (pit) candidates.push({ text: pit.text, rank: 'pit', bad: pit.bad === true })
   candidates.sort((a, b) => RANK[b.rank] - RANK[a.rank])
   return candidates[0] ?? null
 }
@@ -183,7 +186,7 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   const label = emoji ? '📋 ' : 'board '
   runs.push(sep, { text: label })
   const budget = Math.max(BOARD_MIN, columns - widthOf(runs))
-  const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : { bold: true, ...hot(RED) }
+  const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : message.rank === 'pit' && !message.bad ? {} : { bold: true, ...hot(RED) }
   runs.push({ text: message ? fit(message.text, budget, emoji) : emoji ? '—' : '-', ...style })
   return runs
 }
@@ -247,7 +250,7 @@ let gain = 0
 let gainAt = -1
 
 const inputOf = (now: number): LineInput | null =>
-  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2), now, flashAt, fuelFlashAt, delta, deltaAt, gain, gainAt }
+  reading === null ? null : { reading, lap, message: pickBoard(board, now, zoneOf(reading.tokens, reading.window) === 2, getPitBoard()), now, flashAt, fuelFlashAt, delta, deltaAt, gain, gainAt }
 
 // The status-line text, or undefined while dash is off or has no reading yet (fresh session, just cleared).
 export function dashLine(): string | undefined {
@@ -271,6 +274,8 @@ export async function bandRuns($: EngineInterface, columns: number): Promise<Run
 export function markBand($: EngineInterface) {
   if (bandSeen) return
   bandSeen = true
+  // With dash off the band draws nothing, so the pit lines keep the status line.
+  setBandUp(mode !== 'off')
   setDashLine(undefined)
   writeStatus($)
 }
@@ -416,6 +421,7 @@ export function registerDash(on: On, userOptions: PluginOptions) {
   delta = 0
   deltaAt = -1
   bandSeen = false
+  setBandUp(false)
   toastSlot = null
   pitFrom = null
   pitWait = null
@@ -429,6 +435,7 @@ export function registerDash(on: On, userOptions: PluginOptions) {
     if ('deny' in result && result.deny !== undefined) return result
     const was = mode
     mode = modeOf(e.value)
+    if (bandSeen) setBandUp(mode !== 'off')
     // Coming back from off there is no figure yet: one usage read gives it.
     if (was === 'off' && mode !== 'off') {
       const usage = await $.session.usage({ breakdown: 'summary' })
