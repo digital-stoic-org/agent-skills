@@ -36,7 +36,7 @@ Stream name, in order: the argument (`a-z A-Z 0-9 _ -`, up to 50 characters, kep
 A band above the prompt carries the car's instruments, on by default (`dash`: `full`). It is drawn on the terminal and the desktop app. Where there is no such band (VS Code, mobile) the same line goes to the status line instead. While `/pit` runs, or after a pit outcome or the notes hint, those lines take the status line; the band is not affected.
 
 ```
-🚀 revs <n>% ▮▮▯▯▯▯▯▯▯▯ ↑<n> · ⛽ <n>% · 🏁 <n> · 📋 —                [ pit ]
+🚀 revs <n>% ▮▮▯▯▯▯▯▯▯▯ ↑<n> · ⛽ <n>% · 🏁 <n> · 📋 —
 ```
 
 | term | reads |
@@ -48,7 +48,6 @@ A band above the prompt carries the car's instruments, on by default (`dash`: `f
 | `⛽` | What is left of the tighter of the five-hour and seven-day plan windows. Shown only below 30%, and only when the host reports rate limits. |
 | `🏁` | The stint counter, shown from the second stint: +1 at each successful `/pit`, taken from the notes by `/rejoin`. |
 | `📋` | Pit board: the sign the crew holds over the pit wall; one short message, `—` when empty. It is cut first when the line is too wide. |
-| `[ pit ]` | A button that runs `/pit`. Its hotkey works while the band has focus. |
 
 The revs figure flashes for half a second at each upward crossing of a threshold, and the fuel segment flashes when it appears. Nothing else repeats.
 

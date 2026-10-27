@@ -150,9 +150,9 @@ test('renderLine: the board is cut first, revs, delta, fuel and stint are whole'
   expect(line.startsWith('🔥 revs 48% ▮▮▮▮▯▯▯▯▯▯ · ⛽ 20% · 🏁 12 · 📋 xxx')).toBe(true)
   expect(line.endsWith('…')).toBe(true)
   expect(cols(line)).toBeLessThanOrEqual(LINE_MAX)
-  // in the band the button keeps its room
-  const band = buildRuns({ reading: R(48), lap: 1, message: { text: long, rank: 'warn' } }, FULL, 60, 10)
-  expect(cols(band.map(r => r.text).join(''))).toBeLessThanOrEqual(50)
+  // in the band the budget is the band's width
+  const band = buildRuns({ reading: R(48), lap: 1, message: { text: long, rank: 'warn' } }, FULL, 60)
+  expect(cols(band.map(r => r.text).join(''))).toBeLessThanOrEqual(60)
 })
 
 test('toastText: one line per zone, with the window size when it is not 200k', () => {
@@ -215,9 +215,6 @@ type World = {
   forkText: string
   clears: number
   submits: string[]
-  // the host's own /pit beneath the plugin, which the band button reaches through $.command.run
-  pitRuns: string[]
-  refusePit: boolean
 }
 
 function world(on: On): World {
@@ -233,8 +230,6 @@ function world(on: On): World {
     forkText: 'GATE: ok\nstatus: building\ngoal: g\nread_first:\n- /a — b',
     clears: 0,
     submits: [],
-    pitRuns: [],
-    refusePit: false,
   }
   mock.store(on)
   w.clock = mock.clock(on, { now: 1_000_000 })
@@ -269,11 +264,6 @@ function world(on: On): World {
   on('classic.SessionStart', () => ({}))
   on('classic.UserPromptSubmit', () => ({}))
   on('command.run', { command: 'clear' }, () => (w.clears++, {}))
-  on('command.run', { command: 'pit' }, () => {
-    w.pitRuns.push(w.refusePit ? 'refused' : 'ran')
-    if (w.refusePit) throw new Error('refused in this context')
-    return {}
-  })
   on('prompt.submit', (_$, e) => (w.submits.push(e.text), { text: e.text }))
   return w
 }
@@ -469,23 +459,6 @@ test('band: where it is raised it carries the dash and the status line is left e
   await ui.unmount()
 })
 
-test('band: [ pit ] runs /pit, and again from a $.clock.after dispatch when the host refuses the first run', async ($, on) => {
-  const w = world(on)
-  await fresh($)
-  await measure($, 29)
-  const ui = await mountBand($)
-  expect(await ui.findAll({ type: 'Button' })).toHaveLength(1)
-  w.refusePit = true
-  await ui.press({ key: 'pit' })
-  expect(w.pitRuns).toEqual(['refused'])
-  w.refusePit = false
-  await w.clock.advance(5)
-  expect(w.pitRuns).toEqual(['refused', 'ran'])
-  await ui.press({ key: 'pit' })
-  expect(w.pitRuns).toEqual(['refused', 'ran', 'ran'])
-  await ui.unmount()
-})
-
 test('band: dash ascii draws no emoji and no hex colour', { options: { dash: 'ascii' } }, async ($, on) => {
   const w = world(on)
   await fresh($)
@@ -493,7 +466,7 @@ test('band: dash ascii draws no emoji and no hex colour', { options: { dash: 'as
   const ui = await mountBand($)
   const text = await bandText(ui)
   expect(text).toContain('revs 70%')
-  expect(/[^\x20-\x7e]/.test(text.replace('[ pit ]', ''))).toBe(false)
+  expect(/[^\x20-\x7e]/.test(text)).toBe(false)
   await ui.unmount()
 })
 

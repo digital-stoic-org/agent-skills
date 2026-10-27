@@ -1,9 +1,9 @@
 import type { On } from 'claude-code'
 
-import { bandRuns, markBand, pressPit } from './dash.ts'
+import { bandRuns, markBand } from './dash.ts'
 import type { Run } from './dash.ts'
 
-// The AbovePrompt band: the dash runs, then the `[ pit ]` button. Raised on terminal and desktop only; its Button hotkeys work while the band has focus.
+// The AbovePrompt band: the dash runs, one line. Raised on terminal and desktop only.
 
 // only the styles a run sets, so no prop is passed undefined
 const propsOf = (r: Run) => ({
@@ -19,14 +19,7 @@ export function registerBand(on: On) {
     if (e.props.hasSurvey) return next(e)
     const runs = await bandRuns($, e.props.bodyColumns)
     if (!runs) return next(e)
-    const { Box, Button, Text } = $.ui.resolve(e)
-    return Box({
-      flexDirection: 'row',
-      children: [
-        Text({ wrap: 'truncate-end', children: runs.map(r => Text({ ...propsOf(r), children: r.text })) }),
-        Text({ children: '   ' }),
-        Button({ key: 'pit', label: '[ pit ]', hotkey: 'g', onPress: () => pressPit($) }),
-      ],
-    })
+    const { Text } = $.ui.resolve(e)
+    return Text({ wrap: 'truncate-end', children: runs.map(r => Text({ ...propsOf(r), children: r.text })) })
   }).catch(($, e, next) => next(e))
 }

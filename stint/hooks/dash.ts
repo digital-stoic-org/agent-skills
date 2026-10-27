@@ -28,8 +28,6 @@ export const DELTA_DIM_MS = 2000
 // The board gives way first: revs, delta, fuel and the stint counter are never truncated.
 export const LINE_MAX = 80
 export const BOARD_MIN = 12
-// The `[ pit ]` button and its gap, kept free in the band.
-export const BUTTON_RESERVE = 10
 export const REDLINE_MESSAGE = 'box this lap: /pit'
 export const PIT_DONE_TOAST = '✅ pit done · fresh window'
 
@@ -150,8 +148,8 @@ export type LineInput = {
 export const flashing = (now: number, at: number) => at >= 0 && now >= at && now - at < FLASH_MS
 const widthOf = (runs: readonly Run[]) => runs.reduce((n, r) => n + cols(r.text), 0)
 
-// The line as styled runs. `reserve` columns stay free at the right (the band's button).
-export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number, reserve = 0): Run[] {
+// The line as styled runs.
+export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number): Run[] {
   const { reading, lap, message } = input
   const now = input.now ?? 0
   const zone = zoneOf(reading.tokens, reading.window)
@@ -177,7 +175,7 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   if (lap >= 2) runs.push(sep, { text: emoji ? `🏁 ${lap}` : `stint ${lap}` })
   const label = emoji ? '📋 ' : 'board '
   runs.push(sep, { text: label })
-  const budget = Math.max(BOARD_MIN, columns - reserve - widthOf(runs))
+  const budget = Math.max(BOARD_MIN, columns - widthOf(runs))
   const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : { bold: true, ...hot(RED) }
   runs.push({ text: message ? fit(message.text, budget, emoji) : emoji ? '—' : '-', ...style })
   return runs
@@ -246,7 +244,7 @@ function repaint($: EngineInterface) {
 // The band's runs at the host clock, or null while there is nothing to draw.
 export async function bandRuns($: EngineInterface, columns: number): Promise<Run[] | null> {
   const input = mode === 'off' ? null : inputOf(await $.clock.now())
-  return input ? buildRuns(input, { emoji: mode === 'full' }, columns, BUTTON_RESERVE) : null
+  return input ? buildRuns(input, { emoji: mode === 'full' }, columns) : null
 }
 
 // The band was raised: the status line stops carrying the dash.
@@ -255,17 +253,6 @@ export function markBand($: EngineInterface) {
   bandSeen = true
   setDashLine(undefined)
   writeStatus($)
-}
-
-// `[ pit ]`: the same as typing /pit. If the host refuses the run from the press, it goes again from a $.clock.after dispatch, as pit does.
-export async function pressPit($: EngineInterface) {
-  try {
-    await $.command.run({ command: 'pit' })
-  } catch {
-    $.clock.after(1, () => {
-      $.command.run({ command: 'pit' }).catch(err => $.ui.log(`stint: dash [ pit ] could not run /pit: ${String(err)}`, { to: 'debug' }))
-    })
-  }
 }
 
 async function announce($: EngineInterface, text: string, kind: ToastKind) {
