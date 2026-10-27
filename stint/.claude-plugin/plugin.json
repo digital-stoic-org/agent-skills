@@ -1,10 +1,24 @@
 {
   "name": "stint",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run your agent in stints. Pit before the redline.",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "dash": {
+      "type": "string",
+      "title": "stint · Dash",
+      "description": "The instruments band above the prompt (revs, fuel, stint, board) and the zone toasts; the status line carries it where there is no band. full: with emoji. ascii: ASCII-only, no hex colours, for terminals that misjudge emoji width. off: no band; the pit lines stay.",
+      "default": "full",
+      "options": [
+        "full",
+        "ascii",
+        "off"
+      ]
+    }
+  }
 }

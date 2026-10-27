@@ -365,7 +365,7 @@ function world(on: On, forkText: string | null, now = 1_000_000): World {
     if (w.gate) await w.gate
     return {
       value: w.forkText === null ? { isAnswered: false, reason: 'nothing-to-fork' } : { isAnswered: true, text: w.forkText, usage: { input_tokens: 1, output_tokens: 1 } },
-    }
+    } as never
   })
   on('agent.list', () => ({ value: w.agents }) as never)
   on('session.cwd', () => ({ value: CWD }))

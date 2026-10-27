@@ -1,5 +1,8 @@
 import type { EngineInterface, On } from 'claude-code'
 
+import { pitDone, setLap } from './dash.ts'
+import { setPitLine, writeStatus } from './status.ts'
+
 // pit (stint): one mod, two commands.
 //   /pit [stream]      save notes (awaited fork) -> /clear (automatic) -> notes re-injected as the first message of the fresh context
 //   /rejoin [stream]   notes of a stream -> first message of this session
@@ -143,6 +146,8 @@ const shortReason = (reason: string) => {
 // ---------- notes format ----------
 
 export const SCALARS_HEADER = ['stream', 'saved', 'status', 'previous_session', 'goal']
+// Written after the header scalars when the caller gives a stint number: the stint the notes hand over to (absent in older notes = 1).
+export const STINT_KEY = 'stint'
 export const LISTS = ['read_first', 'read_if_needed', 'decisions', 'learnings', 'discarded', 'in_progress', 'next', 'unknowns', 'stale']
 // Body order of the notes file (deliverable is the only scalar among them).
 export const BODY_ORDER = ['read_first', 'read_if_needed', 'deliverable', 'decisions', 'learnings', 'discarded', 'in_progress', 'next', 'unknowns', 'stale']
@@ -171,8 +176,15 @@ export function parseKeyed(text: string, scalarKeys: string[], listKeys: string[
   return out
 }
 
-const NOTES_SCALARS = [...SCALARS_HEADER, 'deliverable']
+const NOTES_SCALARS = [...SCALARS_HEADER, STINT_KEY, 'deliverable']
 export const parseNotes = (text: string) => parseKeyed(text, NOTES_SCALARS, LISTS)
+
+// The stint number in a notes file; missing, malformed or no file = 1.
+export function stintOf(notes: string | null): number {
+  const raw = notes ? parseNotes(notes).scalars[STINT_KEY] : undefined
+  const n = raw !== undefined && /^\d{1,6}$/.test(raw) ? Number(raw) : 1
+  return n >= 1 ? n : 1
+}
 
 const FORK_SCALARS = ['status', 'goal', 'deliverable']
 export type ForkParse = { kind: 'ok'; body: string } | { kind: 'blocked'; reason: string }
@@ -224,6 +236,8 @@ export type AssembleInput = {
   sid: string
   prev: string | null
   fork: Keyed
+  // The stint the notes hand over to; no line in the header when absent.
+  stint?: number
   // In-flight agent lines (agentLines()), written by code; rendered first in in_progress and never cut.
   agents?: string[]
 }
@@ -260,8 +274,8 @@ export function assemble(input: AssembleInput): Assembled {
   let overflowLine: string | null = null
   let degraded = false
   const render = () => {
-    const header = { ...scalars, status: degraded ? `degraded (${scalars.status})` : scalars.status }
-    const head = SCALARS_HEADER.map(k => `${k}: ${header[k]}`).join('\n')
+    const header: Record<string, string | undefined> = { ...scalars, status: degraded ? `degraded (${scalars.status})` : scalars.status }
+    const head = [...SCALARS_HEADER.map(k => `${k}: ${header[k]}`), ...(input.stint !== undefined ? [`${STINT_KEY}: ${input.stint}`] : [])].join('\n')
     const agents = input.agents ?? []
     const shown = (k: string) => {
       const list = lists[k] ?? []
@@ -351,8 +365,10 @@ let hint: string | undefined
 
 const current = () => resolveStream(boundArg, titleStream)
 
+// pit's own lines (flow, outcome, hint) come first; with none, the dash line (status.ts).
 function paint($: EngineInterface) {
-  $.ui.status(flowLine ?? outcome ?? hint)
+  setPitLine(flowLine ?? outcome ?? hint)
+  writeStatus($)
 }
 
 function flowStatus($: EngineInterface, text: string | undefined) {
@@ -418,7 +434,7 @@ async function agentLines($: EngineInterface): Promise<string[]> {
 
 // ---------- save ----------
 
-type Built = { kind: 'ok'; state: string; cut: string[]; degraded: boolean } | { kind: 'blocked'; reason: string }
+type Built = { kind: 'ok'; state: string; cut: string[]; degraded: boolean; stint: number } | { kind: 'blocked'; reason: string }
 
 async function askFork($: EngineInterface, prompt: string): Promise<{ kind: 'ok'; fork: Keyed } | { kind: 'blocked'; reason: string }> {
   const reply = await $.model.fork({ prompt })
@@ -438,11 +454,12 @@ async function buildNotes($: EngineInterface, cwd: string, stream: string): Prom
     // One fork per save: an over-cap answer is cut by assemble(), never re-asked.
     const asked = await askFork($, forkPrompt(prev))
     if (asked.kind === 'blocked') return asked
-    const result = assemble({ stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, fork: asked.fork, agents })
+    const stint = stintOf(prev) + 1
+    const result = assemble({ stream, saved: new Date(await $.clock.now()).toISOString(), sid, prev, fork: asked.fork, agents, stint })
     if (result.kind === 'blocked') return result
     await $.fs.write(path, result.state)
     if (!(await $.fs.exists(path))) return { kind: 'blocked', reason: `${path} not found after writing` }
-    return result
+    return { ...result, stint }
   } catch (err) {
     return { kind: 'blocked', reason: `error: ${String(err)}` }
   }
@@ -537,11 +554,12 @@ async function pit($: EngineInterface, args: string) {
 
   pending = { text: built.state, createdAt: await $.clock.now(), cwd, stream }
   await persist($)
+  await setLap($, built.stint)
   flowStatus($, 'Starting a fresh session...')
   // $.command.run rejects inside the hook the run waits on, so the /clear runs from a $.clock.after dispatch, after the hook returned.
   // If the host still refuses, the human types /clear.
   $.clock.after(1, () => {
-    $.command.run({ command: 'clear' }).catch(() => flowStatus($, READY))
+    $.command.run({ command: 'clear' }).then(() => pitDone($), () => flowStatus($, READY))
   })
   const notes = [`${built.state.length.toLocaleString('en-US')} chars`]
   if (built.cut.length) notes.push(`over the cap, cut: ${built.cut.join(', ')}`)
@@ -576,6 +594,7 @@ async function rejoin($: EngineInterface, args: string) {
 
   boundArg = chosen
   hint = undefined
+  await setLap($, stintOf(notes))
   paint($)
   inject($, chosen, notes, true)
   return { text: `rejoin: loading stream "${chosen}" as the first message.` }
