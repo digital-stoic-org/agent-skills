@@ -23,12 +23,9 @@ export const BASE_WINDOW = 200_000
 export const BAR_CELLS = 10
 export const FUEL_BELOW = 30
 export const FLASH_MS = 500
-// Sparkline of the last prompt deltas: fixed scale, a cell is one prompt, 20 points or more is a full block.
-export const SPARK_CELLS = 8
-export const SPARK_FULL = 20
-export const SPARK_BOLD_ABOVE = 10
-export const SPARK_EMOJI = '▁▂▃▄▅▆▇█'
-export const SPARK_ASCII = '_.-=#'
+// The series of the last prompt deltas: one `+N` per prompt, the pit drop `-N` first after a pit.
+export const SERIES_CELLS = 5
+export const SERIES_BOLD_ABOVE = 10
 // The board gives way first: revs, delta, fuel and the stint counter are never truncated.
 export const LINE_MAX = 80
 export const BOARD_MIN = 12
@@ -155,17 +152,14 @@ export type LineInput = {
   history?: readonly number[]
 }
 
-// One sparkline cell on the fixed scale: 0 is the lowest glyph, SPARK_FULL or more the highest.
-export function sparkCell(d: number, emoji: boolean): string {
-  const set = emoji ? SPARK_EMOJI : SPARK_ASCII
-  return set.charAt(Math.round((Math.min(Math.max(d, 0), SPARK_FULL) * (set.length - 1)) / SPARK_FULL))
-}
+// One series entry: `+N` for a rise (`+0` for none), `-N` for the pit drop.
+export const seriesText = (d: number) => (d < 0 ? `-${-d}` : `+${d}`)
 
 export const flashing = (now: number, at: number) => at >= 0 && now >= at && now - at < FLASH_MS
 const widthOf = (runs: readonly Run[]) => runs.reduce((n, r) => n + cols(r.text), 0)
 
 // The line as styled runs.
-export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number, spark = false): Run[] {
+export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: number, series = false): Run[] {
   const { reading, lap, message } = input
   const now = input.now ?? 0
   const zone = zoneOf(reading.tokens, reading.window)
@@ -183,8 +177,12 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   } else {
     runs.push({ text: bar(reading.percent, false) })
   }
-  if ((input.delta ?? 0) > 0) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: true })
-  if ((input.gain ?? 0) > 0) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
+  // Where the series shows (band, 2 entries or more) it carries the delta and the pit drop; otherwise the arrows do.
+  const entries = series && (input.history?.length ?? 0) >= 2 ? input.history!.slice(-SERIES_CELLS) : []
+  if (entries.length === 0) {
+    if ((input.delta ?? 0) > 0) runs.push({ text: emoji ? ` ↑${input.delta}` : ` +${input.delta}`, dim: true })
+    if ((input.gain ?? 0) > 0) runs.push({ text: emoji ? ` ↓${input.gain}` : ` -${input.gain}`, dim: true })
+  }
   if (fuel !== null && fuel < FUEL_BELOW) {
     runs.push(sep, { text: emoji ? `⛽ ${fuel}%` : `fuel ${fuel}%`, ...hot(YELLOW), ...(flashing(now, input.fuelFlashAt ?? -1) ? flash : {}) })
   }
@@ -192,17 +190,21 @@ export function buildRuns(input: LineInput, { emoji }: DashOptions, columns: num
   const label = emoji ? '📋 ' : 'board '
   runs.push(sep, { text: label })
   const room = columns - widthOf(runs)
-  const history = spark && (input.history?.length ?? 0) >= 2 ? input.history!.slice(-SPARK_CELLS) : []
-  // The board gives way first, then the sparkline drops its oldest cells.
-  const n = history.length === 0 ? 0 : Math.max(0, Math.min(history.length, room - BOARD_MIN - 1))
-  const budget = Math.max(BOARD_MIN, room - (n > 0 ? n + 1 : 0))
+  // The board gives way first, then the series drops its oldest entries.
+  const widthFor = (k: number) => entries.slice(-k).reduce((n, d) => n + seriesText(d).length, 0) + k - 1
+  let k = entries.length
+  while (k > 0 && widthFor(k) + 1 > room - BOARD_MIN) k--
+  const budget = Math.max(BOARD_MIN, room - (k > 0 ? widthFor(k) + 1 : 0))
   const style: Partial<Run> = !message || message.rank === 'info' ? { dim: true } : message.rank === 'warn' ? hot(YELLOW) : { bold: true, ...hot(RED) }
   runs.push({ text: message ? fit(message.text, budget, emoji) : emoji ? '—' : '-', ...style })
-  if (n > 0) {
-    const pad = columns - widthOf(runs) - n
+  if (k > 0) {
+    const pad = columns - widthOf(runs) - widthFor(k)
     if (pad >= 1) {
       runs.push({ text: ' '.repeat(pad) })
-      for (const d of history.slice(-n)) runs.push({ text: sparkCell(d, emoji), ...(d > SPARK_BOLD_ABOVE ? { bold: true } : {}) })
+      entries.slice(-k).forEach((d, idx) => {
+        if (idx > 0) runs.push({ text: ' ' })
+        runs.push({ text: seriesText(d), ...(d > SERIES_BOLD_ABOVE ? { bold: true } : { dim: true }) })
+      })
     }
   }
   return runs
@@ -254,7 +256,7 @@ let boardTimer: { cancel: () => void } | null = null
 let flashAt = -1
 let fuelFlashAt = -1
 let fuelShown = false
-// Per-prompt context use: revs % at the end of the previous prompt, its delta, and the last SPARK_CELLS deltas.
+// Per-prompt context use: revs % at the end of the previous prompt, its delta, and the last SERIES_CELLS entries.
 let turnBase: number | null = null
 let delta = 0
 let history: number[] = []
@@ -341,6 +343,7 @@ async function settlePit($: EngineInterface, percent: number) {
     return
   }
   gain = from - to
+  history = [-gain]
   repaint($)
   await announce($, pitDoneText(mode === 'full', { from, to }), 'positive')
 }
@@ -349,10 +352,10 @@ async function settlePit($: EngineInterface, percent: number) {
 function endPrompt($: EngineInterface) {
   if (reading === null) return
   const cur = Math.round(reading.percent)
-  gain = 0
   if (turnBase !== null) {
+    gain = 0
     delta = Math.max(0, cur - turnBase)
-    history = [...history, delta].slice(-SPARK_CELLS)
+    history = [...history, delta].slice(-SERIES_CELLS)
   }
   turnBase = cur
   repaint($)
