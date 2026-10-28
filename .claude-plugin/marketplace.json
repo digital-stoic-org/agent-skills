@@ -199,7 +199,7 @@
       "name": "stint",
       "source": "./stint",
       "description": "Run your agent in stints. Pit before the redline. Ships the dash mod: a band above the prompt with revs (context fill, two-step soft/hard zones), fuel when low and a board for short messages, one toast per zone crossing, config full|ascii|off. And the pit mod: /pit saves the stream's notes to .stint/<stream>-notes.md, runs /clear and re-injects them as the first message of the fresh context; /rejoin [stream] re-injects saved notes in a new session. A pit is refused, with nothing cleared, when the save fails or the context is near the compaction limit. Do not load together with stoa.",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "author": {
         "name": "dstoic"
       },

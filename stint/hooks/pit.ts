@@ -1,6 +1,7 @@
 import type { EngineInterface, On } from 'claude-code'
 
 import { pitDone, pitStart, setLap } from './dash.ts'
+import { debugOn, sidNow, startWatch, stopWatch, trace, writeReport } from './debug.ts'
 import { setPitBoard, setPitLine, writeStatus } from './status.ts'
 
 // pit (stint): one mod, two commands.
@@ -361,7 +362,8 @@ function forkFailure(reason: string): string {
 
 // ---------- module state (survives /clear, lost on mod reload; the pending injection is backed up in $.store) ----------
 
-type Pending = { text: string; createdAt: number; cwd: string; stream: string }
+// `sid`: the session of the pit, kept only while debug is on.
+type Pending = { text: string; createdAt: number; cwd: string; stream: string; sid?: string | undefined }
 
 let pending: Pending | null = null
 // A pit is running (the fork is slow): refuse a second one meanwhile.
@@ -512,11 +514,61 @@ const DONE_MS = 3000
 
 // The notes to re-inject after /clear: module var first, else a fresh store entry from this cwd.
 async function armedPending($: EngineInterface): Promise<Pending | null> {
-  const stored = pending ?? ((await $.store.get(STORE_KEY)) as Pending | undefined)
-  if (!stored) return null
-  if ((await $.clock.now()) - stored.createdAt >= STALE_MS) return null
-  if (stored.cwd !== (await $.session.cwd())) return null
+  const fromModule = pending
+  const stored = fromModule ?? ((await $.store.get(STORE_KEY)) as Pending | undefined)
+  const dbg = debugOn()
+  const sid = dbg ? await sidNow($) : undefined
+  const miss = (reason: string, extra: Record<string, unknown> = {}) => trace($, 'pending.lookup', { hit: false, reason, storedSid: stored?.sid, sid, ...extra }, stored?.stream)
+  if (!stored) {
+    miss('none')
+    return null
+  }
+  // The module variable is gone but the store still holds the entry: the mod was reloaded after the pit.
+  if (fromModule === null) trace($, 'reload.detected', { storedSid: stored.sid, sid }, stored.stream)
+  const age = (await $.clock.now()) - stored.createdAt
+  if (age >= STALE_MS) {
+    miss('stale', { ageMs: age })
+    return null
+  }
+  const cwd = await $.session.cwd()
+  if (stored.cwd !== cwd) {
+    miss('other-cwd', { storedCwd: stored.cwd, cwd })
+    return null
+  }
+  trace($, 'pending.lookup', { hit: true, source: fromModule ? 'module' : 'store', storedSid: stored.sid, sid }, stored.stream)
   return stored
+}
+
+// ---------- debug: incidents ----------
+
+// The last pit whose pending was persisted and not yet looked up (debug only).
+let lastPersist: { cwd: string; stream: string } | null = null
+
+// Notes that should have been loaded were not: a report next to the notes, a red board line, a toast.
+async function incident($: EngineInterface, why: string, cwd: string, stream: string) {
+  lastPersist = null
+  trace($, 'incident', { why }, stream)
+  let path: string | null = null
+  try {
+    path = await writeReport($, cwd, why)
+  } catch (err) {
+    $.ui.log(`stint: debug report not written: ${String(err)}`, { to: 'debug' })
+  }
+  const board = `notes not loaded: /rejoin ${stream}${path ? ' - trace saved' : ''}`
+  outcome = { status: `⚠ ${board}`, board, bad: true }
+  paint($)
+  $.ui.toast(path ? `Pit incident (${why}): trace saved to ${path}` : `Pit incident (${why}): the trace could not be saved`, { timeoutMs: ERROR_TOAST_MS })
+}
+
+// /pit --trace: the buffer on demand. Never runs a pit.
+async function traceCommand($: EngineInterface) {
+  if (!debugOn()) return { text: 'pit: debug is off. Turn it on in /config (stint · Debug), then run /pit --trace.' }
+  try {
+    const path = await writeReport($, await $.session.cwd(), 'on demand')
+    return { text: `pit: trace saved to ${path}` }
+  } catch (err) {
+    return { text: `pit: the trace could not be saved: ${String(err)}` }
+  }
 }
 
 // ---------- inject (shared by the fresh start after /clear and /rejoin) ----------
@@ -526,9 +578,14 @@ async function armedPending($: EngineInterface): Promise<Pending | null> {
 // dispatch, after the hook returned. SessionStart submits directly.
 function inject($: EngineInterface, stream: string, notes: string, defer: boolean) {
   const run = () => {
-    $.prompt.submit({ text: injectText(notes), asUser: true }).catch(err => {
-      fail($, `Loading the notes of stream "${stream}" failed: ${String(err)}. Try /rejoin ${stream}`, `LOADING NOTES FAILED, try /rejoin ${stream}`)
-    })
+    trace($, 'inject.submit', { state: 'call', chars: notes.length }, stream)
+    $.prompt.submit({ text: injectText(notes), asUser: true }).then(
+      () => trace($, 'inject.submit', { state: 'resolve' }, stream),
+      err => {
+        trace($, 'inject.submit', { state: 'reject', error: String(err) }, stream)
+        fail($, `Loading the notes of stream "${stream}" failed: ${String(err)}. Try /rejoin ${stream}`, `LOADING NOTES FAILED, try /rejoin ${stream}`)
+      },
+    )
   }
   if (defer) $.clock.after(1, run)
   else run()
@@ -549,12 +606,14 @@ function backOnTrack($: EngineInterface, stint: number) {
 // ---------- commands ----------
 
 async function pit($: EngineInterface, args: string) {
+  if (args.trim() === '--trace') return traceCommand($)
   const parsed = parseArgs(args, 'pit')
   if ('error' in parsed) return { text: `pit: ${parsed.error}` }
   if (saving) return { text: `pit: a pit is already running, its outcome will show in the status line` }
 
   const cwd = await $.session.cwd()
   const room = await headroom($)
+  trace($, 'pit.start', { cwd, headroom: room }, current())
   if (room && overWall(room.tokens, room.wall)) {
     const pct = Math.round((room.tokens / room.wall) * 100)
     const text = `pit: context is at ${pct}% of the limit where the host compacts on its own (${room.tokens} of ${room.wall} tokens); the save runs in this context and would fail there. Nothing saved, the session is unchanged.`
@@ -583,15 +642,33 @@ async function pit($: EngineInterface, args: string) {
     return { text: `pit: could not save stream "${stream}": ${built.reason.replace(/\.$/, '')}. No /clear run, the session is unchanged.` }
   }
 
-  pending = { text: built.state, createdAt: await $.clock.now(), cwd, stream }
-  await persist($)
+  trace($, 'notes.written', { path: `${cwd}/${NOTES_DIR}/${stream}-notes.md`, chars: built.state.length }, stream)
+  pending = { text: built.state, createdAt: await $.clock.now(), cwd, stream, ...(debugOn() ? { sid: await sidNow($) } : {}) }
+  try {
+    await persist($)
+    trace($, 'pending.persisted', { ok: true }, stream)
+    if (debugOn()) lastPersist = { cwd, stream }
+  } catch (err) {
+    trace($, 'pending.persisted', { ok: false, error: String(err) }, stream)
+    throw err
+  }
   await setLap($, built.stint)
   pitStart()
   flowStatus($, { status: 'Starting a fresh session...', board: savedBoard(built.state.length) })
   // $.command.run rejects inside the hook the run waits on, so the /clear runs from a $.clock.after dispatch, after the hook returned.
   // If the host still refuses, the human types /clear.
   $.clock.after(1, () => {
-    $.command.run({ command: 'clear' }).then(() => { pitDone($); backOnTrack($, built.stint) }, () => flowStatus($, READY))
+    $.command.run({ command: 'clear' }).then(
+      () => {
+        pitDone($)
+        backOnTrack($, built.stint)
+        trace($, 'clear.run', { result: 'resolve' }, stream)
+      },
+      () => {
+        flowStatus($, READY)
+        trace($, 'clear.run', { result: 'reject' }, stream)
+      },
+    )
   })
   return { text: `pit: saved ${NOTES_DIR}/${stream}-notes.md` }
 }
@@ -687,6 +764,7 @@ export function registerPit(on: On) {
   })
 
   on('classic.SessionStart', async ($, e, next) => {
+    trace($, 'session.start', { source: e.source, sid: e.session_id, cwd: e.cwd })
     hint = undefined
     outcome = undefined
     if (e.source !== 'clear') {
@@ -698,6 +776,8 @@ export function registerPit(on: On) {
         saving = false
         stopProgress()
         flowLine = undefined
+        lastPersist = null
+        stopWatch()
       }
       await noteTitle(e.session_title)
       if (boundArg === null) {
@@ -711,7 +791,13 @@ export function registerPit(on: On) {
     await noteTitle(e.session_title)
     const armed = await armedPending($)
     await reset($)
-    if (armed === null) return next(e)
+    if (armed === null) {
+      // Debug: a pit persisted its notes and the lookup found nothing.
+      if (lastPersist !== null && debugOn()) await incident($, 'pending persisted but lookup found none', lastPersist.cwd, lastPersist.stream)
+      return next(e)
+    }
+    lastPersist = null
+    if (debugOn()) startWatch($, missing => void incident($, missing, armed.cwd, armed.stream))
 
     // Rail 3: the binding survives /clear; restore it when a mod reload lost it.
     if (boundArg === null) boundArg = armed.stream

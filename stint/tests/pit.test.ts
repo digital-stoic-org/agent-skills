@@ -340,6 +340,7 @@ type World = {
   agents: { id: string; name?: string; description: string; type: string; status: string }[]
   refuseClear: boolean
   failWrites: boolean
+  cwd?: string
 }
 
 function world(on: On, forkText: string | null, now = 1_000_000): World {
@@ -371,7 +372,7 @@ function world(on: On, forkText: string | null, now = 1_000_000): World {
     } as never
   })
   on('agent.list', () => ({ value: w.agents }) as never)
-  on('session.cwd', () => ({ value: CWD }))
+  on('session.cwd', () => ({ value: w.cwd ?? CWD }))
   on('session.id', () => ({ value: 'sess-1' }))
   on('session.usage', () => {
     if (w.usage === 'throws') throw new Error('usage down')
@@ -394,6 +395,7 @@ function world(on: On, forkText: string | null, now = 1_000_000): World {
     return { value: names.map(name => ({ name, kind: 'file', size: 1, mtimeMs: 0, isLink: false })) } as never
   })
   on('session.measure', (_$, e) => ({ changed: [...e.changed] }))
+  on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('ui.status', (_$, e) => (w.statuses.push(e.text), { value: undefined }))
   on('ui.toast', (_$, e) => (w.toasts.push(e.text), { value: undefined }))
   on('ui.log', () => ({ value: undefined }))
@@ -670,4 +672,171 @@ test('session start: a hint when notes exist and no stream is bound; none otherw
   // a bound stream (survives /clear) shows no hint
   await clear($)
   expect(lastStatus(w)).toBeUndefined()
+})
+
+// ---------- debug ----------
+
+const DEBUG = { options: { debug: 'on' } }
+const settle = () => new Promise(r => setTimeout(r, 30))
+type Ev = { t: number; sid?: string; cwd?: string; stream?: string; ev: string; detail: Record<string, unknown> }
+const traced = async (w: World): Promise<Ev[]> => {
+  await settle()
+  return (w.store.get('stint:trace') as Ev[] | undefined) ?? []
+}
+const names = (evs: Ev[]) => evs.map(e => e.ev)
+const debugFiles = (w: World) => [...w.files.keys()].filter(p => p.includes('/.stint/debug-'))
+const injected = ($: Engine) => $.prompt.submit({ text: 'notes', origin: { kind: 'plugin', name: 'stint', asUser: true }, wait: false } as never)
+const turnStart = ($: Engine) => $.turn.start({ text: 'notes', turnId: 't1' })
+// the nominal path up to the fresh session: the host starts it, then the /clear command resolves
+const pitAndClear = async ($: Engine, w: World) => {
+  await pit($)
+  await clear($)
+  await w.clock.advance(5)
+}
+
+test('debug off: no trace, no report, no timer, the pit is as before', async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await pitAndClear($, w)
+  await w.clock.advance(60_000)
+  await settle()
+  expect(w.store.has('stint:trace')).toBe(false)
+  expect(debugFiles(w)).toEqual([])
+  expect(w.submits).toHaveLength(1)
+  // the pending carries no session id while debug is off
+  expect((await pit($, '')).text).toBe('pit: saved .stint/proj-notes.md')
+  expect(w.store.get('stint:pending')).not.toHaveProperty('sid')
+  // --trace says how to turn it on and writes nothing
+  const out = await pit($, '--trace')
+  expect(out.text).toContain('debug is off')
+  expect(out.text).toContain('/config')
+  expect(debugFiles(w)).toEqual([])
+})
+
+test('debug on: the nominal path is traced in order, metadata only', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await pitAndClear($, w)
+  await injected($)
+  await turnStart($)
+  const evs = await traced(w)
+  const order = names(evs)
+  const want = ['module.load', 'session.start', 'pit.start', 'notes.written', 'pending.persisted', 'session.start', 'pending.lookup', 'inject.submit', 'prompt.seen', 'inject.submit', 'clear.run', 'turn.start']
+  expect(order[0]).toBe('module.load')
+  let at = -1
+  for (const ev of want.slice(1)) {
+    const i = order.indexOf(ev, at + 1)
+    expect(i).toBeGreaterThan(at)
+    at = i
+  }
+  const get = (ev: string, pick: (e: Ev) => boolean = () => true) => evs.find(e => e.ev === ev && pick(e))!
+  expect(get('pit.start').detail).toEqual({ cwd: CWD, headroom: { tokens: 10_000, wall: 100_000 } })
+  expect(get('pit.start').sid).toBe('sess-1')
+  expect(get('notes.written').detail.path).toBe(NOTES)
+  expect(typeof get('notes.written').detail.chars).toBe('number')
+  expect(get('pending.persisted').detail).toEqual({ ok: true })
+  expect(get('clear.run').detail).toEqual({ result: 'resolve' })
+  expect(get('session.start', e => e.detail.source === 'clear').detail.source).toBe('clear')
+  expect(get('pending.lookup').detail).toMatchObject({ hit: true, source: 'module', storedSid: 'sess-1', sid: 'sess-1' })
+  expect(get('prompt.seen').detail.chars).toBeGreaterThan(0)
+  // no notes content anywhere in the trace
+  expect(JSON.stringify(evs)).not.toContain('ship v2')
+  expect(w.toasts.some(t => t.includes('Pit incident'))).toBe(false)
+})
+
+test('debug on: turn.start in time means no incident, whatever the clock does after', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await pitAndClear($, w)
+  await w.clock.advance(3_000)
+  await injected($)
+  await turnStart($)
+  await w.clock.advance(30_000)
+  expect(debugFiles(w)).toEqual([])
+  expect(w.toasts.some(t => t.includes('Pit incident'))).toBe(false)
+})
+
+test('debug on: no turn.start within 10 s writes the report next to the notes and puts a red sticky line on the board', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await pitAndClear($, w)
+  await injected($)
+  await w.clock.advance(9_000)
+  expect(debugFiles(w)).toEqual([])
+  await w.clock.advance(1_500)
+  const files = debugFiles(w)
+  expect(files).toHaveLength(1)
+  expect(files[0]).toMatch(/^\/work\/\.stint\/debug-\d{4}-\d\d-\d\dT[\d-]+Z\.md$/)
+  const report = w.files.get(files[0]!) ?? ''
+  expect(report).toContain('why: no turn.start')
+  expect(report).toContain('- turn.start: MISSING')
+  expect(report).toContain('- prompt.seen: reached')
+  expect(report).toContain('- pit.start: reached')
+  expect(report).not.toContain('ship v2')
+  expect(w.toasts.some(t => t.includes(files[0]!))).toBe(true)
+  expect(await bandNow($)).toContain('notes not loaded: /rejoin proj - trace saved')
+})
+
+test('debug on: a lookup that finds nothing after a persisted pit is traced with its reason and is an incident (stale, other cwd)', { ...DEBUG }, async ($, on) => {
+  const stale = world(on, OK())
+  await fresh($)
+  await pit($)
+  await stale.clock.advance(11 * 60 * 1000)
+  await clear($)
+  const evs = await traced(stale)
+  expect(evs.find(e => e.ev === 'pending.lookup')?.detail).toMatchObject({ hit: false, reason: 'stale', storedSid: 'sess-1', sid: 'sess-1' })
+  expect(debugFiles(stale)).toHaveLength(1)
+  expect(stale.files.get(debugFiles(stale)[0]!)).toContain('why: pending persisted but lookup found none')
+  expect(stale.submits).toHaveLength(0)
+})
+
+test('debug on: other cwd between the pit and the clear', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await pit($)
+  w.cwd = '/elsewhere'
+  await clear($)
+  const evs = await traced(w)
+  expect(evs.find(e => e.ev === 'pending.lookup')?.detail).toMatchObject({ hit: false, reason: 'other-cwd', storedCwd: CWD, cwd: '/elsewhere' })
+  // the report goes next to the notes of the pit, not to the new folder
+  expect(debugFiles(w)[0]?.startsWith('/work/.stint/')).toBe(true)
+})
+
+test('debug on: a clear with nothing armed is traced as none and is not an incident', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await clear($)
+  const evs = await traced(w)
+  expect(evs.find(e => e.ev === 'pending.lookup')?.detail).toMatchObject({ hit: false, reason: 'none' })
+  expect(debugFiles(w)).toEqual([])
+})
+
+test('debug on: a mod reload (module empty, store hit) is traced', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK(), 60 * 1000)
+  w.store.set('stint:pending', { text: 'n', createdAt: 0, cwd: CWD, stream: 'proj', sid: 'old-sid' })
+  await clear($)
+  const evs = await traced(w)
+  expect(names(evs)).toContain('reload.detected')
+  expect(evs.find(e => e.ev === 'pending.lookup')?.detail).toMatchObject({ hit: true, source: 'store', storedSid: 'old-sid', sid: 'sess-1' })
+})
+
+test('debug on: /pit --trace writes the buffer and returns the path, it never runs a pit', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  await fresh($)
+  await settle()
+  const out = await pit($, '--trace')
+  expect(out.text).toMatch(/^pit: trace saved to \/work\/\.stint\/debug-.*\.md$/)
+  const path = (out.text ?? '').replace('pit: trace saved to ', '')
+  expect(w.files.get(path)).toContain('why: on demand')
+  expect(w.forkPrompts).toHaveLength(0)
+  expect(w.files.has(NOTES)).toBe(false)
+  expect(w.clears).toBe(0)
+})
+
+test('debug on: the ring buffer never grows past 200 events', { ...DEBUG }, async ($, on) => {
+  const w = world(on, OK())
+  for (let i = 0; i < 230; i++) await fresh($)
+  const evs = await traced(w)
+  expect(evs).toHaveLength(200)
+  expect(evs.at(-1)?.ev).toBe('session.start')
 })

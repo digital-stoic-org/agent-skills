@@ -73,6 +73,12 @@ type Board = { text: string; level: 'info' | 'warn' | 'alert'; from: string; unt
 
 Figures come from Claude Code's `session.measure` event; until it fires, one `$.session.usage()` read after each main-thread turn gives the same reading.
 
+## Debug
+
+Off by default. Turn it on in `/config` (row `stint · Debug`, `off|on`). Once on, stint keeps a ring buffer of the last 200 events (pit start, notes written, pending persisted, clear, session start, pending lookup with the reason for a miss, injection, prompt seen, turn start) and mirrors them to the debug log. It records metadata only: paths, sizes, ids, never the notes.
+
+After an armed `/pit`, if the injected prompt does not reach a turn within 10 seconds of the fresh session, or the pending notes were saved but not found, stint writes `<pit folder>/.stint/debug-<time>.md`, raises a red line on the board (`notes not loaded: /rejoin <stream> - trace saved`) and a toast with the path. `/pit --trace` writes the buffer on demand and never runs a pit. With debug off nothing is written and no timer runs.
+
 ## Notes file
 
 `<working directory>/.stint/<stream>-notes.md`, at most 8,000 characters, written by one model fork that sees the previous notes of the stream and merges them. Header: `stream`, `saved`, `status`, `previous_session`, `goal`, `stint`. `stint` is the number of the stint the notes hand over to: each successful `/pit` writes the previous value plus one, and a file without the field counts as 1. Body lists: `read_first`, `read_if_needed`, `deliverable`, `decisions`, `learnings`, `discarded`, `in_progress`, `next`, `unknowns`, `stale`. Over the cap, code marks the status `degraded`, shortens long `read_if_needed` lines, then drops items oldest first from `stale`, `in_progress`, `discarded`, `learnings`. Still over, it drops from `read_if_needed`, `next`, `unknowns`, `decisions` and names the cut in `stale`. The header, `read_first`, `deliverable` and the running agents are never cut; if they alone exceed the cap, nothing is written and the pit is refused. Agents still running are listed in `in_progress` by code.

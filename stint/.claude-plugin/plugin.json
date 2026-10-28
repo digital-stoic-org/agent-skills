@@ -1,6 +1,6 @@
 {
   "name": "stint",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Run your agent in stints. Pit before the redline.",
   "author": {
     "name": "dstoic",
@@ -18,6 +18,16 @@
         "full",
         "ascii",
         "off"
+      ]
+    },
+    "debug": {
+      "type": "string",
+      "title": "stint · Debug",
+      "description": "Trace the pit steps (metadata only: paths, sizes, ids) in the plugin store and the debug log. If the notes are not re-injected after a /pit, a report is written to .stint/debug-<time>.md in the folder of the pit. /pit --trace writes the trace on demand. off: nothing is recorded.",
+      "default": "off",
+      "options": [
+        "off",
+        "on"
       ]
     }
   }
