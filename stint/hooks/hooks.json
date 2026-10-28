@@ -1,4 +1,0 @@
-{
-  "description": "stint hooks module",
-  "modules": ["./register.ts"]
-}
