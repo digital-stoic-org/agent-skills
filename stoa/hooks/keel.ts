@@ -493,19 +493,10 @@ async function onPrompt($: EngineInterface, root: string): Promise<string[]> {
 
 // ── /keel (§10) ─────────────────────────────────────────────────────────────
 
-// The command is declared from keel's `session.*` glob (branch on `session.start`): pack owns the exact `session.start`, and the host throws on a duplicate
-// (pattern, matcher). Declared from `classic.SessionStart` it landed too late: `claude -p "/keel"` answered "isn't installed". Also while off: `/keel on` must stay reachable.
-async function declareCommand($: EngineInterface): Promise<void> {
-  try {
-    await $.command.register({ name: 'keel', description: 'Derived files whose sources changed: suspects, scan, why <file>, off, on', argumentHint: '[scan | why <file> | off | on]' })
-  } catch (err) {
-    try {
-      $.ui.log(`keel: command keel not registered: ${String(err)}`, { to: 'debug' })
-    } catch {
-      // nothing left to do
-    }
-  }
-}
+// The command is declared by the shared `session.*` hook (hooks/stoa-session.ts, branch on `session.start`): pack owns the exact `session.start`, and the host
+// throws on a duplicate (pattern, matcher), so keel and tack share one glob. Declared from `classic.SessionStart` it landed too late: `claude -p "/keel"`
+// answered "isn't installed". Also while off: `/keel on` must stay reachable. Pure spec, no `$` (the validator does not follow `$` across an import).
+export const KEEL_COMMAND = { name: 'keel', description: 'Derived files whose sources changed: suspects, scan, why <file>, off, on', argumentHint: '[scan | why <file> | off | on]' }
 
 const USAGE = 'usage: /keel | /keel scan | /keel why <file> | /keel off | /keel on'
 const isoOf = (ms: number): string => new Date(ms).toISOString()
@@ -615,17 +606,6 @@ export function registerKeel(on: On): void {
   }).catch(($, e, next) => {
     try {
       $.ui.log(`keel: hook failed: ${String(next.error)}`, { to: 'debug' })
-    } catch {
-      // nothing left to do
-    }
-    return next(e)
-  })
-  on('session.*', async ($, e, next) => {
-    if (next.is('session.start', e)) await declareCommand($)
-    return next(e)
-  }).catch(($, e, next) => {
-    try {
-      $.ui.log(`keel: session hook failed: ${String(next.error)}`, { to: 'debug' })
     } catch {
       // nothing left to do
     }

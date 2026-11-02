@@ -8,8 +8,9 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 - [SKILL.md Templates](#skillmd-templates)
 - [Naming Rules](#naming-rules)
 - [Description Best Practices](#description-best-practices)
-- [Model Selection Guide](#model-selection-guide)
+- [Model & Effort Selection](#model--effort-selection)
 - [Common Mistakes](#common-mistakes)
+- [Gotchas](#gotchas--the-highest-signal-section-of-any-skill)
 - [Modification Best Practices](#modification-best-practices)
 - [Example Skills](#example-skills)
 - [Supporting Files](#supporting-files)
@@ -18,7 +19,7 @@ Detailed templates, examples, and best practices for creating and modifying Clau
 - [Anthropic Best Practices](#anthropic-best-practices)
 - [Anthropic Workflows & Patterns](#anthropic-workflows--patterns)
 - [Script Wrapper Pattern](#script-wrapper-pattern)
-- [Instruction Ordering](#instruction-ordering-attention-mechanism-optimization)
+- [Instruction Ordering](#instruction-ordering-frequency-first)
 
 ---
 
@@ -31,11 +32,13 @@ Single source of truth for all skill frontmatter fields.
 | Field | Required | Values | Description |
 |-------|----------|--------|-------------|
 | `name` | ✅ | lowercase-hyphens | Skill identifier |
-| `description` | ✅ | string (max 1024 chars) | Triggers and use cases |
+| `description` | ✅ | string (max 1024 chars, agentskills.io spec) | Triggers and use cases. Claude Code listing truncates `description` + `when_to_use` at 1536 chars combined (doc officielle, 2026-09-23) |
+| `when_to_use` | No | string | Trigger phrases / example requests; appended to `description` in listing, counts toward the 1536-char cap |
 | `disable-model-invocation` | No | `true`/`false` (default: false) | Opt-out from model auto-invoke; rarely needed since dual-invocable is the default |
 | `user-invocable` | No | `true`/`false` (default: true) | Shows in `/` menu |
-| `context` | No | `main`/`fork`/`subagent` (default: main) | Execution context mode |
-| `agent` | No | agent-type string | Only with `context: subagent` — which agent type to spawn |
+| `context` | No | `fork` (only documented value); absent = inline in main conversation (default) | `fork` = runs in isolated sub-agent, NO conversation history; skill content = its prompt. `main`/`subagent`/`inherit` undocumented, silently ignored = inline (tested CC 2.1.287) — do not use |
+| `agent` | No | agent-type string (default: `general-purpose`) | Only with `context: fork` — which sub-agent type runs the skill: built-in (`Explore`, `Plan`, `general-purpose`) or custom from `.claude/agents/` |
+| `background` | No | `true`/`false` (default: true) | Only with `context: fork`. `false` = wait for the result in the invoking turn + keep full tool set (backgrounded fork gets the narrower background-subagent tool set); waits anyway under -p/SDK, `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, same skill already running, or scheduled task. v2.1.218+ |
 | `hooks` | No | `[hook-spec, ...]` | Skill-scoped hooks |
 | `allowed-tools` | No | `[Tool1, Tool2, ...]` | Tool restrictions |
 | `argument-hint` | No | pattern string | Argument pattern hint |
@@ -62,17 +65,12 @@ argument-hint: [environment]
 ```yaml
 name: security-audit
 description: Deep security analysis across codebase. Use for security audit, vulnerability scan.
-context: subagent   # isolated; was `fork` pre-2026-04-23 taxonomy change
+context: fork   # isolated sub-agent, NO conversation history; skill content = its prompt; runs in background
+agent: Explore  # optional: sub-agent type
 model: opus
 ```
 
-**Parallel fan-out w/ inherited parent context** (v2.1.117+):
-```yaml
-name: challenge-deep
-description: 9-pattern debiasing fan-out.
-context: fork   # inherits parent context; N parallel forks (full project ctx, no parent reasoning bias)
-model: opus
-```
+`context: fork` does NOT fork the current conversation: instructions must stand alone. Task needs parent history → fork the conversation instead (code.claude.com/docs/en/sub-agents#fork-the-current-conversation), not `context: fork`. Field absent = inline in main conversation. Source: code.claude.com/docs/en/skills (doc officielle, 2026-09-23).
 
 ---
 
@@ -83,10 +81,10 @@ model: opus
 ```markdown
 ---
 name: skill-name
-description: What it does and when to use it. Include file types, keywords, triggers (max 1024 chars)
+description: What it does and when to use it. Include file types, keywords, triggers (max 1024 chars, agentskills.io spec; + when_to_use ≤ 1536 combined)
 allowed-tools: [Read, Edit, Bash]  # Optional
 model: sonnet  # Optional: haiku|sonnet|opus
-context: main  # Optional: main|fork|subagent
+context: fork  # Optional: only documented value; omit = inline in main conversation
 ---
 
 # Skill Name
@@ -164,7 +162,8 @@ description: What it does and when to use it
 | "Performs database migrations" | ❌ Missing when/what triggers |
 
 **Requirements:**
-- Max 1024 characters
+- Max 1024 characters (agentskills.io spec)
+- Claude Code listing truncates `description` + `when_to_use` at 1536 chars combined (doc officielle, 2026-09-23) — key use case first
 - Include WHAT + WHEN
 - Mention file types/keywords
 - Specific, not generic
@@ -221,7 +220,7 @@ Skills can read the dynamic context var **`${CLAUDE_EFFORT}`** (current level: `
 | Missing frontmatter | Add `---` YAML delimiters |
 | Generic description | Specify what + when + file types |
 | Wrong tool type | Use triage decision framework |
-| Context overload (>1000 tokens) | Refactor to reference.md or change tool type |
+| Context overload (SKILL.md > 500 lines) | Refactor to reference.md or change tool type |
 
 ---
 
@@ -330,7 +329,7 @@ Keeps SKILL.md concise while providing depth.
 Based on Anthropic's official skill-creator guidelines. Skills use a **three-level loading system**:
 
 1. **Metadata (name + description)** - Always in context (~100 words)
-2. **SKILL.md body** - When skill triggers (<500 tokens ideal, <1000 max)
+2. **SKILL.md body** - When skill triggers (< 500 lines (doc officielle, 2026-09-23); agentskills.io spec: < 5000 tokens recommended)
 3. **Bundled resources** - As needed by Claude (scripts = 0 tokens)
 
 ### Pattern 1: High-Level Guide with References
@@ -481,7 +480,7 @@ Claude reads top-to-bottom. Put essential info first, background/theory last or 
    - **Medium freedom** (pseudocode/scripts with params): Preferred pattern exists
    - **Low freedom** (specific scripts): Operations fragile, consistency critical
 
-3. **Progressive disclosure**: Keep SKILL.md <500 lines, split content when approaching limit
+3. **Progressive disclosure**: Keep SKILL.md < 500 lines (doc officielle, 2026-09-23), split content when approaching limit
 
 ### Skill Anatomy
 
@@ -689,7 +688,7 @@ Script returns success/error. Check output.pdf was created.
 - Provides user feedback in natural language
 
 ---
-## Instruction Ordering: Attention Mechanism Optimization
+## Instruction Ordering: Frequency-First
 
 ### Problem: The "Validation-First" Anti-Pattern
 
@@ -704,9 +703,9 @@ Most skills bury high-frequency workflows under validation gates:
 ```
 
 This creates:
-- ❌ Only 5-10% of first 30% is actionable
+- ❌ Opening of the file mostly non-actionable
 - ❌ Most common task (UPDATE/MODIFY) buried
-- ❌ 75-95% longer to reach relevant section
+- ❌ Longer path to the relevant section
 
 ### Solution: Frequency-Ordered Structure
 
@@ -735,14 +734,6 @@ Order sections by **frequency of use**, not by gatekeeping:
 | **Reference Last** | Advanced content doesn't interfere with critical path |
 | **Checklist Last** | Final safety net, not gatekeeping |
 
-### Impact
-
-| Metric | Before | After | Gain |
-|--------|--------|-------|------|
-| First 30% actionable lines | ~5% | ~85% | +1700% |
-| Time to UPDATE section (frequent path) | Line 93+ | Line 20 | 75% faster |
-| Attention retention in critical path | ~40% | ~80% | +100% |
-
 ### Implementation Checklist
 
 When creating skill instructions:
@@ -769,12 +760,8 @@ This pattern applies to **ALL instruction sets**, not just skills:
 7. "Advanced patterns" (Reference)
 8. "Safety checklist" (Final)
 
-### Why Anthropic LLMs Benefit
+### Basis
 
-Claude's attention mechanisms show:
-- **Recency bias**: Information at end gets 20-30% attention
-- **Frequency sensitivity**: Repeated patterns are weighted by frequency
-- **Position decay**: Every 20-30 lines loses ~20% attention
-- **Purpose clarity**: Understanding purpose early improves instruction following
-
-Reordering by frequency optimizes for how Claude actually processes context.
+- Frequency ordering = authoring heuristic (shortest path for the common case), not a measured attention effect. No official source quantifies per-line attention or position decay in skills.
+- Only official positional rule: long documents/inputs (20k+ tokens) go at the top of the prompt, above query, instructions, examples (doc officielle, 2026-09-23).
+- Source: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#long-context-prompting

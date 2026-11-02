@@ -1,6 +1,6 @@
 ---
 name: edit-tool
-description: Creates, modifies, and orchestrates Claude Code tools (skills, agents, scripts). Use when user requests creating, updating, improving, or editing any Claude Code extension — skills, sub-agents, slash commands, script wrappers. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", file paths with /skills/, /agents/. For plugin version bumps and release metadata, route directly to edit-plugin.
+description: Creates, modifies, and orchestrates Claude Code tools (skills, agents, scripts). Use when user requests creating, updating, improving, or editing any Claude Code extension — skills, sub-agents, slash commands, script wrappers. Triggers include "create/make/new skill/command/agent/script", "tool for X", "slash command", "sub-agent", "prompt audit", "audit prompt", file paths with /skills/, /agents/. For plugin version bumps and release metadata, route directly to edit-plugin.
 ---
 
 # Edit Tool — Unified Skill/Agent/Script Editor
@@ -10,32 +10,31 @@ description: Creates, modifies, and orchestrates Claude Code tools (skills, agen
 Pick the tool type *before* writing anything. The wrong type is expensive to unwind later (a skill that should have been a 0-token bash script pollutes every session; an agent that should have been a skill loses main-context access). Triaging first is what makes this skill worth more than "just write the file".
 
 1. **Analyze request** against the decision tree
-2. **Explain the call** to the user so they can catch a bad fit early: `✅ [TYPE] because: pollution cost (~X tokens × Yfreq), context mode (main|fork), key factor`
+2. **Explain the call** to the user so they can catch a bad fit early: `✅ [TYPE] because: pollution cost (~X tokens × Yfreq), context mode (inline | context: fork), key factor`
 3. **Branch to the matching guide** or give direct guidance
 
 ```mermaid
 graph TD
-    A[Tool Request] --> AA{Plugin<br/>version/release?}
-    AA -->|Yes| PLUGIN[✅ edit-plugin]
-    AA -->|No| B{Deterministic<br/>shell only?}
-    B -->|Yes| C{AI needed to<br/>decide when/how?}
-    C -->|No| BASH[✅ Bash Script<br/>0 tokens]
-    C -->|Yes| D{Token<br/>budget?}
-    D -->|<500| WRAP[✅ Skill + scripts/]
-    D -->|>500| SKILL_REF[✅ Skill + reference.md]
+    A["Tool Request"] --> AA{"Plugin<br/>version/release?"}
+    AA -->|Yes| PLUGIN["✅ edit-plugin"]
+    AA -->|No| B{"Deterministic<br/>shell only?"}
+    B -->|Yes| C{"AI needed to<br/>decide when/how?"}
+    C -->|No| BASH["✅ Bash Script<br/>0 tokens"]
+    C -->|Yes| D{"Token<br/>budget?"}
+    D -->|<500| WRAP["✅ Skill + scripts/"]
+    D -->|>500| SKILL_REF["✅ Skill + reference.md"]
 
-    B -->|No| E{Pollution<br/>cost?}
-    E -->|High >2000 tokens<br/>OR deep exploration| W{Multi-agent<br/>control flow?}
-    W -->|Single reasoning pass| AGENT[✅ Sub-Agent]
-    W -->|Loops/fan-out/<br/>verify-stages| WORKFLOW[✅ Workflow script<br/>+ optional skill wrapper]
-    E -->|Medium 500-2000| F{Context<br/>mode?}
-    F -->|Needs parent ctx + fan-out| FORK[✅ Skill context:fork<br/>NEW v2.1.117+]
-    F -->|Needs isolation no bias| SUBAGENT[✅ Skill context:subagent]
-    F -->|Needs main context| SKILL_BIG[✅ Skill + reference.md]
+    B -->|No| E{"Pollution<br/>cost?"}
+    E -->|High >2000 tokens<br/>OR deep exploration| W{"Multi-agent<br/>control flow?"}
+    W -->|Single reasoning pass| AGENT["✅ Sub-Agent"]
+    W -->|Loops/fan-out/<br/>verify-stages| WORKFLOW["✅ Workflow script<br/>+ optional skill wrapper"]
+    E -->|Medium 500-2000| F{"Context<br/>mode?"}
+    F -->|Needs isolation, no history| FORK["✅ Skill context:fork<br/>+ optional agent:type"]
+    F -->|Needs main context: inline, absent| SKILL_BIG["✅ Skill + reference.md"]
 
-    E -->|Low <500| G{Frequency?}
-    G -->|1+ per session| SKILL[✅ Skill]
-    G -->|Rare <1/10| DIRECT[❌ No tool needed]
+    E -->|Low <500| G{"Frequency?"}
+    G -->|1+ per session| SKILL["✅ Skill"]
+    G -->|Rare <1/10| DIRECT["❌ No tool needed"]
 
     style PLUGIN fill:#B2DFDB,stroke:#00897B,stroke-width:2px,color:#000
     style BASH fill:#90EE90,stroke:#000,stroke-width:2px,color:#000
@@ -44,7 +43,6 @@ graph TD
     style SKILL_REF fill:#FFA500,stroke:#000,stroke-width:2px,color:#000
     style SKILL_BIG fill:#87CEEB,stroke:#000,stroke-width:2px,color:#000
     style FORK fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
-    style SUBAGENT fill:#CE93D8,stroke:#000,stroke-width:2px,color:#000
     style AGENT fill:#DDA0DD,stroke:#000,stroke-width:2px,color:#000
     style WORKFLOW fill:#9FA8DA,stroke:#000,stroke-width:2px,color:#000
     style DIRECT fill:#FFB6C1,stroke:#000,stroke-width:2px,color:#000
@@ -64,6 +62,7 @@ graph TD
 4. **Regression check**: verify each output from step 2 is retained
 5. Update description if changing triggers
 6. Validate: YAML valid, triggers clear, instructions actionable
+7. Optimize mode (request to improve/optimize/tighten an existing tool, function preserved) → run prompt-audit pass (`/claude-api prompt-audit`, by name), see `references/frameworks.md § Prompt-audit pass`
 
 ## Creating New Tools
 
@@ -72,7 +71,7 @@ graph TD
 1. Ask for details if missing: purpose, triggers, tools needed
 2. Determine type via triage decision tree above
 3. Use `pick-model` skill for model **and effort** selection
-4. Branch to appropriate guide:
+4. Branch to appropriate guide (non-trivial creation → also run prompt-audit pass: `/claude-api prompt-audit`, by name, see `references/frameworks.md § Prompt-audit pass`):
 
 | Type | Guide | Location |
 |------|-------|----------|
@@ -81,7 +80,7 @@ graph TD
 | **Plugin** | `edit-plugin` skill | `plugin.json` + `marketplace.json` |
 | **Bash** | Direct guidance (scripts/, chmod +x) | Project scripts dir |
 
-**Frontmatter:** Skill core = `name` (lowercase-hyphens) + `description` (triggers, max 1024) + `context` (`main`|`fork`|`subagent`) + `model`. Agent core = `name` + `description` + `tools`/`model`. Full field tables in the type guides above.
+**Frontmatter:** Skill core = `name` (lowercase-hyphens) + `description` (triggers; description+when_to_use ≤ 1536 chars, doc officielle, 2026-09-23) + `context` (only value `fork` = isolated, no history; absent = inline) + `model`. Agent core = `name` + `description` + `tools`/`model`. Full field tables in the type guides above.
 
 ## Sanity check before creating
 
@@ -90,24 +89,24 @@ These aren't gates to satisfy — they're the failure modes that make a new tool
 | Check | Why it matters — the failure it prevents |
 |-------|------------------------------------------|
 | **Pollution acceptable?** (skill: ~tokens × freq) | A skill's body loads on every trigger. Heavy + frequent = it crowds out the actual work every session, forever. |
-| **SKILL.md fits ~500 tokens?** (overflow → reference.md) | Past that, the always-loaded cost outweighs the value; progressive disclosure keeps the hot path lean. |
+| **SKILL.md < 500 lines?** (overflow → reference.md) | Past that, the always-loaded cost outweighs the value; progressive disclosure keeps the hot path lean. |
 | **One capability, not a workflow bundle?** (skill & agent) | Bundles violate single-responsibility — they under-trigger (description can't cover everything) and are impossible to eval. |
 | **Needs multi-step reasoning with isolation?** (→ agent) | If yes, a skill in main context will either pollute or bias the reasoning; that's the signal to make it an agent. |
 
-If a skill trips the first three, it usually wants a different shape — `context:fork`/`subagent`, an agent, or just a direct request. Say which, and why, rather than forcing the skill.
+If a skill trips the first three, it usually wants a different shape — `context:fork` (+ `agent:<type>`), an agent, or just a direct request. Say which, and why, rather than forcing the skill.
 
 ## Key Principles
 
 - **Preserve function**: an edit that silently drops a capability is a regression, not an improvement — enumerate outputs first, keep them unless the user asked to remove one
-- **~500 tokens** ideal for SKILL.md; past that the always-loaded cost starts to outweigh the value — push detail into a reference file
+- **< 500 lines** for SKILL.md (doc officielle, 2026-09-23); past that the always-loaded cost starts to outweigh the value — push detail into a reference file
 - **Single responsibility**: one focused purpose per tool, so its description can actually describe it and it can be evaluated
 - **Token-efficient**: tables, bullets, Mermaid over prose — the context window is a shared budget
-- **Context-aware**: main when the tool needs conversation state, fork for parallel fan-out on a shared base, subagent/agent when isolation avoids pollution or bias
+- **Context-aware**: main when the tool needs conversation state, `context:fork` (isolated, no history; `agent:` picks the type) when isolation avoids pollution or bias
 
 ## Fork vs Subagent & Proactive Audit
 
-- **Choosing `fork` vs `subagent`**, fork invocation rules, "keep subagent when ANY" criteria → `references/frameworks.md § Fork vs Subagent`.
-- **On every create/edit, run the Proactive Audit** (frontmatter compliance + fit check, incl. legacy `context: fork` rename) → `references/frameworks.md § Proactive Audit`.
+- **Spawning from a skill body** (Agent tool: conversation fork vs typed subagent), fork rules, "keep typed subagent when ANY" criteria → `references/frameworks.md § Fork vs Subagent`. Skill frontmatter modes (inline | `context: fork` + optional `agent:`) → `§ Context Execution Mode`.
+- **On every create/edit, run the Proactive Audit** (frontmatter compliance + fit check) → `references/frameworks.md § Proactive Audit`.
 
 ## Parallelization
 

@@ -1,6 +1,6 @@
 # Sub-agent Editor Reference
 
-<!-- Source: code.claude.com/docs/en/sub-agents — verified 2026-02-26 -->
+<!-- Source: code.claude.com/docs/en/sub-agents — verified 2026-10-02 -->
 
 Templates, patterns, and field guidance for Claude Code sub-agents.
 
@@ -24,12 +24,12 @@ Templates, patterns, and field guidance for Claude Code sub-agents.
 
 **Use one approach, not both.** Allowlist when few tools needed; denylist when most tools needed minus a few.
 
-**`Task(agent_type)` restriction**: For agents running as main thread (`claude --agent`), restrict spawnable sub-agents:
+**`Agent(agent_type)` restriction** (sub-agents doc, 2026-10-02): for agents running as main thread (`claude --agent`), restrict spawnable sub-agents:
 ```yaml
-tools: Task(worker, researcher), Read, Bash  # Only worker and researcher allowed
+tools: Agent(worker, researcher), Read, Bash  # Only worker and researcher allowed
 ```
-`Task` without parens = spawn any sub-agent. Omitting `Task` = cannot spawn sub-agents.
-This only applies to main-thread agents; sub-agents cannot spawn other sub-agents.
+`Agent` without parens = spawn any sub-agent. Omitting `Agent` = cannot spawn sub-agents. "In version 2.1.63, the Task tool was renamed to Agent. Existing `Task(...)` references in settings and agent definitions still work as aliases."
+The type list applies only to main-thread agents. In a sub-agent definition, listing `Agent` lets it spawn sub-agents of its own while the depth limit allows (see `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` under Sub-agent vs Other Tools), but any type list in the parentheses is ignored.
 
 ### Model
 
@@ -60,10 +60,10 @@ If parent uses `bypassPermissions`, it takes precedence and cannot be overridden
 | Field | Purpose | Example |
 |-------|---------|---------|
 | `maxTurns` | Max agentic turns before stop | `20` |
-| `background` | Always run as background task | `true` |
+| `background` | Keep this sub-agent in the background even when Claude wants the result | `true` |
 | `isolation` | Run in isolated git worktree | `worktree` |
 
-**Background agents**: Run concurrently. Permissions are pre-approved before launch. `AskUserQuestion` fails silently (agent continues). Resume in foreground if permissions fail.
+**Background agents** (the default): run concurrently; permission prompts surface in the main session (see Foreground vs Background below).
 
 **Worktree isolation**: Agent gets isolated repo copy. Worktree auto-cleaned if no changes made. Use for parallel work that might conflict.
 
@@ -238,7 +238,7 @@ make changes, and commit. The worktree is auto-cleaned if no changes are made.
 
 ## Tool Lists
 
-**Common tools:** Read, Edit, Write, Bash, Grep, Glob, WebFetch, WebSearch, Task
+**Common tools:** Read, Edit, Write, Bash, Grep, Glob, WebFetch, WebSearch, Agent (formerly Task)
 
 **Grant minimal access:**
 - Analysis only → `Read, Grep, Glob`
@@ -290,40 +290,22 @@ claude --agents '{
 
 ## System Prompt Best Practices
 
-**Be specific:**
-```markdown
-Bad:  You are a helpful coding assistant.
-Good: You are a Python test specialist. Analyze pytest failures, identify root causes, and suggest fixes with code examples.
-```
+Agent-specific only. Generic prompt hygiene (pressure language, over-specification, imposed formatting, stacked prohibitions) is covered by the `claude-api` skill's prompt-audit pass, not restated here.
 
-**Include a workflow:**
-```markdown
-When invoked:
-1. Run git diff to see recent changes
-2. Focus on modified files
-3. Begin review immediately
-```
-
-**Set constraints:**
-```markdown
-- Keep responses under 200 words
-- Always provide code examples
-- Cite line numbers when referencing code
-```
-
-**Define output format:**
-```markdown
-Structure your review as:
-1. Summary (2-3 sentences)
-2. Critical Issues (list)
-3. Suggestions (list with code)
-```
-
-**Memory-aware prompts** (when `memory` field is set):
-```markdown
-Consult your agent memory before starting. Update it with patterns,
-conventions, and recurring issues you discover.
-```
+- **Specific role + task**, not a generic persona.
+  ```markdown
+  Bad:  You are a helpful coding assistant.
+  Good: You are a Python test specialist. Analyze pytest failures, identify root causes, and suggest fixes.
+  ```
+- **Workflow as numbered steps** (a non-fork sub-agent starts with a fresh context and no parent history; docs sub-agents, 2026-10-02).
+  ```markdown
+  When invoked:
+  1. Run git diff to see recent changes
+  2. Focus on modified files
+  3. Begin review immediately
+  ```
+- **Output format only if the caller parses it**; otherwise describe the deliverable, not a template.
+- **Memory-aware** (when `memory` is set): tell the agent to read its memory before starting and update it with recurring patterns.
 
 ---
 
@@ -356,7 +338,7 @@ conventions, and recurring issues you discover.
 | Name mismatch | Ensure `name` matches filename (without .md) |
 | Model default wrong | Default is `inherit`, not `sonnet` |
 | Skills not loading | Must list explicitly — sub-agents don't inherit parent skills |
-| Background agent blocked | Pre-approve permissions; resume in foreground if needed |
+| Background agent blocked | Answer the permission prompt surfaced in the main session |
 | Memory not persisting | Set `memory` field AND include memory instructions in prompt |
 
 ---
@@ -367,7 +349,7 @@ conventions, and recurring issues you discover.
 |----------|---------------|
 | Complex multi-step task, needs isolation | Sub-agent |
 | Simple one-step task | Direct conversation |
-| Frequently auto-invoked, <500 tokens | Skill |
+| Frequently auto-invoked, SKILL.md < 500 lines (doc officielle, 2026-09-23) | Skill |
 | Reusable prompt in main context | Skill |
 | Deterministic shell-only | Bash script |
 | Needs exploration + action | Sub-agent with broad tools |
@@ -375,7 +357,7 @@ conventions, and recurring issues you discover.
 | Cross-session coordination | Agent team (not sub-agent) |
 | Verbose output you don't need in main context | Sub-agent |
 
-**Sub-agents cannot spawn other sub-agents.** For nested delegation, use skills or chain sub-agents from the main conversation.
+**Nesting is allowed up to `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (default 3, since v2.1.219; env-vars doc, 2026-10-02).** A sub-agent at the third layer cannot spawn further; set it to `1` to turn nesting off.
 
 ---
 
@@ -387,12 +369,12 @@ In `settings.json`:
 ```json
 {
   "permissions": {
-    "deny": ["Task(Explore)", "Task(my-custom-agent)"]
+    "deny": ["Agent(Explore)", "Agent(my-custom-agent)"]
   }
 }
 ```
 
-Or via CLI: `claude --disallowedTools "Task(Explore)"`
+Or via CLI: `claude --disallowedTools "Agent(Explore)"`
 
 ### Resume Sub-agents
 
@@ -406,10 +388,15 @@ Transcripts persist in `~/.claude/projects/{project}/{sessionId}/subagents/agent
 
 ### Foreground vs Background
 
-- **Foreground** (default): Blocks main conversation. Permission prompts pass through. Use when results needed immediately.
-- **Background**: Concurrent. Permissions pre-approved. Use for independent research/analysis.
+Source: sub-agents doc, "Run subagents in foreground or background", 2026-10-02.
 
-Press **Ctrl+B** to background a running task. Set `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` to disable.
+- Fork mode off: "Claude runs the subagent in the background by default and in the foreground when it needs the result before continuing." Fork mode on (default in an interactive session): always background, and Claude "can't ask for the foreground".
+- `background: true` in the definition: "keep a particular subagent in the background even when Claude wants the result". Spawning a teammate's sub-agent whose definition sets it errors.
+- **Background**: concurrent; the main conversation keeps going. Every permission prompt surfaces in the main session. Use for independent research/analysis.
+- **Foreground** also applies when an in-process team teammate spawned the sub-agent, or when `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
+- Background tool set: Read, Grep, Glob, LSP, Bash, PowerShell, Edit, Write, NotebookEdit, WebFetch, WebSearch, TodoWrite, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, SendMessage, Artifact, SubagentHandback, plus all MCP tools. Agent and ExitPlanMode follow special rules.
+
+Press **Ctrl+B** to background a running task.
 
 ---
 
@@ -425,7 +412,7 @@ permissionMode: default           # default/acceptEdits/dontAsk/bypassPermission
 maxTurns: 20                      # Optional turn limit
 skills: [skill-a, skill-b]        # Preload skills
 memory: user                      # user/project/local
-background: false                 # true = always background
+background: false                 # true = stay background even when Claude wants the result
 isolation: worktree               # Optional isolated git copy
 hooks:                            # Optional lifecycle hooks
   PreToolUse:

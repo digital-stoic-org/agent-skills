@@ -972,13 +972,13 @@ test('pack load: removed, points to /unpack', async ($, on) => {
   expect(w.submits).toHaveLength(0)
 })
 
-test('register: /pack, /unpack (and keel\'s /keel) are declared at session start', async ($, on) => {
+test('register: /pack, /unpack (and keel\'s /keel, tack\'s /tack) are declared at session start', async ($, on) => {
   const registered: { name: string; description?: string; argumentHint?: string }[] = []
   world(on, OK())
   on('command.register', (_$, e) => (registered.push(e as never), { value: { command: (e as { name: string }).name } }) as never)
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
-  expect(registered.map(c => c.name).sort()).toEqual(['keel', 'pack', 'unpack'])
+  expect(registered.map(c => c.name).sort()).toEqual(['keel', 'pack', 'tack', 'unpack'])
   expect(registered.find(c => c.name === 'unpack')?.argumentHint).toBe('<stream>')
   expect(registered.find(c => c.name === 'pack')?.argumentHint).toBe('[stream] [--review] | save [stream] | cancel | auto [off]')
 })

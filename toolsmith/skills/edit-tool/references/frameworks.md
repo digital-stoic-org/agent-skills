@@ -15,65 +15,90 @@ Extended decision trees, edge cases, conversion guide, and detailed examples.
 - [Bash Script vs Skill Wrapper](#bash-script-vs-skill-wrapper)
 - [Parallelization Deep Dive](#parallelization-deep-dive)
 - [Real-World Examples](#real-world-examples)
-- [Fork vs Subagent](#fork-vs-subagent-v2111117)
+- [Fork vs Subagent](#fork-vs-subagent)
 - [Proactive Audit](#proactive-audit-run-on-every-createedit)
+- [Prompt-audit pass](#prompt-audit-pass)
 
 ---
 
 ## Context Execution Mode
 
-**PRIMARY DISCRIMINATOR** for tool design.
+Primary discriminator for tool design.
 
-### Modes (3-way, v2.1.117+)
+Sources: code.claude.com/docs/en/skills § Run skills in a subagent; code.claude.com/docs/en/sub-agents § Fork the current conversation (doc officielle, 2026-09-23; re-checked 2026-10-02).
 
-| Mode | Parent ctx | Pollution | Startup | Best for |
-|------|-----------|-----------|---------|----------|
-| **main** (default) | Full | Full | Instant | Quick actions, interactive, shared state |
-| **fork** | **Inherited** | **Zero (async)** | ~1-2s | Parallel fan-out with shared base (debiasing, multi-perspective). Requires `CLAUDE_CODE_FORK_SUBAGENT=1` |
-| **subagent** | None | Zero | ~1-2s | Research/exploration (parent would bias), heavy output, per-agent config, Team Protocol |
+Two distinct mechanisms share the word "fork": the skill frontmatter `context: fork` (isolated subagent, no history) and the conversation fork (Agent tool, full history). Never conflate them.
+
+### Skill execution modes (frontmatter)
+
+| Frontmatter | Runs in | Conversation history | Best for |
+|-------------|---------|----------------------|----------|
+| `context` absent (default) | Main conversation, inline | Full | Quick actions, interactive, depends on what was discussed |
+| `context: fork` | New subagent of type `agent:` (omitted → `general-purpose`); SKILL.md content = its prompt | None, instructions must stand alone | Self-contained task with explicit steps, heavy output, research where parent state is irrelevant or would bias |
+
+- `context:` has one documented value: `fork`. `main`, `subagent`, `inherit` are undocumented, silently ignored = inline (tested CC 2.1.287); never emit them.
+- Despite the name, `context: fork` does NOT fork the conversation. Task depends on history → inline skill, optionally spawning conversation forks (below).
+- `agent:` selects the subagent type (Explore, Plan, general-purpose, custom from `.claude/agents/`); omitted → `general-purpose`. Explore and Plan skip CLAUDE.md and git status.
+- `model:` with `context: fork` sets the forked subagent's model.
+- Runs in background by default (v2.1.218+). It still waits for the result, even without `background: false`, in cases like: non-interactive mode (`-p`, Agent SDK); `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`; an earlier invocation of the same skill still running; a scheduled task firing with the skill as its prompt. A backgrounded `context: fork` skill gets the narrower background-subagent tool set: its subagent is a regular agent type, so the exemption for conversation forks does not cover it. Its edits bypass checkpoints (`/rewind` does not undo them). Steps need a tool outside that set → `background: false`, which waits in the invoking turn and keeps the full tool set.
+- Guidelines without a task + `context: fork` → subagent gets no actionable prompt, returns nothing useful.
+
+### Spawn mechanisms (from a skill body, not frontmatter)
+
+| | Conversation fork | Typed subagent |
+|---|---|---|
+| Invocation | `Agent({subagent_type: "fork", prompt})`; user: `/subtask <task>` | `Agent({subagent_type: "<type>", prompt})` |
+| Context | Full conversation history; same system prompt, tools, model as main session | Fresh, prompt you pass + definition file |
+| Prompt cache | Shared with main session | Separate |
+| Per-agent config | None | `model`, `tools`, memory, `maxTurns` from definition |
+| Nesting | A fork can't spawn further forks | Per `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` |
+
+Fork mode: on by default in interactive sessions (v2.1.232+), off by default in `-p` and the Agent SDK. `CLAUDE_CODE_FORK_SUBAGENT=1` turns it on there (and on pre-v2.1.232), `=0` turns it off everywhere. `/subtask` works either way. Omitting `subagent_type` gives general-purpose, never a fork.
 
 ### Decision Tree
 
-See `SKILL.md` for canonical 3-branch Mermaid.
+See `SKILL.md` for canonical Mermaid.
 
-### When to Use Fork (new)
+### When to Use a Conversation Fork (spawned from an inline skill)
 
-✅ Fan-out parallel reasoning (N perspectives on same target) · ✅ Debiasing (project ctx, no parent reasoning bias) · ✅ Shares prompt cache across forks · ✅ Parent CLAUDE.md + memories needed by each spawn
-❌ Per-agent model/memory/tools needed · ❌ Team Protocol required · ❌ Named persona identity
+✅ Fan-out parallel reasoning (N approaches from the same starting point) · ✅ Side task that needs the full history (re-briefing too costly) · ✅ Shares prompt cache with main session
+❌ Per-agent model/memory/tools needed · ❌ Team Protocol required · ❌ Named persona identity · ❌ Debiasing (a fork carries the parent's reasoning; use a typed subagent or `context: fork`)
 
-### When to Use Subagent
+### When to Use `context: fork` or a Typed Subagent
 
-✅ Verbose output >2000 tokens · ✅ Deep codebase analysis, parent state irrelevant · ✅ Long-running analysis · ✅ Per-agent config (model downgrade, scoped memory, narrower tools) · ✅ Named persona / Team Protocol / SendMessage
+✅ Verbose output >2000 tokens · ✅ Deep codebase analysis, parent state irrelevant · ✅ Long-running analysis · ✅ Debiasing (no parent reasoning) · ✅ Per-agent config (model downgrade, scoped memory, narrower tools) via typed subagent or `agent:` custom type · ✅ Named persona / Team Protocol / SendMessage via typed subagent
 
-### When to Use Main (default)
+### When to Use Inline (default)
 
 ✅ Quick ops · ✅ Context-dependent · ✅ Frequent invocation (5+/session) · ✅ Interactive
 
 ### Fork Spawning Contract
 
-A `context: fork` skill's runtime instructions MUST include:
+An inline skill that spawns conversation forks MUST include in its runtime instructions:
 
-1. **Invocation**: Call `Agent` WITHOUT `subagent_type` — omitting is what makes it a fork
+1. **Invocation**: Call `Agent` with `subagent_type: "fork"`; omitting it gives general-purpose, not a fork. Requires fork mode (see above).
 2. **Restate specifics**: include target/constraint/decision under review in the directive
-3. **Batch parallel**: send N forks in one tool-use block (prompt cache sharing)
+3. **Batch parallel**: send N forks in one tool-use block (each fork reuses the main session's prompt cache)
 4. **Don't peek**: never Read the fork's `output_file`
 5. **Directive style**: prompt = what to do, not briefing (parent ctx already loaded)
 
-Example fork spawn (inside a `context: fork` skill body):
+The spawning skill must be inline: a `context: fork` skill already runs as an isolated subagent without history.
+
+Example fork spawn (inside an inline skill body):
 
     Agent({
-      name: "challenger-anchor",
-      description: "Anchor-pattern debiasing",
-      prompt: "Target decision: <RESTATE>. Apply anchor-pattern debiasing. Report <300 words: verdict, evidence, reframe."
-      // NOTE: no subagent_type — fork inherits parent context
+      subagent_type: "fork",
+      name: "alt-approach-b",
+      description: "Explore approach B",
+      prompt: "Target decision: <RESTATE>. Develop approach B from current state. Report <300 words: verdict, evidence, risks."
     })
 
 ### Counterexample — when fork does NOT fit
 
-- **`philosopher/council`**: 5 parallel philosophers, independent. Fan-out mechanics fit fork BUT per-agent model (haiku qualification + opus deliberation) + scoped memory require subagent.
-- **`philosopher/encounter` / `philosopher/dialogue`**: SendMessage + Team Protocol. Fork has no stable name → must stay subagent.
+- **`philosopher/council`**: 5 parallel philosophers, independent. Fan-out mechanics fit fork BUT per-agent model (haiku qualification + opus deliberation) + scoped memory require a typed subagent.
+- **`philosopher/encounter` / `philosopher/dialogue`**: SendMessage + Team Protocol + named persona → typed subagent.
 
-Rule: per-agent model/memory/tools OR named persona OR Team Protocol → `subagent`, even when fan-out fits fork.
+Rule: per-agent model/memory/tools OR named persona OR Team Protocol OR debiasing → typed subagent, even when fan-out fits fork.
 
 ---
 
@@ -97,16 +122,18 @@ Rule: per-agent model/memory/tools OR named persona OR Team Protocol → `subage
 |---------|-------------|-------------|
 | **Dual-invocable** (default) | Both `/skill-name` and model auto-invoke | No special frontmatter needed |
 | **Manual-only** (rare) | Only `/skill-name` | `disable-model-invocation: true` |
-| **Programmatic** | Called by other tools | Sub-Agent (Task tool) |
+| **Programmatic** | Called by other tools | Sub-Agent (Agent tool) |
 
 #### Axis 3: Token Budget (Pollution Cost)
+
+House heuristic for total tool content, not an official limit. Official SKILL.md ceiling: <500 lines (doc officielle, 2026-09-23).
 
 | Range | Implication | Tool Choice |
 |-------|-------------|-------------|
 | **0 tokens** | Script executed, not read | Bash Script or Skill+scripts/ |
 | **<500 tokens** | Acceptable pollution | Skill (ideal) |
 | **500-2000 tokens** | Use progressive disclosure | Skill + reference.md |
-| **>2000 tokens** | Needs isolation | Sub-Agent or `context:subagent` |
+| **>2000 tokens** | Needs isolation | Sub-Agent or `context: fork` |
 
 **Estimation Tips:**
 - Count prose, not code blocks (code is efficient)
@@ -118,10 +145,10 @@ Rule: per-agent model/memory/tools OR named persona OR Team Protocol → `subage
 
 | Need | Rationale | Tool Choice |
 |------|-----------|-------------|
-| **Main context access** | Needs conversation history | Skill (`context:main`) |
-| **Parallel fan-out w/ shared base** | Debiasing, multi-perspective reasoning | Skill (`context:fork`) — v2.1.117+ |
-| **Isolated exploration** | Research without pollution | Skill (`context:subagent`) or Sub-Agent |
-| **Minimal pollution** | Concise, high-value capability | Skill (<500 tokens) |
+| **Main context access** | Needs conversation history | Skill (inline, no `context:`) |
+| **Parallel fan-out w/ shared history** | N approaches from current state | Inline skill spawning conversation forks |
+| **Isolated exploration** | Research without pollution, debiasing | Skill (`context: fork`) or Sub-Agent |
+| **Minimal pollution** | Concise, high-value capability | Lean skill (SKILL.md well under 500 lines) |
 | **Zero pollution** | Execution only | Bash Script |
 
 #### Axis 5: Frequency & Justification
@@ -129,7 +156,7 @@ Rule: per-agent model/memory/tools OR named persona OR Team Protocol → `subage
 | Frequency | Per Session | Frontmatter | Tool Choice |
 |-----------|-------------|-------------|-------------|
 | **Very high** | 10+ | default (auto-invoke) | Skill |
-| **High** | 5-9 | default (auto-invoke) | Skill (if <500 tokens) |
+| **High** | 5-9 | default (auto-invoke) | Skill (if lean) |
 | **Medium** | 2-4 | default (dual-invocable) | Skill |
 | **Low** | 1 | default (dual-invocable) | Skill |
 | **Rare** | <0.1 | — | Direct Request |
@@ -188,15 +215,16 @@ wc -c SKILL.md
 
 ```yaml
 Skill SKILL.md:
-  Ideal: <500 tokens
-  Maximum: 1000 tokens (question if higher)
+  Limit: <500 lines (doc officielle, 2026-09-23); move detail to references/
+  Listing: description + when_to_use combined, truncated at 1536 chars (doc officielle, 2026-09-23); key use case first
+  House target: as lean as possible; token counts here are estimates, not limits
 
 Skill reference.md:
   Typical: 1000-3000 tokens
   Maximum: No hard limit (loaded on-demand)
 
 Agent .md:
-  Typical: 300-1000 tokens (system prompt)
+  Typical: 300-1000 tokens (system prompt, house heuristic)
   Maximum: No hard limit (isolated context)
 ```
 
@@ -223,14 +251,14 @@ Agent .md:
 - Add `disable-model-invocation: true` to frontmatter
 - This is the exception, not the default
 
-### Case 3: "This skill is too verbose (>1000 tokens)"
+### Case 3: "This skill is too verbose (SKILL.md near 500 lines)"
 
 **Solutions:**
 1. **Progressive disclosure**: Move details to reference.md
 2. **Split into multiple skills**: If multiple capabilities
-3. **Subagent context**: If research/exploration requires isolation (`context: subagent`)
-4. **Fork context**: If parallel fan-out with inherited parent ctx (`context: fork`, v2.1.117+)
-5. **Convert to Agent**: If >2000 tokens and exploratory
+3. **`context: fork`**: If the task is self-contained and needs no conversation history (isolated subagent)
+4. **Conversation forks from an inline body**: If parallel fan-out needs the full history (`subagent_type: "fork"`)
+5. **Convert to Agent**: If >2000 tokens, exploratory, or needs per-agent config
 
 ### Case 4: "I need a skill that runs complex scripts"
 
@@ -245,12 +273,12 @@ skill-name/
 └── reference.md (script documentation)
 ```
 
-### Case 5: "Should this be a skill or use existing Task tool?"
+### Case 5: "Should this be a skill or use existing Agent tool?"
 
 **Decision Tree:**
 ```
 Is there an existing agent? (Explore, Plan, etc.)
-├─ Yes → Use Task tool (no new skill needed)
+├─ Yes → Use Agent tool (no new skill needed)
 └─ No → Create skill (with appropriate context mode)
 ```
 
@@ -273,8 +301,8 @@ Is there an existing agent? (Explore, Plan, etc.)
 2. Add unified frontmatter (see skill-guide.md § Unified Frontmatter Specification)
 3. Ensure `description` has trigger keywords (enables model auto-invoke)
 4. Move verbose content to `reference.md`
-6. Optimize SKILL.md to <500 tokens
-7. Test trigger still works
+5. Keep SKILL.md <500 lines and description + when_to_use ≤1536 chars (doc officielle, 2026-09-23)
+6. Test trigger still works
 
 **Frontmatter transformation:**
 ```yaml
@@ -290,7 +318,7 @@ description: Brief description. Use when [triggers].
 allowed-tools: [Tool1, Tool2]
 argument-hint: pattern
 model: sonnet
-context: main
+# No context: field = inline (default); context: fork only for isolated self-contained tasks
 # Dual-invocable by default
 ```
 
@@ -350,15 +378,15 @@ scripts/ (0 tokens) → Executed, never loaded
 - Example: "Use for .xlsx files" (good) vs "Use for documents" (bad)
 
 **Technique 4: Context Mode**
-- `context: subagent` = zero pollution (isolated, no parent ctx)
-- `context: fork` = zero pollution (parent ctx inherited, async, v2.1.117+)
-- Subagent for research/analysis; fork for parallel fan-out with shared base
+- `context: fork` = only the result returns to main ctx (isolated subagent, no conversation history, background by default)
+- Conversation forks spawned from an inline body = only results return; each fork carries full history and shares the prompt cache
+- `context: fork` for research/analysis; conversation forks for parallel fan-out from current state
 
 ### When Pollution is Acceptable
 
 ✅ **High-value capabilities**: >2000 tokens worth of procedural knowledge, used 5+ times/session
 ✅ **Zero-inflation skills**: Mostly references `scripts/` (0 token execution), SKILL.md ~200-300 tokens
-❌ **Unacceptable**: >1000 token skill used 1x per session — use progressive disclosure (reference.md), `context:subagent` (isolation), or `context:fork` (fan-out)
+❌ **Unacceptable**: >1000 token skill used 1x per session — use progressive disclosure (reference.md), `context: fork` (isolation), or conversation forks (fan-out)
 
 ---
 
@@ -484,7 +512,7 @@ generate-api-docs/
 - Frequency: 1-2x/session → Low
 - Invocation: User manually triggers
 
-**Decision:** `✅ SKILL because: progressive disclosure keeps SKILL.md <500, dual-invocable, trigger keywords in description`
+**Decision:** `✅ SKILL because: progressive disclosure keeps SKILL.md lean (<500 lines), dual-invocable, trigger keywords in description`
 
 ```yaml
 # Frontmatter
@@ -505,30 +533,30 @@ Choose BASH SCRIPT when:
   ❌ NOT: Needs AI to decide when/how/what
 
 Choose SKILL (auto-invoked) when:
-  ✅ <500 tokens ideal
+  ✅ Lean SKILL.md (~500 tokens = pollution heuristic, not a size rule)
   ✅ Used 5+ times per session
   ✅ Auto-invoke makes sense
   ✅ Specific capability
   ❌ NOT: Verbose, rare, or user-triggered
 
 Choose SKILL (with progressive disclosure) when:
-  ✅ >500 tokens total content
-  ✅ Keep SKILL.md <500, verbose content in reference.md
+  ✅ Content exceeds a lean SKILL.md
+  ✅ Keep SKILL.md <500 lines (doc officielle, 2026-09-23), verbose content in reference.md
   ✅ Any frequency (dual-invocable by default)
   ✅ Workflow with steps
 
-Choose SKILL (context:subagent) when:
-  ✅ Research, exploration, heavy analysis
+Choose SKILL (context: fork) when:
+  ✅ Self-contained task with explicit steps, no conversation history needed
+  ✅ Research, exploration, heavy analysis, debiasing
   ✅ Verbose output that would pollute main context
-  ✅ Per-agent config / Team Protocol / named persona
-  Frontmatter: context: subagent
+  ❌ NOT: guidelines without a task; needs what was discussed
+  Frontmatter: context: fork (+ agent: <type>, optional model:, background: false to wait)
 
-Choose SKILL (context:fork) when:   # v2.1.117+
-  ✅ Parallel fan-out with inherited parent context
-  ✅ Debiasing (each fork gets project ctx, no reasoning bias)
-  ✅ Prompt cache sharing across forks
-  ❌ NOT: per-agent model/memory/tools/persona/Team Protocol
-  Frontmatter: context: fork
+Choose INLINE SKILL spawning conversation forks when:
+  ✅ Parallel fan-out from the current conversation state
+  ✅ Prompt cache shared with main session
+  ❌ NOT: per-agent model/memory/tools/persona/Team Protocol, debiasing
+  Body: Agent({subagent_type: "fork", ...})
 
 Choose SUB-AGENT when:
   ✅ >2000 tokens AND complex exploration
@@ -544,19 +572,21 @@ Choose DIRECT REQUEST when:
 
 ---
 
-## Fork vs Subagent (v2.1.117+)
+## Fork vs Subagent
 
-| | `fork` | `subagent` |
+Spawn mechanisms from a skill body (Agent tool), not the `context:` frontmatter. See [Context Execution Mode](#context-execution-mode) for `context: fork`, which is neither: it runs the whole skill as an isolated subagent.
+
+| | Conversation fork | Typed subagent |
 |---|---|---|
-| Parent context | Inherited (CLAUDE.md + MEMORY + transcript) | None |
-| Invocation | `Agent({prompt,...})` — **OMIT** `subagent_type` | `Agent({subagent_type, prompt,...})` |
+| Parent context | Full conversation history, same system prompt/tools/model | None, fresh prompt + definition |
+| Invocation | `Agent({subagent_type: "fork", prompt,...})` | `Agent({subagent_type: "<type>", prompt,...})` |
 | Prompt style | Directive — restate current-turn facts | Self-contained briefing |
 | Per-agent config | ❌ none | ✅ tools/model/memory/maxTurns |
-| Team Protocol | ❌ no stable name | ✅ SendMessage addressable |
+| Prompt cache | Shared with main session | Separate |
 
-**Fork rules** (skill body MUST enforce): omit `subagent_type` · restate target/constraint/decision · batch parallel in one tool-use block · NEVER Read output_file.
+**Fork rules** (skill body MUST enforce): `subagent_type: "fork"` (omitting it gives general-purpose) · restate target/constraint/decision · batch parallel in one tool-use block · NEVER Read output_file.
 
-**Keep `subagent` when ANY**: (1) per-agent model · (2) scoped memory · (3) narrower tool allowlist · (4) SendMessage/Team Protocol · (5) named persona (`subagent_type: plugin:persona`).
+**Keep typed subagent when ANY**: (1) per-agent model · (2) scoped memory · (3) narrower tool allowlist · (4) SendMessage/Team Protocol · (5) named persona (`subagent_type: plugin:persona`) · (6) debiasing (fork carries parent reasoning).
 
 Cases: `philosopher/council` (model+memory), `philosopher/encounter`+`dialogue` (Team Protocol).
 
@@ -564,11 +594,27 @@ Cases: `philosopher/council` (model+memory), `philosopher/encounter`+`dialogue` 
 
 ## Proactive Audit (run on every create/edit)
 
-**Check 1 — frontmatter compliance**
-- `context:` ∈ {`main`, `fork`, `subagent`} — else reject
-- Legacy `context: fork` (pre-2026-04-23): flag for rename. Body uses `subagent_type` → rename to `subagent`. Body omits `subagent_type` + fan-out w/ parent ctx → keep `fork` (rare).
+**Check 1 — frontmatter compliance** (doc officielle, 2026-09-23)
+- `context:` absent or `fork` — any other value (`main`, `subagent`, `inherit`) is undocumented → flag. `main` → remove the field. `subagent` → `context: fork` (+ `agent:` if a type was intended). Body expects parent history → remove `context:`, spawn conversation forks from the body.
+- `agent:` or `background:` without `context: fork` → flag (no effect).
+- `context: fork` + body is guidelines without a task → flag (subagent returns nothing useful).
+- Body spawns forks without `subagent_type: "fork"` → flag (gets general-purpose).
+- SKILL.md ≥500 lines → flag, move detail to references/. description + when_to_use >1536 chars → flag (truncated in listing).
 
 **Check 2 — fit check** (recommend change, ask confirm)
-- `fork` declared, needs per-agent config/persona/Team Protocol → `subagent`
-- `subagent` declared, generic parallel fan-out (no persona, no cross-talk, no per-agent config) → `fork`
-- `main` declared, body spawns Agent >2×/invocation → declare `fork` or `subagent`
+- `context: fork` declared, task depends on conversation history → inline (+ conversation forks if fan-out)
+- Inline skill spawns conversation forks, needs per-agent config/persona/Team Protocol or debiasing → typed subagent
+- Inline skill spawns typed subagents for generic fan-out from current state (no persona, no cross-talk, no per-agent config) → conversation forks
+- Inline skill, self-contained task, body spawns Agent >2×/invocation → consider `context: fork`
+
+### Prompt-audit pass
+
+Complements Checks 1-2 (structural); does not replace them.
+
+- **Trigger**: Optimize mode; creation of a non-trivial skill or agent. Skip for small Modify edits (loading claude-api costs tokens).
+- **Scope**: skill = SKILL.md + `references/` + `description`/`when_to_use`; agent = system prompt body + `description`.
+- **Target model**: audited tool's frontmatter `model:`; absent or `inherit` → current session model.
+- **Pass 1 — dated-pattern pass**: invoke `/claude-api prompt-audit` with the scope and target model above. It returns a report and a diff covering pressure language, fossils, over-specification and restated defaults. Call it by skill name only: its bundled file path is versioned per Claude Code release and breaks on upgrade; do not copy its content here either (goes stale).
+- **Pass 2 — edit-tool-specific pass** (prompt-audit does not cover these): tool-type fit, Checks 1-2 above, fork spawning contract, SKILL.md → references/ split, description + when_to_use triggers within 1536 chars, pollution budget, preservation of existing functions. Keep fragile-operation guards (e.g. "never Read output_file") even if pass 1 flags them as pressure language.
+- **Fallback**: claude-api skill unavailable → say so, run pass 2 only.
+- **Consent**: present both diffs; apply only what the user accepts.
