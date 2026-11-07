@@ -1,12 +1,12 @@
 ---
 name: design-system
-description: 'Digital Stoic visual system v0.3 "Tablette" for every Claude artifact and HTML page: tokens, type, classes, inline-SVG charts, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Overrides artifact-design defaults. Use when: build an artifact, HTML page, report page, dashboard, mini-app, chart, plot, data viz, gallery, standalone page, design tokens, Digital Stoic style.'
+description: 'Digital Stoic visual system v0.4 "Tablette" for every Claude artifact and HTML page: tokens, type, classes, inline-SVG charts, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Overrides artifact-design defaults. Use when: build an artifact, HTML page, report page, dashboard, mini-app, chart, plot, data viz, gallery, standalone page, design tokens, Digital Stoic style.'
 user-invocable: true
 ---
 
 # Digital Stoic design system — index
 
-version: 0.3.2 | palette: tablette | updated: 2026-11-07
+version: 0.4.1 | palette: tablette | updated: 2026-11-07
 
 Entry point. Read this first, then open ONLY the files the routing table sends you to. Paths are relative to this skill's directory.
 
@@ -42,10 +42,10 @@ Output goes to the calling project's `build/` folder — never `/tmp/`.
 2. `--accent` (blueprint blue, machine) = actionable · `--voice` (terracotta, human) = first-person conviction ONLY · `--ok`/`--warn` = state only · `--cat-*` = series identity only.
 3. Series palette: 6 slots, order frozen. Cap 6 (bar/line/area/stacked), cap 3 (scatter/bubble/small multiples). No 7th hue. Changing a hex means re-running `validate_palette.js` (dataviz skill) in both modes.
 4. No component kit (shadcn, Tailwind, Radix), no chart library. CSP blocks external assets, there is no bundler, and their default look is what the guardrails ban. Use native elements.
-5. Charts = hand-authored inline SVG. Mermaid for flows/schemas only, never quantitative data. Chart marks use `.mk`, never `.bar`.
+5. Charts = hand-authored inline SVG, drawn at the container's real width and redrawn on resize (`fit()` in `demo/03-charts.html`), so chart text stays 12 px. Mermaid for flows/schemas only, never quantitative data. Chart marks use `.mk`, never `.bar`.
 6. Rules, not cards. Never centered by default. No gradients, shadows, glows. No emoji in the rendered page.
 7. Focus never removed — `:focus-visible` is global in the base, do not override per component.
-8. Type by role, set by the base, never per component: EB Garamond reads (headings, prose, editorial labels in small caps), `font-size-adjust:.5` on body; Hanken operates and compares (buttons, chips, table headers and cells, inputs, hints, errors, KPI figures, legends, chart text, dashboard rail); JetBrains Mono only for what gets copied verbatim (hex, ids, sources, code, document rail values). Tool pages: `<body class="mode-outil">` (marker `@body`) also switches editorial labels to Hanken. Editorial labels use `--label-*` tokens, never a hardcoded family. Reading sizes use `--t-body --t-lede --t-h2 --t-h1`, never a raw rem.
+8. Type by role, set by the base, never per component: EB Garamond reads (headings, prose, editorial labels in small caps), `font-size-adjust:.5` on body; Hanken operates and compares (buttons, chips, table headers and cells, inputs, hints, errors, KPI figures, legends, chart text, dashboard rail); JetBrains Mono only for what gets copied verbatim (hex, ids, sources, code, document rail values). Tool pages: `<body class="mode-outil">` (marker `@body`) also switches editorial labels to Hanken. Editorial labels use `--label-*` tokens, never a hardcoded family. Sizes are tokens, never a raw rem or px: reading `--t-sm --t-body --t-lede --t-h2 --t-h1 --t-h1-sm`, interface `--u-xs` (12 px floor) `--u-sm --u-md`; spacing `--s0…--s6`.
 9. Real content, never lorem. Project-level brand constraints (the caller's CLAUDE.md) apply on top.
 10. `artifact-build.mjs` + `artifact-base.css` + `fonts/` move as one block or not at all.
 11. Render it and look at it before claiming it works.

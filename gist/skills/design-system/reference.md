@@ -1,6 +1,6 @@
 # Digital Stoic artifact design system — agent reference
 
-version: 0.3.2 | palette: tablette | updated: 2026-11-07
+version: 0.4.1 | palette: tablette | updated: 2026-11-07
 
 Load when building a Claude artifact or any HTML page. Overrides the artifact-design skill defaults; user's explicit words still win. Paths below are relative to this skill's directory.
 
@@ -39,7 +39,7 @@ Layout of this skill:
 | `reference.md` | this file |
 | `artifact-build.mjs` + `artifact-base.css` + `fonts/` | the assembler and what it injects. It resolves its assets from its own directory, so these three move as one block or not at all. |
 | `templates/` | `gallery.html` (living spec, every class rendered) and `identity.html` (document skeleton) |
-| `demo/` + `check-demos.mjs` | six full screens on one fictional domain, numbered from simple to complex: `01-document` `02-landing` `03-charts` (document mode), then `04-dashboard` `05-decision` `06-mini-app` (tool mode). The checker fails a demo that hardcodes a colour or font, uses an undefined class, carries a stale `@ds:` version stamp or does not assemble; it also fails when the palette table of `templates/gallery.html` drifts from `artifact-base.css`. It rebuilds the gallery as `00-gallery.html` and every demo into `demo/build/` (git-ignored, regenerable). |
+| `demo/` + `check-demos.mjs` | six full screens on one fictional domain, numbered from simple to complex: `01-document` `02-landing` `03-charts` (document mode), then `04-dashboard` `05-decision` `06-mini-app` (tool mode). The checker fails a demo that hardcodes a colour, a font or a font size (only `var(--t-*)`, `var(--u-*)`, `var(--label-size)`), uses an undefined class, carries a stale `@ds:` version stamp or does not assemble; it also fails when the palette table of `templates/gallery.html` drifts from `artifact-base.css`. It rebuilds the gallery as `00-gallery.html` and every demo into `demo/build/` (git-ignored, regenerable). |
 
 Output goes to the calling project's `build/` folder: regenerable, but somewhere the user can open or host without hunting. Never `/tmp/`.
 
@@ -60,7 +60,9 @@ Never hardcode a color. Style only through tokens. Palette is defined four times
 --dv-mid                       diverging midpoint (neutral gray)
 ```
 
-Scale: `--s1:.45rem --s2:.8rem --s3:1.2rem --s4:2rem --s5:3.2rem --s6:5rem` · `--r:6px`
+Spacing: `--s0:.25rem --s1:.45rem --s2:.8rem --s3:1.2rem --s4:2rem --s5:3.2rem --s6:5rem` · `--r:6px`. `--s0` is the inner padding of small components (buttons, chips, inputs, marks).
+Reading sizes (Garamond, appear 1.25× larger through `font-size-adjust`): `--t-sm:1rem --t-body:1.1rem --t-lede:1.3rem --t-h2 --t-h1`, and `--t-h1-sm` for a compact tool-page title.
+Interface sizes (Hanken and mono, no adjustment): `--u-xs:.75rem` (12 px, the floor) `--u-sm:.88rem` `--u-md:1rem`. No HTML text below `--u-xs`. The only raw size left in the base is `.kpis .n` (2.1rem).
 Type: `--serif` (EB Garamond, what is read) `--sans` (Hanken, what is operated or compared) `--mono` (JetBrains Mono, what is copied verbatim)
 Label tokens (editorial labels only): `--label-font --label-caps --label-tt --label-ls --label-size --label-w --label-adjust`. Edito (default) = Garamond `all-small-caps`; `.mode-outil` on `<body>` = Hanken uppercase 600.
 
@@ -184,7 +186,8 @@ Rendering rules:
 - One axis. Never a dual-axis chart; two measures of different scale become two charts or an indexed common base.
 - Legend present for ≥ 2 series, absent for one (the title names it). At ≤ 4 series add direct labels. Never a number on every point.
 - Every chart has a table view, or the figure carries visible labels — three light-versant slots sit near the 3:1 contrast line.
-- Author the `viewBox` at roughly the intended render width — 480 to 720 units for a full reading column. `.viz` stretches to 100%, and SVG text scales with the viewBox, so a 300-unit box in a 900px column renders a 9px label at 27px. Cap with `max-width` when the figure is meant to stay small.
+- Script-drawn charts are drawn at the real width of their container: `viewBox` width = `plot.clientWidth`, so one unit is one pixel and `.viz text` (`--u-xs`, 12 px) stays 12 px on every screen. Redraw when the width changes (ResizeObserver; a hidden pane has width 0, wait for it). Copy `fit(svg, draw, o)` from `demo/03-charts.html`.
+- A static SVG (no script) cannot redraw: author its `viewBox` at the intended render width (480 to 720 units for a reading column) and accept that its text scales with it — on a 375 px phone a 480-unit box shows 12 px text at about 9 px. Prefer a script-drawn chart when the page targets phones.
 - Grid and axes recede. `font-variant-numeric:tabular-nums` wherever digits align.
 - Render it and look at it. The validator checks colour, not layout — collisions and overflow are found by opening the page.
 

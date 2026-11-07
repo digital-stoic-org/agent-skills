@@ -85,23 +85,26 @@
   --serif:'EB Garamond', Garamond, 'Times New Roman', Georgia, serif;
   --sans:'Hanken', ui-sans-serif, -apple-system, 'Segoe UI', Arial, sans-serif;
   --mono:'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --s1:.45rem; --s2:.8rem; --s3:1.2rem; --s4:2rem; --s5:3.2rem; --s6:5rem;
+  --s0:.25rem; --s1:.45rem; --s2:.8rem; --s3:1.2rem; --s4:2rem; --s5:3.2rem; --s6:5rem;
   --r:6px;
   /* Échelle de lecture (Garamond). Valeurs écrites ; font-size-adjust:.5 les
      fait paraître 1,25 fois plus grandes (oeil .40 em) : 1.1rem se voit ≈ 22 px. */
   --t-body:1.1rem; --t-lede:1.3rem;
   --t-h2:clamp(1.6rem,2.8vw,2rem); --t-h1:clamp(2.4rem,5.5vw,3.8rem);
+  --t-sm:1rem; --t-h1-sm:clamp(2rem,4.5vw,2.8rem); /* titre compact d'une page d'outil */
+  /* Échelle d'interface (Hanken et mono, sans ajustement d'oeil) : 12, 14, 16 px. */
+  --u-xs:.75rem; --u-sm:.88rem; --u-md:1rem;
   /* Étiquettes éditoriales (marque, sur-titre, rail, tags de registre). Mode
      édito par défaut : Garamond en petites capitales. body.mode-outil bascule
      en Hanken. Les libellés de commande suivent leur rôle, voir plus bas. */
   --label-font:var(--serif); --label-caps:all-small-caps; --label-tt:none;
-  --label-ls:.07em; --label-size:1rem; --label-w:400; --label-adjust:.5;
+  --label-ls:.07em; --label-size:var(--t-sm); --label-w:400; --label-adjust:.5;
 }
 /* Pages d'outil (tableaux de bord, mini-apps, pages de revue) : interface dense,
    les étiquettes éditoriales passent aussi en Hanken. */
 .mode-outil{
   --label-font:var(--sans); --label-caps:normal; --label-tt:uppercase;
-  --label-ls:.1em; --label-size:.75rem; --label-w:600; --label-adjust:none;
+  --label-ls:.1em; --label-size:var(--u-xs); --label-w:600; --label-adjust:none;
 }
 
 *{box-sizing:border-box}
@@ -127,24 +130,25 @@ a{color:var(--accent)}
 }
 .mark{
   border:1px solid var(--line-strong); border-radius:var(--r);
-  padding:.25rem .5rem; color:var(--fg);}
+  padding:var(--s0) var(--s1); color:var(--fg);}
 .bar .who{color:var(--muted);}
 .bar .sp{flex:1}
 button.tgl{
   background:transparent; color:var(--muted); border:1px solid var(--line-strong);
-  border-radius:var(--r); padding:.3rem .7rem; cursor:pointer;}
+  border-radius:var(--r); padding:var(--s0) .7rem; cursor:pointer;}
 button.tgl:hover{color:var(--fg); border-color:var(--accent)}
 
 /* ── Grille document : rail de métadonnées + colonne de lecture ────────── */
 .doc{display:grid; grid-template-columns:11rem minmax(0,1fr); gap:var(--s4)}
-@media (max-width:760px){ .doc{grid-template-columns:1fr} }
+/* minmax(0,…) : un SVG ou un tableau large ne doit pas élargir la colonne unique. */
+@media (max-width:760px){ .doc{grid-template-columns:minmax(0,1fr)} }
 
-.rail{font-family:var(--mono); font-size:.75rem; line-height:1.5; color:var(--faint)}
+.rail{font-family:var(--mono); font-size:var(--u-xs); line-height:1.5; color:var(--faint)}
 .rail dl{margin:0; display:grid; gap:var(--s2)}
 .rail dt{color:var(--faint);}
 .rail dd{margin:.1rem 0 0; color:var(--muted); font-variant-numeric:tabular-nums}
 .rail .marg{
-  font-family:var(--serif); font-style:italic; font-size:1.05rem; line-height:1.45;
+  font-family:var(--serif); font-style:italic; font-size:var(--t-sm); line-height:1.45;
   color:var(--muted); border-top:1px solid var(--line);
   padding-top:var(--s2); margin-top:var(--s4);
 }
@@ -174,24 +178,24 @@ p{margin:0 0 var(--s3); max-width:68ch}
 .regs{display:grid; gap:0}
 .reg{display:grid; grid-template-columns:1.6rem minmax(0,1fr); gap:var(--s2); padding:var(--s3) 0}
 .reg + .reg{border-top:1px solid var(--line)}
-.reg .glyph{font-family:var(--mono); font-size:.75rem; color:var(--faint); padding-top:.28rem}
+.reg .glyph{font-family:var(--mono); font-size:var(--u-xs); color:var(--faint); padding-top:var(--s0)}
 .reg p{margin:0 0 var(--s1)}
 .reg .tag{color:var(--faint);}
 
 /* fait vérifiable : neutre, plein, sourcé */
 .reg-fact p{color:var(--fg)}
-.reg-fact .glyph{border-left:2px solid var(--line-strong); padding-left:.45rem}
-.reg-fact .src{font-family:var(--mono); font-size:.75rem; color:var(--accent)}
+.reg-fact .glyph{border-left:2px solid var(--line-strong); padding-left:var(--s1)}
+.reg-fact .src{font-family:var(--mono); font-size:var(--u-xs); color:var(--accent)}
 
 /* consensus émergent daté : atténué, pointillé, horodaté */
 .reg-cons p{color:var(--muted)}
-.reg-cons .glyph{border-left:2px dotted var(--line-strong); padding-left:.45rem}
-.reg-cons .when{font-family:var(--mono); font-size:.75rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.reg-cons .glyph{border-left:2px dotted var(--line-strong); padding-left:var(--s1)}
+.reg-cons .when{font-family:var(--mono); font-size:var(--u-xs); color:var(--muted); font-variant-numeric:tabular-nums}
 
 /* conviction assumée : serif italique, marque de voix — le seul texte coloré */
 .reg-conv{background:var(--voice-weak); margin:0 calc(-1 * var(--s2)); padding:var(--s3) var(--s2)}
-.reg-conv p{font-family:var(--serif); font-style:italic; font-size:1.3rem; color:var(--fg)}
-.reg-conv .glyph{border-left:2px solid var(--voice); padding-left:.45rem; color:var(--voice)}
+.reg-conv p{font-family:var(--serif); font-style:italic; font-size:var(--t-lede); color:var(--fg)}
+.reg-conv .glyph{border-left:2px solid var(--voice); padding-left:var(--s1); color:var(--voice)}
 .reg-conv .tag{color:var(--voice)}
 
 /* ── Dichotomie du contrôle ────────────────────────────────────────────── */
@@ -205,8 +209,8 @@ p{margin:0 0 var(--s3); max-width:68ch}
   margin:0 0 var(--s2);}
 .dicho .up h3{color:var(--accent)}
 .dicho .not h3{color:var(--faint)}
-.dicho ul{margin:0; padding-left:1.1rem; font-size:1.1rem}
-.dicho li{margin-bottom:.3rem}
+.dicho ul{margin:0; padding-left:1.1rem; font-size:var(--t-body)}
+.dicho li{margin-bottom:var(--s0)}
 .dicho .up li{color:var(--fg)}
 .dicho .not li{color:var(--muted)}
 
@@ -220,6 +224,8 @@ p{margin:0 0 var(--s3); max-width:68ch}
   padding:var(--s2) var(--s3) var(--s2) 0; border-right:1px solid var(--line);
 }
 .kpis > div:last-child{border-right:0}
+/* Le filet sépare deux chiffres : celui de droite s'en écarte d'autant. */
+.kpis > div + div{padding-left:var(--s3)}
 .kpis .n{
   font-family:var(--sans); font-weight:400; font-size:2.1rem; line-height:1.1;
   letter-spacing:-.01em; font-variant-numeric:tabular-nums; font-size-adjust:none;
@@ -229,7 +235,7 @@ p{margin:0 0 var(--s3); max-width:68ch}
 /* ── États ─────────────────────────────────────────────────────────────── */
 .states{display:flex; flex-wrap:wrap; gap:var(--s2); align-items:center; margin-bottom:var(--s3)}
 .chip{
-  border-radius:var(--r); padding:.25rem .6rem; border:1px solid currentColor;}
+  border-radius:var(--r); padding:var(--s0) .6rem; border:1px solid currentColor;}
 .chip-ok{color:var(--ok)}
 .chip-warn{color:var(--warn)}
 .chip-crit{background:var(--crit-bg); color:var(--crit-fg); border-color:var(--crit-bg)}
@@ -239,20 +245,20 @@ p{margin:0 0 var(--s3); max-width:68ch}
 /* la couleur est réaffirmée ici : en mode quirks un tableau n'hérite pas
    de la couleur de ses ancêtres, et le texte des lignes disparaîtrait */
 table{
-  border-collapse:collapse; width:100%; font-size:1rem;
+  border-collapse:collapse; width:100%; font-size:var(--u-md);
   color:var(--fg); font-family:var(--sans); font-size-adjust:none;
 }
 th{color:var(--faint); text-align:left;
   border-bottom:1px solid var(--line-strong); padding:var(--s1) var(--s2) var(--s1) 0;}
 td{border-bottom:1px solid var(--line); padding:var(--s1) var(--s2) var(--s1) 0; vertical-align:middle}
-td.hex{font-family:var(--mono); font-size:.78rem; font-variant-numeric:tabular-nums; color:var(--muted)}
-td.name{font-family:var(--mono); font-size:.78rem}
+td.hex{font-family:var(--mono); font-size:var(--u-xs); font-variant-numeric:tabular-nums; color:var(--muted)}
+td.name{font-family:var(--mono); font-size:var(--u-xs)}
 .sw{display:inline-block; width:1.6rem; height:.9rem; border-radius:2px; border:1px solid var(--line-strong); vertical-align:-.1rem}
 
 /* ── Bande de nuances ──────────────────────────────────────────────────── */
 .strip{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line-strong); border-radius:var(--r); overflow:hidden}
-.strip > div{flex:1 1 5.5rem; height:3.4rem; display:flex; align-items:flex-end; padding:.3rem .4rem}
-.strip span{font-family:var(--mono); font-size:.75rem; letter-spacing:.05em}
+.strip > div{flex:1 1 5.5rem; height:3.4rem; display:flex; align-items:flex-end; padding:var(--s0) var(--s1)}
+.strip span{font-family:var(--mono); font-size:var(--u-xs); letter-spacing:.05em}
 
 /* ── Figures et séries ─────────────────────────────────────────────────── */
 /* La couleur suit l'entité, jamais son rang : une série garde son jeton
@@ -266,10 +272,10 @@ td.name{font-family:var(--mono); font-size:.78rem}
 .se-4{color:var(--cat-4)} .se-5{color:var(--cat-5)} .se-6{color:var(--cat-6)}
 
 .fig{margin:var(--s4) 0}
-.fig-t{font-family:var(--serif); font-weight:600; font-size:1.1rem; margin:0 0 .15rem}
-.fig-s{font-family:var(--serif); font-size:.98rem; color:var(--muted); margin:0 0 var(--s2); max-width:60ch}
+.fig-t{font-family:var(--serif); font-weight:600; font-size:var(--t-body); margin:0 0 .15rem}
+.fig-s{font-family:var(--serif); font-size:var(--t-sm); color:var(--muted); margin:0 0 var(--s2); max-width:60ch}
 .fig figcaption{
-  font-family:var(--mono); font-size:.75rem; color:var(--faint);
+  font-family:var(--mono); font-size:var(--u-xs); color:var(--faint);
   margin-top:var(--s2); padding-top:var(--s1); border-top:1px solid var(--line);
 }
 
@@ -277,8 +283,8 @@ td.name{font-family:var(--mono); font-size:.78rem}
 /* La grille situe, elle ne se lit pas : elle reste sous le trait de donnée. */
 .viz .grid{stroke:var(--line); stroke-width:1; fill:none}
 .viz .axis{stroke:var(--line-strong); stroke-width:1; fill:none}
-.viz text{font-family:var(--sans); font-size:9px; fill:var(--faint); font-size-adjust:none}
-.viz .val{fill:var(--fg); font-size:10px; font-variant-numeric:tabular-nums}
+.viz text{font-family:var(--sans); font-size:var(--u-xs); fill:var(--faint); font-size-adjust:none}
+.viz .val{fill:var(--fg); font-size:var(--u-xs); font-variant-numeric:tabular-nums}
 /* Marques fines : trait de 2 px, marqueur d'au moins 8 px de diamètre. */
 /* .mk et non .bar : .bar est déjà la barre de tête, et sa règle non scopée
    frapperait un <rect class="bar"> à l'intérieur du SVG. */
@@ -291,7 +297,7 @@ td.name{font-family:var(--mono); font-size:.78rem}
 
 .lgd{
   display:flex; flex-wrap:wrap; gap:var(--s1) var(--s3); margin-bottom:var(--s2);
-  font-family:var(--sans); font-size:.88rem; color:var(--muted); font-size-adjust:none;
+  font-family:var(--sans); font-size:var(--u-sm); color:var(--muted); font-size-adjust:none;
 }
 .lgd > span{display:inline-flex; align-items:center; gap:.35rem; color:var(--muted)}
 .lgd i{width:.7rem; height:.7rem; border-radius:2px; background:currentColor; flex:none}
@@ -308,11 +314,11 @@ td.name{font-family:var(--mono); font-size:.78rem}
    vaut d'être réutilisée est le navigateur. Le focus n'est jamais retiré —
    :focus-visible est déjà défini plus haut, ne pas le redéfinir ici. */
 .ctl{display:flex; flex-wrap:wrap; gap:var(--s2) var(--s3); align-items:flex-end; margin-bottom:var(--s3)}
-.ctl label{display:flex; flex-direction:column; gap:.25rem}
+.ctl label{display:flex; flex-direction:column; gap:var(--s0)}
 .ctl > label > span,legend{color:var(--faint);}
 input,select,textarea{
-  font-family:var(--sans); font-size:1rem; font-size-adjust:none; color:var(--fg); background:var(--surface);
-  border:1px solid var(--line-strong); border-radius:var(--r); padding:.3rem .5rem;
+  font-family:var(--sans); font-size:var(--u-md); font-size-adjust:none; color:var(--fg); background:var(--surface);
+  border:1px solid var(--line-strong); border-radius:var(--r); padding:var(--s0) var(--s1);
 }
 input[type=number],input[type=date],.num{font-variant-numeric:tabular-nums}
 .num{font-family:var(--sans); font-size-adjust:none}
@@ -349,13 +355,13 @@ meter::-webkit-meter-even-less-good-value{background:var(--crit-bg); border-radi
 meter::-moz-meter-bar{background:var(--accent); border-radius:var(--r)}
 progress::-moz-progress-bar{background:var(--accent); border-radius:var(--r)}
 /* La jauge n'est pas un graphique : un seul chiffre, aucune légende. */
-.gauge{display:flex; flex-direction:column; gap:.3rem}
+.gauge{display:flex; flex-direction:column; gap:var(--s0)}
 .gauge .l{color:var(--faint);}
 
 /* Jamais la couleur seule : le message porte un glyphe et un texte. */
-.hint{font-family:var(--sans); font-size:.88rem; font-size-adjust:none; color:var(--muted)}
+.hint{font-family:var(--sans); font-size:var(--u-sm); font-size-adjust:none; color:var(--muted)}
 /* Une erreur est un état, pas une conviction : --warn, jamais --voice (règle 2). */
-.err{font-family:var(--sans); font-size:.88rem; font-size-adjust:none; color:var(--warn)}
+.err{font-family:var(--sans); font-size:var(--u-sm); font-size-adjust:none; color:var(--warn)}
 
 /* ── Coque de tableau de bord ──────────────────────────────────────────── */
 /* Le rail bascule à l'horizontale sous la barre : mêmes métadonnées, mais en
@@ -363,7 +369,7 @@ progress::-moz-progress-bar{background:var(--accent); border-radius:var(--r)}
 .dash{
   display:flex; flex-wrap:wrap; gap:var(--s3);
   border-bottom:1px solid var(--line); padding-bottom:var(--s2); margin-bottom:var(--s3);
-  font-family:var(--sans); font-size:.8rem; font-size-adjust:none; font-variant-numeric:tabular-nums;
+  font-family:var(--sans); font-size:var(--u-xs); font-size-adjust:none; font-variant-numeric:tabular-nums;
 }
 .dash > div{display:flex; flex-direction:column; gap:.1rem}
 .dash dt,.dash .l{color:var(--faint);}
@@ -386,7 +392,7 @@ progress::-moz-progress-bar{background:var(--accent); border-radius:var(--r)}
    les modes, car on agit ou on compare avec eux. */
 button,.chip,th,.ctl > label > span,legend,.kpis .l,.gauge .l,.dash dt,.dash .l{
   font-family:var(--sans); font-variant-caps:normal; text-transform:uppercase;
-  letter-spacing:.1em; font-size:.75rem; font-weight:600; font-size-adjust:none;
+  letter-spacing:.1em; font-size:var(--u-xs); font-weight:600; font-size-adjust:none;
 }
 
 /* ── Ce qu'on recopie : seule place de la mono ─────────────────────────── */
@@ -396,13 +402,13 @@ button,.chip,th,.ctl > label > span,legend,.kpis .l,.gauge .l,.dash dt,.dash .l{
 code,kbd,samp,pre,.rail,.rail dd,td.hex,td.name,.reg .glyph,.reg .src,.reg .when,.strip span,.fig figcaption,footer{
   font-family:var(--mono); font-size-adjust:none;
 }
-.rail dd{font-size:.8rem}
+.rail dd{font-size:var(--u-xs)}
 .rail dt{font-family:var(--label-font)}
 
 /* ── Pied ──────────────────────────────────────────────────────────────── */
 footer{
   margin-top:var(--s6); padding-top:var(--s2); border-top:1px solid var(--line-strong);
-  font-family:var(--mono); font-size:.75rem; color:var(--faint);
+  font-family:var(--mono); font-size:var(--u-xs); color:var(--faint);
   display:flex; flex-wrap:wrap; gap:var(--s3); font-variant-numeric:tabular-nums;
 }
 
@@ -414,5 +420,6 @@ footer{
   .bar .who{display:none}
   .kpis{grid-template-columns:1fr}
   .kpis > div{border-right:0; border-bottom:1px solid var(--line); padding-right:0}
+  .kpis > div + div{padding-left:0}
   .kpis > div:last-child{border-bottom:0}
 }

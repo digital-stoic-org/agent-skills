@@ -12,6 +12,8 @@
 //   4. uses a class that neither artifact-base.css nor the demo's own <style>
 //      defines (local classes are allowed, listed so drift stays visible)
 //   5. does not assemble (artifact-build.mjs --standalone)
+//   6. hardcodes a font size instead of var(--t-*|--u-*|--label-size), in CSS,
+//      an inline style, a script or an SVG font-size attribute
 // Visible text is not scanned: a hex printed as content is not a colour.
 //
 // Also builds templates/gallery.html as 00-gallery.html (it holds hex on
@@ -63,6 +65,10 @@ let failed = 0;
   for (const e of errs) console.log(`     ${e}`);
 }
 
+const SIZE = /font-size\s*:\s*([^;"}\n]+)/g;
+const SIZE_OK = /^var\(--(?:t-[\w-]+|u-[\w-]+|label-size)\)$/;
+const SIZE_ATTR = /\sfont-size\s*=\s*"[^"]*"|["']font-size["']\s*[:,]\s*[^,})]+/g;
+
 const files = readdirSync(DEMO).filter((f) => f.endsWith(".html")).sort();
 for (const f of files) {
   const src = readFileSync(join(DEMO, f), "utf8");
@@ -80,6 +86,9 @@ for (const f of files) {
     if (COLOR.test(line)) errs.push(`hardcoded colour: ${line.trim().slice(0, 90)}`);
   });
   for (const m of src.matchAll(PAINT)) if (!PAINT_OK.test(m[1].trim())) errs.push(`hardcoded paint: ${m[0]}`);
+  for (const m of code.matchAll(SIZE))
+    if (!SIZE_OK.test(m[1].trim())) errs.push(`hardcoded font size: ${m[0].trim()}`);
+  for (const m of src.matchAll(SIZE_ATTR)) errs.push(`hardcoded font size: ${m[0].trim()}`);
   for (const m of code.matchAll(FONT))
     if (!/^var\(--(?:serif|sans|mono|label-font)\)/.test(m[1].trim())) errs.push(`hardcoded font: ${m[0].trim()}`);
 

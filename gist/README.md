@@ -6,7 +6,7 @@ Visual output that a reader grasps at a glance. The name comes from gist percept
 
 | skill | what it does |
 |---|---|
-| `design-system` | Digital Stoic visual system v0.3 "Tablette": tokens, type, classes, chart parameters, and an assembler (`bun artifact-build.mjs`) that injects the base CSS and fonts into a source page. |
+| `design-system` | Digital Stoic visual system v0.4 "Tablette": tokens, type, classes, chart parameters, and an assembler (`bun artifact-build.mjs`) that injects the base CSS and fonts into a source page. |
 
 The review page skill (`review-html`) will join this plugin in a later version.
 

@@ -1,4 +1,4 @@
-<!-- @ds: 0.3.2 -->
+<!-- @ds: 0.4.1 -->
 <!-- @title: Le Fournil des Pentes — le vocabulaire graphique sur des données réelles -->
 <style>
 /* @font: ebgaramond-400 */
@@ -12,8 +12,8 @@
 .tip{
   position:absolute; z-index:2; pointer-events:none; white-space:nowrap;
   background:var(--surface); color:var(--muted); border:1px solid var(--line-strong);
-  border-radius:var(--r); padding:.3rem .55rem;
-  font-family:var(--sans); font-size:.75rem; font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
+  border-radius:var(--r); padding:var(--s0) .55rem;
+  font-family:var(--sans); font-size:var(--u-xs); font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
 }
 .tip b{font-weight:400; color:var(--fg)}
 .tip .hd{color:var(--fg); margin-bottom:.1rem}
@@ -21,7 +21,7 @@
 .vtog{display:flex; gap:var(--s1); margin-bottom:var(--s2)}
 .r{text-align:right}
 .hmx{min-width:36rem}
-.hm span{font-family:var(--sans); font-size-adjust:none; font-size:.75rem; color:var(--faint); align-self:center}
+.hm span{font-family:var(--sans); font-size-adjust:none; font-size:var(--u-xs); color:var(--faint); align-self:center}
 .hm i:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
 </style>
 
@@ -161,7 +161,7 @@
         <span>Digital Stoic</span>
         <span>valide au 2026-11-06</span>
         <span>revoir avant 2027-02-06</span>
-        <span>Tablette · v0.3</span>
+        <span>Tablette · v0.4</span>
       </footer>
     </main>
   </div>
@@ -443,9 +443,29 @@ document.querySelectorAll("[data-fig]").forEach(function (fig) {
   });
 });
 
+/* Le graphique se dessine à la largeur réelle de son conteneur : une unité
+   du viewBox vaut un pixel, et le texte garde sa taille sur tous les écrans.
+   Il se redessine quand la largeur change ; un panneau masqué (largeur nulle)
+   attend d'être affiché. */
+function fit(svg, draw, o) {
+  var plot = svg.parentNode, last = 0;
+  function run() {
+    var w = Math.round(plot.clientWidth);
+    if (!w || w === last) return;
+    last = w;
+    var fresh = svg.cloneNode(false);
+    svg.replaceWith(fresh);
+    svg = fresh;
+    plot.querySelectorAll(".tip").forEach(function (t) { t.remove(); });
+    draw(svg, Object.assign({}, o, { W: w }));
+  }
+  run();
+  if (window.ResizeObserver) new ResizeObserver(function () { requestAnimationFrame(run); }).observe(plot);
+}
+
 /* ── 1. Courbes ──────────────────────────────────────────────────────── */
-lineChart(chart("line"), {
-  W: 640, H: 260, mr: 96, cats: MOIS, heads: HEADS, series: INV, direct: true,
+fit(chart("line"), lineChart, {
+  H: 260, mr: 96, cats: MOIS, heads: HEADS, series: INV, direct: true,
   ymin: 2, ymax: 6, step: 1, tick: function (v) { return fr(v); },
   obj: 3, objLabel: "objectif 3 %", vfmt: function (v) { return fr(v, 1) + " %"; },
   label: "Taux d'invendus mensuel 2025 par fournil, en pourcentage"
@@ -457,8 +477,8 @@ pane("line").appendChild(tableOf(
 ));
 
 /* ── 2. Barres empilées ──────────────────────────────────────────────── */
-stackChart(chart("stack"), {
-  W: 640, H: 280, cats: MOIS, heads: HEADS, series: TONNES,
+fit(chart("stack"), stackChart, {
+  H: 280, cats: MOIS, heads: HEADS, series: TONNES,
   ymin: 0, ymax: 40, step: 10, tick: function (v) { return fr(v); },
   label: "Pain produit par fournil et par mois en 2025, en tonnes"
 });
@@ -524,8 +544,8 @@ pane("stack").appendChild(tableOf(
 
 /* ── 4. Divergent ────────────────────────────────────────────────────── */
 var PREV = ECART.map(function (e, i) { return CA_TOTAL[i] / (1 + e / 100); });
-divChart(chart("div"), {
-  W: 640, H: 260, cats: MOIS, heads: HEADS, data: ECART, prev: PREV, reel: CA_TOTAL,
+fit(chart("div"), divChart, {
+  H: 260, cats: MOIS, heads: HEADS, data: ECART, prev: PREV, reel: CA_TOTAL,
   ymin: -6, ymax: 6, step: 3, tick: function (v) { return sgn(v) + (v ? " %" : ""); },
   label: "Écart mensuel du chiffre d'affaires réel à la prévision en 2025, en pourcentage"
 });
@@ -537,8 +557,8 @@ pane("div").appendChild(tableOf(
 
 /* ── 5. Petits multiples (3 au plus) ─────────────────────────────────── */
 CA.forEach(function (s, i) {
-  lineChart(chart("sm" + i), {
-    W: 240, H: 140, ml: 28, mr: 30, every: 3, cats: MOIS, heads: HEADS, series: [s], direct: false,
+  fit(chart("sm" + i), lineChart, {
+    H: 140, ml: 28, mr: 30, every: 3, cats: MOIS, heads: HEADS, series: [s], direct: false,
     ymin: 0, ymax: 45, step: 15, tick: function (v) { return fr(v); },
     vfmt: function (v) { return fr(v) + " k€"; },
     label: s.name + " : chiffre d'affaires mensuel 2025, en k€"

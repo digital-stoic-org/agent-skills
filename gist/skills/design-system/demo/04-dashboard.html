@@ -1,4 +1,4 @@
-<!-- @ds: 0.3.2 -->
+<!-- @ds: 0.4.1 -->
 <!-- @title: Le Fournil des Pentes — tableau de bord de gestion, exercice 2025 -->
 <!-- @body: mode-outil -->
 <style>
@@ -9,13 +9,13 @@
 /* @font: jetbrains-400 */
 /* @base */
 [hidden]{display:none !important}
-.t1{font-size:clamp(2rem,4.5vw,2.8rem)}
+.t1{font-size:var(--t-h1-sm)}
 .plot{position:relative}
 .tip{
   position:absolute; z-index:2; pointer-events:none; white-space:nowrap;
   background:var(--surface); color:var(--muted); border:1px solid var(--line-strong);
-  border-radius:var(--r); padding:.3rem .55rem;
-  font-family:var(--sans); font-size:.75rem; font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
+  border-radius:var(--r); padding:var(--s0) .55rem;
+  font-family:var(--sans); font-size:var(--u-xs); font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
 }
 .tip b{font-weight:400; color:var(--fg)}
 .tip .hd{color:var(--fg); margin-bottom:.1rem}
@@ -161,7 +161,7 @@ th[aria-sort="descending"]::after{content:" \2193"}
       <span>Le Fournil des Pentes</span>
       <span>valide au 2026-11-06</span>
       <span>revoir avant 2027-02-06</span>
-      <span>Tablette · v0.3</span>
+      <span>Tablette · v0.4</span>
     </footer>
   </main>
 </div>
@@ -380,7 +380,27 @@ document.querySelectorAll("[data-spark]").forEach(function (s) {
   spark(s, { ca: CA_TOTAL, t: T_TOTAL, inv: INV_TOTAL }[s.dataset.spark]);
 });
 
-lineChart(document.querySelector('[data-chart="ca"]'), {
+/* Le graphique se dessine à la largeur réelle de son conteneur : une unité
+   du viewBox vaut un pixel, et le texte garde sa taille sur tous les écrans.
+   Il se redessine quand la largeur change ; un panneau masqué (largeur nulle)
+   attend d'être affiché. */
+function fit(svg, draw, o) {
+  var plot = svg.parentNode, last = 0;
+  function run() {
+    var w = Math.round(plot.clientWidth);
+    if (!w || w === last) return;
+    last = w;
+    var fresh = svg.cloneNode(false);
+    svg.replaceWith(fresh);
+    svg = fresh;
+    plot.querySelectorAll(".tip").forEach(function (t) { t.remove(); });
+    draw(svg, Object.assign({}, o, { W: w }));
+  }
+  run();
+  if (window.ResizeObserver) new ResizeObserver(function () { requestAnimationFrame(run); }).observe(plot);
+}
+
+fit(document.querySelector('[data-chart="ca"]'), lineChart, {
   cats: MOIS, heads: MOIS_L.map(function (m) { return m + " 2025"; }), series: FOURN,
   ymin: 0, ymax: 50, step: 10, mr: 96, vfmt: function (v) { return fr(v) + " k€"; },
   label: "Chiffre d'affaires mensuel 2025 par fournil, en k€"
@@ -393,7 +413,7 @@ document.querySelector('[data-fig="ca"] [data-pane="table"]').appendChild(tableO
   "Chiffre d'affaires mensuel 2025 par fournil, en k€"
 ));
 
-hbars(document.querySelector('[data-chart="fam"]'), {
+fit(document.querySelector('[data-chart="fam"]'), hbars, {
   items: FAMILLES.map(function (f) { return { name: f.name, v: f.t }; }),
   max: 250, total: 412, label: "Pain produit par famille de produits en 2025, en tonnes"
 });

@@ -1,4 +1,4 @@
-<!-- @ds: 0.3.2 -->
+<!-- @ds: 0.4.1 -->
 <!-- @title: Décision du conseil — four de Vaise -->
 <!-- @body: mode-outil -->
 <style>
@@ -12,12 +12,12 @@
 .opt{display:grid; grid-template-columns:auto 1fr auto; gap:var(--s2); align-items:start; padding:var(--s2); border:1px solid var(--line-strong); border-radius:var(--r); background:var(--surface); cursor:pointer}
 .opt:has(input:checked){border-color:var(--accent); background:var(--accent-weak)}
 .opt:has(input:focus-visible){outline:2px solid var(--accent); outline-offset:2px}
-.opt h3{margin:0; font-size:1.15rem; font-weight:600}
-.opt p{margin:.15rem 0 0; font-size:1rem; color:var(--muted)}
-.opt .num{white-space:nowrap; font-size:.85rem}
+.opt h3{margin:0; font-size:var(--t-body); font-weight:600}
+.opt p{margin:.15rem 0 0; font-size:var(--t-sm); color:var(--muted)}
+.opt .num{white-space:nowrap; font-size:var(--u-sm)}
 @media (max-width:640px){ .opt{grid-template-columns:auto 1fr} .opt .num{grid-column:2} }
 .msg{min-height:1.6rem; margin:var(--s2) 0 0}
-pre.out{white-space:pre-wrap; overflow-x:auto; background:var(--sunk); border:1px solid var(--line); border-radius:var(--r); padding:var(--s2); font-size:.8rem; margin:var(--s2) 0 0}
+pre.out{white-space:pre-wrap; overflow-x:auto; background:var(--sunk); border:1px solid var(--line); border-radius:var(--r); padding:var(--s2); font-size:var(--u-xs); margin:var(--s2) 0 0}
 </style>
 
 <div class="wrap mode-outil">
@@ -109,7 +109,7 @@ pre.out{white-space:pre-wrap; overflow-x:auto; background:var(--sunk); border:1p
       <span>Le Fournil des Pentes</span>
       <span>valide au 2026-11-06</span>
       <span>revoir avant 2027-02-06</span>
-      <span>Tablette · v0.3</span>
+      <span>Tablette · v0.4</span>
     </footer>
   </main>
 </div>
