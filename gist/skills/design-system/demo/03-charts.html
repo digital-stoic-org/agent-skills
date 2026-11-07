@@ -1,0 +1,564 @@
+<!-- @ds: 0.3.1 -->
+<!-- @title: Le Fournil des Pentes — le vocabulaire graphique sur des données réelles -->
+<style>
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* @base */
+[hidden]{display:none !important}
+.plot{position:relative}
+.tip{
+  position:absolute; z-index:2; pointer-events:none; white-space:nowrap;
+  background:var(--surface); color:var(--muted); border:1px solid var(--line-strong);
+  border-radius:var(--r); padding:.3rem .55rem;
+  font-family:var(--sans); font-size:.75rem; font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
+}
+.tip b{font-weight:400; color:var(--fg)}
+.tip .hd{color:var(--fg); margin-bottom:.1rem}
+.tk{display:inline-block; width:.9rem; height:2px; background:currentColor; vertical-align:middle}
+.vtog{display:flex; gap:var(--s1); margin-bottom:var(--s2)}
+.r{text-align:right}
+.hmx{min-width:36rem}
+.hm span{font-family:var(--sans); font-size-adjust:none; font-size:.66rem; color:var(--faint); align-self:center}
+.hm i:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+@media (max-width:640px){
+  .wrap{padding:var(--s3) var(--s2) var(--s5)}
+  .bar .who{display:none}
+}
+</style>
+
+<div class="wrap">
+
+  <div class="bar">
+    <span class="mark">DS</span>
+    <span class="who">Le Fournil des Pentes — vocabulaire graphique</span>
+    <span class="sp"></span>
+    <button class="tgl" id="tgl" type="button">Inverser le versant</button>
+  </div>
+
+  <div class="doc">
+
+    <aside class="rail">
+      <dl>
+        <dt>Statut</dt><dd>Référence</dd>
+        <dt>Version</dt><dd>0.2</dd>
+        <dt>Périmètre</dt><dd>exercice 2025</dd>
+        <dt>Établi le</dt><dd>2026-11-06</dd>
+        <dt>Revoir avant</dt><dd>2027-02-06</dd>
+      </dl>
+      <p class="marg">Une couleur désigne une chose. Un fournil garde la sienne d'un graphique à l'autre.</p>
+    </aside>
+
+    <main>
+      <p class="eyebrow">Référence · Graphiques</p>
+      <h1>Lire l'exercice 2025 du Fournil</h1>
+      <p class="lede">Six formes, une seule palette : chacune répond à une question que le conseil se pose sur les trois fournils.</p>
+      <p>Croix-Rousse est toujours bleu, Guillotière toujours brique, Vaise toujours vert. Un graphique qui filtre une série ne repeint pas les autres. Chaque figure a son tableau, et chaque valeur lue au survol se lit aussi au clavier.</p>
+
+      <section class="sec">
+        <h2>Comparer trois courbes</h2>
+        <figure class="fig" data-fig="line">
+          <p class="fig-t">Taux d'invendus par fournil, en % des fournées</p>
+          <p class="fig-s">Trois séries : la légende nomme, les étiquettes de fin de courbe confirment. Au-delà de quatre séries, la légende reste seule.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div class="lgd">
+            <span><i class="se-1"></i>Croix-Rousse</span>
+            <span><i class="se-2"></i>Guillotière</span>
+            <span><i class="se-3"></i>Vaise</span>
+          </div>
+          <div class="plot" data-pane="chart"><svg class="viz" data-chart="line"></svg></div>
+          <div class="tw" data-pane="table" hidden></div>
+          <figcaption>Source : relevés de fin de journée 2025 · objectif 3 % · flèches gauche/droite sur le graphique pour lire un mois</figcaption>
+        </figure>
+        <p>Vaise ne descend jamais sous 4,8 % ; Croix-Rousse est à 3,7 % sur l'année, à 0,7 point de l'objectif.</p>
+      </section>
+
+      <section class="sec">
+        <h2>Cumuler des parts</h2>
+        <figure class="fig" data-fig="stack">
+          <p class="fig-t">Pain produit par fournil et par mois, en tonnes</p>
+          <p class="fig-s">Les segments s'empilent de Croix-Rousse (bas) à Vaise (haut) et un filet de fond les sépare. Seule la colonne maximale porte son total ; le survol donne le reste.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div class="lgd">
+            <span><i class="se-1"></i>Croix-Rousse</span>
+            <span><i class="se-2"></i>Guillotière</span>
+            <span><i class="se-3"></i>Vaise</span>
+          </div>
+          <div class="plot" data-pane="chart"><svg class="viz" data-chart="stack"></svg></div>
+          <div class="tw" data-pane="table" hidden></div>
+          <figcaption>Source : fiches de production 2025 · total annuel 412 t · Croix-Rousse 178 t, Guillotière 152 t, Vaise 82 t</figcaption>
+        </figure>
+      </section>
+
+      <section class="sec">
+        <h2>Situer une affluence</h2>
+        <figure class="fig" data-fig="heat">
+          <p class="fig-t">Passages en caisse à Croix-Rousse, par heure et par jour</p>
+          <p class="fig-s">Une seule teinte, du clair au foncé : plus la case est foncée, plus la boutique est pleine. La semaine se lit en trois pics, 8 h, 12 h et 18 h, et le samedi les porte tous.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div class="plot" data-pane="chart">
+            <div class="tw"><div class="hm hmx" data-chart="heat" role="group" aria-label="Passages en caisse par heure et par jour"></div></div>
+          </div>
+          <div class="tw" data-pane="table" hidden></div>
+          <div class="lgd" style="margin-top:var(--s2); align-items:center">
+            <span>moins</span>
+            <div class="hm" style="grid-template-columns:repeat(5,1.2rem)" aria-hidden="true"><i class="q1"></i><i class="q2"></i><i class="q3"></i><i class="q4"></i><i class="q5"></i></div>
+            <span id="heat-range">plus</span>
+          </div>
+          <figcaption>Source : tickets de caisse 2025, moyenne par heure d'ouverture · flèches pour parcourir les cases</figcaption>
+        </figure>
+      </section>
+
+      <section class="sec">
+        <h2>Mesurer un écart</h2>
+        <figure class="fig" data-fig="div">
+          <p class="fig-t">Chiffre d'affaires réel contre prévision, écart mensuel en %</p>
+          <p class="fig-s">Deux pôles opposés de part et d'autre d'un zéro neutre : le bleu dépasse la prévision, la brique reste en dessous. Seuls les extrêmes sont étiquetés.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div class="lgd">
+            <span><i class="se-1"></i>au-dessus de la prévision</span>
+            <span><i class="se-2"></i>en dessous de la prévision</span>
+          </div>
+          <div class="plot" data-pane="chart"><svg class="viz" data-chart="div"></svg></div>
+          <div class="tw" data-pane="table" hidden></div>
+          <figcaption>Source : budget voté 2024-12 et comptabilité analytique 2025 · écart = (réel − prévision) / prévision</figcaption>
+        </figure>
+        <p>Août (−5,2 %) est le mois le plus bas : la fermeture estivale de deux semaines n'était pas dans le budget.</p>
+      </section>
+
+      <section class="sec">
+        <h2>Séparer les fournils</h2>
+        <figure class="fig" data-fig="small">
+          <p class="fig-t">Chiffre d'affaires mensuel, un panneau par fournil, en k€</p>
+          <p class="fig-s">Trois panneaux, même échelle verticale de 0 à 45 : les écarts de niveau restent honnêtes. Au-delà de trois, on regroupe ou on filtre.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div data-pane="chart">
+            <div class="grid2">
+              <div><p class="fig-t">Croix-Rousse</p><div class="plot"><svg class="viz" data-chart="sm0"></svg></div></div>
+              <div><p class="fig-t">Guillotière</p><div class="plot"><svg class="viz" data-chart="sm1"></svg></div></div>
+              <div><p class="fig-t">Vaise</p><div class="plot"><svg class="viz" data-chart="sm2"></svg></div></div>
+            </div>
+          </div>
+          <div class="tw" data-pane="table" hidden></div>
+          <figcaption>Source : comptabilité analytique 2025 · total annuel 1 124 k€</figcaption>
+        </figure>
+      </section>
+
+      <footer>
+        <span>Digital Stoic</span>
+        <span>valide au 2026-11-06</span>
+        <span>revoir avant 2027-02-06</span>
+        <span>Tablette · v0.3</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+var NS = "http://www.w3.org/2000/svg";
+var MOIS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+var MOIS_L = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+var HEADS = MOIS_L.map(function (m) { return m + " 2025"; });
+
+function el(tag, attrs, parent) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function dom(tag, cls, text, parent) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function fr(v, d) {
+  return v.toLocaleString("fr-FR", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+}
+function sgn(v, d) { return (v > 0 ? "+" : v < 0 ? "−" : "") + fr(Math.abs(v), d); }
+
+/* ── Données ─────────────────────────────────────────────────────────── */
+var CA = [
+  { name: "Croix-Rousse", cls: "se-1", data: [32, 32, 35, 36, 38, 40, 37, 34, 40, 42, 41, 43] },
+  { name: "Guillotière", cls: "se-2", data: [30, 29, 32, 32, 34, 35, 33, 30, 36, 37, 37, 39] },
+  { name: "Vaise", cls: "se-3", data: [20, 19, 21, 22, 23, 23, 22, 20, 24, 25, 24, 27] }
+];
+var CA_TOTAL = [82, 80, 88, 90, 95, 98, 92, 84, 100, 104, 102, 109];
+var INV = [
+  { name: "Croix-Rousse", cls: "se-1", data: [4.3, 4.2, 4.0, 3.9, 3.6, 3.4, 3.6, 3.9, 3.3, 3.4, 3.5, 3.7] },
+  { name: "Guillotière", cls: "se-2", data: [4.7, 4.6, 4.4, 4.3, 4.0, 3.9, 4.1, 4.5, 3.8, 3.9, 4.0, 4.2] },
+  { name: "Vaise", cls: "se-3", data: [5.6, 5.5, 5.2, 5.1, 4.9, 4.8, 5.1, 5.6, 4.9, 5.0, 5.2, 5.5] }
+];
+var TONNES = [
+  { name: "Croix-Rousse", cls: "se-1", data: [12, 12, 13, 15, 15, 15, 15, 14, 16, 15, 18, 18] },
+  { name: "Guillotière", cls: "se-2", data: [12, 11, 13, 12, 13, 14, 12, 11, 14, 15, 13, 12] },
+  { name: "Vaise", cls: "se-3", data: [7, 7, 7, 7, 7, 7, 7, 6, 7, 8, 6, 6] }
+];
+var ECART = [-2.1, -3.4, 1.2, 2.8, 4.1, 3.3, -1.4, -5.2, 2.6, 3.9, 0.8, 4.5];
+var JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+var PROFIL = { 7: 42, 8: 78, 9: 64, 10: 48, 11: 55, 12: 92, 13: 70, 14: 34, 15: 30, 16: 46, 17: 73, 18: 88, 19: 40 };
+var COEF = [0.78, 0.82, 0.9, 0.86, 1, 1.28, 1.1];
+function passages(d, h) { return Math.round(PROFIL[h] * COEF[d]) + ((h * 7 + d * 13) % 9) - 4; }
+
+/* ── Briques ─────────────────────────────────────────────────────────── */
+function makeTip(plot) {
+  var t = dom("div", "tip", null, plot);
+  t.hidden = true;
+  return {
+    show: function (px, py, head, rows) {
+      t.replaceChildren();
+      dom("div", "hd", head, t);
+      rows.forEach(function (r) {
+        var d = dom("div", null, null, t);
+        if (r.cls) {
+          dom("span", "tk " + r.cls, null, d);
+          d.appendChild(document.createTextNode(" "));
+        }
+        dom("b", null, r.v, d);
+        d.appendChild(document.createTextNode(" " + r.n));
+      });
+      t.hidden = false;
+      var w = t.offsetWidth, W = plot.clientWidth;
+      var x = px + 14;
+      if (x + w > W) x = px - w - 14;
+      t.style.left = Math.max(0, x) + "px";
+      t.style.top = Math.max(0, py - t.offsetHeight - 8) + "px";
+    },
+    hide: function () { t.hidden = true; }
+  };
+}
+
+function frame(svg, o, m) {
+  var W = o.W, H = o.H;
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var iw = W - m.l - m.r, ih = H - m.t - m.b;
+  var Y = function (v) { return m.t + ih * (1 - (v - o.ymin) / (o.ymax - o.ymin)); };
+  for (var v = o.ymin; v <= o.ymax + 1e-9; v += o.step) {
+    el("line", { "class": Math.abs(v - o.base) < 1e-9 ? "axis" : "grid", x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, svg);
+    el("text", { x: m.l - 6, y: Y(v) + 3, "text-anchor": "end" }, svg).textContent = o.tick(v);
+  }
+  return { iw: iw, ih: ih, Y: Y };
+}
+
+function lineChart(svg, o) {
+  o.base = o.ymin;
+  var m = { l: o.ml || 38, r: o.mr || 16, t: 14, b: 26 }, W = o.W, H = o.H;
+  var plot = svg.parentNode, tip = makeTip(plot), n = o.cats.length;
+  var f = frame(svg, o, m), Y = f.Y, iw = f.iw, ih = f.ih;
+  var X = function (i) { return m.l + (iw * i) / (n - 1); };
+  if (o.obj != null) {
+    el("line", { "class": "axis", x1: m.l, x2: W - m.r, y1: Y(o.obj), y2: Y(o.obj) }, svg);
+    el("text", { x: m.l + 4, y: Y(o.obj) - 5, "class": "val" }, svg).textContent = o.objLabel;
+  }
+  o.cats.forEach(function (c, i) {
+    if (i % (o.every || 1) === 0) el("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = c;
+  });
+  var dots = [];
+  o.series.forEach(function (s) {
+    var g = el("g", { "class": s.cls }, svg);
+    var d = s.data.map(function (val, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(val).toFixed(1); }).join("");
+    el("path", { "class": "ln", d: d }, g);
+    el("circle", { "class": "dot", cx: X(n - 1), cy: Y(s.data[n - 1]), r: 4 }, g);
+    dots.push(el("circle", { "class": "dot", r: 4, display: "none" }, g));
+    var last = s.data[n - 1];
+    el("text", { "class": "val", x: X(n - 1) + 10, y: Y(last) + 3 }, svg).textContent = o.direct ? s.name : fr(last);
+  });
+  var xh = el("line", { "class": "axis", y1: m.t, y2: m.t + ih, display: "none" }, svg);
+  var hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "none", "pointer-events": "all" }, svg);
+  function at(i) {
+    i = Math.max(0, Math.min(n - 1, i));
+    var k = svg.getBoundingClientRect().width / W, top = 1e9;
+    xh.setAttribute("x1", X(i));
+    xh.setAttribute("x2", X(i));
+    xh.removeAttribute("display");
+    o.series.forEach(function (s, j) {
+      dots[j].setAttribute("cx", X(i));
+      dots[j].setAttribute("cy", Y(s.data[i]));
+      dots[j].removeAttribute("display");
+      top = Math.min(top, Y(s.data[i]));
+    });
+    tip.show(X(i) * k, top * k, o.heads[i], o.series.map(function (s) {
+      return { cls: s.cls, n: s.name, v: o.vfmt(s.data[i]) };
+    }));
+    return i;
+  }
+  function off() {
+    xh.setAttribute("display", "none");
+    dots.forEach(function (d) { d.setAttribute("display", "none"); });
+    tip.hide();
+  }
+  var cur = n - 1;
+  hit.addEventListener("pointermove", function (e) {
+    var r = svg.getBoundingClientRect();
+    cur = at(Math.round((((e.clientX - r.left) * W) / r.width - m.l) / iw * (n - 1)));
+  });
+  hit.addEventListener("pointerleave", off);
+  svg.setAttribute("tabindex", "0");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", o.label);
+  svg.addEventListener("focus", function () { cur = at(cur); });
+  svg.addEventListener("blur", off);
+  svg.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") cur = at(cur + 1);
+    else if (e.key === "ArrowLeft") cur = at(cur - 1);
+    else if (e.key === "Escape") off();
+    else return;
+    e.preventDefault();
+  });
+}
+
+/* Colonnes : une cible par colonne, le survol liste chaque segment. */
+function columnHits(svg, o) {
+  var plot = svg.parentNode, tip = makeTip(plot), cols = [];
+  o.items.forEach(function (it, i) {
+    var hit = el("rect", {
+      x: o.x(i) - o.band / 2, y: o.top, width: o.band, height: o.height, fill: "none", "pointer-events": "all",
+      tabindex: "0", "aria-label": it.aria
+    }, svg);
+    function on() {
+      var k = svg.getBoundingClientRect().width / o.W;
+      cols.forEach(function (c, j) { c.forEach(function (p) { p.setAttribute("opacity", j === i ? 1 : 0.55); }); });
+      tip.show(o.x(i) * k, it.y * k, it.head, it.rows);
+    }
+    function off() {
+      cols.forEach(function (c) { c.forEach(function (p) { p.removeAttribute("opacity"); }); });
+      tip.hide();
+    }
+    hit.addEventListener("pointermove", on);
+    hit.addEventListener("pointerleave", off);
+    hit.addEventListener("focus", on);
+    hit.addEventListener("blur", off);
+  });
+  return cols;
+}
+
+function stackChart(svg, o) {
+  var m = { l: 34, r: 16, t: 22, b: 26 }, W = o.W, H = o.H, n = o.cats.length;
+  o.base = o.ymin;
+  var f = frame(svg, o, m), Y = f.Y, band = f.iw / n, cw = 24;
+  var X = function (i) { return m.l + band * (i + 0.5); };
+  var items = [], cols = [], maxI = 0, tot = [];
+  for (var i = 0; i < n; i++) {
+    tot[i] = o.series.reduce(function (a, s) { return a + s.data[i]; }, 0);
+    if (tot[i] > tot[maxI]) maxI = i;
+  }
+  for (i = 0; i < n; i++) {
+    var acc = 0, col = [];
+    o.series.forEach(function (s) {
+      var g = el("g", { "class": s.cls }, svg);
+      var r = el("rect", { "class": "mk stk", x: X(i) - cw / 2, y: Y(acc + s.data[i]), width: cw, height: Y(acc) - Y(acc + s.data[i]) }, g);
+      col.push(r);
+      acc += s.data[i];
+    });
+    cols.push(col);
+    el("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = o.cats[i];
+    items.push({
+      head: o.heads[i], y: Y(tot[i]),
+      rows: o.series.map(function (s) { return { cls: s.cls, n: s.name, v: fr(s.data[i]) + " t" }; }).concat([{ n: "au total", v: fr(tot[i]) + " t" }]),
+      aria: o.heads[i] + " : " + o.series.map(function (s) { return s.name + " " + fr(s.data[i]) + " tonnes"; }).join(", ") + ", total " + fr(tot[i]) + " tonnes"
+    });
+  }
+  el("text", { "class": "val", x: X(maxI), y: Y(tot[maxI]) - 6, "text-anchor": "middle" }, svg).textContent = fr(tot[maxI]) + " t";
+  svg.setAttribute("role", "group");
+  svg.setAttribute("aria-label", o.label);
+  var hits = columnHits(svg, { W: W, x: X, band: band, top: m.t, height: f.ih, items: items });
+  /* les marques sont déjà posées : on relie chaque colonne à sa cible de survol */
+  cols.forEach(function (c, j) { hits.push(c); });
+}
+
+function divChart(svg, o) {
+  var m = { l: 44, r: 16, t: 20, b: 26 }, W = o.W, H = o.H, n = o.cats.length, w = 18, rr = 4;
+  o.base = 0;
+  var f = frame(svg, o, m), Y = f.Y, band = f.iw / n;
+  var X = function (i) { return m.l + band * (i + 0.5); };
+  el("line", { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), stroke: "var(--dv-mid)", "stroke-width": 1.5 }, svg);
+  var items = [], marks = [], mx = 0, mn = 0;
+  o.data.forEach(function (v, i) {
+    if (v > o.data[mx]) mx = i;
+    if (v < o.data[mn]) mn = i;
+  });
+  o.data.forEach(function (v, i) {
+    var x = X(i) - w / 2, y0 = Y(0), y1 = Y(v), g = el("g", { "class": v >= 0 ? "se-1" : "se-2" }, svg), d;
+    if (v >= 0) d = "M" + x + " " + y0 + "V" + (y1 + rr) + "a" + rr + " " + rr + " 0 0 1 " + rr + " -" + rr + "h" + (w - 2 * rr) + "a" + rr + " " + rr + " 0 0 1 " + rr + " " + rr + "V" + y0 + "Z";
+    else d = "M" + x + " " + y0 + "V" + (y1 - rr) + "a" + rr + " " + rr + " 0 0 0 " + rr + " " + rr + "h" + (w - 2 * rr) + "a" + rr + " " + rr + " 0 0 0 " + rr + " -" + rr + "V" + y0 + "Z";
+    marks.push([el("path", { "class": "mk", d: d }, g)]);
+    el("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = o.cats[i];
+    if (i === mx || i === mn) {
+      el("text", { "class": "val", x: X(i), y: v >= 0 ? y1 - 6 : y1 + 14, "text-anchor": "middle" }, svg).textContent = sgn(v, 1) + " %";
+    }
+    items.push({
+      head: o.heads[i], y: v >= 0 ? y1 : y0,
+      rows: [{ cls: v >= 0 ? "se-1" : "se-2", n: "d'écart", v: sgn(v, 1) + " %" }, { n: "prévision", v: fr(o.prev[i], 1) + " k€" }, { n: "réel", v: fr(o.reel[i]) + " k€" }],
+      aria: o.heads[i] + " : écart " + sgn(v, 1) + " %, prévision " + fr(o.prev[i], 1) + " k€, réel " + fr(o.reel[i]) + " k€"
+    });
+  });
+  svg.setAttribute("role", "group");
+  svg.setAttribute("aria-label", o.label);
+  var hit = columnHits(svg, { W: W, x: X, band: band, top: m.t, height: f.ih, items: items });
+  hit.length = 0;
+  marks.forEach(function (c) { hit.push(c); });
+}
+
+function tableOf(head, rows, caption) {
+  var t = dom("table");
+  dom("caption", "hint", caption, t);
+  var tr = dom("tr", null, null, dom("thead", null, null, t));
+  head.forEach(function (h, i) { var th = dom("th", i ? "r" : null, h, tr); th.setAttribute("scope", "col"); });
+  var tb = dom("tbody", null, null, t);
+  rows.forEach(function (r) {
+    var row = dom("tr", null, null, tb);
+    r.forEach(function (c, i) { dom("td", i ? "num r" : null, c, row); });
+  });
+  return t;
+}
+function pane(fig) { return document.querySelector('[data-fig="' + fig + '"] [data-pane="table"]'); }
+function chart(name) { return document.querySelector('[data-chart="' + name + '"]'); }
+
+/* ── Graphique ↔ tableau ─────────────────────────────────────────────── */
+document.querySelectorAll("[data-fig]").forEach(function (fig) {
+  var btns = fig.querySelectorAll("[data-v]");
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      btns.forEach(function (x) {
+        var on = x === b;
+        x.setAttribute("aria-pressed", on);
+        x.classList.toggle("ghost", !on);
+      });
+      fig.querySelectorAll("[data-pane]").forEach(function (p) { p.hidden = p.dataset.pane !== b.dataset.v; });
+    });
+  });
+});
+
+/* ── 1. Courbes ──────────────────────────────────────────────────────── */
+lineChart(chart("line"), {
+  W: 640, H: 260, mr: 96, cats: MOIS, heads: HEADS, series: INV, direct: true,
+  ymin: 2, ymax: 6, step: 1, tick: function (v) { return fr(v); },
+  obj: 3, objLabel: "objectif 3 %", vfmt: function (v) { return fr(v, 1) + " %"; },
+  label: "Taux d'invendus mensuel 2025 par fournil, en pourcentage"
+});
+pane("line").appendChild(tableOf(
+  ["Mois", "Croix-Rousse (%)", "Guillotière (%)", "Vaise (%)"],
+  MOIS_L.map(function (m, i) { return [m, fr(INV[0].data[i], 1), fr(INV[1].data[i], 1), fr(INV[2].data[i], 1)]; }),
+  "Taux d'invendus mensuel 2025 par fournil, en pourcentage"
+));
+
+/* ── 2. Barres empilées ──────────────────────────────────────────────── */
+stackChart(chart("stack"), {
+  W: 640, H: 280, cats: MOIS, heads: HEADS, series: TONNES,
+  ymin: 0, ymax: 40, step: 10, tick: function (v) { return fr(v); },
+  label: "Pain produit par fournil et par mois en 2025, en tonnes"
+});
+pane("stack").appendChild(tableOf(
+  ["Mois", "Croix-Rousse (t)", "Guillotière (t)", "Vaise (t)", "Total (t)"],
+  MOIS_L.map(function (m, i) {
+    return [m, fr(TONNES[0].data[i]), fr(TONNES[1].data[i]), fr(TONNES[2].data[i]),
+      fr(TONNES[0].data[i] + TONNES[1].data[i] + TONNES[2].data[i])];
+  }),
+  "Pain produit par fournil et par mois en 2025, en tonnes"
+));
+
+/* ── 3. Carte de chaleur ─────────────────────────────────────────────── */
+(function () {
+  var grid = chart("heat"), plot = grid.closest(".plot"), tip = makeTip(plot);
+  var hours = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], vals = [], lo = 1e9, hi = 0;
+  JOURS.forEach(function (j, d) {
+    vals[d] = hours.map(function (h) { var v = passages(d, h); lo = Math.min(lo, v); hi = Math.max(hi, v); return v; });
+  });
+  grid.style.gridTemplateColumns = "2.2rem repeat(" + hours.length + ",minmax(1.6rem,1fr))";
+  dom("span", null, "", grid);
+  hours.forEach(function (h) { dom("span", null, h + " h", grid).style.justifySelf = "center"; });
+  var cells = [];
+  JOURS.forEach(function (j, d) {
+    dom("span", null, j, grid);
+    cells[d] = hours.map(function (h, c) {
+      var v = vals[d][c], q = Math.min(5, 1 + Math.floor(((v - lo) / (hi - lo)) * 5));
+      var i = dom("i", "q" + q, null, grid);
+      i.setAttribute("tabindex", d === 0 && c === 0 ? "0" : "-1");
+      i.setAttribute("aria-label", j + " " + h + " h : " + v + " passages");
+      function on() {
+        var a = i.getBoundingClientRect(), b = plot.getBoundingClientRect();
+        tip.show(a.left - b.left + a.width / 2, a.top - b.top, j + " " + h + " h", [{ n: "passages par heure", v: String(v) }]);
+      }
+      i.addEventListener("pointerenter", on);
+      i.addEventListener("pointerleave", function () { tip.hide(); });
+      i.addEventListener("focus", on);
+      i.addEventListener("blur", function () { tip.hide(); });
+      i.addEventListener("keydown", function (e) {
+        var nd = d, nc = c;
+        if (e.key === "ArrowRight") nc++;
+        else if (e.key === "ArrowLeft") nc--;
+        else if (e.key === "ArrowDown") nd++;
+        else if (e.key === "ArrowUp") nd--;
+        else return;
+        e.preventDefault();
+        if (cells[nd] && cells[nd][nc]) {
+          i.setAttribute("tabindex", "-1");
+          cells[nd][nc].setAttribute("tabindex", "0");
+          cells[nd][nc].focus();
+        }
+      });
+      return i;
+    });
+  });
+  document.getElementById("heat-range").textContent = "plus · de " + lo + " à " + hi + " passages par heure";
+  pane("heat").appendChild(tableOf(
+    ["Heure"].concat(JOURS),
+    hours.map(function (h, c) { return [h + " h"].concat(JOURS.map(function (j, d) { return String(vals[d][c]); })); }),
+    "Passages en caisse à Croix-Rousse, moyenne par heure et par jour, 2025"
+  ));
+})();
+
+/* ── 4. Divergent ────────────────────────────────────────────────────── */
+var PREV = ECART.map(function (e, i) { return CA_TOTAL[i] / (1 + e / 100); });
+divChart(chart("div"), {
+  W: 640, H: 260, cats: MOIS, heads: HEADS, data: ECART, prev: PREV, reel: CA_TOTAL,
+  ymin: -6, ymax: 6, step: 3, tick: function (v) { return sgn(v) + (v ? " %" : ""); },
+  label: "Écart mensuel du chiffre d'affaires réel à la prévision en 2025, en pourcentage"
+});
+pane("div").appendChild(tableOf(
+  ["Mois", "Prévision (k€)", "Réel (k€)", "Écart (%)"],
+  MOIS_L.map(function (m, i) { return [m, fr(PREV[i], 1), fr(CA_TOTAL[i]), sgn(ECART[i], 1)]; }),
+  "Chiffre d'affaires réel et prévu en 2025, écart en pourcentage"
+));
+
+/* ── 5. Petits multiples (3 au plus) ─────────────────────────────────── */
+CA.forEach(function (s, i) {
+  lineChart(chart("sm" + i), {
+    W: 240, H: 140, ml: 28, mr: 30, every: 3, cats: MOIS, heads: HEADS, series: [s], direct: false,
+    ymin: 0, ymax: 45, step: 15, tick: function (v) { return fr(v); },
+    vfmt: function (v) { return fr(v) + " k€"; },
+    label: s.name + " : chiffre d'affaires mensuel 2025, en k€"
+  });
+});
+pane("small").appendChild(tableOf(
+  ["Mois", "Croix-Rousse (k€)", "Guillotière (k€)", "Vaise (k€)"],
+  MOIS_L.map(function (m, i) { return [m, fr(CA[0].data[i]), fr(CA[1].data[i]), fr(CA[2].data[i])]; }),
+  "Chiffre d'affaires mensuel 2025 par fournil, en k€"
+));
+
+/* ── Versant clair / sombre ──────────────────────────────────────────── */
+document.getElementById("tgl").addEventListener("click", function () {
+  var root = document.documentElement;
+  var now = root.getAttribute("data-theme");
+  if (!now) now = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  root.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+});
+</script>

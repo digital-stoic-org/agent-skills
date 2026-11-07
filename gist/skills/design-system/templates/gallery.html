@@ -1,0 +1,571 @@
+<!-- @title: Galerie — système visuel Digital Stoic -->
+<style>
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* @base */
+
+/* ── Mobilier propre à la galerie ──────────────────────────────────────────
+   Ces règles décrivent la spécification elle-même, pas le système. Elles ne
+   remontent pas dans le socle : une fiche de composant n'est pas un composant.
+   ───────────────────────────────────────────────────────────────────────── */
+.spec{border-top:1px solid var(--line); padding:var(--s3) 0 var(--s4)}
+.spec:last-child{padding-bottom:var(--s3)}
+.spec-n{font-family:var(--mono); font-size:.72rem; color:var(--accent); letter-spacing:.02em}
+.spec-r{color:var(--muted); font-size:.92rem; max-width:68ch; margin:.35rem 0 var(--s3)}
+.spec-d{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:var(--s3)}
+.spec-d > :last-child{margin-bottom:0}
+
+/* Échelle d'espacement : la barre vaut la mesure, on ne la décrit pas. */
+.scale{display:grid; gap:var(--s2)}
+.scale > div{display:grid; grid-template-columns:3.2rem 4.5rem 1fr; gap:var(--s2); align-items:center}
+.scale .k{font-family:var(--mono); font-size:.7rem; color:var(--accent)}
+.scale .v{font-family:var(--mono); font-size:.7rem; color:var(--faint); font-variant-numeric:tabular-nums}
+.scale .b{height:.7rem; background:var(--accent-weak); border-left:2px solid var(--accent)}
+
+/* Spécimens typographiques */
+.face{border-top:1px solid var(--line); padding:var(--s3) 0}
+.face:first-child{border-top:0; padding-top:0}
+.face .who{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint)}
+.face .sample{margin:.4rem 0 .3rem}
+.face .use{font-size:.88rem; color:var(--muted); max-width:68ch; margin:0}
+.f-serif{font-family:var(--serif); font-size:2.3rem; line-height:1.15; font-weight:400}
+.f-sans{font-family:var(--sans); font-size:1.15rem; line-height:1.4}
+.f-mono{font-family:var(--mono); font-size:1rem; letter-spacing:.02em}
+
+</style>
+
+<div class="wrap">
+
+  <div class="bar">
+    <span class="mark">DS</span>
+    <span class="who">Digital Stoic — galerie</span>
+    <span class="sp"></span>
+    <button class="tgl" id="tgl" type="button">Inverser le versant</button>
+  </div>
+
+  <div class="doc">
+
+    <aside class="rail">
+      <dl>
+        <dt>Statut</dt><dd>Spécification vivante</dd>
+        <dt>Version</dt><dd>0.2</dd>
+        <dt>Palette</dt><dd>Tablette</dd>
+        <dt>Portée</dt><dd>Artefacts</dd>
+        <dt>Établi le</dt><dd>2026-11-03</dd>
+        <dt>Revoir avant</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="marg">Une spécification qui se lit sans se rendre ment sur ce qu'elle décrit.</p>
+    </aside>
+
+    <main>
+      <p class="eyebrow">Référence · Spécification vivante</p>
+      <h1>La galerie</h1>
+      <p class="lede">Tout ce que le système sait faire, rendu plutôt que décrit. Ce que cette page affiche est ce que le système est — les arbitrages sont tranchés, il n'y a plus de variante en attente.</p>
+
+      <section class="sec">
+        <h2>Les jetons de couleur</h2>
+        <p>Rien n'est jamais stylé en dur. Chaque règle passe par un jeton, et la palette se réécrit en quatre blocs — versant clair, préférence système sombre, et les deux estampilles <span style="font-family:var(--mono);font-size:.85em">data-theme</span> qui doivent l'emporter sur la préférence dans les deux sens.</p>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr><th></th><th>Jeton</th><th>Clair</th><th>Sombre</th><th>Rôle</th></tr>
+            </thead>
+            <tbody id="tokens"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>La bande</h2>
+        <p>Les nuances porteuses, mises bout à bout. Le libellé posé sur chaque nuance calcule sa propre couleur : elle dépend du versant actif, et se décide par luminance relative, pas à l'avance.</p>
+        <div class="strip" id="strip"></div>
+      </section>
+
+      <section class="sec">
+        <h2>Les échelles</h2>
+        <p>Six pas d'espacement et un seul rayon. Une valeur qui ne figure pas dans cette liste n'a pas à apparaître dans une feuille de style.</p>
+        <div class="scale" id="scale"></div>
+        <p style="margin-top:var(--s3)">Le rayon <span style="font-family:var(--mono);font-size:.85em">--r</span> vaut 6&nbsp;px et ne s'applique qu'aux conteneurs de premier niveau. Un composant interne reste à angle vif.</p>
+      </section>
+
+      <section class="sec">
+        <h2>Les familles</h2>
+        <p>La police suit le rôle de l'élément. Garamond pour ce qu'on lit, Hanken Grotesk pour ce qu'on actionne ou compare, la monospace pour ce qu'on recopie tel quel. Le partage est fonctionnel : la forme des lettres dit ce qu'on fait du texte.</p>
+
+        <div class="face">
+          <p class="who">EB Garamond — lire</p>
+          <p class="sample f-serif">Le coût du build s'est effondré</p>
+          <p class="use">Titres, chapô, corps, conviction assumée en italique, et les étiquettes éditoriales en petites capitales : marque, sur-titre, rail, tags de registre. Un ajustement d'oeil de .5 compense son petit x-height. La mesure du corps ne dépasse jamais 68&nbsp;caractères.</p>
+        </div>
+
+        <div class="face">
+          <p class="who">Hanken Grotesk — actionner, comparer</p>
+          <p class="sample f-sans">BOUTON · TAG · EN-TÊTE DE TABLEAU</p>
+          <div class="states" style="margin-top:var(--s2)"><button>Exporter</button><button class="ghost">Annuler</button><span class="chip chip-ok">Conforme</span></div>
+          <p class="use">Boutons, tags d'état, champs, en-têtes et cellules de tableau, chiffres saillants, légendes, texte des graphiques, rail du tableau de bord, dans tous les modes. La classe mode-outil fait en plus passer les étiquettes éditoriales en Hanken capitales.</p>
+        </div>
+
+        <div class="face">
+          <p class="who">JetBrains Mono — recopier</p>
+          <p class="sample f-mono">2026-08-03 · ANCHOR-2026-07-28 · --accent</p>
+          <p class="use">Ce qu'on recopie tel quel : identifiants, noms de jetons, valeurs hexadécimales, sources, valeurs du rail de document, code, surcouche. Jamais pour une étiquette.</p>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>Les composants</h2>
+        <p>Huit familles, toutes déjà en service. Chacune porte une règle d'emploi : un composant dont on ne sait pas quand l'employer se retrouve employé partout.</p>
+
+        <div class="spec">
+          <p class="spec-n">.bar .mark .who .tgl</p>
+          <p class="spec-r">La barre de tête. Elle identifie la page et rien d'autre. La bascule de versant y reste alignée à droite, jamais flottante.</p>
+          <div class="spec-d">
+            <div class="bar" style="margin-bottom:0">
+              <span class="mark">DS</span>
+              <span class="who">Titre de la page</span>
+              <span class="sp"></span>
+              <button class="tgl" type="button">Inverser le versant</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.doc .rail .marg</p>
+          <p class="spec-r">Le rail de métadonnées et la colonne de lecture. Le rail porte le statut, la version et les dates de validité ; il se replie en une seule colonne sous 760&nbsp;px. La marginalia s'écrit en italique et commente, elle n'informe pas.</p>
+          <div class="spec-d">
+            <aside class="rail" style="max-width:11rem">
+              <dl><dt>Statut</dt><dd>Proposition</dd><dt>Revoir avant</dt><dd>2026-09-01</dd></dl>
+              <p class="marg" style="margin-top:var(--s3)">Ce qui n'est pas daté ne se relit pas.</p>
+            </aside>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.eyebrow .lede .sec</p>
+          <p class="spec-r">La hiérarchie de lecture. Le surtitre situe, le chapô engage, la section découpe. Le chapô se tient sous 44&nbsp;caractères de mesure — au-delà il cesse d'être un chapô.</p>
+          <div class="spec-d">
+            <p class="eyebrow">Référence · Identité visuelle</p>
+            <h1 style="font-size:1.9rem">Un titre de premier niveau</h1>
+            <p class="lede" style="margin-bottom:0">Le chapô porte la promesse de la page et s'arrête là.</p>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.regs .reg-fact .reg-cons .reg-conv</p>
+          <p class="spec-r">Les trois registres d'affirmation, le dispositif propre au système. Le fait n'entre qu'avec une source réelle, le consensus qu'avec une date, la conviction qu'à la première personne. On lit le niveau d'engagement avant d'avoir lu la phrase.</p>
+          <div class="spec-d">
+            <div class="regs">
+              <div class="reg reg-fact">
+                <div class="glyph">01</div>
+                <div>
+                  <p>Six praticiens indépendants sur sept citent spontanément l'artisanat et le « pas de slides ».</p>
+                  <span class="tag">Fait vérifiable</span> <span class="src">[ANCHOR-2026-07-28 · Bloc 4]</span>
+                </div>
+              </div>
+              <div class="reg reg-cons">
+                <div class="glyph">02</div>
+                <div>
+                  <p>La discussion se déplace de « quel assistant utiliser » vers « comment outiller sa chaîne de travail ».</p>
+                  <span class="tag">Consensus émergent</span> <span class="when">daté 2026-07</span>
+                </div>
+              </div>
+              <div class="reg reg-conv">
+                <div class="glyph">03</div>
+                <div>
+                  <p>Le coût du build s'est effondré ; celui du run, non.</p>
+                  <span class="tag">Conviction assumée</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.dicho .up .not</p>
+          <p class="spec-r">La dichotomie du contrôle. Le bleu marque la colonne sur laquelle le lecteur a prise, le neutre marque ce qu'il ne fait que constater. Une seule mécanique de couleur, deux lectures.</p>
+          <div class="spec-d">
+            <div class="dicho" style="border-top:0">
+              <div class="up">
+                <h3>↑ Ce qui dépend de toi</h3>
+                <ul><li>La thèse qu'on défend</li><li>Le harnais qu'on se construit</li></ul>
+              </div>
+              <div class="not">
+                <h3>→ Ce qui n'en dépend pas</h3>
+                <ul><li>Le cycle du marché</li><li>La feuille de route d'un fournisseur</li></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.kpis .n .l</p>
+          <p class="spec-r">Les chiffres saillants. Hanken pour le nombre et pour le libellé en capitales, chiffres tabulaires pour que les colonnes s'alignent. Trois au maximum : au-delà, plus rien ne saille.</p>
+          <div class="spec-d">
+            <div class="kpis" style="border-top:0">
+              <div><span class="n">3</span><span class="l">familles typographiques</span></div>
+              <div><span class="n">2</span><span class="l">couleurs porteuses de sens</span></div>
+              <div><span class="n">6</span><span class="l">px de rayon, maximum</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.states .chip-ok .chip-warn .chip-crit</p>
+          <p class="spec-r">Les états restent séparés de l'accent : une couleur d'état ne réutilise jamais le bleu. Le critique n'est pas une teinte, c'est une inversion du fond et du texte — l'alerte se voit parce que la page s'est retournée.</p>
+          <div class="spec-d">
+            <div class="states" style="margin-bottom:0">
+              <span class="chip chip-ok">Conforme</span>
+              <span class="chip chip-warn">À surveiller</span>
+              <span class="chip chip-crit">Critique</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.tw table .hex .name .sw · .strip</p>
+          <p class="spec-r">Les tableaux et la bande de nuances. Des filets, jamais des cartes. Le tableau reçoit sa couleur explicitement — un fichier ouvert localement n'a pas de doctype, et en mode quirks un tableau n'hérite pas de la couleur de ses ancêtres. Tout contenu large se met dans son propre conteneur défilant.</p>
+          <div class="spec-d">
+            <div class="tw">
+              <table>
+                <thead><tr><th></th><th>Jeton</th><th>Clair</th><th>Rôle</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="sw" style="background:var(--accent)"></span></td><td class="name">--accent</td><td class="hex">#1F3F8F</td><td>actionnable</td></tr>
+                  <tr><td><span class="sw" style="background:var(--voice)"></span></td><td class="name">--voice</td><td class="hex">#9A3B1A</td><td>conviction</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>Les séries</h2>
+        <p>Six emplacements, dans un ordre figé. L'ordre n'est pas décoratif&nbsp;: c'est lui qui garantit que deux séries voisines restent distinguables, y compris pour un œil daltonien. Chaque valeur a été validée sur les deux versants — bande de luminance, plancher de chroma, écart entre paires voisines, écart en vision normale, contraste sur la surface. Rien ici n'a été choisi à l'œil.</p>
+
+        <div class="spec">
+          <p class="spec-n">.se-1 … .se-6</p>
+          <p class="spec-r">La couleur suit l'entité, jamais son rang&nbsp;: un filtre qui change le nombre de séries ne doit pas repeindre les survivantes. Une seule mécanique — <span class="f-mono" style="font-size:.85em">.se-N</span> pose <span class="f-mono" style="font-size:.85em">color</span>, le SVG le récupère par <span class="f-mono" style="font-size:.85em">currentColor</span>. Au-delà de six, on replie en «&nbsp;Autres&nbsp;» ou on facette&nbsp;; on ne fabrique pas une septième teinte.</p>
+          <div class="spec-d">
+            <div class="lgd" style="margin-bottom:0">
+              <span><i class="se-1"></i>Bleu</span>
+              <span><i class="se-2"></i>Brique</span>
+              <span><i class="se-3"></i>Teal</span>
+              <span><i class="se-4"></i>Violet</span>
+              <span><i class="se-5"></i>Ambre</span>
+              <span><i class="se-6"></i>Magenta</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.fig .viz .mk · barres groupées</p>
+          <p class="spec-r">La comparaison de grandeurs. Les extrémités côté valeur s'arrondissent à 4&nbsp;px, celles posées sur la ligne de base restent d'équerre — la barre s'ancre, elle ne flotte pas. Deux&nbsp;px de fond séparent deux barres voisines. La grille recule&nbsp;: elle situe, elle ne se lit pas.</p>
+          <div class="spec-d">
+            <figure class="fig" style="margin:0">
+              <p class="fig-t">Part des livrables passés en revue</p>
+              <p class="fig-s">Trois ateliers, trois trimestres. Les valeurs sont fictives — la page démontre une forme, pas un résultat.</p>
+              <div class="lgd">
+                <span><i class="se-1"></i>Atelier A</span>
+                <span><i class="se-2"></i>Atelier B</span>
+                <span><i class="se-3"></i>Atelier C</span>
+              </div>
+              <svg class="viz" viewBox="0 0 480 155" role="img" aria-label="Barres groupées : trois ateliers sur trois trimestres.">
+                <g class="grid">
+                  <line x1="36" y1="10" x2="470" y2="10"/>
+                  <line x1="36" y1="40" x2="470" y2="40"/>
+                  <line x1="36" y1="70" x2="470" y2="70"/>
+                  <line x1="36" y1="100" x2="470" y2="100"/>
+                </g>
+                <g text-anchor="end">
+                  <text x="30" y="13">100</text>
+                  <text x="30" y="43">75</text>
+                  <text x="30" y="73">50</text>
+                  <text x="30" y="103">25</text>
+                  <text x="30" y="133">0</text>
+                </g>
+                <g class="se-1"><path class="mk" d="M71,130 V60 Q71,56 75,56 H93 Q97,56 97,60 V130 Z"/><path class="mk" d="M214,130 V40 Q214,36 218,36 H236 Q240,36 240,40 V130 Z"/><path class="mk" d="M357,130 V28 Q357,24 361,24 H379 Q383,24 383,28 V130 Z"/></g>
+                <g class="se-2"><path class="mk" d="M99,130 V80 Q99,76 103,76 H121 Q125,76 125,80 V130 Z"/><path class="mk" d="M242,130 V72 Q242,68 246,68 H264 Q268,68 268,72 V130 Z"/><path class="mk" d="M385,130 V75 Q385,71 389,71 H407 Q411,71 411,75 V130 Z"/></g>
+                <g class="se-3"><path class="mk" d="M127,130 V100 Q127,96 131,96 H149 Q153,96 153,100 V130 Z"/><path class="mk" d="M270,130 V97 Q270,93 274,93 H292 Q296,93 296,97 V130 Z"/><path class="mk" d="M413,130 V86 Q413,82 417,82 H435 Q439,82 439,86 V130 Z"/></g>
+                <line class="axis" x1="36" y1="130" x2="470" y2="130"/>
+                <g text-anchor="middle">
+                  <text x="112" y="146">T1</text>
+                  <text x="255" y="146">T2</text>
+                  <text x="398" y="146">T3</text>
+                </g>
+              </svg>
+              <figcaption>Source : jeu de démonstration · valide au 2026-08-04</figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.viz .ln .dot .area · courbe</p>
+          <p class="spec-r">L'évolution dans le temps. Traits de 2&nbsp;px, marqueurs d'au moins 8&nbsp;px de diamètre, cernés de 2&nbsp;px de fond pour que deux points superposés se lisent encore. Un seul axe des ordonnées — jamais deux échelles sur un même graphique&nbsp;: deux grandeurs de nature différente font deux graphiques.</p>
+          <div class="spec-d">
+            <figure class="fig" style="margin:0">
+              <p class="fig-t">Livrables relus par semaine</p>
+              <div class="lgd">
+                <span><i class="se-1"></i>Avec harnais</span>
+                <span><i class="se-2"></i>Sans harnais</span>
+              </div>
+              <svg class="viz" viewBox="0 0 480 155" role="img" aria-label="Deux courbes comparées sur six périodes.">
+                <g class="grid">
+                  <line x1="36" y1="20" x2="470" y2="20"/>
+                  <line x1="36" y1="55" x2="470" y2="55"/>
+                  <line x1="36" y1="90" x2="470" y2="90"/>
+                </g>
+                <g text-anchor="end">
+                  <text x="30" y="23">30</text>
+                  <text x="30" y="58">20</text>
+                  <text x="30" y="93">10</text>
+                  <text x="30" y="128">0</text>
+                </g>
+                <g class="se-2">
+                  <polyline class="ln" points="60,112 142,108 224,96 306,98 388,84 460,78"/>
+                  <circle class="dot" cx="60" cy="112" r="4"/><circle class="dot" cx="142" cy="108" r="4"/><circle class="dot" cx="224" cy="96" r="4"/>
+                  <circle class="dot" cx="306" cy="98" r="4"/><circle class="dot" cx="388" cy="84" r="4"/><circle class="dot" cx="460" cy="78" r="4"/>
+                </g>
+                <g class="se-1">
+                  <polyline class="ln" points="60,100 142,88 224,72 306,66 388,48 460,34"/>
+                  <circle class="dot" cx="60" cy="100" r="4"/><circle class="dot" cx="142" cy="88" r="4"/><circle class="dot" cx="224" cy="72" r="4"/>
+                  <circle class="dot" cx="306" cy="66" r="4"/><circle class="dot" cx="388" cy="48" r="4"/><circle class="dot" cx="460" cy="34" r="4"/>
+                </g>
+                <line class="axis" x1="36" y1="125" x2="470" y2="125"/>
+                <g text-anchor="middle">
+                  <text x="60" y="141">S1</text><text x="142" y="141">S2</text><text x="224" y="141">S3</text>
+                  <text x="306" y="141">S4</text><text x="388" y="141">S5</text><text x="460" y="141">S6</text>
+                </g>
+              </svg>
+            </figure>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.viz · anneau et magnitude continue</p>
+          <p class="spec-r">L'anneau ne sert qu'à une part d'un tout, avec peu de parts et un écart net entre elles&nbsp;; dès qu'il s'agit de comparer, la barre gagne. Deux&nbsp;px de fond séparent les segments. À droite, la magnitude continue&nbsp;: une seule teinte en cinq pas, du clair au foncé — jamais un arc-en-ciel, et jamais une teinte au milieu d'une divergente.</p>
+          <div class="spec-d">
+            <div class="grid2">
+              <figure class="fig" style="margin:0">
+                <p class="fig-t">Répartition du temps d'atelier</p>
+                <svg class="viz" viewBox="0 0 170 170" style="max-width:11rem" role="img" aria-label="Anneau à quatre parts.">
+                  <g transform="rotate(-90 85 85)" fill="none" stroke-width="22">
+                    <circle class="se-1" cx="85" cy="85" r="56" stroke="currentColor" stroke-dasharray="145.8 206.1" stroke-dashoffset="0"/>
+                    <circle class="se-2" cx="85" cy="85" r="56" stroke="currentColor" stroke-dasharray="93 258.9" stroke-dashoffset="-147.8"/>
+                    <circle class="se-3" cx="85" cy="85" r="56" stroke="currentColor" stroke-dasharray="64.9 287" stroke-dashoffset="-242.8"/>
+                    <circle class="se-4" cx="85" cy="85" r="56" stroke="currentColor" stroke-dasharray="40.2 311.7" stroke-dashoffset="-309.7"/>
+                  </g>
+                  <text class="val" x="85" y="88" text-anchor="middle" style="font-size:19px">42 %</text>
+                  <text x="85" y="102" text-anchor="middle">cadrage</text>
+                </svg>
+                <div class="lgd" style="margin:var(--s2) 0 0">
+                  <span><i class="se-1"></i>Cadrage 42 %</span>
+                  <span><i class="se-2"></i>Production 27 %</span>
+                  <span><i class="se-3"></i>Revue 19 %</span>
+                  <span><i class="se-4"></i>Reste 12 %</span>
+                </div>
+              </figure>
+
+              <figure class="fig" style="margin:0">
+                <p class="fig-t">Densité de relectures par jour</p>
+                <div class="hm" style="grid-template-columns:repeat(7,1fr); max-width:15rem">
+                  <i class="q1"></i><i class="q2"></i><i class="q3"></i><i class="q2"></i><i class="q4"></i><i class="q3"></i><i class="q1"></i>
+                  <i class="q2"></i><i class="q4"></i><i class="q5"></i><i class="q3"></i><i class="q2"></i><i class="q1"></i><i class="q1"></i>
+                  <i class="q3"></i><i class="q5"></i><i class="q4"></i><i class="q5"></i><i class="q3"></i><i class="q2"></i><i class="q1"></i>
+                  <i class="q1"></i><i class="q2"></i><i class="q3"></i><i class="q4"></i><i class="q5"></i><i class="q4"></i><i class="q2"></i>
+                </div>
+                <div class="lgd" style="margin-top:var(--s2)">
+                  <span>faible</span>
+                  <span><i class="q1" style="background:var(--seq-1)"></i><i class="q2" style="background:var(--seq-2)"></i><i class="q3" style="background:var(--seq-3)"></i><i class="q4" style="background:var(--seq-4)"></i><i class="q5" style="background:var(--seq-5)"></i></span>
+                  <span>forte</span>
+                </div>
+                <p class="fig-s" style="margin:var(--s2) 0 0">Une pastille par jour, quatre semaines. La teinte encode la magnitude, pas l'identité.</p>
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.dash .kpis .spark .gauge</p>
+          <p class="spec-r">La coque du tableau de bord. Le rail bascule à l'horizontale sous la barre&nbsp;: mêmes métadonnées, en Hanken car on les compare d'un coup d'oeil, aucune sémantique de couleur nouvelle. Le résumé passe avant le détail. La jauge n'est pas un graphique — un seul chiffre, ni légende ni axe.</p>
+          <div class="spec-d">
+            <div class="dash">
+              <div><span class="l">Statut</span><span class="v">En service</span></div>
+              <div><span class="l">Période</span><span class="v">2026-05 → 2026-07</span></div>
+              <div><span class="l">Établi le</span><span class="v">2026-08-04</span></div>
+              <div><span class="l">Revoir avant</span><span class="v">2026-09-01</span></div>
+            </div>
+            <div class="kpis" style="border-top:0">
+              <div>
+                <span class="n">88 %</span>
+                <span class="l">livrables relus
+                  <svg class="spark se-1" viewBox="0 0 80 16" aria-hidden="true"><polyline class="ln" points="2,13 15,11 28,8 41,9 54,5 66,3 78,2"/></svg>
+                </span>
+              </div>
+              <div><span class="n">12</span><span class="l">jours de délai médian</span></div>
+              <div><span class="n">3</span><span class="l">ateliers actifs</span></div>
+            </div>
+            <div class="grid2" style="margin-top:var(--s3)">
+              <div class="gauge">
+                <span class="l">Couverture de relecture</span>
+                <meter value="0.88" min="0" max="1" low="0.4" high="0.75" optimum="1">88 %</meter>
+                <span class="hint">88 % — au-dessus du seuil de 75 %.</span>
+              </div>
+              <div class="states" style="margin-bottom:0">
+                <span class="chip chip-ok">Conforme</span>
+                <span class="chip chip-warn">À surveiller</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec">
+          <p class="spec-n">.ctl input select button .hint .err</p>
+          <p class="spec-r">Les contrôles natifs, stylés au jeton. On ne reconstruit jamais un contrôle en <span class="f-mono" style="font-size:.85em">&lt;div&gt;</span>&nbsp;: la roue qui vaut d'être réutilisée est le navigateur, qui apporte le clavier, le focus et l'accessibilité. Le focus n'est jamais retiré. Deux niveaux de bouton, pas trois. Un message de validation porte un texte, jamais une couleur seule.</p>
+          <div class="spec-d">
+            <div class="ctl">
+              <label><span>Période</span>
+                <select><option>3 derniers mois</option><option>12 derniers mois</option></select>
+              </label>
+              <label><span>Seuil</span>
+                <input type="number" value="75" min="0" max="100" style="width:5rem">
+              </label>
+              <label><span>Atelier</span>
+                <input type="range" min="1" max="3" value="2" style="width:8rem">
+              </label>
+              <label style="flex-direction:row; align-items:center; gap:.4rem">
+                <input type="checkbox" checked><span style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:.82rem; color:var(--fg)">Masquer les brouillons</span>
+              </label>
+              <button type="button">Appliquer</button>
+              <button type="button" class="ghost">Réinitialiser</button>
+            </div>
+            <p class="hint">Le filtre change le nombre de séries&nbsp;; il ne repeint pas celles qui restent.</p>
+            <p class="err">Le seuil doit rester compris entre 0 et 100.</p>
+            <details>
+              <summary>Voir les données</summary>
+              <p style="margin-top:var(--s2)">Tout graphique s'accompagne d'une vue tabulaire ou de libellés visibles&nbsp;: trois emplacements du versant clair frôlent la limite de contraste de 3:1, et la couleur seule n'a jamais suffi à porter une identité.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+
+      <footer>
+        <span>Digital Stoic</span>
+        <span>Valide au 2026-08-04</span>
+        <span>Revoir avant 2026-12-01</span>
+        <span>Tablette · v0.3</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+var TOKENS = [
+  ["--bg",          "#F2E9D8", "#1A140F", "sol de page"],
+  ["--surface",     "#FAF4E8", "#241C15", "surface posée"],
+  ["--sunk",        "#E9DCC3", "#120E0A", "surface creusée"],
+  ["--fg",          "#2B1F16", "#EADFC8", "encre"],
+  ["--muted",       "#6E5A47", "#A8957D", "texte secondaire"],
+  ["--faint",       "#8C7862", "#7D6C58", "étiquettes, métadonnées"],
+  ["--line",        "#D9C7A6", "#3D3125", "filet ordinaire"],
+  ["--line-strong", "#C4AE88", "#54453A", "filet structurant"],
+  ["--accent",      "#1F3F8F", "#8FA9E8", "actionnable, liens, sources"],
+  ["--accent-weak", "#E1E5EE", "#1E2638", "fond d'accent"],
+  ["--accent-ink",  "#FAF4E8", "#1A140F", "encre posée sur l'accent"],
+  ["--voice",       "#9A3B1A", "#D9784F", "conviction assumée — rien d'autre"],
+  ["--voice-weak",  "#EFD9C9", "#3A2219", "fond de conviction"],
+  ["--ok",          "#3A6B47", "#7DB38E", "état conforme"],
+  ["--warn",        "#8A6412", "#D6A84C", "état à surveiller"],
+  ["--crit-bg",     "#2B1F16", "#EADFC8", "état critique — le fond"],
+  ["--crit-fg",     "#F2E9D8", "#1A140F", "état critique — l'encre"],
+  ["--cat-1",       "#2447A8", "#5B8FE0", "série 1 — bleu"],
+  ["--cat-2",       "#A02F2F", "#D2685F", "série 2 — brique"],
+  ["--cat-3",       "#0A8A6C", "#2E9E8E", "série 3 — teal"],
+  ["--cat-4",       "#6A4C93", "#8F7AD0", "série 4 — violet"],
+  ["--cat-5",       "#B4761A", "#B4842F", "série 5 — ambre"],
+  ["--cat-6",       "#B84A7E", "#CE6E9B", "série 6 — magenta"],
+  ["--dv-mid",      "#DCDFE6", "#333B4C", "milieu neutre d'une divergente"]
+];
+
+var tb = document.getElementById("tokens");
+TOKENS.forEach(function (t) {
+  var tr = document.createElement("tr");
+  tr.innerHTML =
+    '<td><span class="sw" style="background:var(' + t[0] + ')"></span></td>' +
+    '<td class="name">' + t[0] + "</td>" +
+    '<td class="hex">' + t[1] + "</td>" +
+    '<td class="hex">' + t[2] + "</td>" +
+    "<td>" + t[3] + "</td>";
+  tb.appendChild(tr);
+});
+
+// L'échelle se mesure sur la page rendue plutôt que recopiée : une valeur
+// écrite en dur ici pourrait mentir sur ce que le socle applique réellement.
+var SCALE = ["--s1", "--s2", "--s3", "--s4", "--s5", "--s6"];
+var sc = document.getElementById("scale");
+var csRoot = getComputedStyle(document.documentElement);
+SCALE.forEach(function (name) {
+  var val = csRoot.getPropertyValue(name).trim();
+  var px = parseFloat(val) * 16;
+  var d = document.createElement("div");
+  d.innerHTML =
+    '<span class="k">' + name + "</span>" +
+    '<span class="v">' + val + " · " + px + "px</span>" +
+    '<span class="b" style="width:' + px + 'px"></span>';
+  sc.appendChild(d);
+});
+
+var STRIP = ["--bg", "--sunk", "--surface", "--line-strong", "--muted", "--fg", "--accent", "--voice", "--ok", "--warn"];
+var strip = document.getElementById("strip");
+
+// Le libellé se pose sur la nuance elle-même : sa couleur ne peut pas être
+// décidée à l'avance, elle dépend du versant actif. On mesure la luminance
+// relative de la nuance résolue et on choisit blanc ou noir en conséquence.
+function readable(bg) {
+  var m = bg.match(/\d+(\.\d+)?/g);
+  if (!m || m.length < 3) return "#000";
+  var c = m.slice(0, 3).map(function (v) {
+    var x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  });
+  var L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  // 0.179 est le point où le contraste WCAG contre le noir et contre le blanc
+  // s'égalise ; au-dessus, le noir gagne toujours.
+  return L > 0.179 ? "#000" : "#FFF";
+}
+
+function paintStrip() {
+  strip.innerHTML = "";
+  var cs = getComputedStyle(document.documentElement);
+  STRIP.forEach(function (name) {
+    var hex = cs.getPropertyValue(name).trim();
+    var d = document.createElement("div");
+    d.style.background = hex;
+    var probe = document.createElement("span");
+    probe.style.color = hex;
+    document.body.appendChild(probe);
+    d.style.color = readable(getComputedStyle(probe).color);
+    probe.remove();
+    d.innerHTML = "<span>" + name.replace("--", "") + "</span>";
+    strip.appendChild(d);
+  });
+}
+paintStrip();
+
+document.getElementById("tgl").addEventListener("click", function () {
+  var root = document.documentElement;
+  var now = root.getAttribute("data-theme");
+  if (!now) {
+    now = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  root.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+});
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintStrip);
+new MutationObserver(paintStrip).observe(document.documentElement, {
+  attributes: true, attributeFilter: ["data-theme"]
+});
+</script>

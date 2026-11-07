@@ -1,0 +1,458 @@
+<!-- @ds: 0.3.1 -->
+<!-- @title: Le Fournil des Pentes — tableau de bord de gestion, exercice 2025 -->
+<!-- @body: mode-outil -->
+<style>
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* @base */
+[hidden]{display:none !important}
+.t1{font-size:clamp(2rem,4.5vw,2.8rem)}
+.plot{position:relative}
+.tip{
+  position:absolute; z-index:2; pointer-events:none; white-space:nowrap;
+  background:var(--surface); color:var(--muted); border:1px solid var(--line-strong);
+  border-radius:var(--r); padding:.3rem .55rem;
+  font-family:var(--sans); font-size:.75rem; font-size-adjust:none; line-height:1.5; font-variant-numeric:tabular-nums;
+}
+.tip b{font-weight:400; color:var(--fg)}
+.tip .hd{color:var(--fg); margin-bottom:.1rem}
+.tk{display:inline-block; width:.9rem; height:2px; background:currentColor; vertical-align:middle}
+.vtog{display:flex; gap:var(--s1); margin-bottom:var(--s2)}
+.r{text-align:right}
+th[tabindex]{cursor:pointer; user-select:none}
+th[aria-sort="ascending"]::after{content:" \2191"}
+th[aria-sort="descending"]::after{content:" \2193"}
+.hit-note{margin:var(--s2) 0 0}
+@media (max-width:640px){
+  .wrap{padding:var(--s3) var(--s2) var(--s5)}
+  .bar .who{display:none}
+  .kpis{grid-template-columns:1fr}
+  .kpis > div{border-right:0; border-bottom:1px solid var(--line)}
+  .kpis > div:last-child{border-bottom:0}
+}
+</style>
+
+<div class="wrap mode-outil">
+
+  <div class="bar">
+    <span class="mark">FP</span>
+    <span class="who">Le Fournil des Pentes — gestion</span>
+    <span class="sp"></span>
+    <button class="tgl" id="tgl" type="button">Inverser le versant</button>
+  </div>
+
+  <main>
+    <p class="eyebrow">Tableau de bord · exercice 2025 · suivi mensuel</p>
+    <h1 class="t1">Le chiffre d'affaires monte, les invendus restent au-dessus de l'objectif</h1>
+
+    <dl class="dash">
+      <div><dt>Période</dt><dd>2025-01 → 2025-12</dd></div>
+      <div><dt>Périmètre</dt><dd>3 fournils</dd></div>
+      <div><dt>Source</dt><dd>comptabilité analytique</dd></div>
+      <div><dt>Statut</dt><dd>exercice clos</dd></div>
+      <div><dt>Mis à jour</dt><dd>2026-11-06</dd></div>
+    </dl>
+
+    <div class="states" role="list" aria-label="État des fournils">
+      <span class="chip chip-ok" role="listitem">Croix-Rousse · invendus 3,7 % · conforme</span>
+      <span class="chip chip-warn" role="listitem">Guillotière · invendus 4,2 % · à surveiller</span>
+      <span class="chip chip-crit" role="listitem">Vaise · invendus 5,2 % · critique</span>
+    </div>
+
+    <div class="kpis">
+      <div>
+        <span class="n">1 124 k€</span>
+        <span class="l">Chiffre d'affaires · +6,1 % vs 2024</span>
+        <svg class="spark" style="color:var(--muted)" viewBox="0 0 80 20" aria-hidden="true" data-spark="ca"></svg>
+      </div>
+      <div>
+        <span class="n">412 t</span>
+        <span class="l">Pain produit · +4,8 % vs 2024</span>
+        <svg class="spark" style="color:var(--muted)" viewBox="0 0 80 20" aria-hidden="true" data-spark="t"></svg>
+      </div>
+      <div>
+        <span class="n">4,2 %</span>
+        <span class="l">Taux d'invendus · objectif 3 %</span>
+        <svg class="spark" style="color:var(--muted)" viewBox="0 0 80 20" aria-hidden="true" data-spark="inv"></svg>
+        <span class="chip chip-warn" style="align-self:flex-start;margin-top:var(--s1)">1,2 point au-dessus</span>
+      </div>
+    </div>
+    <div class="kpis" style="border-top:0">
+      <div><span class="n">38 400 €</span><span class="l">Résultat net · 31 200 € en 2024</span></div>
+      <div><span class="n">14</span><span class="l">Sociétaires-salariés</span></div>
+      <div><span class="n">212</span><span class="l">Sociétaires-clients · +19 sur l'année</span></div>
+    </div>
+
+    <section class="sec">
+      <h2>Chiffre d'affaires par fournil</h2>
+      <figure class="fig" data-fig="ca">
+        <p class="fig-t">Chiffre d'affaires mensuel, en k€</p>
+        <p class="fig-s">Guillotière et Croix-Rousse suivent la même saison ; Vaise reste sous 27 k€ tous les mois.</p>
+        <div class="vtog">
+          <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+          <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+        </div>
+        <div class="lgd">
+          <span><i class="se-1"></i>Croix-Rousse</span>
+          <span><i class="se-2"></i>Guillotière</span>
+          <span><i class="se-3"></i>Vaise</span>
+        </div>
+        <div class="plot" data-pane="chart"><svg class="viz" data-chart="ca"></svg></div>
+        <div class="tw" data-pane="table" hidden></div>
+        <figcaption>Source : comptabilité analytique 2025 · total annuel 1 124 k€ · flèches gauche/droite sur le graphique pour lire un mois</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec">
+      <h2>Production et invendus</h2>
+      <div class="grid2">
+        <figure class="fig" data-fig="fam" style="margin-top:0">
+          <p class="fig-t">Pain produit par famille, en tonnes</p>
+          <p class="fig-s">Le levain porte plus de la moitié du volume.</p>
+          <div class="vtog">
+            <button type="button" data-v="chart" aria-pressed="true">Graphique</button>
+            <button type="button" class="ghost" data-v="table" aria-pressed="false">Tableau</button>
+          </div>
+          <div class="plot" data-pane="chart"><svg class="viz" data-chart="fam"></svg></div>
+          <div class="tw" data-pane="table" hidden></div>
+          <figcaption>Source : fiches de production 2025 · total 412 t</figcaption>
+        </figure>
+
+        <div style="display:grid; gap:var(--s3); align-content:start">
+          <div>
+            <p class="fig-t">Taux d'invendus par fournil</p>
+            <p class="fig-s">Objectif 3 %, seuil critique 5 %.</p>
+          </div>
+          <div class="gauge">
+            <span class="l">Croix-Rousse · 3,7 %</span>
+            <meter min="0" max="8" low="3" high="5" optimum="0" value="3.7" aria-label="Croix-Rousse, invendus 3,7 %"></meter>
+          </div>
+          <div class="gauge">
+            <span class="l">Guillotière · 4,2 %</span>
+            <meter min="0" max="8" low="3" high="5" optimum="0" value="4.2" aria-label="Guillotière, invendus 4,2 %"></meter>
+          </div>
+          <div class="gauge">
+            <span class="l">Vaise · 5,2 % · four en fin de vie</span>
+            <meter min="0" max="8" low="3" high="5" optimum="0" value="5.2" aria-label="Vaise, invendus 5,2 %"></meter>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>Détail par famille de produits</h2>
+      <p class="hint hit-note" id="sort-hint">Cliquer sur un en-tête de colonne, ou Entrée ou Espace au clavier, pour trier.</p>
+      <div class="tw">
+        <table id="fam-table" aria-describedby="sort-hint">
+          <thead>
+            <tr>
+              <th tabindex="0" data-k="name" scope="col">Famille</th>
+              <th tabindex="0" data-k="ca" scope="col" class="r" aria-sort="descending">CA (k€)</th>
+              <th tabindex="0" data-k="t" scope="col" class="r">Tonnes</th>
+              <th tabindex="0" data-k="inv" scope="col" class="r">Invendus (%)</th>
+              <th scope="col">Tendance (janvier = 100)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr><td>Total</td><td class="num r">1 124</td><td class="num r">412</td><td class="num r">4,2</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Le Fournil des Pentes</span>
+      <span>valide au 2026-11-06</span>
+      <span>revoir avant 2027-02-06</span>
+      <span>Tablette · v0.3</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+
+var NS = "http://www.w3.org/2000/svg";
+var MOIS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+var MOIS_L = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+function el(tag, attrs, parent) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function dom(tag, cls, text, parent) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function fr(v, d) {
+  return v.toLocaleString("fr-FR", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+}
+
+/* ── Données ─────────────────────────────────────────────────────────── */
+var CA_TOTAL = [82, 80, 88, 90, 95, 98, 92, 84, 100, 104, 102, 109];
+var T_TOTAL = [31, 30, 33, 34, 35, 36, 34, 31, 37, 38, 37, 36];
+var INV_TOTAL = [4.8, 4.6, 4.4, 4.3, 4.0, 3.9, 4.1, 4.5, 3.8, 3.9, 4.0, 4.2];
+var FOURN = [
+  { name: "Croix-Rousse", cls: "se-1", data: [32, 32, 35, 36, 38, 40, 37, 34, 40, 42, 41, 43] },
+  { name: "Guillotière", cls: "se-2", data: [30, 29, 32, 32, 34, 35, 33, 30, 36, 37, 37, 39] },
+  { name: "Vaise", cls: "se-3", data: [20, 19, 21, 22, 23, 23, 22, 20, 24, 25, 24, 27] }
+];
+var FAMILLES = [
+  { name: "Pains au levain", ca: 596, t: 218, inv: 3.0, trend: [100, 98, 106, 108, 114, 118, 110, 102, 120, 124, 122, 130] },
+  { name: "Pains spéciaux", ca: 168, t: 74, inv: 3.6, trend: [100, 102, 104, 109, 112, 110, 104, 98, 115, 118, 121, 128] },
+  { name: "Viennoiseries", ca: 190, t: 61, inv: 7.2, trend: [100, 104, 96, 92, 88, 86, 84, 82, 94, 104, 116, 128] },
+  { name: "Pâtisseries", ca: 112, t: 38, inv: 6.8, trend: [100, 96, 102, 108, 114, 116, 104, 92, 100, 112, 106, 124] },
+  { name: "Traiteur", ca: 58, t: 21, inv: 5.0, trend: [100, 88, 90, 98, 112, 126, 122, 96, 92, 100, 110, 118] }
+];
+
+/* ── Briques ─────────────────────────────────────────────────────────── */
+function makeTip(plot) {
+  var t = dom("div", "tip", null, plot);
+  t.hidden = true;
+  return {
+    show: function (px, py, head, rows) {
+      t.replaceChildren();
+      dom("div", "hd", head, t);
+      rows.forEach(function (r) {
+        var d = dom("div", null, null, t);
+        if (r.cls) {
+          dom("span", "tk " + r.cls, null, d);
+          d.appendChild(document.createTextNode(" "));
+        }
+        dom("b", null, r.v, d);
+        d.appendChild(document.createTextNode(" " + r.n));
+      });
+      t.hidden = false;
+      var w = t.offsetWidth, W = plot.clientWidth;
+      var x = px + 14;
+      if (x + w > W) x = px - w - 14;
+      t.style.left = Math.max(0, x) + "px";
+      t.style.top = Math.max(0, py - t.offsetHeight - 8) + "px";
+    },
+    hide: function () { t.hidden = true; }
+  };
+}
+
+function spark(svg, data) {
+  var min = Math.min.apply(null, data), max = Math.max.apply(null, data), n = data.length;
+  var X = function (i) { return 3 + (74 * i) / (n - 1); };
+  var Y = function (v) { return 17 - (14 * (v - min)) / (max - min); };
+  var d = data.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join("");
+  el("path", { "class": "ln", d: d }, svg);
+  el("circle", { "class": "mk", cx: X(n - 1), cy: Y(data[n - 1]), r: 2.5 }, svg);
+}
+
+function lineChart(svg, o) {
+  var W = o.W || 640, H = o.H || 260, m = { l: 38, r: o.mr || 16, t: 14, b: 26 };
+  var plot = svg.parentNode, tip = makeTip(plot);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var iw = W - m.l - m.r, ih = H - m.t - m.b, n = o.cats.length;
+  var X = function (i) { return m.l + (iw * i) / (n - 1); };
+  var Y = function (v) { return m.t + ih * (1 - (v - o.ymin) / (o.ymax - o.ymin)); };
+  for (var v = o.ymin; v <= o.ymax + 1e-9; v += o.step) {
+    el("line", { "class": v === o.ymin ? "axis" : "grid", x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, svg);
+    el("text", { x: m.l - 6, y: Y(v) + 3, "text-anchor": "end" }, svg).textContent = fr(v);
+  }
+  o.cats.forEach(function (c, i) {
+    el("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = c;
+  });
+  var dots = [];
+  o.series.forEach(function (s) {
+    var g = el("g", { "class": s.cls }, svg);
+    var d = s.data.map(function (val, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(val).toFixed(1); }).join("");
+    el("path", { "class": "ln", d: d }, g);
+    el("circle", { "class": "dot", cx: X(n - 1), cy: Y(s.data[n - 1]), r: 4 }, g);
+    dots.push(el("circle", { "class": "dot", r: 4, display: "none" }, g));
+    el("text", { "class": "val", x: X(n - 1) + 10, y: Y(s.data[n - 1]) + 3 }, svg).textContent = s.name;
+  });
+  var xh = el("line", { "class": "axis", y1: m.t, y2: m.t + ih, display: "none" }, svg);
+  var hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "none", "pointer-events": "all" }, svg);
+  function at(i) {
+    i = Math.max(0, Math.min(n - 1, i));
+    var r = svg.getBoundingClientRect(), k = r.width / W, top = 1e9;
+    xh.setAttribute("x1", X(i));
+    xh.setAttribute("x2", X(i));
+    xh.removeAttribute("display");
+    o.series.forEach(function (s, j) {
+      dots[j].setAttribute("cx", X(i));
+      dots[j].setAttribute("cy", Y(s.data[i]));
+      dots[j].removeAttribute("display");
+      top = Math.min(top, Y(s.data[i]));
+    });
+    tip.show(X(i) * k, top * k, o.heads[i], o.series.map(function (s) {
+      return { cls: s.cls, n: s.name, v: o.vfmt(s.data[i]) };
+    }));
+    return i;
+  }
+  function off() {
+    xh.setAttribute("display", "none");
+    dots.forEach(function (d) { d.setAttribute("display", "none"); });
+    tip.hide();
+  }
+  var cur = n - 1;
+  hit.addEventListener("pointermove", function (e) {
+    var r = svg.getBoundingClientRect();
+    cur = at(Math.round((((e.clientX - r.left) * W) / r.width - m.l) / iw * (n - 1)));
+  });
+  hit.addEventListener("pointerleave", off);
+  svg.setAttribute("tabindex", "0");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", o.label);
+  svg.addEventListener("focus", function () { cur = at(cur); });
+  svg.addEventListener("blur", off);
+  svg.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") cur = at(cur + 1);
+    else if (e.key === "ArrowLeft") cur = at(cur - 1);
+    else if (e.key === "Escape") off();
+    else return;
+    e.preventDefault();
+  });
+}
+
+function hbars(svg, o) {
+  var W = o.W || 420, rowH = 34, bh = 16, m = { l: 104, r: 52, t: 6, b: 6 };
+  var H = m.t + m.b + rowH * o.items.length, iw = W - m.l - m.r;
+  var plot = svg.parentNode, tip = makeTip(plot), marks = [];
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", o.label);
+  el("line", { "class": "axis", x1: m.l, x2: m.l, y1: m.t, y2: H - m.b }, svg);
+  var g = el("g", { style: "color:var(--muted)" }, svg);
+  o.items.forEach(function (it, i) {
+    var y = m.t + i * rowH + (rowH - bh) / 2, w = (iw * it.v) / o.max;
+    el("text", { x: m.l - 8, y: y + bh / 2 + 3, "text-anchor": "end" }, svg).textContent = it.name;
+    marks.push(el("path", {
+      "class": "mk",
+      d: "M" + m.l + " " + y + "h" + (w - 4) + "a4 4 0 0 1 4 4v" + (bh - 8) + "a4 4 0 0 1 -4 4H" + m.l + "Z"
+    }, g));
+    el("text", { "class": "val", x: m.l + w + 6, y: y + bh / 2 + 3 }, svg).textContent = fr(it.v) + " t";
+    var hit = el("rect", {
+      x: 0, y: m.t + i * rowH, width: W, height: rowH, fill: "none", "pointer-events": "all",
+      tabindex: "0", "aria-label": it.name + " : " + fr(it.v) + " tonnes, " + fr((it.v / o.total) * 100, 1) + " % du total"
+    }, svg);
+    function on() {
+      var k = svg.getBoundingClientRect().width / W;
+      marks.forEach(function (p, j) { p.setAttribute("opacity", j === i ? 1 : 0.5); });
+      tip.show((m.l + w) * k, y * k, it.name, [{ n: "tonnes", v: fr(it.v) }, { n: "du total", v: fr((it.v / o.total) * 100, 1) + " %" }]);
+    }
+    function off() {
+      marks.forEach(function (p) { p.removeAttribute("opacity"); });
+      tip.hide();
+    }
+    hit.addEventListener("pointermove", on);
+    hit.addEventListener("pointerleave", off);
+    hit.addEventListener("focus", on);
+    hit.addEventListener("blur", off);
+  });
+}
+
+function tableOf(head, rows, caption) {
+  var t = dom("table");
+  dom("caption", "hint", caption, t);
+  var tr = dom("tr", null, null, dom("thead", null, null, t));
+  head.forEach(function (h, i) { var th = dom("th", i ? "r" : null, h, tr); th.setAttribute("scope", "col"); });
+  var tb = dom("tbody", null, null, t);
+  rows.forEach(function (r) {
+    var row = dom("tr", null, null, tb);
+    r.forEach(function (c, i) { dom("td", i ? "num r" : null, c, row); });
+  });
+  return t;
+}
+
+/* ── Graphique ↔ tableau ─────────────────────────────────────────────── */
+document.querySelectorAll("[data-fig]").forEach(function (fig) {
+  var btns = fig.querySelectorAll("[data-v]");
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      btns.forEach(function (x) {
+        var on = x === b;
+        x.setAttribute("aria-pressed", on);
+        x.classList.toggle("ghost", !on);
+      });
+      fig.querySelectorAll("[data-pane]").forEach(function (p) { p.hidden = p.dataset.pane !== b.dataset.v; });
+    });
+  });
+});
+
+/* ── Rendu ───────────────────────────────────────────────────────────── */
+document.querySelectorAll("[data-spark]").forEach(function (s) {
+  spark(s, { ca: CA_TOTAL, t: T_TOTAL, inv: INV_TOTAL }[s.dataset.spark]);
+});
+
+lineChart(document.querySelector('[data-chart="ca"]'), {
+  cats: MOIS, heads: MOIS_L.map(function (m) { return m + " 2025"; }), series: FOURN,
+  ymin: 0, ymax: 50, step: 10, mr: 96, vfmt: function (v) { return fr(v) + " k€"; },
+  label: "Chiffre d'affaires mensuel 2025 par fournil, en k€"
+});
+document.querySelector('[data-fig="ca"] [data-pane="table"]').appendChild(tableOf(
+  ["Mois", "Croix-Rousse", "Guillotière", "Vaise", "Total"],
+  MOIS_L.map(function (m, i) {
+    return [m, fr(FOURN[0].data[i]), fr(FOURN[1].data[i]), fr(FOURN[2].data[i]), fr(CA_TOTAL[i])];
+  }),
+  "Chiffre d'affaires mensuel 2025 par fournil, en k€"
+));
+
+hbars(document.querySelector('[data-chart="fam"]'), {
+  items: FAMILLES.map(function (f) { return { name: f.name, v: f.t }; }),
+  max: 250, total: 412, label: "Pain produit par famille de produits en 2025, en tonnes"
+});
+document.querySelector('[data-fig="fam"] [data-pane="table"]').appendChild(tableOf(
+  ["Famille", "Tonnes", "Part (%)"],
+  FAMILLES.map(function (f) { return [f.name, fr(f.t), fr((f.t / 412) * 100, 1)]; }),
+  "Pain produit par famille de produits en 2025"
+));
+
+/* ── Tableau triable ─────────────────────────────────────────────────── */
+var tbody = document.querySelector("#fam-table tbody");
+var sortKey = "ca", sortDir = -1;
+function renderRows() {
+  var rows = FAMILLES.slice().sort(function (a, b) {
+    var x = a[sortKey], y = b[sortKey];
+    return (typeof x === "string" ? x.localeCompare(y, "fr") : x - y) * sortDir;
+  });
+  tbody.replaceChildren();
+  rows.forEach(function (f) {
+    var tr = dom("tr", null, null, tbody);
+    dom("td", null, f.name, tr);
+    dom("td", "num r", fr(f.ca), tr);
+    dom("td", "num r", fr(f.t), tr);
+    dom("td", "num r", fr(f.inv, 1), tr);
+    var s = el("svg", { "class": "spark", viewBox: "0 0 80 20", "aria-hidden": "true", style: "color:var(--muted)" });
+    spark(s, f.trend);
+    dom("td", null, null, tr).appendChild(s);
+  });
+}
+function sortBy(th) {
+  var k = th.dataset.k;
+  sortDir = k === sortKey ? -sortDir : (k === "name" ? 1 : -1);
+  sortKey = k;
+  document.querySelectorAll("#fam-table th[data-k]").forEach(function (h) {
+    if (h === th) h.setAttribute("aria-sort", sortDir === 1 ? "ascending" : "descending");
+    else h.removeAttribute("aria-sort");
+  });
+  renderRows();
+}
+document.querySelectorAll("#fam-table th[data-k]").forEach(function (th) {
+  th.addEventListener("click", function () { sortBy(th); });
+  th.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortBy(th); }
+  });
+});
+renderRows();
+
+/* ── Versant clair / sombre ──────────────────────────────────────────── */
+document.getElementById("tgl").addEventListener("click", function () {
+  var root = document.documentElement;
+  var now = root.getAttribute("data-theme");
+  if (!now) now = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  root.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+});
+</script>

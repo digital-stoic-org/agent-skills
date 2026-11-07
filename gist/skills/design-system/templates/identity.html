@@ -1,0 +1,223 @@
+<style>
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* @base */
+</style>
+
+<div class="wrap">
+
+  <div class="bar">
+    <span class="mark">DS</span>
+    <span class="who">Digital Stoic — système visuel</span>
+    <span class="sp"></span>
+    <button class="tgl" id="tgl" type="button">Inverser le versant</button>
+  </div>
+
+  <div class="doc">
+
+    <aside class="rail">
+      <dl>
+        <dt>Statut</dt><dd>Proposition</dd>
+        <dt>Version</dt><dd>0.2</dd>
+        <dt>Palette</dt><dd>Tablette</dd>
+        <dt>Établi le</dt><dd>2026-08-02</dd>
+        <dt>Revoir avant</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="marg">L'austérité ne vient pas du vide. Elle vient du nombre de choses qu'on s'interdit.</p>
+    </aside>
+
+    <main>
+      <p class="eyebrow">Référence · Identité visuelle</p>
+      <h1>Digital Stoic</h1>
+      <p class="lede">Une structure ancienne — le carnet, le registre, la note en marge — appliquée à des matériaux contemporains : des chiffres, des traces, des sorties d'agents.</p>
+
+      <section class="sec">
+        <h2>Les trois registres d'affirmation</h2>
+        <p>Le différenciateur n'est pas illustré, il est encodé. Chaque énoncé se range dans l'un des trois régimes, et chaque régime a sa forme. On lit le niveau d'engagement avant d'avoir lu la phrase.</p>
+        <div class="regs">
+
+          <div class="reg reg-fact">
+            <div class="glyph">01</div>
+            <div>
+              <p>Six praticiens indépendants sur sept, interrogés dans la recherche Slasheo, citent spontanément l'artisanat, le hands-on, le « pas de slides ».</p>
+              <span class="tag">Fait vérifiable</span> <span class="src">[ANCHOR-2026-07-28 · Bloc 4]</span>
+            </div>
+          </div>
+
+          <div class="reg reg-cons">
+            <div class="glyph">02</div>
+            <div>
+              <p>La discussion professionnelle se déplace de « quel assistant utiliser » vers « comment outiller sa propre chaîne de travail ».</p>
+              <span class="tag">Consensus émergent</span> <span class="when">daté 2026-07</span>
+            </div>
+          </div>
+
+          <div class="reg reg-conv">
+            <div class="glyph">03</div>
+            <div>
+              <p>Le coût du build s'est effondré ; celui du run, non. C'est là que se joue la décennie.</p>
+              <span class="tag">Conviction assumée</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>La dichotomie du contrôle</h2>
+        <p>Une seule mécanique de couleur, deux lectures. L'accent marque ce sur quoi on a prise ; le neutre marque ce qu'on constate. Rien n'est coloré par décoration.</p>
+        <div class="dicho">
+          <div class="up">
+            <h3>↑ Ce qui dépend de toi</h3>
+            <ul>
+              <li>La thèse qu'on défend</li>
+              <li>Le harnais qu'on se construit</li>
+              <li>La trace qu'on laisse derrière un choix</li>
+              <li>Le refus de présenter une opinion comme un fait</li>
+            </ul>
+          </div>
+          <div class="not">
+            <h3>→ Ce qui n'en dépend pas</h3>
+            <ul>
+              <li>Le cycle du marché</li>
+              <li>La feuille de route d'un fournisseur</li>
+              <li>Le calendrier d'un client</li>
+              <li>La durée de vie d'un artefact</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>Le système, en trois nombres</h2>
+        <div class="kpis">
+          <div><span class="n">2</span><span class="l">familles typographiques</span></div>
+          <div><span class="n">2</span><span class="l">couleurs porteuses de sens</span></div>
+          <div><span class="n">6</span><span class="l">px de rayon, maximum</span></div>
+        </div>
+        <p style="margin-top:var(--s3)">Deux familles : EB Garamond pour tout le texte — titres, corps, étiquettes en petites capitales — et une monospace réservée aux données produites par la machine : mesures, identifiants, jetons. Deux couleurs : le bleu de plan pour l'actionnable et la machine, la terre cuite pour la conviction humaine. Aucune quatrième police, aucun dégradé, aucune ombre portée.</p>
+      </section>
+
+      <section class="sec">
+        <h2>Les états</h2>
+        <p>Les couleurs d'état restent séparées de l'accent. Le critique, lui, n'est pas une teinte : c'est une inversion du fond et du texte. Une alerte ne se distingue pas par sa couleur, elle se distingue parce que la page s'est retournée.</p>
+        <div class="states">
+          <span class="chip chip-ok">Conforme</span>
+          <span class="chip chip-warn">À surveiller</span>
+          <span class="chip chip-crit">Critique</span>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>Les jetons</h2>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr><th></th><th>Jeton</th><th>Clair</th><th>Sombre</th><th>Rôle</th></tr>
+            </thead>
+            <tbody id="tokens"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>La bande</h2>
+        <div class="strip" id="strip"></div>
+      </section>
+
+      <footer>
+        <span>Digital Stoic</span>
+        <span>Valide au 2026-11-03</span>
+        <span>Revoir avant 2026-12-01</span>
+        <span>Tablette · v0.3</span>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+var TOKENS = [
+  ["--bg",          "#F2E9D8", "#1A140F", "sol de page"],
+  ["--surface",     "#FAF4E8", "#241C15", "surface posée"],
+  ["--sunk",        "#E9DCC3", "#120E0A", "surface creusée"],
+  ["--fg",          "#2B1F16", "#EADFC8", "encre"],
+  ["--muted",       "#6E5A47", "#A8957D", "texte secondaire"],
+  ["--faint",       "#8C7862", "#7D6C58", "étiquettes, métadonnées"],
+  ["--line",        "#D9C7A6", "#3D3125", "filet ordinaire"],
+  ["--line-strong", "#C4AE88", "#54453A", "filet structurant"],
+  ["--accent",      "#1F3F8F", "#8FA9E8", "actionnable, liens, sources"],
+  ["--accent-weak", "#E1E5EE", "#1E2638", "fond d'accent"],
+  ["--voice",       "#9A3B1A", "#D9784F", "conviction assumée — rien d'autre"],
+  ["--ok",          "#3A6B47", "#7DB38E", "état conforme"],
+  ["--warn",        "#8A6412", "#D6A84C", "état à surveiller"],
+  ["--crit-bg",     "#2B1F16", "#EADFC8", "état critique — par inversion"]
+];
+
+var tb = document.getElementById("tokens");
+TOKENS.forEach(function (t) {
+  var tr = document.createElement("tr");
+  tr.innerHTML =
+    '<td><span class="sw" style="background:var(' + t[0] + ')"></span></td>' +
+    '<td class="name">' + t[0] + "</td>" +
+    '<td class="hex">' + t[1] + "</td>" +
+    '<td class="hex">' + t[2] + "</td>" +
+    "<td>" + t[3] + "</td>";
+  tb.appendChild(tr);
+});
+
+var STRIP = ["--bg", "--sunk", "--surface", "--line-strong", "--muted", "--fg", "--accent", "--voice", "--ok", "--warn"];
+var strip = document.getElementById("strip");
+
+// Le libellé se pose sur la nuance elle-même : sa couleur ne peut pas être
+// décidée à l'avance, elle dépend du versant actif. On mesure la luminance
+// relative de la nuance résolue et on choisit blanc ou noir en conséquence.
+function readable(bg) {
+  var m = bg.match(/\d+(\.\d+)?/g);
+  if (!m || m.length < 3) return "#000";
+  var c = m.slice(0, 3).map(function (v) {
+    var x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  });
+  var L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  // 0.179 est le point où le contraste WCAG contre le noir et contre le blanc
+  // s'égalise ; au-dessus, le noir gagne toujours.
+  return L > 0.179 ? "#000" : "#FFF";
+}
+
+function paintStrip() {
+  strip.innerHTML = "";
+  var cs = getComputedStyle(document.documentElement);
+  STRIP.forEach(function (name) {
+    var hex = cs.getPropertyValue(name).trim();
+    var d = document.createElement("div");
+    d.style.background = hex;
+    var probe = document.createElement("span");
+    probe.style.color = hex;
+    document.body.appendChild(probe);
+    d.style.color = readable(getComputedStyle(probe).color);
+    probe.remove();
+    d.innerHTML = "<span>" + name.replace("--", "") + "</span>";
+    strip.appendChild(d);
+  });
+}
+paintStrip();
+
+document.getElementById("tgl").addEventListener("click", function () {
+  var root = document.documentElement;
+  var now = root.getAttribute("data-theme");
+  if (!now) {
+    now = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  root.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+});
+
+// Le versant peut aussi changer sous nos pieds (préférence système, bascule
+// du lecteur d'artefact) : la bande doit se recalculer dans ce cas aussi.
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintStrip);
+new MutationObserver(paintStrip).observe(document.documentElement, {
+  attributes: true, attributeFilter: ["data-theme"]
+});
+</script>
