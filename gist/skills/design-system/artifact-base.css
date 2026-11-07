@@ -101,7 +101,7 @@
    les étiquettes éditoriales passent aussi en Hanken. */
 .mode-outil{
   --label-font:var(--sans); --label-caps:normal; --label-tt:uppercase;
-  --label-ls:.1em; --label-size:.7rem; --label-w:600; --label-adjust:none;
+  --label-ls:.1em; --label-size:.75rem; --label-w:600; --label-adjust:none;
 }
 
 *{box-sizing:border-box}
@@ -116,6 +116,8 @@ body{
 .wrap{max-width:64rem; margin:0 auto; padding:var(--s5) var(--s4) var(--s6)}
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+/* Plancher de lecture : aucun texte HTML sous .75rem (12 px). Le texte des
+   SVG suit l'échelle du graphique et se règle à part. */
 @media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
 
 /* ── Barre de tête ─────────────────────────────────────────────────────── */
@@ -137,7 +139,7 @@ button.tgl:hover{color:var(--fg); border-color:var(--accent)}
 .doc{display:grid; grid-template-columns:11rem minmax(0,1fr); gap:var(--s4)}
 @media (max-width:760px){ .doc{grid-template-columns:1fr} }
 
-.rail{font-family:var(--mono); font-size:.7rem; line-height:1.5; color:var(--faint)}
+.rail{font-family:var(--mono); font-size:.75rem; line-height:1.5; color:var(--faint)}
 .rail dl{margin:0; display:grid; gap:var(--s2)}
 .rail dt{color:var(--faint);}
 .rail dd{margin:.1rem 0 0; color:var(--muted); font-variant-numeric:tabular-nums}
@@ -172,19 +174,19 @@ p{margin:0 0 var(--s3); max-width:68ch}
 .regs{display:grid; gap:0}
 .reg{display:grid; grid-template-columns:1.6rem minmax(0,1fr); gap:var(--s2); padding:var(--s3) 0}
 .reg + .reg{border-top:1px solid var(--line)}
-.reg .glyph{font-family:var(--mono); font-size:.7rem; color:var(--faint); padding-top:.28rem}
+.reg .glyph{font-family:var(--mono); font-size:.75rem; color:var(--faint); padding-top:.28rem}
 .reg p{margin:0 0 var(--s1)}
 .reg .tag{color:var(--faint);}
 
 /* fait vérifiable : neutre, plein, sourcé */
 .reg-fact p{color:var(--fg)}
 .reg-fact .glyph{border-left:2px solid var(--line-strong); padding-left:.45rem}
-.reg-fact .src{font-family:var(--mono); font-size:.66rem; color:var(--accent)}
+.reg-fact .src{font-family:var(--mono); font-size:.75rem; color:var(--accent)}
 
 /* consensus émergent daté : atténué, pointillé, horodaté */
 .reg-cons p{color:var(--muted)}
 .reg-cons .glyph{border-left:2px dotted var(--line-strong); padding-left:.45rem}
-.reg-cons .when{font-family:var(--mono); font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.reg-cons .when{font-family:var(--mono); font-size:.75rem; color:var(--muted); font-variant-numeric:tabular-nums}
 
 /* conviction assumée : serif italique, marque de voix — le seul texte coloré */
 .reg-conv{background:var(--voice-weak); margin:0 calc(-1 * var(--s2)); padding:var(--s3) var(--s2)}
@@ -250,7 +252,7 @@ td.name{font-family:var(--mono); font-size:.78rem}
 /* ── Bande de nuances ──────────────────────────────────────────────────── */
 .strip{display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line-strong); border-radius:var(--r); overflow:hidden}
 .strip > div{flex:1 1 5.5rem; height:3.4rem; display:flex; align-items:flex-end; padding:.3rem .4rem}
-.strip span{font-family:var(--mono); font-size:.6rem; letter-spacing:.05em}
+.strip span{font-family:var(--mono); font-size:.75rem; letter-spacing:.05em}
 
 /* ── Figures et séries ─────────────────────────────────────────────────── */
 /* La couleur suit l'entité, jamais son rang : une série garde son jeton
@@ -267,7 +269,7 @@ td.name{font-family:var(--mono); font-size:.78rem}
 .fig-t{font-family:var(--serif); font-weight:600; font-size:1.1rem; margin:0 0 .15rem}
 .fig-s{font-family:var(--serif); font-size:.98rem; color:var(--muted); margin:0 0 var(--s2); max-width:60ch}
 .fig figcaption{
-  font-family:var(--mono); font-size:.66rem; color:var(--faint);
+  font-family:var(--mono); font-size:.75rem; color:var(--faint);
   margin-top:var(--s2); padding-top:var(--s1); border-top:1px solid var(--line);
 }
 
@@ -313,6 +315,7 @@ input,select,textarea{
   border:1px solid var(--line-strong); border-radius:var(--r); padding:.3rem .5rem;
 }
 input[type=number],input[type=date],.num{font-variant-numeric:tabular-nums}
+.num{font-family:var(--sans); font-size-adjust:none}
 input[type=checkbox],input[type=radio]{accent-color:var(--accent); width:auto}
 input[type=range]{accent-color:var(--accent); padding:0; border:0; background:none}
 fieldset{border:1px solid var(--line); border-radius:var(--r); padding:var(--s2)}
@@ -383,13 +386,14 @@ progress::-moz-progress-bar{background:var(--accent); border-radius:var(--r)}
    les modes, car on agit ou on compare avec eux. */
 button,.chip,th,.ctl > label > span,legend,.kpis .l,.gauge .l,.dash dt,.dash .l{
   font-family:var(--sans); font-variant-caps:normal; text-transform:uppercase;
-  letter-spacing:.1em; font-size:.7rem; font-weight:600; font-size-adjust:none;
+  letter-spacing:.1em; font-size:.75rem; font-weight:600; font-size-adjust:none;
 }
-.mode-outil .dash dt,.mode-outil .dash .l{font-size:.62rem}
 
-/* ── Données produites par la machine : seule place de la mono ─────────── */
-/* Mesures, identifiants, hex, surcouche. Jamais d'ajustement d'oeil ici. */
-code,kbd,samp,pre,.rail,.rail dd,td.hex,td.name,.reg .glyph,.reg .src,.reg .when,.strip span,.viz text,.dash,.dash dd,.dash .v,.fig figcaption,footer,.num{
+/* ── Ce qu'on recopie : seule place de la mono ─────────────────────────── */
+/* Ce qu'on recopie : identifiants, hex, sources, dates, code, surcouche.
+   Jamais d'ajustement d'oeil ici. Les chiffres comparés (.num, .dash, .viz
+   text) sont en Hanken, voir « Police par rôle ». */
+code,kbd,samp,pre,.rail,.rail dd,td.hex,td.name,.reg .glyph,.reg .src,.reg .when,.strip span,.fig figcaption,footer{
   font-family:var(--mono); font-size-adjust:none;
 }
 .rail dd{font-size:.8rem}
@@ -398,6 +402,17 @@ code,kbd,samp,pre,.rail,.rail dd,td.hex,td.name,.reg .glyph,.reg .src,.reg .when
 /* ── Pied ──────────────────────────────────────────────────────────────── */
 footer{
   margin-top:var(--s6); padding-top:var(--s2); border-top:1px solid var(--line-strong);
-  font-family:var(--mono); font-size:.68rem; color:var(--faint);
+  font-family:var(--mono); font-size:.75rem; color:var(--faint);
   display:flex; flex-wrap:wrap; gap:var(--s3); font-variant-numeric:tabular-nums;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+/* En fin de feuille pour l'emporter sur les règles de composant.
+   Marges réduites, barre sur une ligne, chiffres saillants empilés. */
+@media (max-width:640px){
+  .wrap{padding:var(--s3) var(--s2) var(--s5)}
+  .bar .who{display:none}
+  .kpis{grid-template-columns:1fr}
+  .kpis > div{border-right:0; border-bottom:1px solid var(--line); padding-right:0}
+  .kpis > div:last-child{border-bottom:0}
 }

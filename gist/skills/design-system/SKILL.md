@@ -6,7 +6,7 @@ user-invocable: true
 
 # Digital Stoic design system — index
 
-version: 0.3.1 | palette: tablette | updated: 2026-11-07
+version: 0.3.2 | palette: tablette | updated: 2026-11-07
 
 Entry point. Read this first, then open ONLY the files the routing table sends you to. Paths are relative to this skill's directory.
 

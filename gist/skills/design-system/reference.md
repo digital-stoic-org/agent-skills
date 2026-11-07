@@ -1,6 +1,6 @@
 # Digital Stoic artifact design system — agent reference
 
-version: 0.3.1 | palette: tablette | updated: 2026-11-07
+version: 0.3.2 | palette: tablette | updated: 2026-11-07
 
 Load when building a Claude artifact or any HTML page. Overrides the artifact-design skill defaults; user's explicit words still win. Paths below are relative to this skill's directory.
 
@@ -91,11 +91,12 @@ ok #3A6B47 / #7DB38E        warn #8A6412 / #D6A84C         crit = fg/bg inversio
 Font follows the element's role, not the page mode (decided 2026-11-07, DS 0.3). The base sets every family; a component never does.
 
 - Read = `--serif` (EB Garamond): h1, h2, h3, `.lede`, body, lists, `.reg-conv p`, `.rail .marg` (italic), `.fig-t .fig-s`, `summary`, editorial labels. h1/h2 weight 400. Sizes come from the reading scale tokens `--t-body` 1.1rem, `--t-lede` 1.3rem, `--t-h2` `clamp(1.6rem,2.8vw,2rem)`, `--t-h1` `clamp(2.4rem,5.5vw,3.8rem)`; `font-size-adjust:.5` makes them appear 1.25× larger (body ≈ 22 px). `summary` = `--t-body` weight 600, with `--s2` below it when open. Hanken tables and inputs are 1rem.
-- Operate and compare = `--sans` (Hanken): `button .chip th td input select textarea .hint .err .lgd`, `.kpis .n` (400, 2.1rem), `.viz text`, the dashboard rail `.dash`. Command, state and column labels (`button .chip th .ctl label span legend .kpis .l .gauge .l .dash dt`) are Hanken uppercase, `.1em`, 600, `.7rem`, in every mode.
+- Operate and compare = `--sans` (Hanken): `button .chip th td input select textarea .hint .err .lgd`, `.kpis .n` (400, 2.1rem), `.num`, `.viz text`, the dashboard rail `.dash`. Command, state and column labels (`button .chip th .ctl label span legend .kpis .l .gauge .l .dash dt`) are Hanken uppercase, `.1em`, 600, `.7rem`, in every mode.
 - Copy = `--mono`: hex values, ids, token names (`td.hex td.name`), sources (`.reg-fact .src`), dates of consequences (`.reg-cons .when`), values of the document rail (`.rail dd`), code, overlay. Never for a label.
 - Editorial labels (`.mark .who .eyebrow .rail dt .dicho h3 .reg .tag`) go through `--label-*` tokens only. Edito mode (default): Garamond `font-variant-caps:all-small-caps`, `letter-spacing:.07em`, 1rem. Tool mode: `<body class="mode-outil">` for dashboards, mini-apps, review pages switches them to Hanken uppercase. In the source, write `<!-- @body: mode-outil -->` and also put `mode-outil` on the outer wrapper so fragment mode keeps it.
 - `font-size-adjust:.5` on `body` (Garamond x-height measured .40 em). Hanken (x-height .49 em) and mono elements reset it to `none` in the base. Do not set it per component.
-- Figures: the embedded Garamond and Hanken both draw lining, tabular digits by default; `tabular-nums` is a no-op kept for fallbacks. The embedded Garamond has no `smcp`/`c2sc`: small caps are synthesized by the browser.
+- Figures: the embedded Garamond and Hanken both draw lining, tabular digits by default; `tabular-nums` is a no-op kept for fallbacks.
+- Small caps: `ebgaramond-400` is the full EB Garamond variable font from google/fonts (OFL, `fonts/OFL-ebgaramond.txt`), subset to the same 236 code points with `smcp` and `c2sc` kept, so editorial small caps are drawn, not synthesized (60 KB woff2, was 44 KB). Re-subsetting must keep `smcp c2sc tnum pnum`.
 
 Body measure ≤ 68ch. Lede ≤ 44ch.
 
