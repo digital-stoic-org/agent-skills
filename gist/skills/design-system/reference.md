@@ -1,6 +1,6 @@
 # Digital Stoic artifact design system — agent reference
 
-version: 0.4.1 | palette: tablette | updated: 2026-11-07
+version: 0.4.2 | palette: tablette | updated: 2026-11-07
 
 Load when building a Claude artifact or any HTML page. Overrides the artifact-design skill defaults; user's explicit words still win. Paths below are relative to this skill's directory.
 
@@ -28,6 +28,7 @@ Markers replaced in src:
 | `@body: <classes>` (HTML comment) | `<body class="<classes>">` in standalone mode (e.g. `mode-outil`). Fragment mode has no `<body>`: put the class on the outer wrapper too |
 
 Required font slugs: `ebgaramond-400` (variable, weight 400-600), `ebgaramond-400i`, `hanken-400`, `hanken-600`, `jetbrains-400`.
+Licences: all three families are SIL Open Font License 1.1; the texts ship in `fonts/OFL-ebgaramond.txt`, `fonts/OFL-hanken.txt`, `fonts/OFL-jetbrainsmono.txt` (from google/fonts). OFL allows embedding in pages and subsetting; the licence text must travel with the font files, so these files move with `fonts/`.
 
 Unknown slug aborts the build. Never link a font CDN — artifact CSP blocks it, produces silent fallback.
 
