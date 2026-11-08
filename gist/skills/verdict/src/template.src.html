@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F2E9D8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161A1F">
+<meta name="review-id" content="REVIEW_ID">
+<meta name="review-phase" content="explorer">
+<meta name="review-type" content="doc">
+<meta name="feedback-endpoint" content="">
+<title>Revue · TITRE</title>
+<!-- verdict template source. Build: bun /repos/agent-skills/gist/skills/design-system/artifact-build.mjs src/template.src.html template.html (make-grammaires.py does it). Never edit template.html by hand. theme-color = base --bg of each versant, copied (the builder only writes them when it wraps a fragment). -->
+<style>
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* @base */
+/*GRAMMAR-CSS:BEGIN thumbnails from vignettes.html*/
+.svg .f-ok{fill:var(--ok);stroke:var(--ok)}.svg .f-no{fill:var(--no);stroke:var(--no)}.svg .f-acc{fill:var(--accent);stroke:var(--accent)}
+.svg .f-line{fill:var(--line);stroke:none}.svg .f-line2{fill:var(--muted);stroke:none;opacity:.35}.svg .f-line3{fill:var(--muted);stroke:none;opacity:.6}
+.svg .f-okbg{fill:var(--ok-weak);stroke:var(--ok)}.svg .f-midbg{fill:var(--warn-weak);stroke:var(--warn)}
+.svg polygon{stroke:var(--muted);stroke-width:1.2}.svg polyline{fill:none}
+.svg path{fill:none}.svg .band{stroke:var(--accent);opacity:.45}.svg .band2{stroke:var(--ok);opacity:.45}.svg .band3{stroke:var(--no);opacity:.55}
+.sk .opt{border:1px solid var(--line);border-radius:6px;padding:4px;font-size:calc(.66rem * var(--k))}.sk .opt.pick{border:2px solid var(--accent)}
+.sk .heat{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}.sk .heat i{display:flex;align-items:center;justify-content:center;height:22px;border-radius:3px;font-style:normal}
+.sk .dsm{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:110px}.sk .dsm i{display:block;aspect-ratio:1;border:1px solid var(--line);border-radius:2px}
+.sk .dsm i.k-no{background:var(--no)}.sk .dsm i.k-mid{background:var(--warn)}.sk .dsm i.k-acc{background:var(--accent)}
+.sk .tm{display:flex;gap:3px;height:90px}.sk .tm i{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:3px;font-style:normal;font-size:calc(.66rem * var(--k))}
+.sk .tm i.k-no{background:var(--no-weak)}.sk .tm i.k-mid{background:var(--warn-weak)}
+.sk .six{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.sk .six span{border:1px solid var(--line);border-radius:5px;padding:3px;font-size:calc(.66rem * var(--k))}.sk .six b{display:block;color:var(--muted)}
+.sk .rank{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:center}.sk .rank i{display:block;height:8px;background:var(--accent);border-radius:4px}
+.sk .waffle{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}.sk .waffle i{display:block;aspect-ratio:1;border-radius:2px}
+.sk .waffle i.k-ok{background:var(--ok)}.sk .waffle i.k-no{background:var(--no)}
+.sk .cyn{display:grid;grid-template-columns:1fr 1fr;gap:3px}.sk .cyn span{border:1px solid var(--line);border-radius:5px;padding:6px;text-align:center}.sk .cyn .on{background:var(--accent-weak);color:var(--accent);font-weight:600;border-color:var(--accent)}
+.sk .ds{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center}.sk .ds span:nth-child(even){display:flex;height:8px}.sk .ds i{display:block;height:8px}
+.sk .ds i.k-ok{background:var(--ok)}.sk .ds i.k-no{background:var(--no)}
+.sk .tabs{display:flex;gap:2px;margin-bottom:4px}.sk .tabs span{border:1px solid var(--line);border-radius:5px 5px 0 0;padding:1px 6px;font-size:calc(.66rem * var(--k))}.sk .tabs .on{background:var(--accent-weak);color:var(--accent);font-weight:600}
+.sk .ph{border:1px dashed var(--line);border-radius:6px;padding:6px;color:var(--muted);text-align:center;font-size:calc(.7rem * var(--k))}
+.sk ins{background:var(--ok-weak);color:var(--ok);text-decoration:none}.sk del{background:var(--no-weak);color:var(--no)}.sk mark{background:var(--warn-weak);color:var(--fg)}
+.sk .bubble{margin:4px 0 0 30px;background:var(--accent-weak);color:var(--accent);border-radius:8px;padding:3px 7px;font-size:calc(.68rem * var(--k))}
+.sk .banner{border-left:4px solid var(--warn);background:var(--warn-weak);padding:5px 7px;border-radius:4px;font-size:calc(.7rem * var(--k))}
+.sk .err{border:2px solid var(--no);padding:6px;border-radius:5px;font-size:calc(.7rem * var(--k));color:var(--no)}.sk .err u{color:var(--accent)}
+.sk .okpanel{background:var(--ok-weak);color:var(--ok);border-radius:6px;padding:8px;text-align:center}
+.sk .steps{display:flex;flex-direction:column;gap:3px}.sk .steps span{border:1px solid var(--line);border-radius:5px;padding:3px 6px;color:var(--muted)}.sk .steps .done{color:var(--ok)}.sk .steps .cur{border:2px solid var(--accent);color:var(--fg);font-weight:600}
+.sk .codebox{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start}
+.catgrid details.ent{margin:0}
+.catgrid details.ent summary{list-style:none;display:flex;flex-direction:column;gap:6px}
+.catgrid details.ent summary::-webkit-details-marker{display:none}
+.catgrid details.ent .sk{flex:none;width:100%;min-height:100px}
+.catgrid details.ent[open]{grid-column:1/-1}
+.catgrid details.ent[open] summary{flex-direction:row;align-items:flex-start;gap:14px}
+.catgrid details.ent[open] .sk{width:260px}
+.catgrid .nm{font-size:.82rem;line-height:1.3}
+.obj .ohead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-right:60px}
+.obj .oid{font:400 .76rem var(--mono);color:var(--accent);background:var(--accent-weak);padding:1px 7px;border-radius:6px}
+.obj .q{color:var(--muted);font-size:.9rem}
+.reco{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.reco .txt{flex:1;min-width:240px}
+.reco .txt .ids{margin:0 0 4px}
+.sk{flex:0 0 240px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:calc(.74rem * var(--k));line-height:1.4;min-height:110px}
+.sk .mute{font-size:calc(.68rem * var(--k));margin-top:4px}
+.sk code{font-size:calc(.68rem * var(--k))}
+.sk .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 8px}
+.sk .kv b{color:var(--muted);font-weight:600}
+.sk .hl{background:var(--accent-weak);color:var(--accent);border-radius:6px;padding:4px 6px;font-weight:600;margin-top:4px}
+.sk em{font-style:normal;font-size:calc(.68rem * var(--k));padding:0 6px;border-radius:99px;display:inline-block}
+.k-ok{background:var(--ok-weak);color:var(--ok)}.k-mid{background:var(--warn-weak);color:var(--warn)}.k-no{background:var(--no-weak);color:var(--no)}.k-acc{background:var(--accent-weak);color:var(--accent)}
+.k-un{background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 6px);color:var(--muted)}
+.sk .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.sk .tiles i{display:block;aspect-ratio:1;border-radius:4px}
+.sk .tiles i.k-ok{background:var(--ok)}.sk .tiles i.k-mid{background:var(--warn)}.sk .tiles i.k-no{background:var(--no)}
+.sk .ledger{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center}
+.sk .prov{font-size:calc(.7rem * var(--k));border-left:3px solid var(--line);padding-left:6px;margin:2px 0}
+.sk .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.sk .cols div{display:flex;flex-direction:column;gap:3px}.sk .cols b{font-size:calc(.68rem * var(--k));color:var(--muted)}
+.sk .tree .i1{padding-left:14px}.sk .tree .i2{padding-left:28px}
+.sk table.mini{border-collapse:collapse;width:100%;font-size:calc(.7rem * var(--k))}.sk table.mini td,.sk table.mini th{border:1px solid var(--line);padding:2px 4px;text-align:center}.sk table.mini th{color:var(--muted);font-weight:600}
+.sk tr.gap td{background:var(--no-weak)}
+.sk .cp{font-size:calc(.7rem * var(--k));border:1px solid var(--line);border-radius:4px;padding:0 3px}
+.sk .sbar{display:flex;height:12px;border-radius:99px;overflow:hidden;margin:8px 0 4px}.sk .sbar i{display:block}
+.sk .sbar i.k-ok{background:var(--ok)}.sk .sbar i.k-no{background:var(--no)}.sk .sbar i.k-mid{background:var(--warn)}.sk .sbar i.k-acc{background:var(--accent)}
+.svg{width:100%;height:auto;display:block}
+.svg line,.svg rect,.svg circle{stroke:var(--muted);stroke-width:1.2;fill:none}
+.svg text{fill:var(--fg);font-size:9px;font-family:var(--mono)}
+.svg .m{stroke:var(--accent);stroke-width:2}.svg .bad{stroke:var(--no);stroke-width:2.4}
+.svg circle.bad{fill:var(--no)}.svg circle.ok{fill:var(--ok);stroke:var(--ok)}.svg circle.mid{fill:var(--warn);stroke:var(--warn)}
+.svg .box{fill:var(--surface)}.svg .hot{fill:var(--no-weak);stroke:var(--no);stroke-width:2}
+.svg .dashed{stroke-dasharray:3 3}
+.svg .ring0{fill:var(--no-weak);stroke:var(--no)}.svg .ring1{fill:var(--warn-weak);stroke:var(--warn)}.svg .ring2{fill:var(--accent-weak);stroke:var(--accent)}
+.cands{margin-top:10px;font-size:.8rem}
+.cands summary{cursor:pointer;color:var(--muted)}
+.cands ul{margin:.4em 0 0;padding-left:1.1em}.cands li{margin:.15em 0}
+.cands a{color:var(--accent);text-decoration:none;font-weight:600}
+.src{font-size:var(--u-xs);color:var(--muted);margin-left:4px}
+details.ent{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0}
+details.ent summary{cursor:pointer}
+details.ent dl{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;font-size:.84rem;margin:.6em 0 .2em}
+details.ent dt{color:var(--muted)}details.ent dd{margin:0;word-break:break-word}
+details.ent:target,details.ent.flash{outline:2px solid var(--accent)}
+.authored{font-size:.72rem;color:var(--muted);font-style:italic}
+pre.raw{white-space:pre-wrap;font-size:.75rem}
+.always{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+.ledger2{display:grid;grid-template-columns:minmax(150px,1fr) auto 2.2fr;gap:8px 14px;align-items:start;font-size:.88rem}
+.ledger2 .h{font-size:.75rem;color:var(--muted);font-weight:600}
+.ledger2 em{font-style:normal;font-size:.75rem;padding:1px 8px;border-radius:99px;white-space:nowrap}
+@media (max-width:700px){.ledger2{grid-template-columns:1fr}.ledger2 .h{display:none}}
+.tiers{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tier{font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px}
+.t0{background:var(--line);color:var(--fg)}.t1{background:var(--accent);color:var(--bg)}.t2{background:var(--warn-weak);color:var(--warn);border:1px dashed var(--warn)}.t3{background:transparent;color:var(--muted);border:1px dotted var(--muted)}
+.anat{display:grid;grid-template-columns:120px 1fr;gap:10px;margin-top:12px}
+.anat .z{font-size:.78rem;font-weight:600;color:var(--muted);padding-top:6px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.th{text-decoration:none;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
+.th:hover{border-color:var(--accent)}
+.th .sk{flex:none;width:100%;min-height:80px;transform-origin:top left}
+.th .lb{font-size:.74rem}.th .lb b{color:var(--accent)}
+.th .trg{font-size:.7rem;color:var(--warn)}
+.th.core{border:2px solid var(--accent)}.th.cond{border:1px dashed var(--warn)}
+.zone-sep{grid-column:1/-1;border-top:1px dashed var(--line)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px}
+.opt2{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.86rem}
+.opt2.rec{border:2px solid var(--accent)}
+.opt2 b{font-size:1rem}
+.recline{margin-top:8px;font-size:.88rem}
+.reserve{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+.gut{display:grid;grid-template-columns:6px 1fr;gap:2px 6px;font-size:.66rem}.gut span{border-radius:2px}.g-ok{background:var(--ok)}.g-no{background:var(--no)}
+.cov{display:grid;grid-template-columns:auto 1fr auto;gap:5px 8px;align-items:center}.cov .b{position:relative;height:10px;background:var(--line);border-radius:5px}
+.cov .b i{display:block;height:100%;background:var(--accent);border-radius:5px}.cov .b s{position:absolute;top:-3px;width:2px;height:16px;background:var(--fg)}
+.cov em,.cov span.k-no,.cov span.k-ok{font-size:.66rem;padding:0 5px;border-radius:99px}
+.chk{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;font-size:.84rem;align-items:start;margin-top:8px}
+.chk .nm b{color:var(--accent)}.chk .ds2{color:var(--muted);font-size:.8rem}
+.chk em{font-style:normal;font-size:.72rem;padding:1px 8px;border-radius:99px;white-space:nowrap}
+pre.yaml{font-size:.74rem;max-height:420px}
+
+/* .sk = thumbnail scale (vignettes). .sk.full = same markup at reading size, for real content in a review block */
+.sk{--k:1}
+.sk.full{--k:1.35;flex:none;width:auto;min-height:0;line-height:1.5;padding:12px 14px}
+.sk.full .svg{max-width:520px;display:block}
+.sk.full .svg text{font-size:10px}
+/*GRAMMAR-CSS:END*/
+/*VERDICT:BEGIN verdict layer over the DS base: tokens, type roles, buttons, details and dialog come from the base; body carries mode-outil. Rules, not cards: a block is a left rule whose colour is its state.*/
+main{max-width:64rem;margin:0 auto;padding:0 var(--s4) var(--s6)}
+.mute{color:var(--muted)}
+.grid{display:grid;gap:var(--s3) var(--s4)}
+.g2{grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
+h2 small{font-family:var(--sans);font-size:var(--u-sm);font-weight:400;color:var(--muted);font-size-adjust:none}
+h3{font-family:var(--serif);font-weight:600;font-size:var(--t-body);line-height:1.3;margin:0 0 var(--s0)}
+code{font-size:var(--u-sm);color:var(--accent)}
+pre{font-size:var(--u-sm);line-height:1.5;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:var(--s2);overflow:auto;margin:var(--s1) 0}
+pre code{color:inherit}
+/* top bar: sticky, one rule under it; theme = button.tgl, export = button.ghost, send = filled button */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line-strong)}
+.top .in{max-width:64rem;margin:0 auto;padding:var(--s1) var(--s4);display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.top strong,.tag{font-family:var(--label-font);font-variant-caps:var(--label-caps);text-transform:var(--label-tt);letter-spacing:var(--label-ls);font-size:var(--label-size);font-weight:var(--label-w);font-size-adjust:var(--label-adjust)}
+.top strong{flex:1;color:var(--fg)}
+/* hero: phase and project as labels, a compact title, counts, sources folded */
+.hero{padding:var(--s4) 0 0}
+.hero h1{font-size:var(--t-h1-sm);margin:var(--s1) 0 var(--s2)}
+.hero p{margin:0 0 var(--s2)}
+.tag{color:var(--faint);margin-right:var(--s1)}
+.tag.acc{color:var(--fg)}
+.lead{font-size:var(--t-lede);color:var(--muted);max-width:44ch}
+/* blocks: a left rule, its colour set by the runtime state class s-* */
+.card{position:relative;padding:var(--s1) 0 var(--s1) var(--s3);border-left:3px solid var(--line);margin:0 0 var(--s4)}
+.grid > .card{margin:0}
+.card p{margin:var(--s0) 0}
+.card.s-ok,.card.s-choisi{border-left-color:var(--ok)}
+.card.s-non{border-left-color:var(--no)}
+.card.s-bloque{border-left-color:var(--crit-bg)}
+.card.s-revoir,.card.s-question{border-left-color:var(--warn)}
+.card.s-attente{border-left-style:dashed;border-left-color:var(--warn)}
+.crit{display:inline-block;background:var(--crit-bg);color:var(--crit-fg);border-radius:var(--r);padding:var(--s0) var(--s1);margin-bottom:var(--s1);font-family:var(--sans);font-size:var(--u-xs);font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size-adjust:none}
+.card details{margin-top:var(--s1)}
+.card summary{color:var(--muted)}
+.cap{font-family:var(--sans);font-size:var(--u-sm);color:var(--muted);font-size-adjust:none;margin:var(--s0) 0 0}
+.flag{cursor:help;margin-left:var(--s0)}
+/* decision options: the active choice is the accent; dashed = the default applied by silence */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:var(--s1);margin-top:var(--s1)}
+.opt2{font-family:var(--sans);font-size:var(--u-md);font-size-adjust:none;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);padding:var(--s1) var(--s2)}
+.opt2 b{font-weight:600}
+.opt2 .mute{font-size:var(--u-sm)}
+.opt2[data-opt]{cursor:pointer}
+.opt2[data-opt]:hover{border-color:var(--accent)}
+.opt2.sel{border:2px solid var(--accent);background:var(--accent-weak);padding:calc(var(--s1) - 1px) calc(var(--s2) - 1px)}
+.opt2.sel.def{border-style:dashed}
+.recline{margin-top:var(--s1)}
+/* response bar: outlined pills; pressed = the state of the answer */
+.rbar{display:flex;gap:var(--s1);flex-wrap:wrap;margin-top:var(--s2);padding-top:var(--s1);border-top:1px dotted var(--line)}
+.card[data-type=constat] .rbar,.card[data-type=tri] .rbar{border-top:0;padding-top:0;margin-top:var(--s1);justify-content:flex-end}
+button.pill{background:transparent;color:var(--muted);border:1px solid var(--line-strong);padding:var(--s0) var(--s1)}
+button.pill:hover{color:var(--fg);border-color:var(--fg)}
+button.pill[aria-pressed=true]{background:var(--accent-weak);color:var(--accent);border-color:var(--accent)}
+button.pill[aria-pressed=true]:is([data-v=ok],[data-v=garder]){background:var(--ok-weak);color:var(--ok);border-color:var(--ok)}
+button.pill[aria-pressed=true]:is([data-v=revoir],[data-v=corriger],[data-v=pasfait],[data-v=plus-tard]){background:var(--warn-weak);color:var(--warn);border-color:var(--warn)}
+button.pill[aria-pressed=true]:is([data-v=non],[data-v=ecart],[data-v=jeter]){background:var(--no-weak);color:var(--no);border-color:var(--no)}
+button.pill.ghost.has{color:var(--accent);border-color:var(--accent)}
+button.pill.mini{padding:0 var(--s0)}
+textarea{display:block;width:100%;min-height:4rem;margin-top:var(--s1);resize:vertical}
+textarea[hidden]{display:none}
+/* tri */
+ul.tri-l{padding:0;margin:var(--s1) 0}
+ul.tri-l [data-item]{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding:var(--s0) 0;border-bottom:1px dotted var(--line);list-style:none}
+.tri{display:flex;gap:var(--s0);flex:none}
+/* relecture: changes inline */
+mark{background:var(--warn-weak);color:var(--fg);padding:0 .15em}
+ins{background:var(--ok-weak);color:var(--ok);text-decoration:none}
+del{background:var(--no-weak);color:var(--no)}
+/* steps */
+.flow{display:flex;align-items:stretch;flex-wrap:wrap;margin:var(--s1) 0}
+.flow .st{flex:1;min-width:7rem;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid var(--line-strong);border-radius:var(--r);padding:var(--s1) var(--s2);font-family:var(--sans);font-size:var(--u-sm);font-size-adjust:none}
+.flow .ar{display:flex;align-items:center;padding:0 var(--s0);color:var(--faint)}
+/* planche: visual specimens side by side */
+.planche{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:var(--s2);margin-top:var(--s1)}
+.planche figure{margin:0;border-top:1px solid var(--line);padding-top:var(--s1)}
+.planche figcaption{font-family:var(--sans);font-size:var(--u-sm);color:var(--muted);font-size-adjust:none;margin-top:var(--s0)}
+/* gantt: durations on a shared scale; bar position and length as inline left/width in % */
+.gantt{display:grid;grid-template-columns:minmax(5rem,auto) 1fr;gap:var(--s0) var(--s2);align-items:center;margin-top:var(--s1);font-family:var(--sans);font-size:var(--u-sm);font-size-adjust:none}
+.gantt .tr{position:relative;height:.9rem;background:var(--sunk);border-radius:2px}
+.gantt .tr i{position:absolute;top:0;bottom:0;background:var(--accent-weak);border:1px solid var(--accent);border-radius:2px}
+.gantt .tr i.no{background:var(--no-weak);border-color:var(--no)}
+.gantt .tr b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg)}
+/* grille: items x criteria; cells y (yes) / n (no) / p (partial) */
+table.grille{width:auto;margin-top:var(--s1);font-size:var(--u-sm)}
+.grille th,.grille td{border:1px solid var(--line);padding:var(--s0) var(--s1);text-align:center}
+.grille th:first-child,.grille td:first-child{text-align:left}
+.grille td.y{background:var(--ok-weak);color:var(--ok)}.grille td.n{background:var(--no-weak);color:var(--no)}.grille td.p{background:var(--warn-weak);color:var(--warn)}
+/* global verdict, dialog, toast */
+.global{margin-top:var(--s5);padding-top:var(--s3);border-top:2px solid var(--fg)}
+.note{font-family:var(--sans);font-size:var(--u-sm);color:var(--muted);font-size-adjust:none}
+dialog{max-width:45rem;width:92vw}
+dialog h3{margin-top:0}
+dialog textarea{min-height:18rem;font-family:var(--mono);font-size:var(--u-xs)}
+.dlg-act{display:flex;gap:var(--s1);justify-content:flex-end;margin-top:var(--s2)}
+#dlgReset{margin-right:auto}
+.toast{position:fixed;bottom:var(--s3);left:50%;transform:translateX(-50%);background:var(--crit-bg);color:var(--crit-fg);border-radius:var(--r);padding:var(--s1) var(--s3);font-family:var(--sans);font-size:var(--u-sm);font-size-adjust:none;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:640px){
+  main,.top .in{padding-left:var(--s2);padding-right:var(--s2)}
+  .opts{grid-template-columns:minmax(0,1fr)}
+}
+/*VERDICT:END*/
+</style>
+</head>
+<body class="mode-outil">
+
+<div class="top"><div class="in">
+  <strong>TITRE_COURT</strong>
+  <button class="tgl" id="bTheme" type="button" title="Thème : auto (suit le système), clair, sombre">thème auto</button>
+  <button class="ghost" id="bExport" type="button">📤 Exporter</button>
+  <button id="bSend" type="button">Envoyer</button>
+  <script>
+  /* theme switch: auto -> clair -> sombre; one choice for all review pages, kept in localStorage; runs before <main> paints */
+  (function(){
+    const K = 'verdict:theme', L = {auto:'thème auto', light:'thème clair', dark:'thème sombre'}, N = {auto:'light', light:'dark', dark:'auto'};
+    const b = document.getElementById('bTheme'), root = document.documentElement;
+    let t; try { t = localStorage.getItem(K) || localStorage.getItem('viz-review:theme') } catch(e) {}
+    if (!L[t]) t = 'auto';
+    const apply = () => { if (t === 'auto') root.removeAttribute('data-theme'); else root.dataset.theme = t; b.textContent = L[t]; };
+    b.onclick = () => { t = N[t]; try { localStorage.setItem(K, t) } catch(e) {} apply(); };
+    apply();
+  })();
+  </script>
+</div></div>
+<main>
+<!-- REVIEW-HTML:CONTENT:BEGIN  (replace everything down to CONTENT:END) -->
+<section class="hero">
+ <span class="tag acc">explorer</span> <span class="tag">PROJET · JJ/MM</span>
+ <h1>La question de Mat, courte ?</h1>
+ <p><b>🎯 2 décisions · ❓ 1 question · 🔍 2 constats · 📖 1 relecture · 🗂️ 1 tri · 🧪 1 essai</b></p>
+ <details><summary>source et contrôles</summary><p>fichier.md · JJ/MM HH:MM · 26 citations vérifiées · 9 détails reportés dans PLAN-x.md</p></details>
+</section>
+
+<h2>🎯 À trancher</h2>
+<div class="card" data-block="dec-exemple-critique" data-type="decision" data-level="critique">
+ <span class="crit">🛑 CRITIQUE · irréversible · réponse obligatoire</span>
+ <h3>Publier la version actuelle ?</h3>
+ <div class="opts">
+  <div class="opt2" data-opt="A"><b>A</b> · Publier maintenant</div>
+  <div class="opt2 rec" data-opt="B"><b>B</b> · Attendre la relecture ★</div>
+ </div>
+ <p class="recline"><b>★ B</b> · raison en douze mots au plus.</p>
+ <details><summary>détail</summary><p>Atouts et risques de chaque option, conséquence du choix.</p></details>
+</div>
+
+<div class="card" data-block="dec-exemple-moyenne" data-type="decision" data-level="moyenne" data-default="A">
+ <h3>Format de la fiche ?</h3>
+ <div class="opts">
+  <div class="opt2 rec" data-opt="A"><b>A</b> · Une page ★</div>
+  <div class="opt2" data-opt="B"><b>B</b> · Deux pages</div>
+ </div>
+ <p class="recline"><b>★ A</b> · lisible sur téléphone. <span class="mute">Sans réponse : A.</span></p>
+ <details><summary>détail</summary><p>Atouts et risques des options, si utile.</p></details>
+</div>
+
+<div class="card" data-block="q-exemple" data-type="question">
+ <h3>Date de fin retenue ?</h3>
+ <details><summary>détail</summary><p>Bloque le planning.</p></details>
+</div>
+
+<h2>🔍 Constats</h2>
+<div class="grid g2">
+<div class="card" data-block="constat-texte" data-type="constat">
+ <h3>Le titre affirme le constat</h3>
+ <details><summary>détail</summary><p>Une phrase de preuve, en mots simples.</p><pre>extrait verbatim inséré par script</pre></details>
+</div>
+<div class="card" data-block="constat-visuel" data-type="constat">
+ <h3>Délai : 6 → 4 semaines</h3>
+ <div class="gantt"><span>avant</span><span class="tr"><i style="left:0;width:100%"></i></span><span>après</span><span class="tr"><i style="left:0;width:66%"></i></span></div>
+ <details><summary>détail</summary><p>D'où viennent les chiffres, en une phrase.</p></details>
+</div>
+</div>
+
+<h2>📖 Relecture</h2>
+<div class="card" data-block="relecture-exemple" data-type="relecture">
+ <h3>Le paragraphe d'ouverture</h3>
+ <p>Texte inséré par script, avec <del>l'ancien mot</del> <ins>le nouveau</ins> et un <mark>passage signalé</mark>.</p>
+</div>
+
+<h2>🗂️ Tri</h2>
+<div class="card" data-block="tri-exemple" data-type="tri" data-choices="garder|reformuler|jeter">
+ <h3>Les pistes candidates</h3>
+ <ul class="tri-l">
+  <li data-item="piste-a">Piste A, six mots au plus</li>
+  <li data-item="piste-b" data-default="reformuler">Piste B <span class="flag" title="voix incertaine">⚠️</span></li>
+  <li data-item="piste-c">Piste C</li>
+ </ul>
+</div>
+
+<h2>🧪 Essais</h2>
+<div class="card" data-block="essai-exemple" data-type="essai">
+ <h3>Menu sur téléphone</h3>
+ <p><b>Geste :</b> ouvrir l'URL. <b>Attendu :</b> menu sur une ligne.</p>
+</div>
+<!-- REVIEW-HTML:CONTENT:END -->
+
+<div class="global" data-global>
+  <h3>🏁 Verdict global</h3>
+  <p class="note">Envoyer vaut « j'ai parcouru la page ». Seuls tes écarts partent, avec les défauts appliqués.</p>
+</div>
+</main>
+
+<dialog id="dlg">
+  <h3>📤 Ton feedback</h3>
+  <p class="note">Colle ce JSON dans la session, ou télécharge le fichier.</p>
+  <textarea id="dlgTxt" readonly></textarea>
+  <div class="dlg-act">
+    <button class="ghost" id="dlgReset" type="button">Réinitialiser</button>
+    <button class="ghost" id="dlgDl" type="button">Télécharger</button>
+    <button id="dlgCopy" type="button">Copier</button>
+    <button class="ghost" id="dlgClose" type="button">Fermer</button>
+  </div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<!--RUNTIME:BEGIN-->
+<script>
+/* verdict runtime v1 — card types with silence semantics. Each [data-block] carries data-type:
+   constat (silence = d'accord) · decision (data-level moyenne + data-default = reco applied on silence; critique = blocking)
+   question (blocking until answered) · relecture (silence = pas validé) · tri (data-choices on the card, first = default; li[data-item] with optional data-default; silence = each item's default) · essai (silence = pas fait).
+   Export carries only deviations, the defaults applied and what stays unanswered. State in localStorage. */
+(function(){
+  const meta = n => (document.querySelector('meta[name="'+n+'"]')||{}).content || '';
+  const RID = meta('review-id'), EP = meta('feedback-endpoint'), PHASE = meta('review-phase'), KEY = 'review:'+RID;
+  let st; try { st = JSON.parse(localStorage.getItem(KEY)) } catch(e) {}
+  if (!st || !st.v1) st = {v1:1, blocs:{}, global:{}};
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(st)) } catch(e) {} };
+  const $ = s => document.querySelector(s);
+  const mk = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const toast = t => { const e=$('#toast'); e.textContent=t; e.classList.add('on'); setTimeout(()=>e.classList.remove('on'),2200) };
+  const blocks = [...document.querySelectorAll('[data-block]')];
+  const rec = id => { const r = st.blocs[id] || (st.blocs[id] = {}); r.items = r.items || {}; return r; };
+
+  // bar of toggle pills + optional comment; open(v) says whether the comment opens for verdict v
+  function bar(host, r, list, open, ph){
+    const b = mk('div','rbar'), ta = mk('textarea');
+    ta.placeholder = ph || 'Commentaire…'; ta.value = r.commentaire || ''; ta.hidden = !ta.value;
+    ta.oninput = () => { r.commentaire = ta.value; persist(); refresh(); };
+    list.forEach(([v,l]) => {
+      const p = mk('button','pill',l); p.type='button'; p.dataset.v=v;
+      p.onclick = () => { r.verdict = r.verdict===v ? null : v; persist(); if (open(r.verdict)) { ta.hidden=false; ta.focus(); } refresh(); };
+      b.appendChild(p);
+    });
+    const c = mk('button','pill ghost','💬 note'); c.type='button'; c.title='commentaire';
+    c.onclick = () => { ta.hidden = !ta.hidden; if (!ta.hidden) ta.focus(); };
+    b.appendChild(c); host.appendChild(b); host.appendChild(ta);
+  }
+
+  const TRI_EMO = {garder:'👍', jeter:'🗑️', 'plus-tard':'⏳', reformuler:'✏️', corriger:'✏️'};  // emoji markers, the word stays (DS 0.6.1)
+  const SETUP = {
+    constat: (b,r) => bar(b, r, [['non',"✋ pas d'accord"]], v => v==='non', "Pourquoi pas d'accord ?"),
+    relecture: (b,r) => bar(b, r, [['ok','✅ relu, ok'],['corriger','✏️ à corriger']], v => v==='corriger', 'Corrections…'),
+    essai: (b,r) => bar(b, r, [['ok','✅ conforme'],['ecart','❌ écart'],['pasfait','⏳ pas fait']], v => v==='ecart', 'Ce que tu as observé…'),
+    question: (b,r) => { const ta = mk('textarea'); ta.placeholder='Ta réponse…'; ta.value = r.commentaire || ''; ta.oninput = () => { r.commentaire = ta.value; persist(); refresh(); }; b.appendChild(ta); },
+    decision: (b,r) => {
+      b.querySelectorAll('.opt2[data-opt]').forEach(o => {
+        o.tabIndex = 0; o.setAttribute('role','button');
+        const pick = () => { r.verdict = r.verdict===o.dataset.opt ? null : o.dataset.opt; persist(); refresh(); };
+        o.onclick = pick; o.onkeydown = e => { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); pick(); } };
+      });
+      bar(b, r, [['question','❓ question']], v => v==='question', 'Ta question ou ta nuance…');
+    },
+    tri: (b,r) => {
+      const ch = (b.dataset.choices || 'garder|plus-tard|jeter').split('|');
+      b.querySelectorAll('[data-item]').forEach(li => {
+        const k = li.dataset.item, d = li.dataset.default || ch[0], g = mk('span','tri');
+        ch.forEach(v => {
+          const p = mk('button','pill mini',(TRI_EMO[v] ? TRI_EMO[v]+' ' : '')+v.replace(/-/g,' ')); p.type='button'; p.dataset.v=v;
+          p.onclick = () => { if (v===d || r.items[k]===v) delete r.items[k]; else r.items[k] = v; persist(); refresh(); };
+          g.appendChild(p);
+        });
+        li.appendChild(g);
+      });
+      bar(b, r, [], () => false);
+    },
+  };
+  blocks.forEach(b => (SETUP[b.dataset.type] || SETUP.constat)(b, rec(b.dataset.block)));
+  const g = $('[data-global]');
+  if (g) bar(g, st.global, [['ok','✅ ok'],['revoir','🟡 à revoir'],['non','❌ non']], v => v && v!=='ok');
+
+  function status(b){
+    const r = rec(b.dataset.block), t = b.dataset.type, c = (r.commentaire||'').trim();
+    if (t==='question') return c ? 'ok' : 'bloque';
+    if (t==='decision') return r.verdict==='question' ? 'question' : r.verdict ? 'choisi' : b.dataset.level==='critique' ? 'bloque' : 'defaut';
+    if (t==='relecture') return r.verdict==='ok' ? 'ok' : r.verdict==='corriger' ? 'revoir' : 'attente';
+    if (t==='essai') return r.verdict==='ok' ? 'ok' : r.verdict==='ecart' ? 'non' : r.verdict==='pasfait' ? 'revoir' : 'attente';
+    if (t==='tri') return Object.keys(r.items).length ? 'choisi' : 'tacite';
+    return r.verdict==='non' ? 'non' : 'tacite';
+  }
+
+  function refresh(){
+    blocks.forEach(b => {
+      const r = rec(b.dataset.block), s = status(b);
+      b.classList.remove(...[...b.classList].filter(c => c.startsWith('s-'))); b.classList.add('s-'+s);
+      b.querySelectorAll(':scope > .rbar .pill[data-v]').forEach(p => p.setAttribute('aria-pressed', p.dataset.v===r.verdict));
+      b.querySelectorAll(':scope > .rbar .ghost').forEach(p => p.classList.toggle('has', !!(r.commentaire||'').trim()));
+      const sel = r.verdict && r.verdict!=='question' ? r.verdict : (b.dataset.level==='critique' ? null : b.dataset.default);
+      b.querySelectorAll('.opt2[data-opt]').forEach(o => { o.classList.toggle('sel', o.dataset.opt===sel); o.classList.toggle('def', o.dataset.opt===sel && !r.verdict); });
+      b.querySelectorAll('[data-item]').forEach(li => li.querySelectorAll('.tri .pill').forEach(p => p.setAttribute('aria-pressed', p.dataset.v===(r.items[li.dataset.item]||li.dataset.default||(b.dataset.choices||'garder').split('|')[0]))));
+    });
+    if (g) { g.querySelectorAll('.rbar .pill[data-v]').forEach(p => p.setAttribute('aria-pressed', p.dataset.v===st.global.verdict)); g.querySelector('.rbar .ghost').classList.toggle('has', !!(st.global.commentaire||'').trim()); }
+  }
+
+  function payload(){
+    const out = {review_id:RID, phase:PHASE||null, envoye_le:new Date().toISOString(),
+      global:{verdict:st.global.verdict||null, commentaire:st.global.commentaire||''},
+      reponses:[], defauts_appliques:{}, sans_reponse:{bloquants:[], relecture:[], essai:[]}};
+    blocks.forEach(b => {
+      const id = b.dataset.block, t = b.dataset.type || 'constat', r = rec(id), s = status(b), c = (r.commentaire||'').trim();
+      if (s==='bloque') out.sans_reponse.bloquants.push(id);
+      if (s==='attente') out.sans_reponse[t].push(id);
+      if (s==='defaut') out.defauts_appliques[id] = b.dataset.default;
+      const items = Object.keys(r.items).length ? r.items : null;
+      if (r.verdict || c || items) { const o = {id, type:t, verdict:r.verdict||null}; if (c) o.commentaire = c; if (items) o.items = items; out.reponses.push(o); }
+    });
+    return out;
+  }
+  function warn(p){ const n = p.sans_reponse.bloquants.length; if (n) toast(n+' bloquant'+(n>1?'s':'')+' sans réponse'); }
+
+  // Export: clipboard API needs a secure context (https/localhost); over plain http via Headscale fall back to execCommand.
+  function copy(txt){
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt).then(()=>toast('JSON copié'));
+    const ta=$('#dlgTxt'); ta.select(); try { document.execCommand('copy'); toast('JSON copié') } catch(e) { toast('Sélectionne et copie à la main') }
+  }
+  $('#bExport').onclick=()=>{ const p = payload(); $('#dlgTxt').value = JSON.stringify(p, null, 2); $('#dlg').showModal(); warn(p); };
+  $('#dlgCopy').onclick=()=>copy($('#dlgTxt').value);
+  $('#dlgClose').onclick=()=>$('#dlg').close();
+  $('#dlgDl').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([$('#dlgTxt').value],{type:'application/json'})); a.download=RID+'.feedback.json'; a.click(); URL.revokeObjectURL(a.href) };
+  $('#dlgReset').onclick=()=>{ if(confirm('Effacer toutes les réponses de cette page ?')){ localStorage.removeItem(KEY); location.reload() } };
+
+  const send=$('#bSend');
+  if (!EP) { send.disabled=true; send.title='Pas de serveur configuré : utilise Exporter'; }
+  else send.onclick=()=>{ const p = payload(); warn(p); fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})
+      .then(r=>{ if(!r.ok) throw 0; toast('✅ Envoyé') }).catch(()=>{ toast('Échec de l\'envoi : exporte'); $('#bExport').click() }); };
+
+  refresh();
+})();
+</script>
+<!--RUNTIME:END-->
+</body>
+</html>

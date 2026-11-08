@@ -5,7 +5,7 @@
     "name": "dstoic"
   },
   "metadata": {
-    "version": "0.52.0"
+    "version": "0.55.0"
   },
   "plugins": [
     {
@@ -198,8 +198,8 @@
     {
       "name": "gist",
       "source": "./gist",
-      "description": "Visual output an agent's reader grasps at a glance. Ships the Digital Stoic design system v0.5 \"Tablette\" (design-system): tokens, type, class vocabulary, inline-SVG chart parameters, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Six demo screens (document, landing, dashboard, charts, decision, mini-app) kept in sync by a checker. Review pages (review-html) will join it.",
-      "version": "0.5.0",
+      "description": "Visual output an agent's reader grasps at a glance. Ships the Digital Stoic design system v0.6 \"Tablette\" (design-system): tokens, type, class vocabulary, inline-SVG chart parameters, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Six demo screens (document, landing, dashboard, charts, decision, mini-app) kept in sync by a checker. Also ships verdict (ex review-html): self-contained review pages assembled from the design system, with cards typed by the action the reader takes and a JSON of deviations pasted back, plus its 108-entry visual grammar catalog and generator.",
+      "version": "0.8.0",
       "author": {
         "name": "dstoic"
       },

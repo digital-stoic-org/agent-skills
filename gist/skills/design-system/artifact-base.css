@@ -23,6 +23,7 @@
   --accent:#1F3F8F; --accent-weak:#E1E5EE; --accent-ink:#FAF4E8;
   --voice:#9A3B1A; --voice-weak:#EFD9C9;
   --ok:#3A6B47; --warn:#8A6412;
+  --ok-weak:#E3E9DA; --warn-weak:#F5EBD5; --no:#A3243B; --no-weak:#F3D9DC; /* verdict : refus, jamais la voix */
   --crit-bg:#2B1F16; --crit-fg:#F2E9D8;
   /* Séries — identité, jamais rang. Ordre figé, validé aux six contrôles. */
   --cat-1:#2447A8; --cat-2:#A02F2F; --cat-3:#0A8A6C;
@@ -40,6 +41,7 @@
     --accent:#94B0F0; --accent-weak:#1C2740; --accent-ink:#161A1F;
     --voice:#E28D65; --voice-weak:#3A2620;
     --ok:#7FBA95; --warn:#D9AE55;
+    --ok-weak:#1F2E28; --warn-weak:#352E1C; --no:#EC7E8E; --no-weak:#3B2229;
     --crit-bg:#E4E2DC; --crit-fg:#161A1F;
     --cat-1:#5B8FE0; --cat-2:#D2685F; --cat-3:#2E9E8E;
     --cat-4:#8F7AD0; --cat-5:#B4842F; --cat-6:#CE6E9B;
@@ -57,6 +59,7 @@
   --accent:#94B0F0; --accent-weak:#1C2740; --accent-ink:#161A1F;
   --voice:#E28D65; --voice-weak:#3A2620;
   --ok:#7FBA95; --warn:#D9AE55;
+  --ok-weak:#1F2E28; --warn-weak:#352E1C; --no:#EC7E8E; --no-weak:#3B2229;
   --crit-bg:#E4E2DC; --crit-fg:#161A1F;
   --cat-1:#5B8FE0; --cat-2:#D2685F; --cat-3:#2E9E8E;
   --cat-4:#8F7AD0; --cat-5:#B4842F; --cat-6:#CE6E9B;
@@ -70,6 +73,7 @@
   --accent:#1F3F8F; --accent-weak:#E1E5EE; --accent-ink:#FAF4E8;
   --voice:#9A3B1A; --voice-weak:#EFD9C9;
   --ok:#3A6B47; --warn:#8A6412;
+  --ok-weak:#E3E9DA; --warn-weak:#F5EBD5; --no:#A3243B; --no-weak:#F3D9DC; /* verdict : refus, jamais la voix */
   --crit-bg:#2B1F16; --crit-fg:#F2E9D8;
   /* Séries — identité, jamais rang. Ordre figé, validé aux six contrôles. */
   --cat-1:#2447A8; --cat-2:#A02F2F; --cat-3:#0A8A6C;

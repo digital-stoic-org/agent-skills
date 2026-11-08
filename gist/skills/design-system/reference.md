@@ -1,6 +1,6 @@
 # Digital Stoic artifact design system — agent reference
 
-version: 0.5.0 | palette: tablette | updated: 2026-11-07
+version: 0.6.1 | palette: tablette | updated: 2026-11-08
 
 Load when building a Claude artifact or any HTML page. Overrides the artifact-design skill defaults; user's explicit words still win. Paths below are relative to this skill's directory.
 
@@ -54,7 +54,8 @@ Never hardcode a color. Style only through tokens. Palette is defined four times
 --line --line-strong           rules
 --accent --accent-weak --accent-ink
 --voice --voice-weak
---ok --warn
+--ok --warn --ok-weak --warn-weak
+--no --no-weak                 refusal state (verdict pages)
 --crit-bg --crit-fg
 --cat-1 … --cat-6              series identity (fixed order, never cycled)
 --seq-1 … --seq-5              continuous magnitude (one hue, light→dark)
@@ -76,6 +77,8 @@ line #D9C7A6 / #2F3640      line-strong #C4AE88 / #434B57
 accent (machine, blueprint) #1F3F8F / #94B0F0   accent-weak #E1E5EE / #1C2740   accent-ink #FAF4E8 / #161A1F
 voice (human, terracotta)   #9A3B1A / #E28D65   voice-weak #EFD9C9 / #3A2620
 ok #3A6B47 / #7FBA95        warn #8A6412 / #D9AE55         crit = fg/bg inversion
+ok-weak #E3E9DA / #1F2E28   warn-weak #F5EBD5 / #352E1C
+no #A3243B / #EC7E8E        no-weak #F3D9DC / #3B2229       (since v0.6)
 ```
 
 ## Color rules
@@ -88,6 +91,8 @@ ok #3A6B47 / #7FBA95        warn #8A6412 / #D9AE55         crit = fg/bg inversio
 6. `--cat-*` = series identity, and nothing else. It is not a decorative palette: never use it for headings, rules, chips or backgrounds. Conversely never colour a series with `--accent` or `--voice` — those already mean something.
 7. Colour follows the entity, never its rank. A filter that changes the series count must not repaint the survivors.
 8. `--ok` / `--warn` stay status-only. They are never "series 7".
+9. `--no` / `--no-weak` = refusal or deviation (a verdict says no, a test diverged, a deleted line). State only, like `--ok` / `--warn`. It is crimson (hue 349°), apart from the voice (15°) and the brick series (0°): a refusal is never written in the voice colour. Added 2026-11-08 (v0.6) for verdict pages.
+10. The `-weak` grounds carry state text in the matching colour: `--ok` on `--ok-weak`, `--warn` on `--warn-weak`, `--no` on `--no-weak`, all ≥ 4.5:1 in both versants; `--fg` on any of them ≥ 10:1.
 
 ## Type roles
 
@@ -192,9 +197,19 @@ Rendering rules:
 - Grid and axes recede. `font-variant-numeric:tabular-nums` wherever digits align.
 - Render it and look at it. The validator checks colour, not layout — collisions and overflow are found by opening the page.
 
+## Consumers — static sites and other pages
+
+- **Static site, no build.** Copy `artifact-base.css` verbatim as the site's `base.css` and never edit it; site rules go in the site's own CSS, loaded after it. Re-copy on every DS release and prove it with `md5sum` against the source. Faces: `bun <skill-dir>/export-fonts.mjs <site>/fonts` writes the same woff2 bytes plus a `fonts.css` and the OFL texts; link `fonts.css` before `base.css`. First consumer: `/repos/www/public/` (digitalstoic.net, 2026-11-08).
+- **theme-color.** Standalone builds emit one `<meta name="theme-color">` per versant, read from the base `--bg` at build time. A hand-written page copies the same two values: light `--bg`, dark `--bg`.
+- **Reserved class names.** Every class of `artifact-base.css` is global. A consumer never reuses one of these names for another meaning; grep the base before naming a class. Names already hit by a consumer: `.mark` `.strip` `.num` `.fig` (www renamed its own to `.brand` `.chain` `.secnum` `.fig-n`).
+- **Landing call to action.** A landing CTA is a link that invites to read, not a form control: EB Garamond 600 at `--t-lede`, background `--accent`, ink `--accent-ink`, radius `--r`, padding from `--s*`, no shadow, one per screen. Form buttons stay Hanken (rule 8). Settled with Mat on www, 2026-11-08.
+- **Text inside an image.** The 12 px floor holds for HTML text. Text that belongs to an image (labels on an illustration, a HUD on a plate) is drawn as SVG text in the image's own coordinates and scales with it, like a static chart: author it at 12 units for the intended width and accept about 9 px on a phone. Never lay HTML text under 12 px over an image; move it into the SVG.
+- **SVG filters.** Filter primitives (`feFlood`, `feColorMatrix`…) take literal colours and cannot follow tokens, like Mermaid. Use the light-versant hexes and write the exception in a comment at the top of the consumer's CSS.
+- **Font coverage.** `ebgaramond-400` has no Greek (0 of 24 capitals) and no `onum` (fontTools, 2026-11-08). A page that needs Greek declares its own face with a `unicode-range`; never set `font-variant-numeric: oldstyle-nums`, it does nothing.
+
 ## Guardrails
 
-- No emoji as section markers in artifacts. (Emoji stay in CLI replies and structured YAML, not in the rendered page.)
+- Emoji are allowed in every page (document, landing, tool) as markers that carry meaning: a state, a section type, a count, an action. Never decorative, never a row of them, never one alone where the word is needed: a button or a state keeps its word next to the emoji. In SVG text, add VS-16 (U+FE0F) and a colour emoji face in the font stack, or the glyph renders black. Decided by Mat 2026-11-08, replacing the v0.1 ban.
 - Mermaid renders only in `<pre class="mermaid">`, never `<div>`. `%%{init:…}%%` takes literal hex only, so diagrams cannot follow token swaps — set diagram colors to the light-versant hexes and accept they do not invert.
 - Colored `classDef` fills must include `color:#000`.
 - Never centered by default. Never `rounded-lg` everywhere. Never an accent rail on a rounded card.
@@ -217,4 +232,5 @@ No fork is open. The system is what `templates/gallery.html` renders. v0.1 "Guè
 - **x-height.** `font-size-adjust:.5` on the serif, none on Hanken and mono.
 - **Voice surface.** `.reg-conv` keeps its full `--voice-weak` background.
 - **Series palette.** Six slots, order frozen, values unchanged from v0.1, re-validated on the Tablette surfaces. Changing any hex means re-running the validator in both modes and accepting the new caps. Do not add a seventh slot.
+- **Emoji.** Allowed as meaningful markers on every page, never decorative (2026-11-08).
 - **Chart engine.** Inline SVG written by hand. Chart libraries excluded: CSP, no bundler, and a default look the guardrails ban.

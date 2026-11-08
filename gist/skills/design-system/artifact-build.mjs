@@ -92,6 +92,16 @@ const bodyClass = () => {
   return marked ? ` class="${escape(marked[1].replace(/\s+/g, " "))}"` : "";
 };
 
+// theme-color : la barre du navigateur suit le --bg de chaque versant, lu dans
+// le socle au moment de l'assemblage — aucune valeur recopiée ici.
+const baseCss = readFileSync(join(DESIGN, "artifact-base.css"), "utf8");
+const bgOf = (sel) => baseCss.match(new RegExp(sel + "\\{[^}]*?--bg:(#[0-9A-Fa-f]{6})"))?.[1];
+const bgLight = bgOf(":root\\[data-theme=\"light\"\\]"), bgDark = bgOf(":root\\[data-theme=\"dark\"\\]");
+if (standalone && (!bgLight || !bgDark)) {
+  console.error("theme-color: --bg introuvable dans artifact-base.css (blocs data-theme)");
+  process.exit(1);
+}
+
 if (standalone && !/^\s*<!doctype/i.test(html)) {
   html = `<!doctype html>
 <html lang="fr">
@@ -99,6 +109,8 @@ if (standalone && !/^\s*<!doctype/i.test(html)) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="${bgLight}">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${bgDark}">
 <title>${escape(title())}</title>
 </head>
 <body${bodyClass()}>
