@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Digital Stoic — socle d'artefact
-   Palette « Tablette » · v0.2 · 2026-11-03
+   Palette « Tablette » · v0.2 · 2026-11-03 · versant sombre « Ardoise » · v0.5 · 2026-11-07
 
    Injecté dans une source d'artefact par le marqueur "@base" que traite
    artifact-build.mjs, ici même. Les faces s'injectent séparément,
@@ -34,34 +34,34 @@
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#1A140F; --surface:#241C15; --sunk:#120E0A;
-    --fg:#EADFC8; --muted:#A8957D; --faint:#7D6C58;
-    --line:#3D3125; --line-strong:#54453A;
-    --accent:#8FA9E8; --accent-weak:#1E2638; --accent-ink:#1A140F;
-    --voice:#D9784F; --voice-weak:#3A2219;
-    --ok:#7DB38E; --warn:#D6A84C;
-    --crit-bg:#EADFC8; --crit-fg:#1A140F;
+    --bg:#161A1F; --surface:#1E232A; --sunk:#101317;
+    --fg:#E4E2DC; --muted:#A0A5AD; --faint:#7A808A;
+    --line:#2F3640; --line-strong:#434B57;
+    --accent:#94B0F0; --accent-weak:#1C2740; --accent-ink:#161A1F;
+    --voice:#E28D65; --voice-weak:#3A2620;
+    --ok:#7FBA95; --warn:#D9AE55;
+    --crit-bg:#E4E2DC; --crit-fg:#161A1F;
     --cat-1:#5B8FE0; --cat-2:#D2685F; --cat-3:#2E9E8E;
     --cat-4:#8F7AD0; --cat-5:#B4842F; --cat-6:#CE6E9B;
     --seq-1:#1E2A44; --seq-2:#2C4270; --seq-3:#3E5F9E; --seq-4:#557FC8; --seq-5:#7EA6F0;
-    --dv-mid:#333B4C;
+    --dv-mid:#343B47;
   }
 }
 /* La bascule du lecteur d'artefact estampille data-theme sur la racine et
    doit l'emporter sur la media query — dans les deux sens, d'où les deux
    blocs qui suivent. */
 :root[data-theme="dark"]{
-  --bg:#1A140F; --surface:#241C15; --sunk:#120E0A;
-  --fg:#EADFC8; --muted:#A8957D; --faint:#7D6C58;
-  --line:#3D3125; --line-strong:#54453A;
-  --accent:#8FA9E8; --accent-weak:#1E2638; --accent-ink:#1A140F;
-  --voice:#D9784F; --voice-weak:#3A2219;
-  --ok:#7DB38E; --warn:#D6A84C;
-  --crit-bg:#EADFC8; --crit-fg:#1A140F;
+  --bg:#161A1F; --surface:#1E232A; --sunk:#101317;
+  --fg:#E4E2DC; --muted:#A0A5AD; --faint:#7A808A;
+  --line:#2F3640; --line-strong:#434B57;
+  --accent:#94B0F0; --accent-weak:#1C2740; --accent-ink:#161A1F;
+  --voice:#E28D65; --voice-weak:#3A2620;
+  --ok:#7FBA95; --warn:#D9AE55;
+  --crit-bg:#E4E2DC; --crit-fg:#161A1F;
   --cat-1:#5B8FE0; --cat-2:#D2685F; --cat-3:#2E9E8E;
   --cat-4:#8F7AD0; --cat-5:#B4842F; --cat-6:#CE6E9B;
   --seq-1:#1E2A44; --seq-2:#2C4270; --seq-3:#3E5F9E; --seq-4:#557FC8; --seq-5:#7EA6F0;
-  --dv-mid:#333B4C;
+  --dv-mid:#343B47;
 }
 :root[data-theme="light"]{
   --bg:#F2E9D8; --surface:#FAF4E8; --sunk:#E9DCC3;

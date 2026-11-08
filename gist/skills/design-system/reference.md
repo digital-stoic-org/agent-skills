@@ -1,6 +1,6 @@
 # Digital Stoic artifact design system — agent reference
 
-version: 0.4.2 | palette: tablette | updated: 2026-11-07
+version: 0.5.0 | palette: tablette | updated: 2026-11-07
 
 Load when building a Claude artifact or any HTML page. Overrides the artifact-design skill defaults; user's explicit words still win. Paths below are relative to this skill's directory.
 
@@ -67,15 +67,15 @@ Interface sizes (Hanken and mono, no adjustment): `--u-xs:.75rem` (12 px, the fl
 Type: `--serif` (EB Garamond, what is read) `--sans` (Hanken, what is operated or compared) `--mono` (JetBrains Mono, what is copied verbatim)
 Label tokens (editorial labels only): `--label-font --label-caps --label-tt --label-ls --label-size --label-w --label-adjust`. Edito (default) = Garamond `all-small-caps`; `.mode-outil` on `<body>` = Hanken uppercase 600.
 
-Palette tablette (light / dark):
+Palette tablette (light / dark). Dark versant = "Ardoise" since v0.5 (cool slate, not brown):
 
 ```
-bg #F2E9D8 / #1A140F        surface #FAF4E8 / #241C15     sunk #E9DCC3 / #120E0A
-fg #2B1F16 / #EADFC8        muted #6E5A47 / #A8957D       faint #8C7862 / #7D6C58
-line #D9C7A6 / #3D3125      line-strong #C4AE88 / #54453A
-accent (machine, blueprint) #1F3F8F / #8FA9E8   accent-weak #E1E5EE / #1E2638   accent-ink #FAF4E8 / #1A140F
-voice (human, terracotta)   #9A3B1A / #D9784F   voice-weak #EFD9C9 / #3A2219
-ok #3A6B47 / #7DB38E        warn #8A6412 / #D6A84C         crit = fg/bg inversion
+bg #F2E9D8 / #161A1F        surface #FAF4E8 / #1E232A     sunk #E9DCC3 / #101317
+fg #2B1F16 / #E4E2DC        muted #6E5A47 / #A0A5AD       faint #8C7862 / #7A808A
+line #D9C7A6 / #2F3640      line-strong #C4AE88 / #434B57
+accent (machine, blueprint) #1F3F8F / #94B0F0   accent-weak #E1E5EE / #1C2740   accent-ink #FAF4E8 / #161A1F
+voice (human, terracotta)   #9A3B1A / #E28D65   voice-weak #EFD9C9 / #3A2620
+ok #3A6B47 / #7FBA95        warn #8A6412 / #D9AE55         crit = fg/bg inversion
 ```
 
 ## Color rules
@@ -155,7 +155,7 @@ Focus is never removed. `:focus-visible` is already defined globally in the base
 
 Load the `dataviz` skill before building any chart — it owns form choice, mark specs, interaction and the anti-pattern catalog. This system supplies only the parameters below. Do not restate the skill's rules here, and do not re-derive the palette.
 
-Palette parameters, validated against both surfaces (`#FAF4E8` light, `#241C15` dark; re-validated 2026-11-03 for v0.2, all checks pass in both modes):
+Palette parameters, validated against both surfaces (`#FAF4E8` light, `#1E232A` dark "Ardoise"; light re-validated 2026-11-03 for v0.2, dark 2026-11-07 for v0.5, all checks pass in both modes, worst dark CVD ΔE 8.3):
 
 | slot | hue | light | dark |
 |---|---|---|---|
@@ -176,7 +176,7 @@ Re-run before changing any value:
 
 ```
 node scripts/validate_palette.js "#2447A8,#A02F2F,#0A8A6C,#6A4C93,#B4761A,#B84A7E" --mode light --surface "#FAF4E8"
-node scripts/validate_palette.js "#5B8FE0,#D2685F,#2E9E8E,#8F7AD0,#B4842F,#CE6E9B" --mode dark  --surface "#241C15"
+node scripts/validate_palette.js "#5B8FE0,#D2685F,#2E9E8E,#8F7AD0,#B4842F,#CE6E9B" --mode dark  --surface "#1E232A"
 ```
 
 Rendering rules:
@@ -212,6 +212,7 @@ Rendering rules:
 No fork is open. The system is what `templates/gallery.html` renders. v0.1 "Guède vive" is retired.
 
 - **Identity.** v0.2 "Tablette" (moodboard variant V4): parchment grounds, terracotta = human voice, blueprint blue = machine. Decided 2026-11-03.
+- **Dark versant.** "Ardoise" (v0.5): cool slate grounds `#161A1F`/`#1E232A`, cream-grey ink, accent and voice lifted for the cooler ground; series unchanged. Chosen 2026-11-07 over warm brown, near-black and blueprint-paper variants (moodboard in the gist workshop, `wip/PALETTE-SOMBRE.md`).
 - **Type.** By role, decided 2026-11-07 (DS 0.3), replacing "one family" and "3B": EB Garamond reads, Hanken operates and compares, JetBrains Mono holds what is copied verbatim. `body.mode-outil` only switches editorial labels to Hanken.
 - **x-height.** `font-size-adjust:.5` on the serif, none on Hanken and mono.
 - **Voice surface.** `.reg-conv` keeps its full `--voice-weak` background.

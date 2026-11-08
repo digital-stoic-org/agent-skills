@@ -1,12 +1,12 @@
 ---
 name: design-system
-description: 'Digital Stoic visual system v0.4 "Tablette" for every Claude artifact and HTML page: tokens, type, classes, inline-SVG charts, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Overrides artifact-design defaults. Use when: build an artifact, HTML page, report page, dashboard, mini-app, chart, plot, data viz, gallery, standalone page, design tokens, Digital Stoic style.'
+description: 'Digital Stoic visual system v0.5 "Tablette" for every Claude artifact and HTML page: tokens, type, classes, inline-SVG charts, and an assembler that injects the base CSS and base64 fonts so they never pass through context. Overrides artifact-design defaults. Use when: build an artifact, HTML page, report page, dashboard, mini-app, chart, plot, data viz, gallery, standalone page, design tokens, Digital Stoic style.'
 user-invocable: true
 ---
 
 # Digital Stoic design system — index
 
-version: 0.4.2 | palette: tablette | updated: 2026-11-07
+version: 0.5.0 | palette: tablette | updated: 2026-11-07
 
 Entry point. Read this first, then open ONLY the files the routing table sends you to. Paths are relative to this skill's directory.
 
@@ -53,4 +53,4 @@ Output goes to the calling project's `build/` folder — never `/tmp/`.
 
 ## Settled — do not reopen
 
-Identity v0.2 Tablette (parchment, terracotta voice `#9A3B1A`/`#D9784F`, blueprint accent `#1F3F8F`/`#8FA9E8`) · type by role (Garamond reads, Hanken operates/compares, mono copied), 2026-11-07 · `font-size-adjust:.5` on the serif · `.reg-conv` keeps its full `--voice-weak` background · series palette · inline-SVG chart engine. Rationale in §Settled of `reference.md`.
+Identity v0.2 Tablette (parchment, terracotta voice `#9A3B1A`/`#E28D65`, blueprint accent `#1F3F8F`/`#94B0F0`) · dark versant "Ardoise" (slate `#161A1F`/`#1E232A`), 2026-11-07 · type by role (Garamond reads, Hanken operates/compares, mono copied), 2026-11-07 · `font-size-adjust:.5` on the serif · `.reg-conv` keeps its full `--voice-weak` background · series palette · inline-SVG chart engine. Rationale in §Settled of `reference.md`.
