@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""gist:commit scan: read-only git snapshot of /praxis + alias data repos -> scan JSON.
+"""gist:commit scan: read-only git snapshot of the workspace root + its alias data repos -> scan JSON.
 Classifies every changed file (taxonomy.py), groups files into projects by path, runs the deterministic
 detectors (secret, deleted with no copy, half-staged move, reopened checkbox, to-reread marker, generated)
 and the decisions whose answers change the commands. Never stages, never commits, never reads a secret path.
 
 usage: scan.py [-o scan.json] [--repo PATH ...] [--no-discover]
-  default repos: /praxis + every /repos/<alias> that is a git repo and has a /praxis/repos/<alias> control folder"""
+  repos: the workspace root (config.py) + every data_repo of an alias that has a control folder + data_repos + --repo
+  no config file: the git repo of the current folder only"""
 import argparse, datetime, json, os, posixpath, re, subprocess, sys
 from collections import Counter
 sys.dont_write_bytecode = True  # no __pycache__ inside the skill dir (plugin cache, data repo)
 from taxonomy import K, classify, repo_plane, is_secret, slug
+import config
 
-PRAXIS = '/praxis'
-MONOREPOS = {'agent-skills'}       # split by first sub-folder (one plugin = one project)
 MARKER_RE = re.compile(r'(?i)\b(à|a) relire\b|\bto re-?read\b')
 MAX_DIFF = 400_000                  # bytes of diff read per file, above that the content detectors skip it
 
@@ -24,13 +24,21 @@ def git(root, *args):
     return r.stdout
 
 
-def discover():
-    repos = [PRAXIS]
-    for n in sorted(os.listdir(os.path.join(PRAXIS, 'repos'))):
-        d = f'/repos/{n}'
-        if os.path.isdir(os.path.join(PRAXIS, 'repos', n)) and os.path.isdir(os.path.join(d, '.git')):
-            repos.append(d)
-    return repos
+def discover(cfg):
+    """Root + data repos: the pattern for each alias control folder, then explicit data_repos. Returns (repos, skipped)."""
+    cand = []
+    ctl = os.path.join(cfg['root'], cfg['control_dir']) if cfg['control_dir'] else None
+    if ctl and cfg['data_repo'] and os.path.isdir(ctl):
+        cand += [cfg['data_repo'].format(alias=n) for n in sorted(os.listdir(ctl)) if os.path.isdir(os.path.join(ctl, n)) and not n.startswith('.')]
+    explicit = list(cfg['data_repos'].values())
+    repos, seen, skipped = [cfg['root']], {os.path.realpath(cfg['root'])}, []
+    for d in cand + explicit:
+        if os.path.realpath(d) in seen: continue
+        if os.path.isdir(os.path.join(d, '.git')):
+            repos.append(d); seen.add(os.path.realpath(d))
+        elif d in explicit:
+            skipped.append(d)  # pattern misses are normal; an explicit entry that is not a repo is reported
+    return repos, skipped
 
 
 def porcelain(root):
@@ -53,22 +61,23 @@ def status_letter(x, y):
     return x if x != ' ' else y
 
 
-def group_key(is_praxis, repo, path):
-    """Project = path rule, never a guess: projects/<x>, projects/_archive/<x>, repos/<alias>[/<plugin>], first segment."""
+def group_key(is_root, repo, path, cfg):
+    """Project = path rule, never a guess: projects/<x>, projects/_archive/<x>, <control_dir>/<alias>[/<plugin>], first segment."""
     seg = path.rstrip('/').split('/')
-    if is_praxis:
+    ctl, mono = (cfg['control_dir'] or '').strip('/'), set(cfg['monorepos'])
+    if is_root:
         if seg[0] == 'projects' and len(seg) > 2 and seg[1] == '_archive':
             return f'archive-{slug(seg[2])}', f'{seg[2]} archive'
         if seg[0] == 'projects' and len(seg) > 1:
             return slug(seg[1]), seg[1]
-        if seg[0] == 'repos' and len(seg) > 1:
-            if seg[1] in MONOREPOS and len(seg) > 3:
+        if ctl and seg[0] == ctl and len(seg) > 1:
+            if seg[1] in mono and len(seg) > 3:
                 return f'ctl-{slug(seg[1])}-{slug(seg[2])}', f'{seg[2]} (control)'
             return f'ctl-{slug(seg[1])}', f'{seg[1]} (control)'
         if len(seg) == 1 or seg[0] in ('.claude', '.mcp.json'):
-            return 'praxis-root', 'praxis root'
-        return f'praxis-{slug(seg[0])}', seg[0].lstrip('.') or 'praxis'
-    if repo in MONOREPOS and len(seg) > 1:
+            return f'{slug(repo)}-root', f'{repo} root'
+        return f'{slug(repo)}-{slug(seg[0])}', seg[0].lstrip('.') or repo
+    if repo in mono and len(seg) > 1:
         return f'{slug(repo)}-{slug(seg[0])}', f'{seg[0]} ({repo})'
     return slug(repo), repo
 
@@ -81,28 +90,27 @@ def diff_text(root, path, tracked):
     return b[:MAX_DIFF].decode(errors='replace')
 
 
-def scan(roots):
+def scan(roots, cfg):
     snap = datetime.datetime.now().astimezone()
     repos, projects = [], {}
     for root in roots:
         top = git(root, 'rev-parse', '--show-toplevel').decode().strip()
-        is_praxis = os.path.realpath(top) == os.path.realpath(PRAXIS)
-        name = 'praxis' if is_praxis else os.path.basename(top)
-        disp = PRAXIS if is_praxis else root
+        is_root = os.path.realpath(top) == os.path.realpath(cfg['root'])
+        name = os.path.basename(os.path.realpath(top))
+        disp = cfg['root'] if is_root else root
         branch = git(root, 'symbolic-ref', '--short', '-q', 'HEAD').decode().strip() if subprocess.run(['git', '-C', root, 'symbolic-ref', '-q', 'HEAD'], capture_output=True).returncode == 0 else 'detached'
         entries = porcelain(root)
         repos.append(dict(name=name, root=disp, branch=branch, head=git(root, 'rev-parse', '--short', 'HEAD').decode().strip(), changed=len(entries)))
         if not entries: continue
         known = Counter(posixpath.basename(f) for f in git(root, 'ls-files', '-z').decode(errors='replace').split('\0') if f)
         for x, y, path, orig in entries:
-            pid, pname = group_key(is_praxis, name, path)
-            pid = pid if is_praxis else pid  # ids are already repo-prefixed for data repos
+            pid, pname = group_key(is_root, name, path, cfg)
             p = projects.setdefault(pid, dict(id=pid, name=pname, repo=name, root=disp, files=[], alerts=[], readers=[], others=0, decisions=[]))
             n = 1
             if path.endswith('/') and x == '?':
                 n = len([f for f in git(root, 'ls-files', '--others', '--exclude-standard', '-z', '--', path).decode(errors='replace').split('\0') if f]) or 1
-            kind, rule = classify(path, is_praxis, top)
-            rp, rdesc = repo_plane(is_praxis, disp, path)
+            kind, rule = classify(path, is_root, top, cfg['control_dir'])
+            rp, rdesc = repo_plane(is_root, disp, path, cfg['control_dir'])
             f = dict(path=path, orig=orig, st=status_letter(x, y), xy=x + y, staged=x not in ' ?', unstaged=(y != ' ') or x == '?', n=n,
                      kind=kind, rule=rule, plane=K[kind]['plane'], repo_desc=rdesc, mism=rp is not None and rp != K[kind]['plane'], secret=is_secret(path))
             p['files'].append(f)
@@ -134,7 +142,9 @@ def scan(roots):
                     p['alerts'].append(dict(rule='to-reread marker added', evidence=f'M {path}', source='script'))
     for p in projects.values():
         decide(p)
-    return dict(generated_at=snap.isoformat(timespec='seconds'), repos=repos, projects=sorted(projects.values(), key=lambda p: (p['repo'] != 'praxis', p['repo'], p['id'])))
+    rootname = os.path.basename(os.path.realpath(cfg['root']))
+    keep = {k: cfg[k] for k in ('root', 'out', 'tmp', 'serve_url', 'commit_cmd', 'config_file')}
+    return dict(generated_at=snap.isoformat(timespec='seconds'), config=keep, repos=repos, projects=sorted(projects.values(), key=lambda p: (p['repo'] != rootname, p['repo'], p['id'])))
 
 
 def decide(p):
@@ -157,16 +167,20 @@ def decide(p):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('-o', '--out', default='/praxis/.tmp/commit/scan.json')
-    ap.add_argument('--repo', action='append', default=[], help='extra repo root (e.g. a data repo outside /repos)')
-    ap.add_argument('--no-discover', action='store_true', help='scan only /praxis and --repo')
+    ap.add_argument('-o', '--out', help='default: <tmp>/scan.json from the config')
+    ap.add_argument('--repo', action='append', default=[], help='extra repo root')
+    ap.add_argument('--no-discover', action='store_true', help='scan only the workspace root and --repo')
     a = ap.parse_args()
-    roots = ([PRAXIS] if a.no_discover else discover()) + a.repo
-    data = scan(roots)
+    cfg = config.load()
+    roots, skipped = ([cfg['root']], []) if a.no_discover else discover(cfg)
+    roots += a.repo
+    a.out = a.out or os.path.join(cfg['tmp'], 'scan.json')
+    data = scan(roots, cfg)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     with open(a.out, 'w', encoding='utf-8') as fh:
         json.dump(data, fh, ensure_ascii=False, indent=1)
     np = len(data['projects']); nf = sum(len(p['files']) for p in data['projects']); na = sum(len(p['alerts']) for p in data['projects'])
-    print(f'{a.out}: {len(data["repos"])} repos, {np} projects, {nf} entries, {na} script alerts · snapshot {data["generated_at"]}')
+    print(f'{a.out}: {len(data["repos"])} repos, {np} projects, {nf} entries, {na} script alerts · snapshot {data["generated_at"]} · config {cfg["config_file"] or "none (single repo)"}')
+    for s in skipped: print(f'  skipped, not a git repo: {s}')
     for p in data['projects']:
         print(f'  {p["id"]:28} ' + ' '.join(f'{f["kind"]}{"↔" if f["mism"] else ""}:{posixpath.basename(f["path"].rstrip("/"))}' for f in p['files'][:6]) + (f' (+{len(p["files"]) - 6})' if len(p['files']) > 6 else ''))

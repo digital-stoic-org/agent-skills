@@ -34,22 +34,22 @@ def has_generator(root, path):
         return False
 
 
-def classify(path, is_praxis, root):
+def classify(path, is_root, root, control_dir=None):
     """Ordered path rules, first match wins. Returns (kind, rule text)."""
     if HARNESS_RE.search(path): return 'har', 'r1 harness path (CLAUDE.md, .claude/, rules/, skills/, agents/, hooks/, code/live/)'
     if '/.stint/' in '/' + path: return 'trc', 'r2 .stint/'
     if '/build/' in '/' + path or has_generator(root, path): return 'gen', 'r3 build/ or HTML next to a make-*.py'
     if STEER_RE.search(path): return 'stg', 'r4 steering name (00-*.md, PLAN-, BRIEF-, MANDATE-, CONTEXT-*-llm, *-tasks) or wip/'
     if INPUT_RE.search(path): return 'inp', 'r5 in/, .in/, anti-library/'
-    if is_praxis and path.startswith('repos/'): return 'stg', 'r6 default: alias control repo /praxis/repos/{alias}'
+    if is_root and control_dir and path.startswith(control_dir.rstrip('/') + '/'): return 'stg', f'r6 default: alias control folder {control_dir}/<alias>'
     return 'dlv', 'r6 default: project or data repo content'
 
 
-def repo_plane(is_praxis, repo, path):
-    """Plane given by the location (paths.md): alias control repo, alias data repo, or praxis itself (both)."""
-    if not is_praxis: return 'data', f'data repo {repo}'
-    if path.startswith('repos/'): return 'control', f'control repo /praxis/repos/{path.split("/")[1]}'
-    return None, 'praxis (control and data in one repo)'
+def repo_plane(is_root, repo, path, control_dir=None):
+    """Plane given by the location: alias control folder, alias data repo, or the workspace root (both)."""
+    if not is_root: return 'data', f'data repo {repo}'
+    if control_dir and path.startswith(control_dir.rstrip('/') + '/'): return 'control', f'control folder {control_dir}/{path.split("/")[1]}'
+    return None, 'workspace root (control and data in one repo)'
 
 
 def slug(s):

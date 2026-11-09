@@ -2,15 +2,17 @@
 """gist:commit page: scan JSON (+ optional agent notes JSON) -> self-contained impact map on the verdict template.
 The agent only DESIGNATES (project ids, target ids, evidence strings) in notes.json; this code copies them into the page.
 
-usage: make-page.py scan.json [--notes notes.json] [-o /praxis/build/commit-map.html]
+usage: make-page.py scan.json [--notes notes.json] [-o page.html] [--keep]
+  defaults from the scan's config (config.py): out = <root>/build/commit-map.html; the tmp folder holding scan.json is removed after the build unless --keep
 notes.json = {"targets": {"<tid>": {"name": "...", "desc": "..."}},
               "projects": {"<project id>": {"alerts": [{"rule": "...", "evidence": "..."}],
                                             "readers": [{"target": "<tid>", "conf": "sure|likely", "type": "...", "evidence": "..."}],
                                             "others": 0}}}"""
-import argparse, datetime, html, json, posixpath, re, shutil, sys
+import argparse, datetime, html, json, os, posixpath, re, shutil, sys
 from pathlib import Path
 sys.dont_write_bytecode = True  # no __pycache__ inside the skill dir (plugin cache, data repo)
 from taxonomy import KINDS, K, PLANES
+import config
 
 HERE = Path(__file__).resolve().parent
 TPL = HERE.parent / 'verdict' / 'template.html'
@@ -340,14 +342,14 @@ main{max-width:100rem} .top .in{max-width:100rem}
 '''
 
 
-def script(DATA):
+def script(DATA, commit_cmd):
     """Commands window + radar wiring (tile <-> row <-> matrix, one open row, bulk validate, reset, state tint, tooltips).
     Reads picks from the verdict runtime localStorage. Commands run in a subshell: exit and set -e never close the terminal."""
     rows = []
     for p in DATA:
         usable = [f['path'] for f in p['files'] if not f['secret']]
         if not usable: continue
-        rows.append(dict(id='p-' + p['id'], name=p['short'] + ' · ' + p['repo'], repo=p['root'], usable=usable,
+        rows.append(dict(id='p-' + p['id'], name=p['short'] + ' · ' + p['repo'], repo=p['root'], usable=usable, commit=commit_cmd,
                          decs=[dict(id=d['id'], reco=d['reco'], ex={o['id']: o['exclude'] for o in d['opts']}) for d in p['decisions']]))
     data = json.dumps(rows, ensure_ascii=False).replace('</', '<\\/')
     js = r'''<script>
@@ -360,7 +362,8 @@ def script(DATA):
   function state(){ try { return JSON.parse(localStorage.getItem('review:' + rid)) || {} } catch(e) { return {} } }
   // silence = later: only an explicit "validate" click puts a project in the commands
   const verdict = (st, id, d) => (((st.blocs || {})[id] || {}).verdict) || d;
-  // every decision's chosen answer excludes some paths; exclusions add up; ccommit gets the common ancestor of what is left
+  // every decision's chosen answer excludes some paths; exclusions add up; the commit command gets the common ancestor of what is left
+  const commitLine = (r, f, quote) => r.commit.replace('{path}', quote(f.cc)).replace('{repo}', quote(r.repo));
   function commonDir(ps){ const ds = ps.map(p => p.endsWith('/') ? p.slice(0, -1) : p.split('/').slice(0, -1).join('/'));
     if (!ds.length || ds.some(d => !d)) return ''; let c = ds[0].split('/');
     ds.slice(1).forEach(d => { const s = d.split('/'); let i = 0; while (i < c.length && c[i] === s[i]) i++; c = c.slice(0, i); }); return c.join('/'); }
@@ -372,7 +375,7 @@ def script(DATA):
     const st = state();
     rows.forEach(r => { const v = verdict(st, r.id, 'later');
       $$('[data-p="' + r.id + '"].tile, #' + r.id).forEach(e => { e.classList.remove('v-validate', 'v-later', 'v-exclude'); e.classList.add('v-' + v); });
-      const c = document.querySelector('#' + r.id + ' .cc'); if (c) c.textContent = 'ccommit ' + variant(st, r).cc; });
+      const c = document.querySelector('#' + r.id + ' .cc'); if (c) c.textContent = commitLine(r, variant(st, r), s => s); });
     const ok = rows.filter(r => verdict(st, r.id, 'later') === 'validate'), off = rows.filter(r => verdict(st, r.id, 'later') !== 'validate');
     const sum = document.getElementById('cp-sum'); if (sum) sum.textContent = pl(ok.length, 'commit') + ' · ' + pl(off.length, 'project') + ' left aside';
     const fab = document.getElementById('bCmd'); if (fab) fab.textContent = '🚀 Commands (' + ok.length + ')';
@@ -384,7 +387,7 @@ def script(DATA):
       '    git -C "$r" diff --cached --quiet || { echo "⛔ index not empty: $r"; exit 1; }', '  done'];
     ok.forEach(r => { const f = variant(st, r);
       if (!f.paths.length) { L.push('', '  # ' + r.name + ': every path excluded by its decisions, nothing to add'); return; }
-      L.push('', '  # ' + r.name + r.decs.map(d => ' (' + d.id + ': ' + verdict(st, d.id, d.reco) + ')').join(''), '  git -C ' + q(r.repo) + ' add -A -- ' + f.paths.map(q).join(' '), '  ccommit ' + q(f.cc)); });
+      L.push('', '  # ' + r.name + r.decs.map(d => ' (' + d.id + ': ' + verdict(st, d.id, d.reco) + ')').join(''), '  git -C ' + q(r.repo) + ' add -A -- ' + f.paths.map(q).join(' '), '  ' + commitLine(r, f, q)); });
     if (off.length) L.push('', '  # left aside: ' + off.map(r => r.name + ' (' + verdict(st, r.id, 'later') + ')').join(', '));
     L.push(')');
     ta.value = L.join('\n');
@@ -417,6 +420,8 @@ def script(DATA):
   document.addEventListener('click', () => setTimeout(build, 0));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') tipEl.hidden = true; if (e.key === 'Enter' || e.key === ' ') setTimeout(build, 0) });
   document.addEventListener('DOMContentLoaded', () => {
+    // one review id per snapshot: drop the stored picks of older snapshots so the browser does not pile them up
+    try { Object.keys(localStorage).filter(k => k.startsWith('review:gist-commit-') && k !== 'review:' + rid).forEach(k => localStorage.removeItem(k)); } catch(e) {}
     document.body.appendChild(tipEl);
     const top = document.getElementById('bExport'), mk = (id, t) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.dataset.tip = t; top.parentNode.insertBefore(b, top); return b; };
     const bulk = mk('bBulk', 'Validate every project with no alert and no decision'); bulk.className = 'ghost'; bulk.textContent = '✅ Validate unflagged';
@@ -456,9 +461,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('scan')
     ap.add_argument('--notes')
-    ap.add_argument('-o', '--out', default='/praxis/build/commit-map.html')
+    ap.add_argument('-o', '--out', help="default: the config's out")
+    ap.add_argument('--keep', action='store_true', help='keep the tmp folder (scan.json, notes.json)')
     a = ap.parse_args()
     scan = json.load(open(a.scan, encoding='utf-8'))
+    cfg = scan.get('config') or config.load()
+    a.out = a.out or cfg['out']
+    via = 'ccommit (Haiku writes the message, direct commit)' if cfg['commit_cmd'].startswith('ccommit') else cfg['commit_cmd']
     targets = merge_notes(scan, json.load(open(a.notes, encoding='utf-8'))) if a.notes else {}
     DATA = [p for p in scan['projects'] if p['files']]
     for p in DATA: prepare(p)
@@ -466,8 +475,8 @@ def main():
     snap = datetime.datetime.fromisoformat(scan['generated_at'])
     repos_line = ' · '.join(f'{r["name"]} {r["branch"]}@{r["head"]} ({r["changed"]})' for r in scan['repos'])
     body = (CSS + f'<div class="radar"><div>{treemap(DATA, ROOTS) if DATA else ""}{treemap_phone(DATA) if DATA else ""}{matrix(DATA, targets)}'
-            f'<p class="note-ex">Snapshot {snap:%Y-%m-%d %H:%M} · {E(repos_line)} · git state moves: rescan before pasting · area = risk weight · halves = plane by function, frames = git repo · one paste = one ccommit per V project (Haiku writes the message, direct commit; stops on an already loaded index or a failed ccommit)</p></div>'
-            f'{ranked(DATA, targets) if DATA else "<p>Nothing to commit.</p>"}</div>' + script(DATA))
+            f'<p class="note-ex">Snapshot {snap:%Y-%m-%d %H:%M} · {E(repos_line)} · git state moves: rescan before pasting · area = risk weight · halves = plane by function, frames = git repo · one paste = one git add + {E(via)} per V project; stops on an already loaded index or a failed commit</p></div>'
+            f'{ranked(DATA, targets) if DATA else "<p>Nothing to commit.</p>"}</div>' + script(DATA, cfg['commit_cmd']))
     content = '<!-- REVIEW-HTML:CONTENT:BEGIN  (replace everything down to CONTENT:END) -->\n' + body + '<!-- REVIEW-HTML:CONTENT:END -->'
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(TPL, out)
@@ -482,7 +491,13 @@ def main():
     nflag = sum(1 for p in DATA if p['flag'])
     t = t.replace('<strong>TITRE_COURT</strong>', f'<strong>Impact map</strong> <span class="mute">{len(DATA)} projects · {nflag} flagged · {snap:%H:%M}</span>')
     out.write_text(t, encoding='utf-8')
-    print(f'{out} · {len(DATA)} projects · {nflag} flagged · review-id {rid}')
+    tmp = os.path.realpath(cfg['tmp'])
+    if not a.keep and os.path.realpath(a.scan).startswith(tmp + os.sep) and os.path.isdir(tmp):
+        shutil.rmtree(tmp)  # scan.json and notes.json are spent once the page is built
+        d, root = os.path.dirname(tmp), os.path.realpath(cfg['root'])
+        while d.startswith(root + os.sep) and not os.listdir(d):  # parents the scan created (e.g. .tmp/), never the root
+            os.rmdir(d); d = os.path.dirname(d)
+    print(f'{config.page_link(cfg, out)} · {len(DATA)} projects · {nflag} flagged · review-id {rid}' + ('' if a.keep else ' · tmp cleaned'))
 
 
 if __name__ == '__main__':
