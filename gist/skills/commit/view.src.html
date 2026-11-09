@@ -1,0 +1,97 @@
+<!-- @title: Files · gist:commit -->
+<!-- @body: mode-outil -->
+<!-- Source of view.html (prebuilt, committed): python3 build-view.py
+     make-page.py copies view.html to <out dir>/commit-view.html and fills #view-data; view.js and vendor/ go next to it.
+     CSP: scripts only from the page's own origin, so raw HTML inside a Markdown file cannot run code or send data out. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src data:; connect-src 'self'; frame-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<style>
+/* @base */
+/* @font: ebgaramond-400 */
+/* @font: ebgaramond-400i */
+/* @font: hanken-400 */
+/* @font: hanken-600 */
+/* @font: jetbrains-400 */
+/* Deliberate DS drift, same as the radar (Mat, 11/09): rounded rows and pills; state = ground, never a rail.
+   Chrome vs content (Mat, 11/09, moodboard B + C): every viewer control sits on --sunk in small type, the file sits in a box with an accent border, so a rendered DS page never reads as viewer chrome. */
+body{margin:0}
+.vw{font-family:var(--sans);font-size:var(--u-sm);font-size-adjust:none;color:var(--fg);background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+.vbar{display:flex;align-items:center;gap:var(--s2);padding:var(--s1) var(--s3);border-bottom:1px solid var(--line-strong);position:sticky;top:0;background:var(--sunk);z-index:2;font-size:var(--u-xs)}
+.vbar .ttl{font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:var(--u-xs)}
+.vbar .sp{flex:1}
+.mute{color:var(--muted)}
+.vbar button,.tabs button,.back{font-family:var(--sans);font-size:var(--u-xs);background:transparent;color:var(--muted);border:1px solid var(--line-strong);border-radius:var(--r);padding:var(--s0) .6rem;cursor:pointer}
+.vbar button:hover,.tabs button:hover,.back:hover{color:var(--fg);border-color:var(--accent)}
+.vgrid{display:grid;grid-template-columns:minmax(14rem,19rem) minmax(0,1fr);flex:1;min-height:0}
+.vside{background:var(--sunk);font-size:var(--u-xs);border-right:1px solid var(--line);padding:var(--s2);overflow:auto;max-height:calc(100vh - 3rem);position:sticky;top:3rem}
+.vside select{width:100%;margin-bottom:var(--s2)}
+.kg{margin:var(--s2) 0 var(--s0);font-size:var(--u-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.fi{display:flex;gap:var(--s0);align-items:baseline;padding:2px var(--s0);border-radius:4px;color:var(--fg);text-decoration:none;font-size:var(--u-xs);overflow:hidden;white-space:nowrap}
+.fi:hover{background:var(--bg)}
+.fi.on{background:var(--accent-weak);color:var(--fg)}
+.fi .nm{overflow:hidden;text-overflow:ellipsis}
+.fi .in{padding-left:1.1em}
+code.st{font-family:var(--mono);font-size:var(--u-xs);color:var(--muted);min-width:1em}
+.st-A{color:var(--ok)!important} .st-D{color:var(--no)!important} .st-M{color:var(--warn)!important}
+.sq{display:inline-block;width:.75em;height:.75em;border-radius:2px;margin-right:.3em;vertical-align:-.04em}
+.k-har{background:var(--seq-5)} .k-stg{background:var(--seq-4)} .k-dlv{background:var(--seq-3)} .k-inp{background:var(--seq-2)} .k-gen,.k-trc{background:var(--seq-1)}
+.vmain{padding:0 var(--s3) var(--s2);min-width:0}
+.fhead{display:flex;flex-wrap:wrap;gap:var(--s1);align-items:baseline;background:var(--sunk);font-size:var(--u-xs);margin:0 calc(-1 * var(--s3));padding:var(--s2) var(--s3) var(--s0)}
+.fhead .pth{font-family:var(--mono);font-size:var(--u-xs);word-break:break-all}
+.back{display:none}
+.tabs{display:flex;gap:var(--s0);align-items:center;background:var(--sunk);font-size:var(--u-xs);margin:0 calc(-1 * var(--s3)) var(--s2);padding:var(--s0) var(--s3) var(--s1)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tabs button:disabled{opacity:.4;cursor:default}
+.tabs .sp{flex:1}
+.ban{padding:var(--s0) var(--s1);border-radius:4px;margin:var(--s0) 0;font-size:var(--u-sm)}
+.ban.warn{background:var(--warn-weak);color:var(--warn)} .ban.no{background:var(--no-weak);color:var(--no)} .ban.info{background:var(--sunk);color:var(--muted)}
+.pane{min-height:50vh;border:2px solid var(--accent);border-radius:var(--r);padding:var(--s2)}
+.md{font-family:var(--serif);font-size:var(--t-body);font-size-adjust:.5;line-height:1.5}
+.md pre,.md code{font-family:var(--mono);font-size:var(--u-sm);font-size-adjust:none}
+.md pre{background:var(--sunk);padding:var(--s1);overflow-x:auto;border-radius:4px}
+.md table{color:var(--fg);border-collapse:collapse;font-family:var(--sans);font-size:var(--u-sm);font-size-adjust:none}
+.md th,.md td{border-bottom:1px solid var(--line);padding:var(--s0) var(--s1);text-align:left}
+.md img{max-width:100%}
+.md blockquote{border-left:2px solid var(--line-strong);margin-left:0;padding-left:var(--s2);color:var(--muted)}
+.wl{color:var(--accent)} span.wl{color:var(--muted);border-bottom:1px dotted var(--line-strong)}
+.fm{font-family:var(--sans);font-size:var(--u-xs);font-size-adjust:none;color:var(--muted);border-collapse:collapse;margin-bottom:var(--s2)}
+.fm td{padding:1px var(--s1) 1px 0;vertical-align:top} .fm td:first-child{font-weight:600}
+pre.mermaid{background:transparent;font-size-adjust:none}
+pre.raw{font-family:var(--mono);font-size:var(--u-sm);white-space:pre-wrap;word-break:break-word;background:var(--surface);padding:var(--s1);border-radius:4px;margin:0}
+.frame{width:100%;height:calc(100vh - 10rem);border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.img{max-width:100%;border:1px solid var(--line)}
+.dh{font-family:var(--mono);font-size:var(--u-xs);color:var(--muted);background:var(--sunk);padding:2px var(--s1);margin-top:var(--s2);border-radius:4px}
+.dl{display:grid;grid-template-columns:3.2em 1.2em minmax(0,1fr);font-family:var(--mono);font-size:var(--u-sm)}
+.dl > span{padding:0 var(--s0);white-space:pre-wrap;word-break:break-word}
+.dl .ln{color:var(--faint);text-align:right;user-select:none}
+.dl .sg{color:var(--faint);user-select:none}
+.dl.ad > span:last-child{background:var(--ok-weak)} .dl.ad .sg{color:var(--ok)}
+.dl.rm > span:last-child{background:var(--no-weak)} .dl.rm .sg{color:var(--no)}
+.dl ins{background:var(--ok-weak);color:var(--ok);text-decoration:none}
+.dl del{background:var(--no-weak);color:var(--no)}
+.dl.prose{font-family:var(--serif);font-size:var(--t-sm);font-size-adjust:.5}
+.empty{color:var(--muted);padding:var(--s3) 0}
+@media (max-width:760px){
+ .vgrid{grid-template-columns:minmax(0,1fr)}
+ .vside{border-right:0;position:static;max-height:none}
+ .vw.vfile .vside{display:none} .vw:not(.vfile) .vmain{display:none}
+ .back{display:inline-block}
+ .vbar .who{display:none}
+}
+</style>
+<div class="vw mode-outil" id="vw">
+ <header class="vbar"><span class="ttl">Files</span><span id="pname"></span><span class="mute who" id="pinfo"></span><span class="sp"></span><span class="mute who" id="snap"></span>
+  <button type="button" id="prev" title="previous file (k)">&lt;</button><button type="button" id="next" title="next file (j)">&gt;</button><button type="button" id="theme">theme: auto</button></header>
+ <div class="vgrid">
+  <nav class="vside"><select id="proj" aria-label="project"></select><div id="flist"></div></nav>
+  <section class="vmain">
+   <div class="fhead"><button type="button" class="back" id="back">&lt; files</button><code class="st" id="fst"></code><span class="pth" id="fpath"></span><span class="mute" id="fmeta"></span></div>
+   <div class="tabs" role="tablist"><button type="button" role="tab" data-t="rendered" title="1">Rendered</button><button type="button" role="tab" data-t="diff" title="2">Diff</button><button type="button" role="tab" data-t="raw" title="3">Raw</button><span class="sp"></span><span class="mute" id="tinfo"></span></div>
+   <div id="bans"></div>
+   <div class="pane" id="pane"></div>
+  </section>
+ </div>
+</div>
+<script type="application/json" id="view-data">__VIEW_DATA__</script>
+<script src="commit-vendor/marked.umd.js"></script>
+<script src="commit-vendor/mermaid.min.js"></script>
+<script src="commit-view.js"></script>

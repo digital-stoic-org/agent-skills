@@ -4,6 +4,7 @@ The agent only DESIGNATES (project ids, target ids, evidence strings) in notes.j
 
 usage: make-page.py scan.json [--notes notes.json] [-o page.html] [--keep]
   defaults from the scan's config (config.py): out = <root>/build/commit-map.html; the tmp folder holding scan.json is removed after the build unless --keep
+  with <scan>-view.json next to the scan (scan.py writes it): also commit-view.html + commit-view.js + commit-vendor/ next to the page (file viewer)
 notes.json = {"targets": {"<tid>": {"name": "...", "desc": "..."}},
               "projects": {"<project id>": {"alerts": [{"rule": "...", "evidence": "..."}],
                                             "readers": [{"target": "<tid>", "conf": "sure|likely", "type": "...", "evidence": "..."}],
@@ -13,9 +14,12 @@ from pathlib import Path
 sys.dont_write_bytecode = True  # no __pycache__ inside the skill dir (plugin cache, data repo)
 from taxonomy import KINDS, K, PLANES
 import config
+from urllib.parse import urlencode
 
 HERE = Path(__file__).resolve().parent
 TPL = HERE.parent / 'verdict' / 'template.html'
+VIEW_TPL, VIEW_JS, VENDOR = HERE / 'view.html', HERE / 'view.js', HERE / 'vendor'
+VIEW_NAME, VIEW_JS_NAME, VENDOR_NAME = 'commit-view.html', 'commit-view.js', 'commit-vendor'
 E = html.escape
 CLS = {k[0]: 'k-' + k[0] for k in KINDS}
 STATUS = {'A': 'added', 'M': 'modified', 'R': 'moved', 'D': 'deleted', 'T': 'type changed', 'U': 'unmerged'}
@@ -208,14 +212,21 @@ def matrix(DATA, targets):
             f'<p class="foot"><span class="dot d-s kc-har"></span> sure link · <span class="dot d-l kc-har"></span> likely, guessed · dot colour = kind of what changed · last column = links in total · hover for the evidence</p></div>')
 
 
+def vlink(p, path=None):
+    """Viewer URL of a project (phone: the file list) or of one of its files; one named tab for every click."""
+    q = dict(p=p['id'], **({'f': path} if path else {}))
+    return f'{VIEW_NAME}#{E(urlencode(q))}'
+
+
 def files_block(p):
     out = ''
     for k, *_ in KINDS:
         fs = [f for f in p['files'] if f['kind'] == k]
         if not fs: continue
-        items = ' '.join(f'<span class="fl"{tip(STATUS.get(f["st"], f["st"]) + (" (staged)" if f["staged"] else "") + " · " + f["path"] + (" (" + str(f["n"]) + " files)" if f["n"] > 1 else "") + (" ← " + f["orig"] if f.get("orig") else "") + chr(10) + "kind: " + K[k]["label"] + " · " + f["rule"] + chr(10) + "location: " + f["repo_desc"] + (chr(10) + "↔ function and repo disagree" if f["mism"] else "") + (chr(10) + "⛔ sensitive: never staged by this page" if f["secret"] else ""))}><code>{f["st"]}</code> {E(posixpath.basename(f["path"].rstrip("/")) + ("/" if f["path"].endswith("/") else ""))}{"×" + str(f["n"]) if f["n"] > 1 else ""}{" ↔" if f["mism"] else ""}{" ⛔" if f["secret"] else ""}</span>' for f in fs)
+        items = ' '.join(f'<span class="fl"{tip(STATUS.get(f["st"], f["st"]) + (" (staged)" if f["staged"] else "") + " · " + f["path"] + (" (" + str(f["n"]) + " files)" if f["n"] > 1 else "") + (" ← " + f["orig"] if f.get("orig") else "") + chr(10) + "kind: " + K[k]["label"] + " · " + f["rule"] + chr(10) + "location: " + f["repo_desc"] + (chr(10) + "↔ function and repo disagree" if f["mism"] else "") + (chr(10) + "⛔ sensitive: never staged by this page" if f["secret"] else ""))}><a href="{vlink(p, None if f["path"].endswith("/") else f["path"])}" target="commit-view"><code>{f["st"]}</code> {E(posixpath.basename(f["path"].rstrip("/")) + ("/" if f["path"].endswith("/") else ""))}</a>{"×" + str(f["n"]) if f["n"] > 1 else ""}{" ↔" if f["mism"] else ""}{" ⛔" if f["secret"] else ""}</span>' for f in fs)
         out += f'<div><i class="sq {CLS[k]}"></i><span class="kd">{K[k]["label"]}</span> {items}</div>'
-    return out
+    n = sum(f['n'] for f in p['files'])
+    return out + f'<div><a class="vbtn" href="{vlink(p)}" target="commit-view"{tip("Rendered · Diff · Raw for each file, in a separate tab")}>View the {n} file{"s" if n > 1 else ""} →</a></div>'
 
 
 def row(p, wmax, targets):
@@ -331,6 +342,8 @@ main{max-width:100rem} .top .in{max-width:100rem}
 .pan dd>div{margin-bottom:2px}
 .kd{color:var(--muted);margin-right:var(--s0)}
 .fl{white-space:nowrap;margin-right:var(--s1)}
+.fl a{color:inherit;text-decoration:none} .fl a:hover{color:var(--accent);text-decoration:underline}
+.vbtn{display:inline-block;margin-top:var(--s0);color:var(--accent);text-decoration:none;border:1px solid var(--line-strong);border-radius:var(--r);padding:0 var(--s1)} .vbtn:hover{border-color:var(--accent)}
 .pan code{font-size:var(--u-xs)}
 .note-ex{color:var(--faint);font-size:var(--u-xs);margin-top:var(--s1)}
 .ctip{position:fixed;z-index:30;max-width:24rem;background:var(--surface);color:var(--fg);border:1px solid var(--line-strong);border-radius:var(--r);padding:var(--s0) var(--s1);font-family:var(--sans);font-size:var(--u-xs);font-size-adjust:none;white-space:pre-line;pointer-events:none}
@@ -457,6 +470,27 @@ def script(DATA, commit_cmd):
 {js}'''
 
 
+def build_view(view_json, DATA, cfg, out):
+    """File viewer next to the radar: prebuilt view.html + the scan's viewer data, view.js and the vendored libs.
+    Projects in radar order (risk), files grouped by kind in the radar's kind order."""
+    order = {k[0]: i for i, k in enumerate(KINDS)}
+    vp = view_json.get('projects', {})
+    projects = [dict(id=p['id'], name=p['short'], repo=p['repo'], files=sorted(vp.get(p['id'], []), key=lambda f: (order.get(f['kind'], 9), f.get('folder') or '', f['path'])))
+                for p in sorted(DATA, key=weight, reverse=True) if vp.get(p['id'])]
+    data = dict(generated_at=view_json.get('generated_at'), live_base=posixpath.relpath(cfg['root'], str(out.parent)).replace(os.sep, '/') or '.', projects=projects)
+    blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')  # no </script> can close the data block
+    t = VIEW_TPL.read_text(encoding='utf-8')
+    if t.count('__VIEW_DATA__') != 1: sys.exit(f'{VIEW_TPL}: placeholder __VIEW_DATA__ missing (rebuild view.html from view.src.html)')
+    (out.parent / VIEW_NAME).write_text(t.replace('__VIEW_DATA__', blob), encoding='utf-8')
+    shutil.copy(VIEW_JS, out.parent / VIEW_JS_NAME)
+    vd = out.parent / VENDOR_NAME; vd.mkdir(exist_ok=True)
+    for src in VENDOR.iterdir():  # copy only what changed: mermaid is 5 MB
+        dst = vd / src.name
+        if not dst.exists() or dst.stat().st_size != src.stat().st_size or dst.read_bytes() != src.read_bytes():
+            shutil.copy(src, dst)
+    return out.parent / VIEW_NAME, len(blob)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('scan')
@@ -465,6 +499,8 @@ def main():
     ap.add_argument('--keep', action='store_true', help='keep the tmp folder (scan.json, notes.json)')
     a = ap.parse_args()
     scan = json.load(open(a.scan, encoding='utf-8'))
+    vpath = os.path.splitext(a.scan)[0] + '-view.json'  # written by scan.py next to the scan
+    view_json = json.load(open(vpath, encoding='utf-8')) if os.path.isfile(vpath) else None
     cfg = scan.get('config') or config.load()
     a.out = a.out or cfg['out']
     via = 'ccommit (Haiku writes the message, direct commit)' if cfg['commit_cmd'].startswith('ccommit') else cfg['commit_cmd']
@@ -491,13 +527,19 @@ def main():
     nflag = sum(1 for p in DATA if p['flag'])
     t = t.replace('<strong>TITRE_COURT</strong>', f'<strong>Impact map</strong> <span class="mute">{len(DATA)} projects · {nflag} flagged · {snap:%H:%M}</span>')
     out.write_text(t, encoding='utf-8')
+    vinfo = ''
+    if view_json is not None:
+        vout, vsize = build_view(view_json, DATA, cfg, out)
+        vinfo = f' · viewer {config.page_link(cfg, vout)} ({vsize // 1024} KB of data)'
+    else:
+        print(f'no viewer data ({vpath} missing): radar only', file=sys.stderr)
     tmp = os.path.realpath(cfg['tmp'])
     if not a.keep and os.path.realpath(a.scan).startswith(tmp + os.sep) and os.path.isdir(tmp):
         shutil.rmtree(tmp)  # scan.json and notes.json are spent once the page is built
         d, root = os.path.dirname(tmp), os.path.realpath(cfg['root'])
         while d.startswith(root + os.sep) and not os.listdir(d):  # parents the scan created (e.g. .tmp/), never the root
             os.rmdir(d); d = os.path.dirname(d)
-    print(f'{config.page_link(cfg, out)} · {len(DATA)} projects · {nflag} flagged · review-id {rid}' + ('' if a.keep else ' · tmp cleaned'))
+    print(f'{config.page_link(cfg, out)} · {len(DATA)} projects · {nflag} flagged · review-id {rid}' + vinfo + ('' if a.keep else ' · tmp cleaned'))
 
 
 if __name__ == '__main__':

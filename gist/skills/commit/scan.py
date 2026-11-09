@@ -5,13 +5,14 @@ detectors (secret, deleted with no copy, half-staged move, reopened checkbox, to
 and the decisions whose answers change the commands. Never stages, never commits, never reads a secret path.
 
 usage: scan.py [-o scan.json] [--repo PATH ...] [--no-discover]
+  also writes <scan>-view.json next to it: diffs and snapshot contents for the file viewer (viewdata.py)
   repos: the workspace root (config.py) + every data_repo of an alias that has a control folder + data_repos + --repo
   no config file: the git repo of the current folder only"""
 import argparse, datetime, json, os, posixpath, re, subprocess, sys
 from collections import Counter
 sys.dont_write_bytecode = True  # no __pycache__ inside the skill dir (plugin cache, data repo)
 from taxonomy import K, classify, repo_plane, is_secret, slug
-import config
+import config, viewdata
 
 MARKER_RE = re.compile(r'(?i)\b(à|a) relire\b|\bto re-?read\b')
 MAX_DIFF = 400_000                  # bytes of diff read per file, above that the content detectors skip it
@@ -92,7 +93,7 @@ def diff_text(root, path, tracked):
 
 def scan(roots, cfg):
     snap = datetime.datetime.now().astimezone()
-    repos, projects = [], {}
+    repos, projects, views = [], {}, {}
     for root in roots:
         top = git(root, 'rev-parse', '--show-toplevel').decode().strip()
         is_root = os.path.realpath(top) == os.path.realpath(cfg['root'])
@@ -100,7 +101,8 @@ def scan(roots, cfg):
         disp = cfg['root'] if is_root else root
         branch = git(root, 'symbolic-ref', '--short', '-q', 'HEAD').decode().strip() if subprocess.run(['git', '-C', root, 'symbolic-ref', '-q', 'HEAD'], capture_output=True).returncode == 0 else 'detached'
         entries = porcelain(root)
-        repos.append(dict(name=name, root=disp, branch=branch, head=git(root, 'rev-parse', '--short', 'HEAD').decode().strip(), changed=len(entries)))
+        head = git(root, 'rev-parse', '--short', 'HEAD').decode().strip()
+        repos.append(dict(name=name, root=disp, branch=branch, head=head, changed=len(entries)))
         if not entries: continue
         known = Counter(posixpath.basename(f) for f in git(root, 'ls-files', '-z').decode(errors='replace').split('\0') if f)
         for x, y, path, orig in entries:
@@ -114,6 +116,7 @@ def scan(roots, cfg):
             f = dict(path=path, orig=orig, st=status_letter(x, y), xy=x + y, staged=x not in ' ?', unstaged=(y != ' ') or x == '?', n=n,
                      kind=kind, rule=rule, plane=K[kind]['plane'], repo_desc=rdesc, mism=rp is not None and rp != K[kind]['plane'], secret=is_secret(path))
             p['files'].append(f)
+            views.setdefault(pid, []).extend(viewdata.entries(top, f, x, is_root, head, git))
             if f['secret']:
                 p['alerts'].append(dict(rule='sensitive path: never read, never staged by this page', evidence=f'{f["st"]} {path}', source='script'))
                 continue
@@ -144,7 +147,7 @@ def scan(roots, cfg):
         decide(p)
     rootname = os.path.basename(os.path.realpath(cfg['root']))
     keep = {k: cfg[k] for k in ('root', 'out', 'tmp', 'serve_url', 'commit_cmd', 'config_file')}
-    return dict(generated_at=snap.isoformat(timespec='seconds'), config=keep, repos=repos, projects=sorted(projects.values(), key=lambda p: (p['repo'] != rootname, p['repo'], p['id'])))
+    return dict(generated_at=snap.isoformat(timespec='seconds'), config=keep, repos=repos, projects=sorted(projects.values(), key=lambda p: (p['repo'] != rootname, p['repo'], p['id']))), views
 
 
 def decide(p):
@@ -165,6 +168,11 @@ def decide(p):
                                          dict(id='B', label='Copies only', effect='originals stay in git: files exist twice', exclude=loose_del)]))
 
 
+def view_path(scan_path):
+    """<scan>.json -> <scan>-view.json, read by make-page.py for the file viewer."""
+    return os.path.splitext(scan_path)[0] + '-view.json'
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('-o', '--out', help='default: <tmp>/scan.json from the config')
@@ -175,10 +183,12 @@ if __name__ == '__main__':
     roots, skipped = ([cfg['root']], []) if a.no_discover else discover(cfg)
     roots += a.repo
     a.out = a.out or os.path.join(cfg['tmp'], 'scan.json')
-    data = scan(roots, cfg)
+    data, views = scan(roots, cfg)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     with open(a.out, 'w', encoding='utf-8') as fh:
         json.dump(data, fh, ensure_ascii=False, indent=1)
+    with open(view_path(a.out), 'w', encoding='utf-8') as fh:  # viewer data, kept apart so scan.json stays small
+        json.dump(dict(generated_at=data['generated_at'], projects=views), fh, ensure_ascii=False)
     np = len(data['projects']); nf = sum(len(p['files']) for p in data['projects']); na = sum(len(p['alerts']) for p in data['projects'])
     print(f'{a.out}: {len(data["repos"])} repos, {np} projects, {nf} entries, {na} script alerts · snapshot {data["generated_at"]} · config {cfg["config_file"] or "none (single repo)"}')
     for s in skipped: print(f'  skipped, not a git repo: {s}')
