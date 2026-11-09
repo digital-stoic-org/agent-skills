@@ -1,2 +1,0 @@
-marked 18.1.3 (lib/marked.umd.js) · mermaid 12.3.0 (dist/mermaid.min.js) · npm pack 2026-11-09 · MIT
-update: npm pack marked@X mermaid@Y, copy the same two files, bump this line
