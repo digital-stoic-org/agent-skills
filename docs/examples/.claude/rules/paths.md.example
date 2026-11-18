@@ -12,7 +12,7 @@ Pattern: control `<workspace>/repos/{alias}` | data `<data-root>/{alias}`. Excep
 - **<workspace-name>**: data `<workspace>` (self-referencing root)
 - **<alias>**: data `<other/location>` (<why it differs>)
 
-Control = instructions (CLAUDE.md, briefs, specs). Data = separate git repo where the work lands. Used by `dstoic:commit-repo`.
+Control = instructions (CLAUDE.md, briefs, specs). Data = separate git repo where the work lands. Useful for any tool that commits across repos.
 
 ## Other locations
 

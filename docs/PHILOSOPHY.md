@@ -2,7 +2,7 @@
 
 > Human+AI collaboration as metacognitive practice.
 
-📖 **Reading order**: [README](README.md) (what + how?) → **this file** (why?) → [PRACTICE](PRACTICE.md) (deep how) → [README-full](README-full.md) (every skill)
+📖 **Reading order**: [README](../README.md) (what + how?) → **this file** (why?) → [PRACTICE](PRACTICE.md) (deep how) → [README-full](../park/README-full.md) (every skill)
 
 ---
 
@@ -230,8 +230,8 @@ This toolkit uses three layers of documentation, each optimized for its reader:
 
 | Layer | Reader | Optimization | Example |
 |-------|--------|-------------|---------|
-| 📄 `README.md` | Human (1 min scan) | Cognitive ease — scan, orient, decide if you care | [README.md](README.md) |
-| 📚 `README-full.md` | Human (deep dive) | Comprehensive — find any skill, understand any workflow | [README-full.md](README-full.md) |
+| 📄 `README.md` | Human (1 min scan) | Cognitive ease — scan, orient, decide if you care | [README.md](../README.md) |
+| 📚 `README-full.md` | Human (deep dive) | Comprehensive — find any skill, understand any workflow | [README-full.md](../park/README-full.md) |
 | 🤖 `SKILL.md` | LLM | Token-optimized — minimal prose, maximum directive density | Internal to each skill |
 
 **Rule:** Respect the reader's attention. Don't make them scroll through 500 lines to find the one thing they need.
@@ -299,4 +299,4 @@ Issues & ideas: [github.com/digital-stoic-org/agent-skills/issues](https://githu
 
 ---
 
-📄 **TL;DR:** [README.md](README.md) · 📚 **Full catalog:** [README-full.md](README-full.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** [benchmarks/](benchmarks/)
+📄 **TL;DR:** [README.md](../README.md) · 📚 **Full catalog:** [README-full.md](../park/README-full.md) · 🎯 **Practice:** [PRACTICE.md](PRACTICE.md) · 📊 **Benchmarks:** [benchmarks/](benchmarks/)

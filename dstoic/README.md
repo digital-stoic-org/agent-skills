@@ -2,61 +2,23 @@
 
 > ⚠️ Live experiment. My cognitive toolkit — adapt it to your brain.
 
+dstoic is the default plugin of this repo. New or revisited skills land here instead of in a new themed plugin.
+
 ## ✨ What
 
-```mermaid
-flowchart LR
-    F["🧭 Frame"] --> T["🧠 Think"]
-    T --> B["⚙️ Build"]
-    B --> D["🔧 Debug"]
-    D --> L["🪞 Learn"]
+| Part | Purpose |
+|------|---------|
+| `agents/devil-advocate` | 😈 Challenges a confident answer before you commit to it |
+| `hooks/` | 🪝 tmux notifications, output dumps |
+| `scripts/` | 📟 Statusline and its helpers |
+| `security/` | 🛡️ Notes on gaps, perimeter, interception and sentinel briefs |
 
-    classDef frame fill:#E8EAF6,stroke:#3F51B5,color:#000
-    classDef think fill:#E1BEE7,stroke:#7B1FA2,color:#000
-    classDef build fill:#C8E6C9,stroke:#388E3C,color:#000
-    classDef debug fill:#FFE0B2,stroke:#F57C00,color:#000
-    classDef learn fill:#BBDEFB,stroke:#1976D2,color:#000
-
-    class F frame
-    class T think
-    class B build
-    class D debug
-    class L learn
-```
-
-| Skill | Purpose |
-|-------|---------|
-| `/commit-repo` | 🗂️ Streamlined git commit with single human gate |
-| `/pick-model` | 🎯 Recommend optimal model (haiku/sonnet/opus) for the task |
-| `/pick-workflow` | 🧩 Design a skill/agent's execution topology (linear/sub-agents/Workflow); calls `/pick-model` per step |
-| `/pick-harness` | 🛡️ Diagnose an agent failure and scaffold the cheapest guardrail to add next |
-| `/plan-context` | 📐 Turn an in-session analysis into a resumable, traceable `plan-<chantier>.md` (dashboard + journal + lots closing on a command), then design its execution |
-| `/save-context` | 💾 Save session state to CONTEXT-llm.md |
-| `/checkpoint` | 🥩 Capture verbatim "meat" (exact wording, rejected paths, live reasoning) → CHECKPOINT-llm.md |
-| `/load-context` | 📥 Resume session from CONTEXT-llm.md |
-| `/instruct-compact` | 🧭 Steer `/compact` to keep signal, drop noise |
-| `/meta-prompt` | 🔁 RELIANCE recursive ledger for multi-session guided tasks |
-| `/post-mortem` | 🪞 Introspective end-of-session retrospective (tokens, dead-ends, playbook) |
-| `/scratch` | 🗒️ Session scratch pad for parking side-thoughts |
-| `/kaizen` | ⚡ Capture friction with any Praxis artifact |
-| `/dump-output` | 📤 Toggle auto-dump of output to `.dump/` |
-
-Plus: 3 hooks (praxis-dir guard, tmux notifications, debug dumps) and 1 agent (devil-advocate). _(Retrospect-capture, list-context-sync, session-pin & recent-notes hooks now live in the `experimental` plugin — staged, gated off.)_
-
-> ℹ️ Skills like `/frame-problem`, `/brainstorm`, `/troubleshoot`, `/openspec-*`, `/retrospect-*` etc. were split into dedicated plugins (cognitive, openspec, retrospect, toolsmith, content, convert). See [README.md](../README.md) for the full plugin table.
-
-## 🚀 Quick Start
-
-```bash
-/pick-model should I use haiku or opus for this code review
-/scratch park this thought about the auth refactor
-/commit-repo
-```
+The skills folder is empty for now. The 14 earlier skills (commit-repo, pick-model, pick-workflow, save/load-context…) were parked in [park/dstoic-skills/](../park/dstoic-skills/) in November 2026, because daily practice no longer called them.
 
 ## 📦 Version
 
-`0.53.1` · 14 skills · 1 agent · 3 hooks
+`0.54.0` · 0 skills · 1 agent · hooks
 
 ---
 
-📚 **Full catalog:** [README-full.md](../README-full.md) · 🧭 **Philosophy:** [PHILOSOPHY.md](../PHILOSOPHY.md)
+🅿️ **Parked work:** [park/README.md](../park/README.md) · 🧭 **Philosophy:** [docs/PHILOSOPHY.md](../docs/PHILOSOPHY.md)

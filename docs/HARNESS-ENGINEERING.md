@@ -2,7 +2,7 @@
 
 > **Harness** = everything in an AI agent except the model itself. **Harness engineering** = the practice of building and maintaining that harness so the agent produces reliable, trustworthy output.
 
-📖 **Reading order**: [README](README.md) (what?) → [PHILOSOPHY](PHILOSOPHY.md) (why?) → [PRACTICE](PRACTICE.md) (deep how) → **this file** (the harness) → [README-full](README-full.md) (every skill)
+📖 **Reading order**: [README](../README.md) (what?) → [PHILOSOPHY](PHILOSOPHY.md) (why?) → [PRACTICE](PRACTICE.md) (deep how) → **this file** (the harness) → [README-full](../park/README-full.md) (every skill)
 
 ---
 
@@ -207,4 +207,4 @@ flowchart LR
 
 ---
 
-🧭 [Philosophy](PHILOSOPHY.md) · 🎯 [Practice](PRACTICE.md) · 📚 [Full Catalog](README-full.md) · 📊 [Benchmarks](benchmarks/)
+🧭 [Philosophy](PHILOSOPHY.md) · 🎯 [Practice](PRACTICE.md) · 📚 [Full Catalog](../park/README-full.md) · 📊 [Benchmarks](benchmarks/)

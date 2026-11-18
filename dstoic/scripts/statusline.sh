@@ -152,7 +152,7 @@ if [ -n "$EFFORT" ]; then
     EFFORT_SEG=" │ ${EFFORT_EMOJI} ${EFFORT}"
 fi
 
-# Helper function to detect project name (same logic as retrospect-capture.sh)
+# Helper function to detect project name: last path segment of cwd under $PRAXIS_DIR
 detect_project_name() {
   local cwd="$1"
 
@@ -162,10 +162,8 @@ detect_project_name() {
   fi
 
   local normalized_path=""
-  if [[ "$cwd" == /praxis* ]]; then
-    normalized_path="${cwd#/praxis}"
-  elif [[ "$cwd" == */dev/praxis* ]]; then
-    normalized_path="${cwd#*/dev/praxis}"
+  if [ -n "${PRAXIS_DIR:-}" ] && [[ "$cwd" == "$PRAXIS_DIR"* ]]; then
+    normalized_path="${cwd#"$PRAXIS_DIR"}"
   else
     echo "external"
     return
@@ -175,7 +173,7 @@ detect_project_name() {
   normalized_path="${normalized_path%/}"
 
   if [ -z "$normalized_path" ]; then
-    echo "praxis"
+    echo "root"
     return
   fi
 
@@ -186,10 +184,10 @@ detect_project_name() {
 # Session size monitoring (for .retro sessions)
 SESSION_SIZE=""
 SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
-if [ -n "$SESSION_ID" ]; then
+if [ -n "$SESSION_ID" ] && [ -n "${PRAXIS_DIR:-}" ]; then
     CURRENT_DIR=$(echo "$input" | jq -r '.workspace.current_dir // ""')
     PROJECT_NAME=$(detect_project_name "$CURRENT_DIR")
-    RETRO_ROOT="/praxis/.retro"
+    RETRO_ROOT="${PRAXIS_DIR}/.retro"
     STAGING_FILE="${RETRO_ROOT}/${PROJECT_NAME}/sessions/.staging/${SESSION_ID}.jsonl"
 
     # Check if staging file exists (project has retro system)

@@ -4,7 +4,7 @@
 
 ⚠️ **This file is for LLM consumption** (benchmarking, comparison). Self-contained by design — duplication with other docs is intentional.
 
-👤 **Human?** Start here instead: [README](README.md) → [PHILOSOPHY](PHILOSOPHY.md) → [PRACTICE](PRACTICE.md) → [README-full](README-full.md)
+👤 **Human?** Start here instead: [README](../README.md) → [PHILOSOPHY](PHILOSOPHY.md) → [PRACTICE](PRACTICE.md) → [README-full](../park/README-full.md)
 
 ---
 

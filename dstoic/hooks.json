@@ -1,15 +1,10 @@
 {
-  "description": "dstoic plugin hooks: praxis-dir guard, tmux notifications, output dumps. (Retrospect session capture moved to the retrospect plugin.)",
+  "description": "dstoic plugin hooks: tmux notifications, output dumps.",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "",
         "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-praxis-dir.sh",
-            "timeout": 5
-          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/notify-tmux.sh SessionStart",

@@ -28,7 +28,7 @@ AI tools are powerful but chaotic. Most people either **micromanage** every prom
 
 This toolkit treats **AI collaboration as cognitive discipline** — a set of thinking modes you activate depending on the situation, where the AI also pushes back on your assumptions. The goal is not to make AI do more. It's to **think better together** — and that includes letting AI challenge the human.
 
-Deeper why → [PHILOSOPHY.md](PHILOSOPHY.md)
+Deeper why → [PHILOSOPHY.md](docs/PHILOSOPHY.md)
 
 ---
 
@@ -47,7 +47,7 @@ flowchart TD
     P3["😈 CHALLENGE<br/>hold the tension ·<br/>counter the confident model"]
   end
   M --> CORE
-  CORE -->|"daily spine still runs underneath"| S["save/load-context · capture · commit · edit-toolkit"]
+  CORE -->|"daily spine still runs underneath"| S["stint pit/rejoin · verdict · edit-tool"]
   classDef mod fill:#B3D9FF,stroke:#333,color:#000
   classDef pillar fill:#90EE90,stroke:#333,color:#000
   classDef spine fill:#E0E0E0,stroke:#333,color:#000
@@ -58,16 +58,13 @@ flowchart TD
 
 | Pillar | What the human does | Live skills |
 |------|------|-------------|
-| 💾 **Persist** | Carry the single source of *what we're doing and why* across resets; the model re-derives its plan from it | `/save-context`, `/load-context` |
-| 🧭 **Guide** | Propose-don't-act + fewer, better-placed checkpoints at the big boundaries — not every section | `/commit-repo` gates, `/pick-model` |
-| 😈 **Challenge** | Hold the tension against a confident, agreeable model — proportional, cheap-first | devil's-advocate agent (auto-triggered), `/challenge` |
+| 💾 **Persist** | Carry the single source of *what we're doing and why* across resets; the model re-derives its plan from it | [stint](https://github.com/digital-stoic-org/stint) `/pit`, `/rejoin` |
+| 🧭 **Guide** | Propose-don't-act + fewer, better-placed checkpoints at the big boundaries — not every section | `/verdict` review pages |
+| 😈 **Challenge** | Hold the tension against a confident, agreeable model — proportional, cheap-first | devil's-advocate agent (auto-triggered) |
 
-> You still **frame, think, build, debug** as needed — but they're *moves you
-> reach for*, not a lifecycle you march through. A model that self-plans doesn't
-> need the phases enforced. (`/brainstorm`, `/troubleshoot`, `/frame-problem`
-> are still here when a problem is genuinely hard — see the [full catalog](README-full.md).)
+> You still **frame, think, build, debug** as needed — but they're *moves you reach for*, not a lifecycle you march through. A model that self-plans doesn't need the phases enforced. The skills that used to force them (`/brainstorm`, `/troubleshoot`, `/frame-problem`…) now sit in the [park](park/README.md), as a record of attempts and ideas to revisit.
 
-Plus: **tool creation** (`/edit-tool`), **conversions** (PDF, EPUB, Google Docs), and domain plugins (GTD, coaching, business analysis, philosopher personas).
+Plus: **tool creation** (`/edit-tool`, `/edit-plugin`) and a **visual system** for HTML artifacts (`/design-system`).
 
 ---
 
@@ -81,7 +78,7 @@ Not human-drives-AI. Not AI-drives-human. **Mutual sharpening:**
 
 **Key**: Posture before technique — but posture includes the willingness to be challenged.
 
-Full autonomy spectrum + orchestrated agency → [PRACTICE.md](PRACTICE.md#-human-ai-governance)
+Full autonomy spectrum + orchestrated agency → [PRACTICE.md](docs/PRACTICE.md#-human-ai-governance)
 
 ---
 
@@ -97,42 +94,30 @@ Not "how fast" — **how deep**:
 
 **Maturity = shifting tokens from ⚙️ toward 🧠.**
 
-Multiplied by **context efficiency** (don't waste tokens re-explaining) and **compounding** (learnings reduce future spend). Full model → [PRACTICE.md](PRACTICE.md#-cognitive-roi-return-on-tokens)
+Multiplied by **context efficiency** (don't waste tokens re-explaining) and **compounding** (learnings reduce future spend). Full model → [PRACTICE.md](docs/PRACTICE.md#-cognitive-roi-return-on-tokens)
 
 ---
 
 ## 📊 By the Numbers
 
-- **128 skills** across 16 plugins — but only ~12 run daily; the rest are parachutes (rare by design) or an archive of exploration. Lead with the spine, not the count.
-- **16 plugins**: core (dstoic), cognitive, openspec, content, convert, toolsmith, experimental, retrospect, GTD, coaching, business analysis, philosopher personas, cowork, lazy, team, ring
-- **2 agents**: devil's advocate, context summarizer
-- **Hooks**: 4 live (notify-tmux, dump-output, retrospect-capture, check-praxis-dir) + experimental staging
+- **3 plugins** shipped: dstoic (default), gist, toolsmith. In November 2026, 16 plugins and over 100 skills moved to the [park](park/README.md), because daily practice no longer called them.
+- **1 agent**: devil's advocate
+- **Hooks**: notify-tmux, dump-output, retrospect-capture, check-praxis-dir
 - **3 execution modes**: garage (default), scale, maintenance
-- **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](PHILOSOPHY.md#-the-toothbrush-principle)
-- **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](PRACTICE.md#-benchmark-results-april-2026) · `/benchmark-praxis` skill
+- **🪥 Toothbrush principle**: This is one practitioner's discipline. Don't copy — adapt. [Why?](docs/PHILOSOPHY.md#-the-toothbrush-principle)
+- **📊 Benchmarked** against 7 frameworks including [ECC](https://github.com/affaan-m/everything-claude-code) (144K⭐), [ACP](https://lexler.github.io/augmented-coding-patterns/), [BMAD](https://github.com/bmad-sim/BMAD-METHOD) (36K⭐) — leads on context quality, cognitive depth, adversarial thinking. Only BMAD edges ahead (for teams). Details → [PRACTICE.md](docs/PRACTICE.md#-benchmark-results-april-2026)
 
 ---
 
 ## 🏪 Plugins
 
-| Plugin | Skills | Description |
-|--------|--------|-------------|
-| [dstoic](dstoic/) | 14 | Core infrastructure: git commits, model selection, scratch pad, kaizen, context save/load, post-mortem, hooks |
-| [cognitive](cognitive/) | 8 | Cynefin-routed problem-solving: frame, troubleshoot, investigate, brainstorm, probe, experiment, challenge, benchmark |
-| [openspec](openspec/) | 9 | Structured development: plan, design, develop, review, test, reflect, replan, sync |
-| [toolsmith](toolsmith/) | 5 | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |
-| [content](content/) | 7 | Content transformation: anonymize, infographize, literatize, bridge, tune-voice, build-storyline |
-| [convert](convert/) | 7 | Format conversion: PDF, EPUB, DOCX, PPTX → markdown, markdown → PDF, Google Docs import |
-| [retrospect](retrospect/) | 3 | Session analysis: domain learnings, collaboration patterns, trend reports |
-| [experimental](experimental/) | 9 | Experimental: deployment, background tasks, distill-skill, context bootstrap, summarization |
-| [philosopher](philosopher/) | 24 | 20 philosopher personas, dialogue, encounter, council, create |
-| [biz](biz/) | 7 | Business analysis: competitive analysis, UX strategy/wireframes/evaluation, market sizing, canvas, personas |
-| [coach](coach/) | 1 | Personal coaching: CLEAR + GROW protocols |
-| [gtd](gtd/) | 5 | GTD workflow automation for Obsidian vaults |
-| [cowork](cowork/) | 5 | Multi-project context management: switch projects, save/load sessions, ref/wip sync |
-| [lazy](lazy/) | 1 | Lazy skill demand capture: placeholder skills that measure real demand before building |
-| [team](team/) | 3 | Fleet coordination under one human: brief, report, relay — one skill per machine arrow, SendMessage only. The mandate carries its own contract, so no skill reads anything at runtime |
-| [ring](ring/) | 3 | Context as a tree of problems to settle: open, close, rings. The ring file holds the steering state; a `team` agent, a sub-agent or the main session is only the vehicle that carries it |
+| Plugin | Description |
+|--------|-------------|
+| [dstoic](dstoic/) | Default plugin: devil-advocate agent, hooks, statusline. Revisited skills land here |
+| [gist](gist/) | Digital Stoic visual system for HTML artifacts, and `/verdict` review pages |
+| [toolsmith](toolsmith/) | Tool creation: edit-tool, edit-claude, edit-plugin, search-skill, install-dependency |
+
+Session persistence lives in its own repo: [stint](https://github.com/digital-stoic-org/stint). Parked plugins are listed in [park/README.md](park/README.md).
 
 ## 📦 Install
 
@@ -148,15 +133,11 @@ To install a specific plugin only, add it to `.claude/settings.json`:
 ## 🚀 Quick Start
 
 ```bash
-/frame-problem how should I approach building a new auth system
-# → Triangulates: Keogh=2 (team expertise), Predictable=yes, Disassemble=yes
-# → Complicated (3/3 agree) + Boulder → /investigate → /openspec-plan
+/verdict review this plan before I commit to it
+# → self-contained HTML page with one card per decision to settle
 
-/brainstorm product naming ideas for my CLI tool
-# → Research → SCAMPER divergence → weighted scoring → recommendation
-
-/troubleshoot "TypeError: Cannot read property 'map' of undefined"
-# → WebSearch → qualify → diagnose → OODA → save learning
+/edit-tool create a skill that converts my meeting notes
+# → scaffolds the skill, then routes the version bump to /edit-plugin
 ```
 
 ---
@@ -174,19 +155,19 @@ The practice itself is about **combining both**: a human who thinks consciously 
 | # | Document | Reader | Job |
 |---|----------|--------|-----|
 | 1 | 📄 **README.md** | 👤 Human | **"What + How (TL;DR)"** — This file. The GitHub landing page. |
-| 2 | 🧭 [PHILOSOPHY.md](PHILOSOPHY.md) | 👤 Human | **"Why"** — 4 beliefs, 7 principles (with belief origins), 4-layer taxonomy, execution modes |
-| 3 | 🎯 [PRACTICE.md](PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI, autonomy spectrum, 8 external + 4 aspirational benchmarking dims |
-| 3b | 🔧 [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md) | 👤 Human | **"The Harness"** — Guides/sensors model, session lifecycle, maturity levels |
-| 4 | 📚 [README-full.md](README-full.md) | 👤 Human | **"Every Skill"** — Complete catalog, reference |
-| 5 | 🤖 [PRACTICE-llm.md](PRACTICE-llm.md) | 🤖 LLM | **Self-contained benchmark** — Token-optimized, YAML-heavy, all-in-one |
+| 2 | 🧭 [PHILOSOPHY.md](docs/PHILOSOPHY.md) | 👤 Human | **"Why"** — 4 beliefs, 7 principles (with belief origins), 4-layer taxonomy, execution modes |
+| 3 | 🎯 [PRACTICE.md](docs/PRACTICE.md) | 👤 Human | **"Deep How"** — Cognitive ROI, autonomy spectrum, 8 external + 4 aspirational benchmarking dims |
+| 3b | 🔧 [HARNESS-ENGINEERING.md](docs/HARNESS-ENGINEERING.md) | 👤 Human | **"The Harness"** — Guides/sensors model, session lifecycle, maturity levels |
+| 4 | 🅿️ [park/README.md](park/README.md) | 👤 Human | **"What was tried"** — Parked plugins and skills, with the full former catalog |
+| 5 | 🤖 [PRACTICE-llm.md](docs/PRACTICE-llm.md) | 🤖 LLM | **Self-contained benchmark** — Token-optimized, YAML-heavy, all-in-one |
 | — | 🤖 `SKILL.md` (per skill) | 🤖 LLM | **Execution directives** — What the LLM actually runs |
 
 Human docs link to each other (progressive depth). LLM docs are **self-contained** (no navigation, everything in one shot). The practice works because both cognitions play to their strengths.
 
 ---
 
-⚠️ 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](CLAUDE.md.example) for inspiration, don't copy. ([Why?](PHILOSOPHY.md#-the-toothbrush-principle))
+⚠️ 🪥 CLAUDE.md = toothbrush. See [CLAUDE.md.example](docs/CLAUDE.md.example) for inspiration, don't copy. ([Why?](docs/PHILOSOPHY.md#-the-toothbrush-principle))
 
 The example uses [`rtk`](https://github.com/pszymkowiak/rtk) for token-optimized command output. Install it separately if you want to use the rtk instructions.
 
-💡 [IDEAS.md](IDEAS.md) — Future ideas & what I'm deliberately *not* building yet.
+💡 [IDEAS.md](docs/IDEAS.md) — Future ideas & what I'm deliberately *not* building yet.

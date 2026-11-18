@@ -8,14 +8,14 @@ Each document has a distinct job. Read in order, stop when you have what you nee
 
 | # | Document | Job | Time |
 |---|----------|-----|------|
-| 1 | [README.md](README.md) | **"What + How (TL;DR)"** — GitHub landing page, overview, quick model | 2 min |
+| 1 | [README.md](../README.md) | **"What + How (TL;DR)"** — GitHub landing page, overview, quick model | 2 min |
 | 2 | [PHILOSOPHY.md](PHILOSOPHY.md) | **"Why these choices?"** — Beliefs, 7 principles, execution modes, toothbrush principle | 5 min |
 | 3 | **This file** | **"Deep How"** — Cognitive ROI, autonomy model, benchmarking | 10 min |
-| 4 | [README-full.md](README-full.md) | **"What's in the toolkit?"** — Every skill, every detail | Reference |
+| 4 | [README-full.md](../park/README-full.md) | **"What's in the toolkit?"** — Every skill, every detail | Reference |
 
 🤖 For LLM consumption (benchmarking, comparison): [PRACTICE-llm.md](PRACTICE-llm.md) — self-contained, token-optimized.
 
-**This file is about the HOW** — how the human-AI collaboration actually works, how to measure its value, and how to benchmark it against other approaches. For the WHY (beliefs, principles), see [PHILOSOPHY.md](PHILOSOPHY.md). For the WHAT (skill catalog), see [README-full.md](README-full.md).
+**This file is about the HOW** — how the human-AI collaboration actually works, how to measure its value, and how to benchmark it against other approaches. For the WHY (beliefs, principles), see [PHILOSOPHY.md](PHILOSOPHY.md). For the WHAT (skill catalog), see [README-full.md](../park/README-full.md).
 
 ---
 
@@ -101,7 +101,7 @@ Before engaging AI, activate a deliberate thinking mode. Not "use AI to do X" bu
 
 > **Posture before technique.** And posture includes the willingness to be challenged.
 
-Skills organize into a development lifecycle — **Frame → Think → Build → Debug → Learn**. The practitioner identifies which phase they're in before engaging AI. See [README-full.md](README-full.md) for which skills map to which phase.
+Skills organize into a development lifecycle — **Frame → Think → Build → Debug → Learn**. The practitioner identifies which phase they're in before engaging AI. See [README-full.md](../park/README-full.md) for which skills map to which phase.
 
 ### Autonomy Spectrum
 
@@ -136,7 +136,7 @@ The toolkit spans from universal to personal:
 
 The core cognitive skills (Frame, Think, Learn) are domain-agnostic. The Build and Debug skills are tech-agnostic. Only a handful are stack-specific or personal.
 
-For the complete skill-by-skill breakdown, see [README-full.md](README-full.md). For how these skills form an agent harness (guides, sensors, maturity model), see [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md).
+For the complete skill-by-skill breakdown, see [README-full.md](../park/README-full.md). For how these skills form an agent harness (guides, sensors, maturity model), see [HARNESS-ENGINEERING.md](HARNESS-ENGINEERING.md).
 
 ---
 
@@ -200,4 +200,4 @@ Systematically compared against 7 frameworks across the AI coding agent ecosyste
 
 ---
 
-📄 **TL;DR**: [README.md](README.md) · 🤖 **LLM reference**: [PRACTICE-llm.md](PRACTICE-llm.md) · 🧭 **Philosophy**: [PHILOSOPHY.md](PHILOSOPHY.md) · 📖 **Skill catalog**: [README-full.md](README-full.md)
+📄 **TL;DR**: [README.md](../README.md) · 🤖 **LLM reference**: [PRACTICE-llm.md](PRACTICE-llm.md) · 🧭 **Philosophy**: [PHILOSOPHY.md](PHILOSOPHY.md) · 📖 **Skill catalog**: [README-full.md](../park/README-full.md)

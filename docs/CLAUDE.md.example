@@ -2,7 +2,7 @@
 
 > A `CLAUDE.md` is like a toothbrush: useful daily, but don't use someone else's. This is a starting point, not a config to copy wholesale. Take it to your project (or `~/.claude/`) root, throw out what doesn't fit *your* mouth, and fill in the `<placeholders>` with your own habits.
 >
-> **First line must be `# <Project Name>`.** Not a Claude Code rule, but skills in this repo (`cowork:save-work`, `cowork:switch`) read it to identify the project. (This file uses `# CLAUDE.md.example` as its own title; replace it.)
+> **First line must be `# <Project Name>`.** Not a Claude Code rule, but skills that need the project name read it from this first line. (This file uses `# CLAUDE.md.example` as its own title; replace it.)
 >
 > Sections marked **[core]** are near-universal — keep them. Sections marked **[pattern]** showcase a technique; adopt if it fits. `<!-- example: ... -->` blocks show the *shape* of a personal rule so you can write your own — they are not defaults.
 >
@@ -22,9 +22,19 @@ Clarify before big tasks; never hallucinate; say "I don't know" over speculation
 
 <!-- example: message-head shortcuts [pattern] — a keyword at the start of a message switches the reply mode. Name them whatever you like.
 
-**`eli5 <topic>`** (alone = re-explain the last turn): plain words for a senior practitioner, 8-12 lines of prose, no diagrams/jargon, one useful analogy or none.
+**`eli42 <topic>`** (alone = re-explain the last turn): plain words for a senior practitioner, 8-12 lines of prose, no diagrams, no opaque jargon, one useful analogy or none.
 
 **`tldr`**: session status — done / in progress / blocked / decision — terse bullets, no table. Source = this session, not a disk scan. Nothing in progress → say so.
+
+**`askmeif`**: before acting, if an ambiguity would change the result → numbered questions (A/B/C choices), then wait. Nothing ambiguous → say so in one line and proceed.
+
+**`shortldr`**: quick analysis, minimal answer — verdict first, ≤ 3 lines, no table or diagram. Keep risk/uncertainty in one line.
+
+**`protoasc`** (alone = applies to the last turn): answer as ASCII wireframes in the terminal, following the Diagrams limits; split into several wireframes rather than cram.
+
+**`dontdo`**: read-only mode. Research and analyze → plan → pick one option with its why → exact proposed edits in the reply. Make no change: no file write, no state-changing command, no external write.
+
+**`subagt`**: run the task in one or more sub-agents, in parallel when the parts are independent. Cheapest capable model by default; a bigger one only when the request names it.
 
 **`tskldr`**: open-task table `id | task | status | deps | path | validate`; done tasks only on request. Source = this session, not a disk scan. IDs `T<n>` stable, never renumbered; `*` after id = assumed priority. Status: 🔄 doing · ⏳ todo · ⛔ blocked · ❓ decision · ✅ done. Sort: unblocked before blocked → most-unblocking first → stated priority; never before its deps. `path` = target file/folder, relative to the work root. `validate` = concrete human check to close it (open an HTML render, run a script, reread a section); `-` if none. Task ≤ 6 words. Nothing open → say so.
 -->
@@ -33,7 +43,7 @@ Clarify before big tasks; never hallucinate; say "I don't know" over speculation
 
 When a turn settles a decision, reveals a non-obvious learning, rejects a path, shifts frame, or leaves an open fork, END with one greppable HTML comment starting `<!-- ckpt`. Skip on clarifying/ack/pure-tool turns. Clauses → `.claude/refs/checkpoint.md`.
 
-<!-- Required by dstoic:checkpoint, dstoic:save-context and ring: they harvest these trailers for free instead of re-reading the transcript. Without this rule they fall back to a slower, lossier extractive pass. Keep the `<!-- ckpt` marker stable — the skills grep it. -->
+<!-- Any skill or script that harvests checkpoint trailers gets them for free instead of re-reading the transcript. Without this rule it falls back to a slower, lossier extractive pass. Keep the `<!-- ckpt` marker stable — tools grep it. -->
 
 ## Execution defaults [core]
 

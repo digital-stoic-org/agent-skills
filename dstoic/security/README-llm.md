@@ -15,8 +15,8 @@ dstoic/security/
 - `*.md` = human docs (why, rationale, prose)
 - `*-llm.md` = LLM docs (directives, config blocks, checklists)
 - Hook scripts: `dstoic/hooks/security-*.sh`
-- Target config: `/praxis/.claude/settings.json`
-- Risk registry: `/praxis/code/security/REGISTRY.md`
+- Target config: `<workspace>/.claude/settings.json`
+- Risk registry: `<workspace>/code/security/REGISTRY.md`
 
 ## Phases
 

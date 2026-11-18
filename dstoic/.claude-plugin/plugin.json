@@ -1,7 +1,7 @@
 {
   "name": "dstoic",
-  "description": "Core infrastructure: git commits, model selection, hooks, scratch pad, kaizen, devil-advocate agent, context save/load, verbatim checkpoint, resumable work plans (plan-context), meta-prompt (RELIANCE recursive ledger), and session post-mortem.",
-  "version": "0.53.1",
+  "description": "Default plugin: devil-advocate agent, hooks (praxis-dir guard, tmux notifications, output dumps), statusline and security notes. Skills are parked in park/dstoic-skills/; revisited skills land back here.",
+  "version": "0.54.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"

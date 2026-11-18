@@ -71,12 +71,12 @@ These phases map to [Bruniaux maturity levels](https://github.com/FlorianBruniau
 
 | What | Where | Purpose |
 |------|-------|---------|
-| Risk registry + status | `/praxis/code/security/REGISTRY.md` | Living inventory — what's done, what's not |
+| Risk registry + status | `<workspace>/code/security/REGISTRY.md` | Living inventory — what's done, what's not |
 | Phase briefs | This folder | Review before, reference after |
 | References | [references.md](references.md) | Curated sources, monthly check cadence |
 | Known gaps | [gaps.md](gaps.md) | What we chose not to do, and why |
 | Hook scripts | `dstoic/hooks/security-*.sh` | Deployed automatically by plugin |
-| Target config | `/praxis/.claude/settings.json` | Git-tracked, replicated across environments |
+| Target config | `<workspace>/.claude/settings.json` | Git-tracked, replicated across environments |
 
 ## 🔄 Review Cadence
 

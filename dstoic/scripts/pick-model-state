@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-STATE="${PRAXIS_DIR:-/praxis}/.tmp/pick-model/session-state.json"
+STATE="${PRAXIS_DIR:+$PRAXIS_DIR/.tmp/pick-model/session-state.json}"
 
 if [ ! -f "$STATE" ]; then
   echo "state=missing (statusline tee not written — set DSTOIC_HOOKS_ENABLED=1, or read the statusline bar / ask user)"

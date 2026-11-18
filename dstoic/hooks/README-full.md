@@ -6,16 +6,14 @@
 
 | Hook | Purpose | Why | Trigger | Requires |
 |------|---------|-----|---------|----------|
-| 🛡️ `check-praxis-dir.sh` | Guard: warn when outside the Praxis dir | Avoid running session automation in the wrong tree | SessionStart | bash |
 | 🖥️ `notify-tmux.sh` | Visual tmux window notifications | Know when the agent needs you vs working autonomously | Multiple | tmux |
 | 📤 `dump-output.sh` | Debug artifacts on stop | Review agent output later without scrolling back | Stop | bash, jq |
 
-> 📦 **Moved to the `experimental` plugin** (staged, gated off by default): `retrospect-capture.sh`, `list-context-sync.sh`, `session-pin.sh`, `recent-notes.sh`. See `experimental/hooks/`.
+> 📦 **Parked:** `retrospect-capture.sh` is in `park/retrospect/hooks/`; `list-context-sync.sh`, `session-pin.sh`, `recent-notes.sh` are in `park/experimental/`.
 
 ```mermaid
 flowchart LR
     subgraph S1["SessionStart"]
-        A0["🛡️ check-praxis-dir"]
         A1["🖥️ notify-tmux"]
     end
 
@@ -32,7 +30,7 @@ flowchart LR
 
     classDef hook fill:#E8F4FD,stroke:#4A90D9,color:#000
     classDef phase fill:#F0F0F0,stroke:#999,color:#000
-    class A0,A1,B1,C1,C2 hook
+    class A1,B1,C1,C2 hook
 ```
 
 ---
