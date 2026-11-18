@@ -1,7 +1,7 @@
 {
   "name": "dstoic",
-  "description": "Default plugin: devil-advocate agent, hooks (praxis-dir guard, tmux notifications, output dumps), statusline and security notes. Skills are parked in park/dstoic-skills/; revisited skills land back here.",
-  "version": "0.54.0",
+  "description": "Default plugin: diverge and converge skills (ideation in rounds, then a decision on Mat's own criteria), devil-advocate agent, hooks (tmux notifications, output dumps), statusline and security notes. Parked skills live in park/dstoic-skills/.",
+  "version": "0.55.0",
   "author": {
     "name": "dstoic",
     "url": "https://github.com/digital-stoic-org"
